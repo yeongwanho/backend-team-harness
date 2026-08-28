@@ -1,0 +1,6 @@
+name: security
+required: true
+checks:
+  - authentication
+  - authorization
+  - secret-redaction

@@ -1,0 +1,6 @@
+name: test
+required: true
+checks:
+  - compile
+  - selected-tests
+  - regression-evidence

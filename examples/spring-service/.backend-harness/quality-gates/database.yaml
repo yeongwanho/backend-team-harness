@@ -1,0 +1,6 @@
+name: database
+required: true
+checks:
+  - migration-order
+  - released-migration-immutability
+  - transaction-boundary

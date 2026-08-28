@@ -1,0 +1,34 @@
+{
+  "name": "backend-team-harness",
+  "version": "0.1.0",
+  "description": "A provider-neutral AI harness for shared backend engineering workflows.",
+  "type": "module",
+  "bin": {
+    "bth": "./src/cli.mjs"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/cli.mjs && node --test",
+    "example:init": "node src/cli.mjs init examples/spring-service",
+    "example:doctor": "node src/cli.mjs doctor examples/spring-service"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "ai-harness",
+    "backend",
+    "spring-boot",
+    "developer-tools",
+    "agentic-ai"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yeongwanho/backend-team-harness.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yeongwanho/backend-team-harness/issues"
+  },
+  "homepage": "https://github.com/yeongwanho/backend-team-harness#readme",
+  "license": "MIT"
+}

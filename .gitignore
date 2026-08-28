@@ -1,0 +1,11 @@
+node_modules/
+coverage/
+.DS_Store
+*.log
+
+# Local harness state can contain private project context.
+.backend-harness/local/
+.backend-harness/generated/
+.backend-harness/tasks/*/evidence/
+!.backend-harness/tasks/README.md
+

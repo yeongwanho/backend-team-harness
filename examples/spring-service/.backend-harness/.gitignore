@@ -1,0 +1,4 @@
+local/
+generated/
+tasks/*/evidence/
+!tasks/README.md

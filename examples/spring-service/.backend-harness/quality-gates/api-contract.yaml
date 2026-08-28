@@ -1,0 +1,6 @@
+name: api-contract
+required: true
+checks:
+  - request-validation
+  - response-compatibility
+  - error-contract
