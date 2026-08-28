@@ -1,14 +1,14 @@
 {
   "name": "backend-team-harness",
-  "version": "0.1.0",
-  "description": "A provider-neutral AI harness for shared backend engineering workflows.",
+  "version": "0.2.0",
+  "description": "An evidence-driven backend workflow harness with resumable tasks and guarded verification.",
   "type": "module",
   "bin": {
     "bth": "./src/cli.mjs"
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/cli.mjs && node --test",
+    "check": "node scripts/check-syntax.mjs && node --test",
     "example:init": "node src/cli.mjs init examples/spring-service",
     "example:doctor": "node src/cli.mjs doctor examples/spring-service"
   },
@@ -16,11 +16,11 @@
     "node": ">=20"
   },
   "keywords": [
-    "ai-harness",
     "backend",
     "spring-boot",
     "developer-tools",
-    "agentic-ai"
+    "workflow-harness",
+    "evidence"
   ],
   "repository": {
     "type": "git",

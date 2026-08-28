@@ -203,7 +203,9 @@ export const sharedTemplates = [
     content: lines(
       '# Tasks',
       '',
-      'Task contracts will live here. Shared task documents may be committed; private evidence remains ignored.'
+      'Each `bth task create` command creates a shared task folder with a human-readable task, an event log, and a replayable snapshot.',
+      '',
+      'State and decisions may be committed for team handoff. `evidence/` stays local and is ignored because build metadata can contain machine-specific details.'
     )
   },
   {
@@ -216,4 +218,3 @@ export const sharedTemplates = [
     )
   }
 ]
-

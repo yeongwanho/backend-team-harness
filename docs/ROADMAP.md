@@ -1,45 +1,68 @@
 # Roadmap
 
-## Milestone 0 — Foundation
+This file separates shipped runtime from intended work. A checkbox counts only when a CLI call path and acceptance tests exist.
 
-- safe `.backend-harness` initialization
-- repository doctor
-- shared policy and workflow templates
-- CI and regression tests
+## Milestone 0 — Safe foundation (shipped)
 
-## Milestone 1 — Task contract
+- [x] existing-project and Git/backend-root validation
+- [x] symlink-safe `.backend-harness` initialization
+- [x] no-clobber default and recoverable `--force` backups
+- [x] content-aware repository doctor
+- [x] strict quality-gate YAML parser
+- [x] CI and regression tests
 
-- one human-readable task document with structured front matter
-- context snapshot and source manifest
-- explicit unknown and conflict handling
-- task state machine with resumable local storage
+## Milestone 1 — Task contract (shipped MVP)
 
-## Milestone 2 — Spring impact analysis
+- [x] human-readable task document
+- [x] explicit unknown starting state
+- [x] task transition table with rejection audit
+- [x] human approval requirement for `PLAN_APPROVED`
+- [x] replayable JSONL event store and snapshot
+- [x] path-safe task ids and local concurrency lock
+- [ ] source manifest and staleness detection
+- [ ] conflict merge for task events created on separate Git branches
 
-- module and package map
-- Controller → Service → Repository trace
-- DTO and endpoint change candidates
-- related test discovery
+## Milestone 2 — Deterministic verification (shipped MVP)
 
-## Milestone 3 — Deterministic verification
+- [x] named tool registry
+- [x] pre-execution task/permission gate
+- [x] project Gradle/Maven Wrapper selection
+- [x] fixed offline commands with no shell string
+- [x] allowlisted child-process environment
+- [x] exit-code, timing, and output-hash evidence
+- [x] `VERIFIED` and `DONE` require confirmed evidence
+- [ ] selected module/test targeting with a validated schema
+- [ ] JUnit XML result parsing
+- [ ] evidence baseline comparison
 
-- allowlisted Gradle/Maven commands
-- test-result evidence
-- Flyway immutability and ordering checks
-- OpenAPI compatibility gate
-- secret redaction
+## Milestone 3 — Spring impact analysis
 
-## Milestone 4 — Team handoff
+- [ ] module and package map
+- [ ] Controller → Service → Repository trace
+- [ ] DTO and endpoint change candidates
+- [ ] related test discovery
+- [ ] multi-repository relationship pack
 
-- implementation decision log
-- verified and unverified work summary
-- handoff packet import/export
-- before/after evaluation suite
+## Milestone 4 — Backend quality adapters
 
-## Milestone 5 — Model providers
+- [ ] released Flyway migration baseline and immutability check
+- [ ] JPA entity, transaction, and query-risk inspection
+- [ ] OpenAPI compatibility gate
+- [ ] secret-pattern scanning before evidence export
 
-- provider-neutral request/response contract
-- Codex, Claude, GPT, and local-model adapters
-- minimum-context and redaction policies
-- replayable evaluation cases
+## Milestone 5 — Team handoff
 
+- [ ] implementation decision log commands
+- [ ] verified/unverified/blocked summary
+- [ ] handoff packet import/export
+- [ ] before/after evaluation suite
+
+## Milestone 6 — Model providers
+
+- [ ] provider-neutral request/response contract
+- [ ] minimum-context and redaction policy
+- [ ] one provider adapter plus a deterministic fake-model test
+- [ ] Codex, Claude, GPT, and local-model adapters
+- [ ] replayable evaluation cases
+
+Model integration is deliberately last. A model may interpret evidence, but it must not replace the state, permission, tool, or evidence contracts already enforced by the core.
