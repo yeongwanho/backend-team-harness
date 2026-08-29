@@ -205,7 +205,8 @@ export const sharedTemplates = [
       '',
       'Each `bth task create` command creates a shared task folder with a human-readable task, an event log, and a replayable snapshot.',
       '',
-      'State and decisions may be committed for team handoff. `evidence/` stays local and is ignored because build metadata can contain machine-specific details.'
+      'State, decisions, and the redacted `runs/latest.json` summary may be committed for team handoff.',
+      '`evidence/` stays local and is ignored because detailed build metadata can contain machine-specific information.'
     )
   },
   {

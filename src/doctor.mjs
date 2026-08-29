@@ -2,6 +2,7 @@ import { constants } from 'node:fs'
 import { access, readdir, readFile } from 'node:fs/promises'
 import { relative, resolve, sep } from 'node:path'
 import { loadQualityGates } from './config/quality-gates.mjs'
+import { loadVerificationConfig, resolveGateExecutable } from './config/verification.mjs'
 import { resolveReadableRoot, statPath } from './fs-safety.mjs'
 
 const SKIPPED_DIRECTORIES = new Set([
@@ -229,6 +230,33 @@ export async function doctorProject(inputPath = '.') {
       ? 'Quality-gate definitions were parsed and validated.'
       : 'Quality-gate definitions are missing or invalid.',
     qualityGates
+  ))
+
+  let verification
+  const verificationDiagnostics = []
+  try {
+    verification = await loadVerificationConfig(root, { allowInferred: false })
+    for (const gate of verification.config.gates) {
+      try {
+        await resolveGateExecutable(root, gate.command)
+      } catch (error) {
+        verificationDiagnostics.push(gate.id + ': ' + (error instanceof Error ? error.message : String(error)))
+      }
+    }
+  } catch (error) {
+    verificationDiagnostics.push(error instanceof Error ? error.message : String(error))
+  }
+  checks.push(check(
+    'verification-config',
+    verificationDiagnostics.length === 0 ? 'pass' : 'fail',
+    verificationDiagnostics.length === 0
+      ? 'Executable verification gates and structured result rules are configured.'
+      : 'Verification configuration is missing, invalid, or not executable.',
+    {
+      source: verification?.source ?? null,
+      gates: verification?.config.gates.map((gate) => gate.id) ?? [],
+      diagnostics: verificationDiagnostics
+    }
   ))
 
   return {

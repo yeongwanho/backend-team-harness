@@ -10,13 +10,13 @@ The useful comparison is therefore “which runtime technique has an equivalent?
 
 | Harness concern | OMO reference area | Backend Team Harness implementation | Correspondence |
 | --- | --- | --- | --- |
-| Core / adapter boundary | `packages/*-core`, `packages/omo-opencode`, `packages/omo-codex`, `packages/omo-senpi` | `src/core/`, `src/adapters/`, composed only by `src/runtime/backend-harness.mjs` | Implemented at small scale |
+| Core / project boundary | `packages/*-core`, `packages/omo-opencode`, `packages/omo-codex`, `packages/omo-senpi` | generic `src/core/` + one configured runner + project `verification.json` | Implemented at small scale |
 | Task transition audit | `packages/senpi-task/src/state/` | `src/core/task-state.mjs` | Independently reimplemented for human-reviewed backend work |
 | Task persistence | `packages/senpi-task/src/store/` | `src/core/task-store.mjs` | JSONL event replay + snapshot + local lock |
 | Tool registry | OpenCode adapter tool registry | `src/core/tool-registry.mjs` | Named structured dispatch implemented |
 | Pre-tool guard | OpenCode `tool.execute.before` guard tier | `src/policy/tool-gate.mjs` | Deny-before-execute implemented |
-| Deterministic QA evidence | OMO `.omo/evidence/` QA rule | `src/core/evidence-store.mjs`, `src/core/verify-task.mjs` | Exit-code and hash evidence implemented |
-| Config validation | `packages/omo-config-core` | `src/config/quality-gates.mjs` | Narrow quality-gate schema only |
+| Deterministic QA evidence | OMO `.omo/evidence/` QA rule | source binding + fresh JUnit ingestion + run/evidence stores | Result contract implemented; hashes are not called signatures |
+| Config validation | `packages/omo-config-core` | `src/config/verification.mjs`, `src/config/quality-gates.mjs` | Executable verification and review checklists are separate |
 | Lifecycle hook system | OpenCode hook composition / Senpi components | none | Not implemented |
 | Memory engine | `packages/memory-core` | none | Not implemented; Markdown context is not called memory |
 | Model routing/providers | `packages/model-core`, harness adapters | none | Not implemented |
@@ -26,7 +26,7 @@ The useful comparison is therefore “which runtime technique has an equivalent?
 
 OMO is an agent runtime: the agent is a primary worker and the harness coordinates tools, hooks, memory, tasks, and multiple host environments.
 
-Backend Team Harness is currently a developer-review runtime: the human performs implementation, while the harness preserves task state, blocks unapproved verification, runs a narrow deterministic backend tool, and records evidence.
+Backend Team Harness is a backend verification runner with an optional developer-review lifecycle: the human or AI performs implementation, while the harness binds source, runs project gates, rejects false test success, and records rerunnable results.
 
 That difference is intentional. Porting OMO's full hook count, team mode, memory engine, or model router would add complexity without proving the backend collaboration problem.
 
@@ -34,7 +34,7 @@ That difference is intentional. Porting OMO's full hook count, team mode, memory
 
 It is accurate to say:
 
-> Backend Team Harness independently adapts OMO-style state, tool registry, pre-execution guard, Core/Adapter separation, and evidence-gated completion to a human-reviewed backend workflow.
+> Backend Team Harness independently adapts OMO-style state, guarded tool execution, Core/project separation, and execution-gated completion to a backend verification workflow.
 
 It is not accurate to say:
 

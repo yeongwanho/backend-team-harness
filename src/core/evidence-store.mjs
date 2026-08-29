@@ -24,7 +24,7 @@ export async function recordEvidence(inputPath, taskId, input, options = {}) {
 
   const base = {
     ...input,
-    schemaVersion: 1,
+    schemaVersion: 2,
     id,
     taskId: paths.id,
     recordedAt: now.toISOString()

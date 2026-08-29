@@ -2,6 +2,7 @@ import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises'
 import { dirname, join, relative, resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { sharedTemplates } from './templates.mjs'
+import { defaultVerificationConfig } from './config/verification.mjs'
 import {
   assertNoSymlinkSegments,
   resolveExistingProjectRoot,
@@ -38,8 +39,15 @@ export async function initProject(inputPath = '.', options = {}) {
   const backups = []
   const backupStamp = timestampForPath(options.now?.() ?? new Date()) + '-' + (options.backupSuffix ?? randomUUID().slice(0, 8))
   const writes = []
+  const detectedVerification = await defaultVerificationConfig(root)
+  const templates = detectedVerification
+    ? [...sharedTemplates, {
+        path: '.backend-harness/verification.json',
+        content: JSON.stringify(detectedVerification, null, 2) + '\n'
+      }]
+    : sharedTemplates
 
-  for (const template of sharedTemplates) {
+  for (const template of templates) {
     const target = await resolveSafeProjectPath(root, template.path)
     const parent = dirname(target)
     await assertNoSymlinkSegments(root, parent)

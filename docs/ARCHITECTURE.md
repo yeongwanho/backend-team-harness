@@ -2,123 +2,116 @@
 
 ## Product boundary
 
-Backend Team Harness is a local workflow runtime for a backend developer and reviewer. It persists task decisions, denies invalid execution, runs one narrow deterministic verification surface, and records machine evidence.
+Backend Team Harness closes one narrow gap: a claim that a change works must be tied to the Git source, commands, and fresh structured test results that produced the claim.
 
-It is not currently a model host, autonomous coding agent, deployment platform, production database client, or replacement for human review.
+It is not a CI replacement, model host, deployment platform, production database client, static-analysis oracle, or sandbox for malicious repositories.
 
-## Implemented runtime
+## Runtime
 
 ```mermaid
 flowchart TB
-  CLI[CLI] --> Init[Safe project initialization]
-  CLI --> Doctor[Content-aware doctor]
-  CLI --> Task[Task state + event store]
-  CLI --> Verify[Verification coordinator]
-
-  Runtime[Backend composition root] --> Verify
-  Runtime --> Registry
-  Runtime --> Build
-  Verify --> Registry[Tool Registry]
-  Registry --> Gate[Pre-execution permission gate]
-  Gate --> Build[Gradle / Maven adapter]
-  Build --> Process[No-shell process runner]
-  Process --> Evidence[Local evidence store]
-  Evidence --> Task
-
-  Doctor --> GateConfig[Quality-gate schema loader]
+  CLI[CLI] --> Check[bth check]
+  CLI --> Task[Task state]
+  CLI --> Verify[bth verify]
+  Check --> Bind[Git source binding]
+  Verify --> Bind
+  Check --> Registry[Tool registry + permission gate]
+  Verify --> Registry
+  Registry --> Runner[Configured verification tool]
+  Runner --> Config[verification.json]
+  Runner --> Process[No-shell process runner]
+  Runner --> JUnit[Fresh JUnit ingestion]
+  JUnit --> Verdict[Required gates + tests > 0]
+  Verdict --> Local[Local run record]
+  Verdict --> Shared[Task run record + local evidence]
 ```
+
+## Boundaries
 
 ### Generic core
 
-The modules under `src/core/` do not contain Spring- or company-specific policy.
+- `source-binding.mjs`: commit, diff, and untracked-content fingerprint
+- `process-runner.mjs`: allowlisted environment, no shell, timeout and process-group cleanup
+- `junit.mjs`: safe report discovery, freshness check, test result parsing
+- `task-state.mjs`: pure lifecycle transition rules
+- `task-store.mjs`: event replay, snapshot, lock, evidence and source revalidation
+- `verify-task.mjs`: approved task verification coordination
+- `run-record-store.mjs`: redacted local/shared run summaries
+- `evidence-store.mjs`: immutable local detailed records
 
-- `task-state.mjs`: pure transition legality and audit result
-- `task-store.mjs`: hash-chained shared event log, snapshot, path-safe task id, stale-lock recovery, and local lock
-- `tool-registry.mjs`: named tool definitions and structured dispatch
-- `process-runner.mjs`: no-shell execution with an environment allowlist and output hashing
-- `evidence-store.mjs`: local immutable evidence records
-- `verify-task.mjs`: state → injected tool registry → evidence → state coordination
+### Project adapter
 
-### Backend adapter
-
-`src/runtime/backend-harness.mjs` is the composition root. It injects the policy gate and backend adapter into the generic core. `src/adapters/build-test-tool.mjs` selects only a project-owned wrapper; it does not accept a user-provided command string and always adds offline flags.
-
-### Policy boundary
-
-`src/policy/tool-gate.mjs` runs before a registered tool. It can reject an invocation based on task state, network capability, or source-write capability before the tool's execute function is called.
+`src/adapters/verification-tool.mjs` is deliberately unaware of Spring, Gradle, Maven, Node, or database brands. It loads project data, resolves a project-contained executable, runs each gate, and applies the configured result contract.
 
 ### Project pack
 
-`.backend-harness/` contains human-readable project context and strict quality-gate definitions. Project policy is data; it does not fork or import the generic core.
+`.backend-harness/verification.json` contains the executable integration boundary:
 
-### Shared and local state
+- project-owned command argv
+- required/optional status
+- timeout
+- exit-code or JUnit result contract
+- report patterns and minimum test count
 
-| Data | Shared by Git | Reason |
-| --- | --- | --- |
-| `tasks/<id>/task.md` | yes | human-readable context |
-| `tasks/<id>/task.json` | yes | current reviewable snapshot |
-| `tasks/<id>/events.jsonl` | yes | replayable decision history |
-| `tasks/<id>/evidence/` | no | machine-specific command metadata |
-| `local/locks/` | no | process coordination |
-| `local/backups/` | no | recovery from explicit overwrite |
+Gradle and Maven are initialization defaults, not Core branches. Other ecosystems use the same schema.
 
-## Task state machine
+The YAML files under `quality-gates/` remain human review checklists. They are not silently treated as executable verification.
 
-The transition table is code in `src/core/task-state.mjs`, not a documentation-only diagram.
+## Source binding
+
+A binding contains:
+
+- `HEAD` commit
+- project path inside the Git worktree
+- status digest
+- tracked binary-diff digest
+- untracked file path/content digests
+- one aggregate fingerprint
+
+Task, local, and generated harness runtime paths are excluded so recording a run does not invalidate the run. Source, verification configuration, project scripts, and policy files remain included.
+
+The binding detects accidental staleness. It is not a signature against an attacker who can rewrite the repository and records.
+
+## Verdict contract
 
 ```text
-CONTEXT_MISSING
-  -> CONTEXT_READY
-  -> PLAN_PROPOSED
-  -> PLAN_APPROVED       (explicit actor + approval)
-  -> IMPLEMENTING
-  -> VERIFYING           (only registered tools may run)
-  -> VERIFIED            (confirmed evidence required)
-  -> DONE                (verified evidence retained)
+PASS = every required gate passed
+   AND at least one required JUnit gate exists
+   AND fresh executed tests >= configured minimum
+   AND failures = 0
+   AND errors = 0
 ```
 
-`VERIFY_FAILED`, `CONTEXT_STALE`, `POLICY_BLOCKED`, and `PERMISSION_DENIED` preserve failure instead of turning it into a successful completion. An illegal transition returns `applied: false` with an audit reason and does not modify the event log.
+Exit code `0` alone is insufficient. A pre-existing report is insufficient. Optional gate failures are reported but do not change the required-gate verdict.
 
-`CONTEXT_READY` requires non-empty context, and `PLAN_PROPOSED` requires a stored plan. Changing context or a plan after approval invalidates that approval and returns the task to `CONTEXT_READY`.
+## Run records
 
-Each event contains the previous event hash and its own SHA-256. Replay rejects a broken chain. This detects accidental or unreviewed edits; it is not a cryptographic signature against an attacker who can rewrite the entire repository.
+| Record | Git | Purpose |
+| --- | --- | --- |
+| `.backend-harness/local/runs/latest.json` | ignored | fast `bth check` feedback |
+| `tasks/<id>/runs/latest.json` | shareable | teammate-readable task result |
+| `tasks/<id>/evidence/*.json` | ignored | detailed state-transition evidence |
 
-## Evidence contract
+Records contain no raw stdout/stderr. They contain command argv, exit metadata, byte counts, hashes, test statistics, report paths, source binding, runtime version, and a rerun argv.
 
-A verification record contains:
+## DB boundary
 
-- tool id and adapter
-- fixed executable plus argument array
-- start, finish, and duration
-- exit code, signal, and timeout state
-- stdout/stderr byte counts and SHA-256 hashes
-- evidence-record SHA-256
+DB verification is a project gate, not a hard-coded universal lifecycle. A repository may call its existing Testcontainers, Docker Compose, embedded DB, Flyway, Liquibase, or Prisma workflow. A migration exit-code gate can run before a required integration-test JUnit gate.
 
-Raw stdout and stderr are deliberately not stored. A result is confirmed only when the child process exits with code `0`, without a signal or timeout.
-
-The persisted state store re-reads and hashes the referenced evidence before accepting `VERIFIED` or `DONE`. A caller-supplied evidence id or boolean is not trusted by itself.
+This keeps the Core portable and prevents a second conflicting DB lifecycle. A managed DB Pack remains possible for projects that have no lifecycle of their own.
 
 ## Safety properties
 
-- Init accepts an existing project directory only.
-- Filesystem root, user home, and symlinked write segments are rejected.
-- Existing contract files are preserved by default.
-- Explicit `--force` replacement creates byte-for-byte backups first.
-- Task and evidence ids cannot contain path traversal.
-- Tool dispatch is deny-before-execute.
-- Process execution uses `shell: false`, an environment allowlist, project wrappers, and offline arguments.
-- Deployment, production DB, secrets, and arbitrary commands have no registered tool.
+- Project init and writes reject unsafe roots and symlink segments.
+- Gate executables must be regular, executable, project-contained, and non-symlinked.
+- Commands are argv arrays and run with `shell: false`.
+- Parent environment values are allowlisted; common credential variables and `MAVEN_OPTS` are excluded.
+- Timeouts kill the POSIX process group, not only the immediate child.
+- Missing, stale, malformed, zero-test, failed, errored, timed-out, or signalled results cannot confirm verification.
+- `DONE` rebinds the current Git source and rejects a post-verification change.
 
-## Planned, not implemented
+The project-owned executable remains trusted code and can perform network or filesystem actions. No OS sandbox currently enforces the declared capability metadata.
 
-```mermaid
-flowchart LR
-  Provider[Model Provider Adapter] -. future .-> Core[Harness Core]
-  Core -. future .-> Spring[Spring impact adapter]
-  Core -. future .-> JPA[JPA risk adapter]
-  Core -. future .-> Flyway[Released-migration baseline]
-  Core -. future .-> OpenAPI[Compatibility adapter]
-  Core -. future .-> Handoff[Handoff packet]
-```
+## Deferred
 
-The dotted components must not be described as current product capabilities until they have runtime modules and acceptance tests.
+Code Graph is deferred until runtime observation proves a need. If added, coverage and SQL observations should be preferred over framework-wide guessed relationships, and graph output must never become the PASS oracle.

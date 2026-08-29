@@ -1,9 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { chmod, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
 
 const cli = resolve('src/cli.mjs')
 
@@ -19,6 +20,24 @@ test('CLI help exposes the actual task and verification commands', () => {
   assert.equal(result.status, 0)
   assert.match(result.stdout, /bth task create/)
   assert.match(result.stdout, /bth verify/)
+  assert.match(result.stdout, /bth check/)
+})
+
+test('CLI check provides a one-command local verification loop', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-cli-check-'))
+  await writeGradleFixture(root)
+  initializeGit(root)
+  assert.equal(runCli(['init', root]).status, 0)
+
+  const checked = runCli(['check', root, '--json'])
+
+  assert.equal(checked.status, 0, checked.stderr || checked.stdout)
+  const result = JSON.parse(checked.stdout)
+  assert.equal(result.confirmed, true)
+  assert.equal(result.result.tests.tests, 1)
+  const localRecord = JSON.parse(await readFile(join(root, result.run.path), 'utf8'))
+  assert.equal(localRecord.taskId, null)
+  assert.deepEqual(localRecord.rerun, ['bth', 'check', '.'])
 })
 
 test('CLI refuses implicit force overwrite in the current directory', async () => {
@@ -36,9 +55,8 @@ test('CLI refuses implicit force overwrite in the current directory', async () =
 
 test('CLI drives one approved task through real guarded verification', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-cli-flow-'))
-  await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
-  await writeFile(join(root, 'gradlew'), '#!/bin/sh\nexit 0\n', 'utf8')
-  await chmod(join(root, 'gradlew'), 0o755)
+  await writeGradleFixture(root)
+  initializeGit(root)
 
   const commands = [
     ['init', root],

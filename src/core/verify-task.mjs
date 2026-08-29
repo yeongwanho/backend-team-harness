@@ -1,9 +1,25 @@
 import { ToolPermissionError } from '../policy/tool-gate.mjs'
 import { recordEvidence } from './evidence-store.mjs'
+import { recordRun } from './run-record-store.mjs'
 import { advanceTask, loadTask } from './task-store.mjs'
+import { transitionTaskRecord } from './task-state.mjs'
 
 function verificationOutcome(result) {
-  return result.exitCode === 0 && result.signal === null && result.timedOut === false
+  return result?.passed === true && result.tests?.tests > 0
+}
+
+function stripOutputTails(result) {
+  return {
+    ...result,
+    gates: result.gates?.map((gate) => gate.process ? {
+      ...gate,
+      process: {
+        ...gate.process,
+        stdout: { sha256: gate.process.stdout.sha256, bytes: gate.process.stdout.bytes },
+        stderr: { sha256: gate.process.stderr.sha256, bytes: gate.process.stderr.bytes }
+      }
+    } : gate)
+  }
 }
 
 export async function verifyTask(inputPath, taskId, options = {}) {
@@ -12,22 +28,34 @@ export async function verifyTask(inputPath, taskId, options = {}) {
     throw new Error('Verification requires an injected tool registry.')
   }
   const loaded = await loadTask(inputPath, taskId)
-  const started = await advanceTask(loaded.root, taskId, 'VERIFYING', {
+  const transitionInput = {
     actor: options.actor ?? 'bth.verify',
-    reason: 'Deterministic build verification started.'
-  })
+    reason: 'Source-bound verification gates started.'
+  }
+  const preview = transitionTaskRecord(loaded.record, 'VERIFYING', transitionInput)
+  if (!preview.applied) {
+    const error = new Error('Verification cannot start: ' + preview.audit.reason)
+    error.audit = preview.audit
+    throw error
+  }
+  const sourceBinding = options.sourceBinding ?? await options.captureSourceBinding?.()
+  if (!sourceBinding?.fingerprint) {
+    throw new Error('Verification requires a Git source binding.')
+  }
+  const started = await advanceTask(loaded.root, taskId, 'VERIFYING', transitionInput)
   if (!started.applied) {
     const error = new Error('Verification cannot start: ' + started.audit.reason)
     error.audit = started.audit
     throw error
   }
 
-  const toolId = options.toolId ?? 'build.test'
+  const toolId = options.toolId ?? 'verification.run'
   let result
   try {
     result = await registry.execute(toolId, {}, {
       root: loaded.root,
       task: started.record,
+      sourceBinding,
       approval: { network: false, write: false }
     })
   } catch (error) {
@@ -37,11 +65,19 @@ export async function verifyTask(inputPath, taskId, options = {}) {
       toolId,
       outcome: permissionDenied ? 'blocked' : 'failed',
       confirmed: false,
+      sourceBinding,
       error: {
         code: error?.code ?? null,
         message: error instanceof Error ? error.message : String(error)
       }
     }, options.evidence)
+    const run = await recordRun(loaded.root, taskId, {
+      confirmed: false,
+      sourceBinding,
+      evidenceId: evidence.record.id,
+      failure: evidence.record.error,
+      recordedAt: evidence.record.recordedAt
+    })
     const finished = await advanceTask(loaded.root, taskId, permissionDenied ? 'PERMISSION_DENIED' : 'VERIFY_FAILED', {
       actor: 'bth.verify',
       reason: permissionDenied ? 'Permission gate blocked tool execution.' : 'Tool execution failed before a confirmed result.',
@@ -50,7 +86,7 @@ export async function verifyTask(inputPath, taskId, options = {}) {
     if (!finished.applied) {
       throw new Error('Tool failure could not update task state: ' + finished.audit.reason)
     }
-    return { root: loaded.root, confirmed: false, task: finished.record, evidence }
+    return { root: loaded.root, confirmed: false, task: finished.record, evidence, run }
   }
 
   const confirmed = verificationOutcome(result)
@@ -59,15 +95,23 @@ export async function verifyTask(inputPath, taskId, options = {}) {
     toolId,
     outcome: confirmed ? 'confirmed' : 'failed',
     confirmed,
-    result
+    sourceBinding,
+    result: stripOutputTails(result)
   }, options.evidence)
+  const run = await recordRun(loaded.root, taskId, {
+    confirmed,
+    sourceBinding,
+    evidenceId: evidence.record.id,
+    result,
+    recordedAt: evidence.record.recordedAt
+  })
   const finished = await advanceTask(loaded.root, taskId, confirmed ? 'VERIFIED' : 'VERIFY_FAILED', {
     actor: 'bth.verify',
-    reason: confirmed ? 'Build wrapper returned a verified success.' : 'Build wrapper did not return a verified success.',
+    reason: confirmed ? 'Required gates and structured tests passed.' : 'Required gates or structured tests did not pass.',
     evidence: { id: evidence.record.id, confirmed }
   })
   if (!finished.applied) {
     throw new Error('Verification result could not update task state: ' + finished.audit.reason)
   }
-  return { root: loaded.root, confirmed, task: finished.record, evidence }
+  return { root: loaded.root, confirmed, task: finished.record, evidence, run, execution: result }
 }
