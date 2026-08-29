@@ -34,6 +34,10 @@ test('task state is recovered by replaying the shared event log', async () => {
   assert.equal(loaded.record.state, 'PLAN_PROPOSED')
   assert.equal(loaded.record.revision, 2)
   assert.equal(loaded.events.length, 3)
+  assert.match(
+    await readFile(join(root, '.backend-harness/tasks/ORDER-17/task.md'), 'utf8'),
+    /Current state: `PLAN_PROPOSED`/
+  )
 })
 
 test('path-hostile task ids are rejected before writing', async () => {

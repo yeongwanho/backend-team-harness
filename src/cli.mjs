@@ -9,9 +9,10 @@ import {
   updateTaskContext,
   updateTaskPlan
 } from './core/task-store.mjs'
-import { verifyTask } from './runtime/backend-harness.mjs'
+import { captureSourceBinding } from './core/source-binding.mjs'
+import { checkProject, verifyTask } from './runtime/backend-harness.mjs'
 
-const VERSION = '0.2.0'
+const VERSION = '0.3.0'
 
 function printHelp() {
   console.log([
@@ -20,6 +21,7 @@ function printHelp() {
     'Usage:',
     '  bth init [path] [--force] [--allow-unversioned]',
     '  bth doctor [path] [--json]',
+    '  bth check [path] [--json]',
     '  bth task create <id> [path] [--title <text>] [--context <text>] [--json]',
     '  bth task context <id> [path] --text <text> --by <actor> [--json]',
     '  bth task plan <id> [path] --text <text> --by <actor> [--json]',
@@ -30,8 +32,8 @@ function printHelp() {
     '',
     'Safety:',
     '  init never creates the project directory, rejects symlink paths, and backs up every --force overwrite.',
-    '  verify runs only the project Gradle/Maven wrapper, in offline mode, after an approved task state.',
-    '  build output is hashed, not copied into evidence.'
+    '  verify runs only project-contained executables declared in verification.json after an approved task state.',
+    '  VERIFIED requires fresh structured test reports with at least one executed test.'
   ].join('\n'))
 }
 
@@ -77,6 +79,15 @@ function printResult(value, json, fallback) {
     console.log(JSON.stringify(value, null, 2))
   } else {
     fallback()
+  }
+}
+
+function printFailureTail(result) {
+  const gate = result?.gates?.find((entry) => entry.outcome === 'failed')
+  const tail = gate?.process?.stderr?.tail || gate?.process?.stdout?.tail
+  if (tail?.trim()) {
+    console.log('Failure output (last 8 KiB):')
+    console.log(tail.trimEnd())
   }
 }
 
@@ -199,11 +210,15 @@ async function runTask(args) {
       throw new Error('Task transitions require --by <actor>.')
     }
     const [id, state, path = '.'] = parsed.positionals
-    const result = await advanceTask(path, id, state.toUpperCase(), {
+    const targetState = state.toUpperCase()
+    const transitionOptions = targetState === 'DONE'
+      ? { currentSourceFingerprint: (await captureSourceBinding(path)).fingerprint }
+      : {}
+    const result = await advanceTask(path, id, targetState, {
       actor,
       reason: parsed.options.get('--reason'),
       approved: parsed.flags.has('--approve')
-    })
+    }, transitionOptions)
     printResult(result, parsed.flags.has('--json'), () => {
       console.log(
         result.applied
@@ -229,6 +244,41 @@ async function runVerify(args) {
     console.log('Verification ' + (result.confirmed ? 'confirmed' : 'failed') + ' for task ' + id + '.')
     console.log('Task state: ' + result.task.state)
     console.log('Evidence: ' + result.evidence.path)
+    console.log('Shared run record: ' + result.run.path)
+    if (result.evidence.record.result?.tests) {
+      const tests = result.evidence.record.result.tests
+      console.log('Tests: ' + tests.tests + ', failures: ' + tests.failures + ', errors: ' + tests.errors + ', skipped: ' + tests.skipped)
+    }
+    if (result.evidence.record.error) {
+      console.log('Failure: ' + result.evidence.record.error.message)
+    }
+    if (!result.confirmed) {
+      printFailureTail(result.execution)
+    }
+  })
+  if (!result.confirmed) {
+    process.exitCode = 1
+  }
+}
+
+async function runCheck(args) {
+  const parsed = parseArguments(args, { booleans: ['--json'] })
+  assertPositionalCount(parsed.positionals, 0, 1, 'bth check [path] [--json]')
+  const result = await checkProject(parsed.positionals[0] ?? '.')
+  printResult(result, parsed.flags.has('--json'), () => {
+    console.log('Project verification ' + (result.confirmed ? 'passed.' : 'failed.'))
+    console.log('Source: ' + result.sourceBinding.fingerprint)
+    console.log('Local run record: ' + result.run.path)
+    if (result.result?.tests) {
+      const tests = result.result.tests
+      console.log('Tests: ' + tests.tests + ', failures: ' + tests.failures + ', errors: ' + tests.errors + ', skipped: ' + tests.skipped)
+    }
+    if (result.failure) {
+      console.log('Failure: ' + result.failure.message)
+    }
+    if (!result.confirmed) {
+      printFailureTail(result.result)
+    }
   })
   if (!result.confirmed) {
     process.exitCode = 1
@@ -251,6 +301,10 @@ async function run() {
   }
   if (command === 'doctor') {
     await runDoctor(args)
+    return
+  }
+  if (command === 'check') {
+    await runCheck(args)
     return
   }
   if (command === 'task') {

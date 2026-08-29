@@ -7,7 +7,6 @@ const SAFE_ENVIRONMENT_KEYS = [
   'LANG',
   'LC_ALL',
   'M2_HOME',
-  'MAVEN_OPTS',
   'PATH',
   'SystemRoot',
   'TMPDIR',
@@ -16,7 +15,7 @@ const SAFE_ENVIRONMENT_KEYS = [
 ]
 
 export function buildSafeEnvironment(source = process.env) {
-  const result = { CI: 'true', TERM: 'dumb' }
+  const result = { BTH_NODE: process.execPath, CI: 'true', TERM: 'dumb' }
   for (const key of SAFE_ENVIRONMENT_KEYS) {
     if (typeof source[key] === 'string') {
       result[key] = source[key]
@@ -33,6 +32,8 @@ export function runProcess({ program, args, cwd, timeoutMs = 10 * 60 * 1000, env
     const stderrHash = createHash('sha256')
     let stdoutBytes = 0
     let stderrBytes = 0
+    let stdoutTail = Buffer.alloc(0)
+    let stderrTail = Buffer.alloc(0)
     let timedOut = false
     let settled = false
     let forceKillTimeout = null
@@ -40,23 +41,41 @@ export function runProcess({ program, args, cwd, timeoutMs = 10 * 60 * 1000, env
     const child = spawn(program, args, {
       cwd,
       env: env ?? buildSafeEnvironment(),
+      detached: process.platform !== 'win32',
       shell: false,
       stdio: ['ignore', 'pipe', 'pipe']
     })
 
+    const killProcessTree = (signal) => {
+      if (process.platform !== 'win32' && child.pid) {
+        try {
+          process.kill(-child.pid, signal)
+          return
+        } catch (error) {
+          if (error?.code !== 'ESRCH') {
+            child.kill(signal)
+          }
+          return
+        }
+      }
+      child.kill(signal)
+    }
+
     child.stdout.on('data', (chunk) => {
       stdoutHash.update(chunk)
       stdoutBytes += chunk.length
+      stdoutTail = Buffer.concat([stdoutTail, chunk]).subarray(-8192)
     })
     child.stderr.on('data', (chunk) => {
       stderrHash.update(chunk)
       stderrBytes += chunk.length
+      stderrTail = Buffer.concat([stderrTail, chunk]).subarray(-8192)
     })
 
     const timeout = setTimeout(() => {
       timedOut = true
-      child.kill('SIGTERM')
-      forceKillTimeout = setTimeout(() => child.kill('SIGKILL'), 2000)
+      killProcessTree('SIGTERM')
+      forceKillTimeout = setTimeout(() => killProcessTree('SIGKILL'), 2000)
     }, timeoutMs)
 
     child.once('error', (error) => {
@@ -82,8 +101,8 @@ export function runProcess({ program, args, cwd, timeoutMs = 10 * 60 * 1000, env
         startedAt: startedAt.toISOString(),
         finishedAt: finishedAt.toISOString(),
         durationMs: Date.now() - startedMonotonic,
-        stdout: { sha256: stdoutHash.digest('hex'), bytes: stdoutBytes },
-        stderr: { sha256: stderrHash.digest('hex'), bytes: stderrBytes }
+        stdout: { sha256: stdoutHash.digest('hex'), bytes: stdoutBytes, tail: stdoutTail.toString('utf8') },
+        stderr: { sha256: stderrHash.digest('hex'), bytes: stderrBytes, tail: stderrTail.toString('utf8') }
       })
     })
   })

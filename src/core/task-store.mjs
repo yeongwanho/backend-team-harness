@@ -304,7 +304,15 @@ export async function advanceTask(inputPath, taskId, to, input = {}, options = {
       transitionInput = { ...input, evidence: { id: evidence.id, confirmed: true } }
     }
     if (loaded.record.state === 'VERIFIED' && to === 'DONE' && loaded.record.lastEvidenceId) {
-      await loadConfirmedEvidence(paths.taskDir, paths.id, loaded.record.lastEvidenceId)
+      const evidence = await loadConfirmedEvidence(paths.taskDir, paths.id, loaded.record.lastEvidenceId)
+      if (evidence.sourceBinding?.fingerprint) {
+        if (!options.currentSourceFingerprint) {
+          throw new Error('Current Git source binding is required before completing a verified task.')
+        }
+        if (options.currentSourceFingerprint !== evidence.sourceBinding.fingerprint) {
+          throw new Error('Source changed after verification. Run `bth verify` again before completing the task.')
+        }
+      }
     }
     const transition = transitionTaskRecord(loaded.record, to, transitionInput)
     if (!transition.applied) {
@@ -323,6 +331,7 @@ export async function advanceTask(inputPath, taskId, to, input = {}, options = {
     await assertNoSymlinkSegments(paths.taskDir, eventPath)
     await appendEvent(eventPath, event)
     await atomicJsonWrite(resolve(paths.taskDir, 'task.json'), transition.record)
+    await atomicTextWrite(resolve(paths.taskDir, 'task.md'), taskMarkdown(transition.record))
     return { root: paths.root, ...transition, event }
   } finally {
     await release()

@@ -1,13 +1,14 @@
 {
   "name": "backend-team-harness",
-  "version": "0.2.0",
-  "description": "An evidence-driven backend workflow harness with resumable tasks and guarded verification.",
+  "version": "0.3.0",
+  "description": "A source-bound backend verification harness with structured test results and reproducible run records.",
   "type": "module",
   "bin": {
     "bth": "./src/cli.mjs"
   },
   "scripts": {
     "test": "node --test",
+    "test:real-jvm": "BTH_REAL_JVM_E2E=1 node --test test/jvm-real-e2e.test.mjs",
     "check": "node scripts/check-syntax.mjs && node --test",
     "example:init": "node src/cli.mjs init examples/spring-service",
     "example:doctor": "node src/cli.mjs doctor examples/spring-service"

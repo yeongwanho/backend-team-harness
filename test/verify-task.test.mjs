@@ -7,16 +7,13 @@ import { initProject } from '../src/init-project.mjs'
 import { advanceTask, createTask, loadTask } from '../src/core/task-store.mjs'
 import { verifyTask } from '../src/runtime/backend-harness.mjs'
 import { verifyTask as verifyCoreTask } from '../src/core/verify-task.mjs'
+import { captureSourceBinding } from '../src/core/source-binding.mjs'
+import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
 
 async function approvedProject(prefix, exitCode) {
   const root = await mkdtemp(join(tmpdir(), prefix))
-  await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
-  await writeFile(
-    join(root, 'gradlew'),
-    '#!/bin/sh\nprintf "synthetic output that must not be copied"\nprintf "synthetic error" >&2\nexit ' + exitCode + '\n',
-    'utf8'
-  )
-  await chmod(join(root, 'gradlew'), 0o755)
+  await writeGradleFixture(root, { exitCode })
+  initializeGit(root)
   await initProject(root)
   await createTask(root, {
     id: 'VERIFY-1',
@@ -42,19 +39,26 @@ test('guarded build verification records command, exit code, and output hashes',
     }
   })
   const persisted = JSON.parse(await readFile(join(root, result.evidence.path), 'utf8'))
+  const sharedRun = JSON.parse(await readFile(join(root, result.run.path), 'utf8'))
 
   assert.equal(result.confirmed, true)
   assert.equal(result.task.state, 'VERIFIED')
-  assert.deepEqual(persisted.result.command, [
+  assert.deepEqual(persisted.result.gates[0].command, [
     './gradlew',
     'test',
     '--offline',
     '--no-daemon',
-    '--console=plain'
+    '--console=plain',
+    '--rerun-tasks'
   ])
-  assert.equal(persisted.result.exitCode, 0)
-  assert.match(persisted.result.stdout.sha256, /^[a-f0-9]{64}$/)
+  assert.equal(persisted.result.gates[0].process.exitCode, 0)
+  assert.match(persisted.result.gates[0].process.stdout.sha256, /^[a-f0-9]{64}$/)
+  assert.equal(persisted.result.tests.tests, 1)
+  assert.match(persisted.sourceBinding.fingerprint, /^[a-f0-9]{64}$/)
+  assert.equal(result.run.record.verdict, 'passed')
   assert.equal(JSON.stringify(persisted).includes('synthetic output that must not be copied'), false)
+  assert.equal(JSON.stringify(sharedRun).includes('synthetic output that must not be copied'), false)
+  assert.match(result.execution.gates[0].process.stdout.tail, /synthetic output/)
 })
 
 test('a non-zero build exit becomes VERIFY_FAILED, never VERIFIED', async () => {
@@ -75,7 +79,7 @@ test('a non-zero build exit becomes VERIFY_FAILED, never VERIFIED', async () => 
 
 test('verification cannot run before human plan approval', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-verify-unapproved-'))
-  await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
+  await writeGradleFixture(root)
   await initProject(root)
   await createTask(root, { id: 'UNAPPROVED-1' })
 
@@ -133,6 +137,8 @@ test('a symlinked build wrapper is rejected before the external script runs', as
   await writeFile(externalWrapper, '#!/bin/sh\nprintf executed > "' + marker + '"\n', 'utf8')
   await chmod(externalWrapper, 0o755)
   await symlink(externalWrapper, join(root, 'gradlew'))
+  await writeFile(join(root, '.gitignore'), 'build/\n', 'utf8')
+  initializeGit(root)
   await initProject(root)
   await createTask(root, {
     id: 'SYMLINK-1',
@@ -154,4 +160,33 @@ test('a symlinked build wrapper is rejected before the external script runs', as
   assert.equal(result.task.state, 'VERIFY_FAILED')
   assert.match(result.evidence.record.error.message, /symbolic link/)
   await assert.rejects(readFile(marker, 'utf8'), (error) => error.code === 'ENOENT')
+})
+
+test('a zero-test report is a failed verification even when the wrapper exits zero', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-verify-zero-tests-'))
+  await writeGradleFixture(root, { tests: 0 })
+  initializeGit(root)
+  await initProject(root)
+  await createTask(root, { id: 'ZERO-1', context: 'Check zero tests', plan: 'Run verification.' })
+  await advanceTask(root, 'ZERO-1', 'CONTEXT_READY', { actor: 'developer' })
+  await advanceTask(root, 'ZERO-1', 'PLAN_PROPOSED', { actor: 'developer' })
+  await advanceTask(root, 'ZERO-1', 'PLAN_APPROVED', { actor: 'reviewer', approved: true })
+
+  const result = await verifyTask(root, 'ZERO-1')
+
+  assert.equal(result.confirmed, false)
+  assert.equal(result.task.state, 'VERIFY_FAILED')
+  assert.equal(result.evidence.record.result.gates[0].reason, 'minimum_tests_not_met')
+})
+
+test('DONE is blocked when source changes after a successful verification', async () => {
+  const root = await approvedProject('bth-verify-source-stale-', 0)
+  await verifyTask(root, 'VERIFY-1')
+  await writeFile(join(root, 'build.gradle.kts'), 'plugins { java-library }\n', 'utf8')
+  const current = await captureSourceBinding(root)
+
+  await assert.rejects(
+    advanceTask(root, 'VERIFY-1', 'DONE', { actor: 'developer' }, { currentSourceFingerprint: current.fingerprint }),
+    /Source changed after verification/
+  )
 })

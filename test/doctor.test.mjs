@@ -36,7 +36,7 @@ test('doctor blocks a repository without a build definition or shared contract',
   assert.equal(result.healthy, false)
   assert.deepEqual(
     result.checks.filter((entry) => entry.status === 'fail').map((entry) => entry.id),
-    ['build-file', 'shared-contract', 'quality-gate-schema']
+    ['build-file', 'shared-contract', 'quality-gate-schema', 'verification-config']
   )
 })
 
@@ -87,4 +87,24 @@ test('duplicate Flyway versions fail with the conflicting paths', async () => {
 
   assert.equal(flyway.status, 'fail')
   assert.equal(flyway.details.duplicates.length, 1)
+})
+
+test('doctor rejects a verification config that could pass without tests', async () => {
+  const root = await preparedProject('bth-doctor-verification-')
+  await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify({
+    schemaVersion: 1,
+    gates: [{
+      id: 'compile',
+      required: true,
+      command: ['./gradlew'],
+      result: { type: 'exit-code' }
+    }]
+  }) + '\n', 'utf8')
+
+  const result = await doctorProject(root)
+  const verification = result.checks.find((entry) => entry.id === 'verification-config')
+
+  assert.equal(result.healthy, false)
+  assert.equal(verification.status, 'fail')
+  assert.match(verification.details.diagnostics[0], /required junit gate/)
 })

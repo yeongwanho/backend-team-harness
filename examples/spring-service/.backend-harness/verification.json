@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "gates": [
+    {
+      "id": "tests",
+      "required": true,
+      "command": [
+        "./gradlew",
+        "test",
+        "--offline",
+        "--no-daemon",
+        "--console=plain",
+        "--rerun-tasks"
+      ],
+      "timeoutMs": 600000,
+      "result": {
+        "type": "junit",
+        "reports": [
+          "build/test-results/**/*.xml"
+        ],
+        "minimumTests": 1
+      }
+    }
+  ]
+}
