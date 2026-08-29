@@ -26,6 +26,34 @@ test('plan approval requires an explicit actor and approval signal', () => {
   })
   assert.equal(approved.applied, true)
   assert.equal(approved.record.state, 'PLAN_APPROVED')
+  assert.match(approved.record.approvalReceipt.planSha256, /^[a-f0-9]{64}$/)
+  assert.equal(approved.record.approvalReceipt.actor, 'developer')
+})
+
+test('a source-bound plan cannot be approved after source drift', () => {
+  const plannedSourceFingerprint = 'a'.repeat(64)
+  const proposed = {
+    ...createTaskRecord({ id: 'TASK-SOURCE', context: 'Known', plan: 'Bound plan' }),
+    state: 'PLAN_PROPOSED',
+    revision: 2,
+    planSourceFingerprint: plannedSourceFingerprint
+  }
+
+  const stale = transitionTaskRecord(proposed, 'PLAN_APPROVED', {
+    actor: 'reviewer',
+    approved: true,
+    currentSourceFingerprint: 'b'.repeat(64)
+  })
+  assert.equal(stale.applied, false)
+  assert.equal(stale.audit.reason, 'approved_plan_source_stale')
+
+  const approved = transitionTaskRecord(proposed, 'PLAN_APPROVED', {
+    actor: 'reviewer',
+    approved: true,
+    currentSourceFingerprint: plannedSourceFingerprint
+  })
+  assert.equal(approved.applied, true)
+  assert.equal(approved.record.approvalReceipt.sourceFingerprint, plannedSourceFingerprint)
 })
 
 test('VERIFIED requires confirmed evidence and DONE retains its evidence reference', () => {

@@ -199,6 +199,49 @@ Baseline은 올리기만 하고 자동으로 낮추지 않습니다. 이후 테�
 
 매일 빠른 확인은 `bth check`만 사용합니다. 승인·인수인계가 필요한 변경은 task lifecycle을 사용합니다.
 
+요구사항이 아직 실행 가능한 계획이 아니라면 BTH의 내장 인터뷰로 시작할 수 있습니다. 이것은 Ouroboros·Gajae·OMO를 호출하는 래퍼가 아니라 BTH Core 안의 결정적 상태 기계입니다.
+
+```bash
+node src/cli.mjs interview start USER-17 /path/to/project \
+  --requirement "사용자 ID 조회 API에 안전한 not-found 응답을 추가한다" \
+  --by developer
+
+# 명령이 보여 주는 현재 질문 하나에 답합니다.
+node src/cli.mjs interview answer USER-17 /path/to/project \
+  --question acceptance \
+  --text "존재하면 200, 없으면 기존 오류 계약의 404를 반환한다" \
+  --by developer
+
+# scope → data → verification → constraints도 같은 방식으로 답합니다.
+node src/cli.mjs interview finalize USER-17 /path/to/project --by developer
+```
+
+인터뷰 시작 시 BTH는 Git 지문, 빌드 정의, 소스·테스트 수, Flyway, 팀 문서, `verification.json` Gate를 읽기 전용으로 수집합니다. 질문은 완료 조건·변경 범위·DB 영향·검증·제약의 다섯 가지이며, 한 번에 현재 질문 하나만 답할 수 있습니다. 확정되지 않은 답은 `--status unknown` 또는 `--status conflict`로 남길 수 있지만 해결 전에는 계획을 확정하지 못합니다.
+
+`finalize`는 다음 파일을 만듭니다.
+
+```text
+.backend-harness/tasks/USER-17/interview/
+├── events.jsonl              # hash-chain 감사 이력
+├── context-snapshot.json     # 결정적으로 관찰한 프로젝트 사실
+├── requirement.json
+├── context.json
+├── impact.json
+├── plan.json
+└── plan.md                   # 사람이 검토하는 실행계획
+```
+
+계획 확정 중 Git 소스가 바뀌면 실패합니다. 확정 후 task는 `PLAN_PROPOSED`가 되며 자동 승인되지 않습니다. 사람은 내용을 검토한 뒤 아래처럼 승인합니다. 승인할 때도 계획이 묶인 소스 지문을 다시 확인하고 context/plan 해시가 들어간 승인 영수증을 task 이력에 남깁니다.
+
+```bash
+node src/cli.mjs task advance USER-17 PLAN_APPROVED /path/to/project --by reviewer --approve
+node src/cli.mjs task advance USER-17 IMPLEMENTING /path/to/project --by developer
+# 사람 또는 연결된 코딩 에이전트가 승인된 plan.md 범위만 구현
+node src/cli.mjs verify USER-17 /path/to/project
+```
+
+BTH 자체가 모델을 내장하거나 임의로 코드를 수정하지는 않습니다. 그래서 어떤 코딩 에이전트나 사람과도 함께 쓸 수 있고, 계획·승인·검증 판정은 모델의 주장과 분리됩니다.
+
 ```text
 CONTEXT_MISSING → CONTEXT_READY → PLAN_PROPOSED → PLAN_APPROVED
                                                        ↓
@@ -217,6 +260,7 @@ CONTEXT_MISSING → CONTEXT_READY → PLAN_PROPOSED → PLAN_APPROVED
 .backend-harness/
 ├── verification.json
 ├── packs/
+├── tasks/<id>/interview/              # source-bound requirement/context/impact/plan
 ├── tasks/<id>/runs/latest.json
 ├── tasks/<id>/runs/history/*.json
 ├── tasks/<id>/evidence/              # local, Git ignored

@@ -15,18 +15,9 @@ import {
   resolveSafeProjectPath,
   statPath
 } from '../fs-safety.mjs'
-import { createTaskRecord, normalizeTaskText, transitionTaskRecord } from './task-state.mjs'
+import { assertTaskId, createTaskRecord, normalizeTaskText, transitionTaskRecord } from './task-state.mjs'
 import { canonicalJson } from './canonical-json.mjs'
 import { processIsAlive, withLockRecoveryGuard } from './lock-recovery.mjs'
-
-const TASK_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/
-
-export function assertTaskId(taskId) {
-  if (typeof taskId !== 'string' || !TASK_ID_PATTERN.test(taskId) || taskId === '.' || taskId === '..') {
-    throw new Error('Task id must use 1-64 letters, numbers, dots, underscores, or hyphens and cannot traverse paths.')
-  }
-  return taskId
-}
 
 async function harnessPaths(inputPath, taskId) {
   const root = await resolveReadableRoot(inputPath)
@@ -67,6 +58,8 @@ function taskMarkdown(record) {
     '- Task ID: `' + record.id + '`',
     '- Current state: `' + record.state + '`',
     '- Created: ' + record.createdAt,
+    '- Planned source: ' + (record.planSourceFingerprint ? '`' + record.planSourceFingerprint + '`' : '_not bound_'),
+    '- Approved: ' + (record.approvalReceipt ? record.approvalReceipt.at + ' by ' + record.approvalReceipt.actor : '_not approved_'),
     '',
     '## Context',
     '',
@@ -380,6 +373,10 @@ async function updateTaskField(inputPath, taskId, field, value, input = {}, opti
     throw new Error('Task ' + field + ' update requires an actor.')
   }
   const reason = normalizeTaskText(input.reason, 'reason', 2048)
+  const planSourceFingerprint = field === 'plan' ? (input.sourceFingerprint ?? null) : null
+  if (planSourceFingerprint !== null && !/^[a-f0-9]{64}$/.test(planSourceFingerprint)) {
+    throw new Error('Task plan source fingerprint must be a lowercase SHA-256 value.')
+  }
 
   const paths = await harnessPaths(inputPath, taskId)
   const release = await acquireLock(paths.lockPath, options)
@@ -399,7 +396,11 @@ async function updateTaskField(inputPath, taskId, field, value, input = {}, opti
       state: nextState,
       revision: loaded.record.revision + 1,
       updatedAt: at,
-      lastEvidenceId: approvalInvalidated ? null : loaded.record.lastEvidenceId
+      lastEvidenceId: approvalInvalidated ? null : loaded.record.lastEvidenceId,
+      planSourceFingerprint: field === 'plan'
+        ? planSourceFingerprint
+        : null,
+      approvalReceipt: approvalInvalidated ? null : (loaded.record.approvalReceipt ?? null)
     }
     const event = sealEvent({
       schemaVersion: 1,

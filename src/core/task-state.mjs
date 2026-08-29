@@ -1,3 +1,15 @@
+import { createHash } from 'node:crypto'
+import { canonicalJson } from './canonical-json.mjs'
+
+const TASK_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/
+
+export function assertTaskId(taskId) {
+  if (typeof taskId !== 'string' || !TASK_ID_PATTERN.test(taskId) || taskId === '.' || taskId === '..') {
+    throw new Error('Task id must use 1-64 letters, numbers, dots, underscores, or hyphens and cannot traverse paths.')
+  }
+  return taskId
+}
+
 export const TASK_STATES = Object.freeze([
   'CONTEXT_MISSING',
   'CONTEXT_READY',
@@ -45,7 +57,7 @@ export function isTaskState(value) {
 export function createTaskRecord(input, options = {}) {
   const now = options.at ?? new Date().toISOString()
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: input.id,
     title: normalizeTaskText(input.title, 'title', 256) ?? input.id,
     context: normalizeTaskText(input.context, 'context', 256 * 1024),
@@ -54,7 +66,9 @@ export function createTaskRecord(input, options = {}) {
     revision: 0,
     createdAt: now,
     updatedAt: now,
-    lastEvidenceId: null
+    lastEvidenceId: null,
+    planSourceFingerprint: null,
+    approvalReceipt: null
   }
 }
 
@@ -95,6 +109,13 @@ export function transitionTaskRecord(record, to, input = {}) {
   if (to === 'PLAN_APPROVED' && input.approved !== true) {
     return rejected(record, to, 'explicit_human_approval_required')
   }
+  if (
+    to === 'PLAN_APPROVED' &&
+    record.planSourceFingerprint &&
+    input.currentSourceFingerprint !== record.planSourceFingerprint
+  ) {
+    return rejected(record, to, 'approved_plan_source_stale')
+  }
   if (to === 'VERIFIED' && (!input.evidence?.id || input.evidence.confirmed !== true)) {
     return rejected(record, to, 'confirmed_evidence_required')
   }
@@ -104,12 +125,22 @@ export function transitionTaskRecord(record, to, input = {}) {
 
   const at = input.at ?? new Date().toISOString()
   const evidenceId = input.evidence?.id ?? record.lastEvidenceId
+  const approvalReceipt = to === 'PLAN_APPROVED'
+    ? {
+        actor,
+        at,
+        sourceFingerprint: record.planSourceFingerprint ?? input.currentSourceFingerprint ?? null,
+        contextSha256: createHash('sha256').update(canonicalJson({ context: record.context })).digest('hex'),
+        planSha256: createHash('sha256').update(canonicalJson({ plan: record.plan })).digest('hex')
+      }
+    : record.approvalReceipt ?? null
   const next = {
     ...record,
     state: to,
     revision: record.revision + 1,
     updatedAt: at,
-    lastEvidenceId: evidenceId
+    lastEvidenceId: evidenceId,
+    approvalReceipt
   }
 
   return {
@@ -124,6 +155,7 @@ export function transitionTaskRecord(record, to, input = {}) {
       evidenceId: input.evidence?.id ?? null,
       evidenceConfirmed: input.evidence?.confirmed === true,
       approved: input.approved === true,
+      approvalReceipt: to === 'PLAN_APPROVED' ? approvalReceipt : null,
       at
     }
   }

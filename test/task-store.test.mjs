@@ -92,6 +92,7 @@ test('changing an approved plan invalidates approval and verified evidence', asy
   assert.equal(updated.record.state, 'CONTEXT_READY')
   assert.equal(updated.event.audit.approvalInvalidated, true)
   assert.equal(updated.record.lastEvidenceId, null)
+  assert.equal(updated.record.approvalReceipt, null)
 })
 
 test('changing a proposed plan requires the proposal step again', async () => {

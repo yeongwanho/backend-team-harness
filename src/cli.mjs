@@ -14,6 +14,12 @@ import { listPacks } from './packs/catalog.mjs'
 import { installPack } from './packs/install.mjs'
 import { updateTestBaseline } from './baseline.mjs'
 import { withProjectVerificationLock } from './core/project-lock.mjs'
+import {
+  answerInterview,
+  completeInterview,
+  interviewStatus,
+  startInterview
+} from './runtime/interview-orchestrator.mjs'
 
 const VERSION = '0.4.0'
 
@@ -33,14 +39,124 @@ function printHelp() {
     '  bth task plan <id> [path] --text <text> --by <actor> [--json]',
     '  bth task status <id> [path] [--json]',
     '  bth task advance <id> <state> [path] --by <actor> [--approve] [--reason <text>] [--json]',
+    '  bth interview start <id> [path] --requirement <text> --by <actor> [--title <text>] [--json]',
+    '  bth interview answer <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--json]',
+    '  bth interview status <id> [path] [--json]',
+    '  bth interview finalize <id> [path] --by <actor> [--json]',
     '  bth verify <id> [path] [--allow-network] [--json]',
     '  bth version',
     '',
     'Safety:',
     '  init never creates the project directory, rejects symlink paths, and backs up every --force overwrite.',
     '  verify runs only project-contained executables declared in verification.json after an approved task state.',
+    '  interview binds requirements, deterministic project facts, and a reviewable plan to one Git source fingerprint.',
     '  VERIFIED requires fresh structured test reports with at least one executed test.'
   ].join('\n'))
+}
+
+function printInterviewProgress(result) {
+  const progress = result.progress
+  console.log('Interview ' + result.record.taskId + ': ' + progress.status + ' (' + progress.answered + '/' + progress.total + ' resolved)')
+  if (progress.currentQuestion) {
+    console.log('')
+    console.log('[' + progress.currentQuestion.id + '] ' + progress.currentQuestion.title)
+    console.log(progress.currentQuestion.prompt)
+    console.log('Hint: ' + progress.currentQuestion.hint)
+  }
+  console.log('')
+  console.log('Next: ' + result.nextCommand)
+}
+
+async function runInterview(args) {
+  const [subcommand, ...rest] = args
+  if (!subcommand) {
+    throw new Error('Usage: bth interview <start|answer|status|finalize> ...')
+  }
+
+  if (subcommand === 'start') {
+    const parsed = parseArguments(rest, {
+      booleans: ['--json'],
+      values: ['--requirement', '--by', '--title']
+    })
+    assertPositionalCount(
+      parsed.positionals,
+      1,
+      2,
+      'bth interview start <id> [path] --requirement <text> --by <actor> [--title <text>] [--json]'
+    )
+    const requirement = parsed.options.get('--requirement')
+    const actor = parsed.options.get('--by')
+    if (!requirement || !actor) {
+      throw new Error('Interview start requires both --requirement and --by.')
+    }
+    const [id, path = '.'] = parsed.positionals
+    const result = await startInterview(path, {
+      taskId: id,
+      requirement,
+      actor,
+      title: parsed.options.get('--title')
+    })
+    printResult(result, parsed.flags.has('--json'), () => printInterviewProgress(result))
+    return
+  }
+
+  if (subcommand === 'answer') {
+    const parsed = parseArguments(rest, {
+      booleans: ['--json'],
+      values: ['--question', '--text', '--by', '--status']
+    })
+    assertPositionalCount(
+      parsed.positionals,
+      1,
+      2,
+      'bth interview answer <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--json]'
+    )
+    const questionId = parsed.options.get('--question')
+    const text = parsed.options.get('--text')
+    const actor = parsed.options.get('--by')
+    if (!questionId || !text || !actor) {
+      throw new Error('Interview answer requires --question, --text, and --by.')
+    }
+    const [id, path = '.'] = parsed.positionals
+    const result = await answerInterview(path, id, {
+      questionId,
+      text,
+      actor,
+      status: parsed.options.get('--status')
+    })
+    printResult(result, parsed.flags.has('--json'), () => printInterviewProgress(result))
+    return
+  }
+
+  if (subcommand === 'status') {
+    const parsed = parseArguments(rest, { booleans: ['--json'] })
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth interview status <id> [path] [--json]')
+    const [id, path = '.'] = parsed.positionals
+    const result = await interviewStatus(path, id)
+    printResult(result, parsed.flags.has('--json'), () => printInterviewProgress(result))
+    return
+  }
+
+  if (subcommand === 'finalize') {
+    const parsed = parseArguments(rest, { booleans: ['--json'], values: ['--by'] })
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth interview finalize <id> [path] --by <actor> [--json]')
+    const actor = parsed.options.get('--by')
+    if (!actor) {
+      throw new Error('Interview finalization requires --by <actor>.')
+    }
+    const [id, path = '.'] = parsed.positionals
+    const result = await completeInterview(path, id, { actor })
+    printResult(result, parsed.flags.has('--json'), () => {
+      console.log('Finalized source-bound execution plan for ' + id + '.')
+      console.log('Task state: ' + result.task.state)
+      console.log('Plan: ' + result.planPath)
+      console.log('Human approval is still required.')
+      console.log('Next: ' + result.nextCommand)
+    })
+    return
+  }
+
+  throw new Error('Unknown interview command: ' + subcommand)
 }
 
 function parseArguments(args, schema = {}) {
@@ -233,13 +349,17 @@ async function runTask(args) {
     const [id, state, path = '.'] = parsed.positionals
     const targetState = state.toUpperCase()
     const result = await withProjectVerificationLock(path, undefined, async () => {
+      const currentSourceFingerprint = ['PLAN_APPROVED', 'DONE'].includes(targetState)
+        ? (await captureConfiguredSourceBinding(path)).fingerprint
+        : undefined
       const transitionOptions = targetState === 'DONE'
-        ? { currentSourceFingerprint: (await captureConfiguredSourceBinding(path)).fingerprint }
+        ? { currentSourceFingerprint }
         : {}
       return advanceTask(path, id, targetState, {
         actor,
         reason: parsed.options.get('--reason'),
-        approved: parsed.flags.has('--approve')
+        approved: parsed.flags.has('--approve'),
+        currentSourceFingerprint
       }, transitionOptions)
     })
     printResult(result, parsed.flags.has('--json'), () => {
@@ -380,6 +500,10 @@ async function run() {
   }
   if (command === 'task') {
     await runTask(args)
+    return
+  }
+  if (command === 'interview') {
+    await runInterview(args)
     return
   }
   if (command === 'pack') {

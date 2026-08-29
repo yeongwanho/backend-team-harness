@@ -24,6 +24,53 @@ test('CLI help exposes the actual task and verification commands', () => {
   assert.match(result.stdout, /bth check/)
   assert.match(result.stdout, /bth pack install/)
   assert.match(result.stdout, /bth baseline update/)
+  assert.match(result.stdout, /bth interview start/)
+})
+
+test('CLI runs the native requirement interview through PLAN_PROPOSED', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-cli-interview-'))
+  await writeGradleFixture(root)
+  initializeGit(root)
+  assert.equal(runCli(['init', root]).status, 0)
+
+  const started = runCli([
+    'interview', 'start', 'CLI-INT-1', root,
+    '--requirement', 'Add a safe lookup.',
+    '--by', 'developer',
+    '--json'
+  ])
+  assert.equal(started.status, 0, started.stderr)
+  assert.equal(JSON.parse(started.stdout).progress.currentQuestion.id, 'acceptance')
+
+  const answers = [
+    ['acceptance', '200 for present and 404 for missing.'],
+    ['scope', 'Only users module and tests.'],
+    ['data', 'No database change.'],
+    ['verification', 'Unit and integration tests.'],
+    ['constraints', 'No API rename.']
+  ]
+  for (const [question, text] of answers) {
+    const answered = runCli([
+      'interview', 'answer', 'CLI-INT-1', root,
+      '--question', question,
+      '--text', text,
+      '--by', 'developer'
+    ])
+    assert.equal(answered.status, 0, answered.stderr || answered.stdout)
+  }
+
+  const finalized = runCli(['interview', 'finalize', 'CLI-INT-1', root, '--by', 'developer', '--json'])
+  assert.equal(finalized.status, 0, finalized.stderr || finalized.stdout)
+  assert.equal(JSON.parse(finalized.stdout).task.state, 'PLAN_PROPOSED')
+
+  await writeFile(join(root, 'source-drift.txt'), 'changed after planning\n', 'utf8')
+  const staleApproval = runCli([
+    'task', 'advance', 'CLI-INT-1', 'PLAN_APPROVED', root,
+    '--by', 'reviewer',
+    '--approve'
+  ])
+  assert.equal(staleApproval.status, 1)
+  assert.match(staleApproval.stdout, /approved_plan_source_stale/)
 })
 
 test('CLI check provides a one-command local verification loop', async () => {

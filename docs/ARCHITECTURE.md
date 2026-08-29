@@ -31,6 +31,27 @@ flowchart TB
 
 `bth check` uses the explicit `CHECKING` operation. It does not forge a persisted task. `bth verify` first requires an approved task and uses `VERIFYING`.
 
+## Native planning interview
+
+```mermaid
+flowchart LR
+  R[Initial requirement] --> C[Deterministic project context]
+  C --> Q[One current decision question]
+  Q -->|answered| Q
+  Q -->|all five resolved| B[Rebind current Git source]
+  B -->|same fingerprint| A[requirement/context/impact/plan artifacts]
+  B -->|drift| X[Reject and restart]
+  A --> P[PLAN_PROPOSED]
+  P --> H[Explicit human approval]
+  H -->|same planned source| I[PLAN_APPROVED]
+```
+
+The interview is native BTH behavior, not a runtime bridge to another harness or an LLM. Its question catalogue and transitions are versioned in `interview-state.mjs`. It records only explicit human decisions and deterministic repository observations; it does not claim semantic code impact that no tool or person established.
+
+Interview persistence is under the owning task. `events.jsonl` is append-only and hash-chained, the project-context snapshot and four JSON artifacts are SHA-256 bound, and path/symlink/size limits match the existing task safety model. `unknown` and `conflict` answers remain the current question and fail closed.
+
+Finalization is crash-recoverable across the interview and task stores: finalized artifacts are authoritative and a retry may finish materializing the unchanged task plan. The resulting task enters `PLAN_PROPOSED`, never `PLAN_APPROVED`. Approval checks the planned source fingerprint and records context/plan hashes plus actor and time. Any later context or plan update clears that receipt.
+
 ## Layers
 
 ### Generic Core
@@ -43,6 +64,7 @@ flowchart TB
 - `toolchain.mjs`: executable hashes, Java and wrapper metadata
 - `canonical-json.mjs`, `redaction.mjs`: stable hashes and shareable-record hygiene
 - task state/store, evidence store, and run-record store
+- native interview state/store and source-bound plan artifacts
 
 ### Configured adapter
 
@@ -105,6 +127,8 @@ Task state updates also retain narrower nonce-owned per-task locks for event-log
 Gate executables are trusted project code. A Gate declaring `network: true` is denied unless the caller explicitly supplies `--allow-network`. This is an approval latch, not an operating-system network sandbox. Credential variables remain absent from the child environment.
 
 BTH does not currently provide a source-writing tool. Pack installation, baseline update, init, and task persistence are explicit CLI mutations with collision checks/backups.
+
+The planning interview may prepare work for a person or any coding agent, but BTH does not grant that actor source-write authority. Implementation remains a separate, explicit step after human plan approval.
 
 ## DB boundary
 

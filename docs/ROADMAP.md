@@ -44,6 +44,16 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [ ] measure valid-finding rate for each optional static Pack
 - [x] document a flaky-test policy that never converts a failed attempt into PASS
 
+## 0.6 — Native source-bound planning
+
+- [x] one-question-at-a-time requirement interview with explicit unknown/conflict states
+- [x] deterministic Git/build/source/test/Flyway/policy/verification context snapshot
+- [x] hash-chained interview history and hash-bound requirement/context/impact/plan artifacts
+- [x] source-drift rejection before plan finalization and approval
+- [x] crash-recoverable handoff into `PLAN_PROPOSED` with explicit human approval retained
+- [x] approval receipt bound to context, plan, actor, time, and planned source
+- [ ] provider-neutral coding-agent adapter that consumes an approved plan without changing BTH verdict authority
+
 ## Later, only with measured demand
 
 - [ ] runtime coverage-to-test observation index
