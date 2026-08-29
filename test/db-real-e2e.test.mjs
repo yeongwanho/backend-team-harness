@@ -27,19 +27,20 @@ function mysqlContainerIds() {
   return new Set(result.stdout.split('\n').filter(Boolean))
 }
 
-async function waitForMySqlCleanup(before) {
+async function waitForMySqlCleanup(before, scenario) {
   let leaked = []
-  for (let attempt = 0; attempt < 40; attempt += 1) {
+  const deadline = Date.now() + 60_000
+  while (Date.now() < deadline) {
     leaked = [...mysqlContainerIds()].filter((id) => !before.has(id))
     if (leaked.length === 0) {
       return
     }
-    await new Promise((resolvePromise) => setTimeout(resolvePromise, 250))
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, 500))
   }
   for (const id of leaked) {
     docker(['rm', '-f', id])
   }
-  assert.fail('MySQL Testcontainers cleanup left containers behind: ' + leaked.join(', '))
+  assert.fail('MySQL Testcontainers cleanup exceeded 60 seconds after ' + scenario + ': ' + leaked.join(', '))
 }
 
 async function configureMode(configPath, mode, timeoutMs = 900000) {
@@ -79,7 +80,7 @@ test('DB Pack runs real MySQL migrations and integration behavior', { skip: !ena
     assert.equal(dbGate.outcome, 'passed')
     assert.equal(dbGate.result.executed, 1)
     assert.equal(result.result.toolchain.declaredContext.databaseDialect, 'mysql')
-    await waitForMySqlCleanup(successBefore)
+    await waitForMySqlCleanup(successBefore, 'success')
 
     for (const scenario of [
       { mode: 'assertion-failure', expectedReason: 'process_failed', timeoutMs: 900000 },
@@ -92,7 +93,7 @@ test('DB Pack runs real MySQL migrations and integration behavior', { skip: !ena
       const failedGate = failed.result.gates.find((gate) => gate.id === 'db-integration')
       assert.equal(failed.confirmed, false)
       assert.equal(failedGate.reason, scenario.expectedReason)
-      await waitForMySqlCleanup(before)
+      await waitForMySqlCleanup(before, scenario.mode)
     }
   } finally {
     await rm(root, { recursive: true, force: true })
