@@ -47,6 +47,20 @@ test('path-hostile task ids are rejected before writing', async () => {
   await assert.rejects(createTask(root, { id: '/absolute' }), /cannot traverse paths/)
 })
 
+test('task text is bounded before it can inflate the event log', async () => {
+  const root = await initializedProject('bth-task-bounds-')
+
+  await assert.rejects(
+    createTask(root, { id: 'HUGE-TITLE', title: 'x'.repeat(257) }),
+    /title exceeds the 256-byte safety limit/
+  )
+  await createTask(root, { id: 'BOUNDED-1', context: 'Known requirement' })
+  await assert.rejects(
+    advanceTask(root, 'BOUNDED-1', 'CONTEXT_READY', { actor: 'a'.repeat(129) }),
+    /actor exceeds the 128-byte safety limit/
+  )
+})
+
 test('concurrent identical advances apply exactly once', async () => {
   const root = await initializedProject('bth-task-lock-')
   await createTask(root, { id: 'CONCURRENT-1', context: 'Known requirement' })
@@ -123,4 +137,50 @@ test('a dead stale process lock is recovered before advancing', async () => {
 
   assert.equal(result.applied, true)
   assert.equal(result.record.state, 'CONTEXT_READY')
+})
+
+test('concurrent stale task-lock recovery preserves a single event sequence', async () => {
+  const root = await initializedProject('bth-task-stale-race-')
+  await createTask(root, { id: 'STALE-RACE-1', context: 'Known requirement' })
+  const lockDir = join(root, '.backend-harness/local/locks')
+  await mkdir(lockDir, { recursive: true })
+  await writeFile(
+    join(lockDir, 'task-STALE-RACE-1.lock'),
+    JSON.stringify({ pid: 999_999_999, acquiredAt: '2000-01-01T00:00:00.000Z' }) + '\n',
+    'utf8'
+  )
+
+  const results = await Promise.all([
+    advanceTask(root, 'STALE-RACE-1', 'CONTEXT_READY', { actor: 'developer-a' }, { staleMs: 0 }),
+    advanceTask(root, 'STALE-RACE-1', 'CONTEXT_READY', { actor: 'developer-b' }, { staleMs: 0 })
+  ])
+  const loaded = await loadTask(root, 'STALE-RACE-1')
+
+  assert.equal(results.filter((result) => result.applied).length, 1)
+  assert.equal(loaded.record.revision, 1)
+  assert.equal(loaded.events.length, 2)
+})
+
+test('a dead task recovery guard cannot permanently block later task work', async () => {
+  const root = await initializedProject('bth-task-orphan-guard-')
+  await createTask(root, { id: 'ORPHAN-1', context: 'Known requirement' })
+  const lockPath = join(root, '.backend-harness/local/locks/task-ORPHAN-1.lock')
+  await mkdir(join(root, '.backend-harness/local/locks'), { recursive: true })
+  const deadOwner = {
+    pid: 999_999_999,
+    nonce: 'dead-owner',
+    acquiredAt: new Date().toISOString()
+  }
+  await writeFile(lockPath, JSON.stringify(deadOwner) + '\n', 'utf8')
+  await writeFile(lockPath + '.recovering', JSON.stringify({ ...deadOwner, nonce: 'dead-recovery' }) + '\n', 'utf8')
+
+  const result = await advanceTask(
+    root,
+    'ORPHAN-1',
+    'CONTEXT_READY',
+    { actor: 'developer' },
+    { staleMs: 60 * 60 * 1000, timeoutMs: 100 }
+  )
+
+  assert.equal(result.applied, true)
 })

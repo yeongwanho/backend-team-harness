@@ -18,7 +18,8 @@ async function collect(directory) {
   return files
 }
 
-for (const file of [...await collect(resolve('src')), ...await collect(resolve('test'))].sort()) {
+const roots = ['src', 'test', 'test-support', 'packs']
+for (const file of (await Promise.all(roots.map((root) => collect(resolve(root))))).flat().sort()) {
   const result = spawnSync(process.execPath, ['--check', file], { stdio: 'inherit' })
   if (result.status !== 0) {
     process.exit(result.status ?? 1)

@@ -3,13 +3,17 @@ import { mkdir, rename, unlink, writeFile } from 'node:fs/promises'
 import { dirname, relative, resolve } from 'node:path'
 import { assertNoSymlinkSegments, resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { taskDirectory } from './task-store.mjs'
+import { canonicalJson } from './canonical-json.mjs'
+import { redactForShare } from './redaction.mjs'
 
 function compactGate(gate) {
   return {
     id: gate.id,
     required: gate.required,
+    network: gate.network ?? false,
     outcome: gate.outcome,
     reason: gate.reason ?? null,
+    evidenceTier: gate.evidenceTier ?? null,
     command: gate.command ?? null,
     process: gate.process ? {
       exitCode: gate.process.exitCode,
@@ -20,7 +24,10 @@ function compactGate(gate) {
       stderr: { sha256: gate.process.stderr.sha256, bytes: gate.process.stderr.bytes }
     } : null,
     result: gate.result ? {
+      type: gate.result.type,
+      evidenceTier: gate.result.evidenceTier,
       tests: gate.result.tests,
+      executed: gate.result.executed,
       failures: gate.result.failures,
       errors: gate.result.errors,
       skipped: gate.result.skipped,
@@ -28,6 +35,12 @@ function compactGate(gate) {
       reportFiles: gate.result.reportFiles,
       staleReportCount: gate.result.staleReportCount,
       failedTests: gate.result.failedTests,
+      counts: gate.result.counts,
+      blockingCount: gate.result.blockingCount,
+      metrics: gate.result.metrics,
+      tools: gate.result.tools,
+      reportDigests: gate.result.reportDigests,
+      findings: gate.result.findings,
       error: gate.result.error ?? null
     } : null
   }
@@ -44,32 +57,56 @@ async function atomicWrite(target, content) {
   }
 }
 
-function createRunRecord(taskId, input, rerun) {
+function createRunRecord(taskId, input, rerun, projectRoot) {
+  const rerunCommand = input.result?.gates?.some((gate) => gate.network)
+    ? [...rerun, '--allow-network']
+    : rerun
   const base = {
-    schemaVersion: 1,
+    schemaVersion: 2,
+    evidenceTier: 'EXECUTED',
     taskId,
     recordedAt: input.recordedAt ?? new Date().toISOString(),
     verdict: input.confirmed ? 'passed' : 'failed',
     source: input.sourceBinding,
     configuration: input.result?.configuration ?? null,
+    toolchain: input.result?.toolchain ?? null,
     verificationReason: input.result?.reason ?? null,
     sourceStable: input.result?.sourceStable ?? null,
     postSourceFingerprint: input.result?.postSourceFingerprint ?? null,
-    tests: input.result?.tests ?? { tests: 0, failures: 0, errors: 0, skipped: 0 },
+    tests: input.result?.tests ?? { tests: 0, executed: 0, failures: 0, errors: 0, skipped: 0 },
+    reported: input.result?.reported ?? [],
     gates: (input.result?.gates ?? []).map(compactGate),
     failure: input.failure ?? null,
     localEvidenceId: input.evidenceId,
-    rerun,
+    rerun: rerunCommand,
     runtime: {
       node: process.version,
       platform: process.platform,
       arch: process.arch
     }
   }
+  const redacted = redactForShare(base, { projectRoot })
+  const sealed = { ...redacted.value, redactionsApplied: redacted.redactionsApplied }
   return {
-    ...base,
-    recordSha256: createHash('sha256').update(JSON.stringify(base)).digest('hex')
+    ...sealed,
+    recordSha256: createHash('sha256').update(canonicalJson(sealed)).digest('hex')
   }
+}
+
+async function writeRunFiles(root, runsDir, record) {
+  const historyDir = resolve(runsDir, 'history')
+  await mkdir(historyDir, { recursive: true })
+  await assertNoSymlinkSegments(runsDir, historyDir)
+  const stamp = record.recordedAt.replace(/[:.]/g, '-').replace('T', '_').replace('Z', '')
+  const history = resolve(historyDir, stamp + '-' + record.recordSha256.slice(0, 12) + '-' + randomUUID().slice(0, 8) + '.json')
+  await writeFile(history, JSON.stringify(record, null, 2) + '\n', {
+    encoding: 'utf8',
+    flag: 'wx',
+    mode: 0o600
+  })
+  const target = resolve(runsDir, 'latest.json')
+  await atomicWrite(target, JSON.stringify(record, null, 2) + '\n')
+  return { path: relative(root, target), historyPath: relative(root, history) }
 }
 
 export async function recordRun(inputPath, taskId, input) {
@@ -79,10 +116,8 @@ export async function recordRun(inputPath, taskId, input) {
   await mkdir(runsDir, { recursive: true })
   await assertNoSymlinkSegments(paths.taskDir, runsDir)
 
-  const record = createRunRecord(paths.id, input, ['bth', 'verify', paths.id, '.'])
-  const target = resolve(runsDir, 'latest.json')
-  await atomicWrite(target, JSON.stringify(record, null, 2) + '\n')
-  return { record, path: relative(paths.root, target) }
+  const record = createRunRecord(paths.id, input, ['bth', 'verify', paths.id, '.'], paths.root)
+  return { record, ...await writeRunFiles(paths.root, runsDir, record) }
 }
 
 export async function recordProjectRun(inputPath, input) {
@@ -95,8 +130,6 @@ export async function recordProjectRun(inputPath, input) {
   const runsDir = await resolveSafeProjectPath(root, '.backend-harness/local/runs')
   await mkdir(runsDir, { recursive: true })
   await assertNoSymlinkSegments(harnessRoot, runsDir)
-  const record = createRunRecord(null, input, ['bth', 'check', '.'])
-  const target = resolve(runsDir, 'latest.json')
-  await atomicWrite(target, JSON.stringify(record, null, 2) + '\n')
-  return { record, path: relative(root, target) }
+  const record = createRunRecord(null, input, ['bth', 'check', '.'], root)
+  return { record, ...await writeRunFiles(root, runsDir, record) }
 }

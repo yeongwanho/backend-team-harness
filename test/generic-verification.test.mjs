@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { initProject } from '../src/init-project.mjs'
 import { advanceTask, createTask } from '../src/core/task-store.mjs'
-import { verifyTask } from '../src/runtime/backend-harness.mjs'
+import { checkProject, verifyTask } from '../src/runtime/backend-harness.mjs'
 import { initializeGit } from '../test-support/git-project.mjs'
 
 test('a non-Java backend can verify through a project-owned command without a new core adapter', async () => {
@@ -78,4 +78,33 @@ test('verification fails when a gate changes bound source during the run', async
   assert.equal(result.confirmed, false)
   assert.equal(result.task.state, 'VERIFY_FAILED')
   assert.equal(result.evidence.record.result.reason, 'source_changed_during_run')
+})
+
+test('a network-declared gate requires explicit approval', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-network-gate-'))
+  await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
+  await writeFile(join(root, '.gitignore'), 'reports/\n', 'utf8')
+  await writeFile(
+    join(root, 'verify-network'),
+    '#!/bin/sh\nmkdir -p reports\nprintf \'%s\\n\' \'<testsuite tests="1"><testcase name="network-approved"/></testsuite>\' > reports/junit.xml\n',
+    'utf8'
+  )
+  await chmod(join(root, 'verify-network'), 0o755)
+  initializeGit(root)
+  await initProject(root)
+  await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify({
+    schemaVersion: 1,
+    gates: [{
+      id: 'tests', required: true, network: true, command: ['./verify-network'],
+      result: { type: 'junit', reports: ['reports/junit.xml'], minimumTests: 1 }
+    }]
+  }, null, 2) + '\n', 'utf8')
+
+  const denied = await checkProject(root)
+  assert.equal(denied.confirmed, false)
+  assert.equal(denied.failure.code, 'network_approval_required')
+
+  const allowed = await checkProject(root, { allowNetwork: true })
+  assert.equal(allowed.confirmed, true)
+  assert.deepEqual(allowed.run.record.rerun, ['bth', 'check', '.', '--allow-network'])
 })

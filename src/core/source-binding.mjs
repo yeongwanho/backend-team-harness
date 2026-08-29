@@ -4,6 +4,7 @@ import { createReadStream } from 'node:fs'
 import { lstat, readlink, realpath } from 'node:fs/promises'
 import { isAbsolute, relative, resolve, sep } from 'node:path'
 import { buildSafeEnvironment } from './process-runner.mjs'
+import { canonicalJson } from './canonical-json.mjs'
 
 const RUNTIME_EXCLUDES = [
   ':(exclude).backend-harness/tasks/**',
@@ -88,7 +89,29 @@ async function hashFileEntry(gitRoot, path) {
   }
 }
 
-export async function captureSourceBinding(inputPath) {
+async function hashDeclaredInput(gitRoot, projectRoot, path, options = {}) {
+  const target = resolve(projectRoot, path)
+  ensureInside(projectRoot, target)
+  const projectRelative = relative(projectRoot, target).split(sep).join('/')
+  let current = projectRoot
+  for (const segment of projectRelative.split('/').filter(Boolean)) {
+    current = resolve(current, segment)
+    const metadata = await lstat(current)
+    if (metadata.isSymbolicLink()) {
+      if (options.allowSymlink !== true) {
+        throw new Error('Declared verification input cannot use a symbolic link: ' + path)
+      }
+      return {
+        pathSha256: sha256(relative(gitRoot, target).split(sep).join('/')),
+        kind: 'symlink',
+        contentSha256: sha256(await readlink(current))
+      }
+    }
+  }
+  return hashFileEntry(gitRoot, relative(gitRoot, target))
+}
+
+export async function captureSourceBinding(inputPath, options = {}) {
   const gitRoot = await realpath((await runGit(inputPath, ['rev-parse', '--show-toplevel'])).toString('utf8').trim())
   const headCommit = (await runGit(inputPath, ['rev-parse', 'HEAD'])).toString('utf8').trim()
   if (!/^[a-f0-9]{40,64}$/i.test(headCommit)) {
@@ -115,6 +138,22 @@ export async function captureSourceBinding(inputPath) {
     untracked.push(await hashFileEntry(gitRoot, path))
   }
 
+  const explicitInputs = []
+  const explicitPaths = [...new Set(options.explicitPaths ?? [])].sort()
+  const allowSymlinkPaths = new Set(options.allowSymlinkPaths ?? [])
+  for (const path of explicitPaths) {
+    try {
+      explicitInputs.push(await hashDeclaredInput(gitRoot, resolvedInput, path, {
+        allowSymlink: allowSymlinkPaths.has(path)
+      }))
+    } catch (error) {
+      if (error?.code === 'ENOENT') {
+        throw new Error('Declared verification input is missing: ' + path)
+      }
+      throw error
+    }
+  }
+
   const input = {
     schemaVersion: 1,
     headCommit: headCommit.toLowerCase(),
@@ -123,10 +162,11 @@ export async function captureSourceBinding(inputPath) {
     changedEntryCount: status.toString('utf8').split('\0').filter(Boolean).length,
     statusSha256: sha256(status),
     trackedDiffSha256: sha256(trackedDiff),
-    untracked
+    untracked,
+    explicitInputs
   }
   return {
     ...input,
-    fingerprint: sha256(JSON.stringify(input))
+    fingerprint: sha256(canonicalJson(input))
   }
 }

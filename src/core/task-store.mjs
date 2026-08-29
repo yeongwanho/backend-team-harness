@@ -15,7 +15,9 @@ import {
   resolveSafeProjectPath,
   statPath
 } from '../fs-safety.mjs'
-import { createTaskRecord, transitionTaskRecord } from './task-state.mjs'
+import { createTaskRecord, normalizeTaskText, transitionTaskRecord } from './task-state.mjs'
+import { canonicalJson } from './canonical-json.mjs'
+import { processIsAlive, withLockRecoveryGuard } from './lock-recovery.mjs'
 
 const TASK_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/
 
@@ -54,7 +56,7 @@ function sealEvent(event, previousEventSha256) {
   const unsigned = { ...event, previousEventSha256 }
   return {
     ...unsigned,
-    eventSha256: createHash('sha256').update(JSON.stringify(unsigned)).digest('hex')
+    eventSha256: createHash('sha256').update(canonicalJson(unsigned)).digest('hex')
   }
 }
 
@@ -101,50 +103,60 @@ async function atomicTextWrite(target, value) {
   }
 }
 
+function serializeEvent(event) {
+  const serialized = JSON.stringify(event) + '\n'
+  if (Buffer.byteLength(serialized, 'utf8') > 1024 * 1024) {
+    throw new Error('Task event exceeds the 1 MiB safety limit.')
+  }
+  return serialized
+}
+
 async function appendEvent(eventPath, event) {
+  const serialized = serializeEvent(event)
   const handle = await open(eventPath, 'a')
   try {
-    await handle.writeFile(JSON.stringify(event) + '\n', 'utf8')
+    await handle.writeFile(serialized, 'utf8')
     await handle.sync()
   } finally {
     await handle.close()
   }
 }
 
-function processIsAlive(pid) {
-  if (!Number.isInteger(pid) || pid <= 0) {
-    return false
-  }
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch (error) {
-    return error?.code === 'EPERM'
-  }
-}
-
 async function recoverStaleLock(lockPath, staleMs) {
-  const stat = await statPath(lockPath)
-  if (!stat) {
-    return true
-  }
-  if (!stat.isFile() || stat.isSymbolicLink()) {
-    throw new Error('Task lock is not a regular file: ' + lockPath)
-  }
+  return withLockRecoveryGuard(lockPath, { malformedStaleMs: Math.min(staleMs, 5000) }, async () => {
+    const stat = await statPath(lockPath)
+    if (!stat) {
+      return true
+    }
+    if (!stat.isFile() || stat.isSymbolicLink()) {
+      throw new Error('Task lock is not a regular file: ' + lockPath)
+    }
 
-  let metadata = null
-  try {
-    metadata = JSON.parse(await readFile(lockPath, 'utf8'))
-  } catch {
-    // An interrupted write is recoverable only after the age threshold.
-  }
-  const acquiredAt = Date.parse(metadata?.acquiredAt ?? '')
-  const ageMs = Date.now() - (Number.isFinite(acquiredAt) ? acquiredAt : stat.mtimeMs)
-  if (ageMs >= staleMs && !processIsAlive(metadata?.pid)) {
-    await unlink(lockPath)
-    return true
-  }
-  return false
+    let metadata = null
+    try {
+      metadata = JSON.parse(await readFile(lockPath, 'utf8'))
+    } catch {
+      // An interrupted write is recoverable only after the age threshold.
+    }
+    const acquiredAt = Date.parse(metadata?.acquiredAt ?? '')
+    const ageMs = Date.now() - (Number.isFinite(acquiredAt) ? acquiredAt : stat.mtimeMs)
+    const deadOwner = Number.isInteger(metadata?.pid) && metadata.pid > 0 && !processIsAlive(metadata.pid)
+    const malformedAndStale = !Number.isInteger(metadata?.pid) && ageMs >= Math.min(staleMs, 5000)
+    if (deadOwner || malformedAndStale) {
+      let current = null
+      try {
+        current = JSON.parse(await readFile(lockPath, 'utf8'))
+      } catch {
+        // The malformed identity is represented by a null nonce.
+      }
+      if ((metadata?.nonce ?? null) !== (current?.nonce ?? null)) {
+        return false
+      }
+      await unlink(lockPath)
+      return true
+    }
+    return false
+  })
 }
 
 async function acquireLock(lockPath, options = {}) {
@@ -153,12 +165,13 @@ async function acquireLock(lockPath, options = {}) {
   const timeoutMs = options.timeoutMs ?? 3000
   const staleMs = options.staleMs ?? 30_000
   const started = Date.now()
+  const nonce = randomUUID()
 
   while (true) {
     try {
       const handle = await open(lockPath, 'wx', 0o600)
       try {
-        await handle.writeFile(JSON.stringify({ pid: process.pid, acquiredAt: new Date().toISOString() }) + '\n')
+        await handle.writeFile(JSON.stringify({ pid: process.pid, nonce, acquiredAt: new Date().toISOString() }) + '\n')
         await handle.sync()
       } catch (error) {
         await handle.close().catch(() => {})
@@ -167,6 +180,15 @@ async function acquireLock(lockPath, options = {}) {
       }
       return async () => {
         await handle.close()
+        let current = null
+        try {
+          current = JSON.parse(await readFile(lockPath, 'utf8'))
+        } catch {
+          // A missing or changed lock is an ownership failure.
+        }
+        if (current?.nonce !== nonce) {
+          throw new Error('Task lock ownership changed before release.')
+        }
         await unlink(lockPath).catch((error) => {
           if (error?.code !== 'ENOENT') {
             throw error
@@ -193,6 +215,9 @@ function parseEvents(text, taskId) {
   if (lines.length === 0) {
     throw new Error('Task event log is empty: ' + taskId)
   }
+  if (lines.length > 10_000) {
+    throw new Error('Task event log exceeds the 10000-event safety limit: ' + taskId)
+  }
 
   let previousHash = null
   return lines.map((line, index) => {
@@ -203,8 +228,9 @@ function parseEvents(text, taskId) {
       throw new Error('Task event log contains invalid JSON at line ' + (index + 1) + ': ' + taskId)
     }
     const { eventSha256, ...unsigned } = event
-    const expectedHash = createHash('sha256').update(JSON.stringify(unsigned)).digest('hex')
-    if (eventSha256 !== expectedHash || event.previousEventSha256 !== previousHash) {
+    const expectedHash = createHash('sha256').update(canonicalJson(unsigned)).digest('hex')
+    const legacyHash = createHash('sha256').update(JSON.stringify(unsigned)).digest('hex')
+    if (![expectedHash, legacyHash].includes(eventSha256) || event.previousEventSha256 !== previousHash) {
       throw new Error('Task event log hash chain is inconsistent at line ' + (index + 1) + ': ' + taskId)
     }
     if (event.seq !== index || event.record?.id !== taskId || event.record?.revision !== index) {
@@ -231,7 +257,9 @@ async function loadConfirmedEvidence(taskDir, taskId, evidenceId) {
     throw error
   }
   const { recordSha256, ...unsigned } = record
-  const expectedHash = createHash('sha256').update(JSON.stringify(unsigned)).digest('hex')
+  const expectedHash = record.schemaVersion >= 3
+    ? createHash('sha256').update(canonicalJson(unsigned)).digest('hex')
+    : createHash('sha256').update(JSON.stringify(unsigned)).digest('hex')
   if (
     recordSha256 !== expectedHash ||
     record.id !== evidenceId ||
@@ -248,6 +276,10 @@ async function loadFromTaskDirectory(taskDir, taskId) {
   await assertNoSymlinkSegments(dirname(taskDir), taskDir)
   const eventPath = resolve(taskDir, 'events.jsonl')
   await assertNoSymlinkSegments(taskDir, eventPath)
+  const metadata = await statPath(eventPath)
+  if (!metadata?.isFile() || metadata.isSymbolicLink() || metadata.size > 16 * 1024 * 1024) {
+    throw new Error('Task event log is missing, unsafe, or exceeds 16 MiB: ' + taskId)
+  }
   const events = parseEvents(await readFile(eventPath, 'utf8'), taskId)
   return { record: events.at(-1).record, events }
 }
@@ -271,7 +303,7 @@ export async function createTask(inputPath, input, options = {}) {
 
   try {
     const event = createdEvent(record)
-    await writeFile(resolve(staging, 'events.jsonl'), JSON.stringify(event) + '\n', { encoding: 'utf8', flag: 'wx' })
+    await writeFile(resolve(staging, 'events.jsonl'), serializeEvent(event), { encoding: 'utf8', flag: 'wx' })
     await writeFile(resolve(staging, 'task.json'), JSON.stringify(record, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' })
     await writeFile(resolve(staging, 'task.md'), taskMarkdown(record), { encoding: 'utf8', flag: 'wx' })
     await rename(staging, paths.taskDir)
@@ -339,13 +371,15 @@ export async function advanceTask(inputPath, taskId, to, input = {}, options = {
 }
 
 async function updateTaskField(inputPath, taskId, field, value, input = {}, options = {}) {
-  const normalized = typeof value === 'string' ? value.trim() : ''
+  const normalized = normalizeTaskText(value, field, 256 * 1024)
   if (!normalized) {
     throw new Error('Task ' + field + ' cannot be empty.')
   }
-  if (typeof input.actor !== 'string' || !input.actor.trim()) {
+  const actor = normalizeTaskText(input.actor, 'actor', 128)
+  if (!actor) {
     throw new Error('Task ' + field + ' update requires an actor.')
   }
+  const reason = normalizeTaskText(input.reason, 'reason', 2048)
 
   const paths = await harnessPaths(inputPath, taskId)
   const release = await acquireLock(paths.lockPath, options)
@@ -374,8 +408,8 @@ async function updateTaskField(inputPath, taskId, field, value, input = {}, opti
       at,
       audit: {
         type: field + '_updated',
-        actor: input.actor.trim(),
-        reason: typeof input.reason === 'string' && input.reason.trim() ? input.reason.trim() : null,
+        actor,
+        reason,
         approvalInvalidated,
         from: loaded.record.state,
         to: nextState,

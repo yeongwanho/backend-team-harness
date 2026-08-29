@@ -1,55 +1,65 @@
 # Roadmap
 
-A checkbox counts only when a real CLI path and acceptance test exist.
+A checkbox counts only when a real CLI path and an acceptance test exist. External adoption and cross-machine claims remain unchecked until measured; synthetic fixtures are not renamed as production proof.
 
-## 0.3 — Reproducible verification runner
+## 0.4 — Trustworthy evidence and Pack boundary
 
-- [x] Git commit, diff, and untracked-content source binding
-- [x] project-declared executable gate schema
-- [x] safe project-contained command resolution
-- [x] required-gate fail-fast execution
-- [x] Gradle `--rerun-tasks` default
-- [x] Maven `verify` plus Surefire/Failsafe defaults
-- [x] fresh JUnit report discovery and parsing
-- [x] zero-test, stale-report, timeout, signal, failure, and error rejection
-- [x] descendant cleanup on POSIX timeout
-- [x] one-command `bth check`
-- [x] local and task-scoped run records
-- [x] post-verification source staleness rejection before `DONE`
-- [x] non-Java real test-runner acceptance case
+- [x] strict XML parser with DTD/ENTITY rejection
+- [x] per-file report freshness with mixed fresh/stale fail-closed behavior
+- [x] executed-test count excludes skipped cases
+- [x] CDATA/malformed/all-skipped false-PASS regression tests
+- [x] project-wide cross-process verification lock
+- [x] explicit `CHECKING` operation instead of a forged task
+- [x] Git-ignored declared input binding
+- [x] Gate executable hashes and Java/Gradle/Maven metadata
+- [x] declared profile and database dialect in source-bound config
+- [x] canonical JSON hashes
+- [x] structured path/credential redaction
+- [x] append-only run history plus atomic latest record
+- [x] `EXECUTED` versus `REPORTED` result authority
+- [x] blocking Findings and non-gating Observation contracts
+- [x] explicit network declaration and CLI approval
+- [x] monotonically increasing executed-test baseline
+- [x] runnable Gradle/JUnit backend example
+- [x] isolated cold dependency-cache E2E using system Maven and a repository Gradle Wrapper
 
-## 0.4 — Adoption proof
+## 0.5 — Backend Packs
 
-- [ ] run against two independently maintained backend repositories
-- [ ] prove onboarding in 30 minutes or less
-- [x] add an opt-in actual Maven + JUnit acceptance fixture
-- [x] add an opt-in actual Gradle + JUnit acceptance fixture
-- [ ] record cross-machine verdict agreement without requiring identical timestamps or log hashes
+- [x] Gitleaks converter that discards secret-bearing fields
+- [x] production-dialect DB integration-test recipe/Gate
+- [x] executable architecture-test recipe/Gate
+- [x] executable API/message contract recipe/Gate
+- [x] conservative advisory Java/Kotlin import graph
+- [x] Flyway duplicate comparison matching trailing-zero `MigrationVersion` semantics
+- [x] prove DB teardown after success, assertion failure, process failure, and timeout against a disposable real PostgreSQL container
+- [ ] add a project-owned Atlas Findings recipe after its dialect/dev database lifecycle is specified
+- [ ] add Liquibase-specific adoption evidence when a real project needs it
+
+## Adoption proof still required
+
+- [ ] run against two independently maintained backend repositories without modifying their source
+- [ ] prove onboarding in 30 minutes or less with another developer
+- [ ] record cross-machine agreement for fingerprint, verdict, Gate outcomes, and test counts
 - [ ] compare direct local execution time with `bth check` overhead
-- [ ] document flaky-test and retry policy without converting a flaky failure into PASS
-
-## 0.5 — DB recipes
-
-- [ ] Testcontainers migration + integration-test recipe
-- [ ] Docker Compose migration + integration-test recipe
-- [ ] explicit teardown and orphan-resource acceptance test
-- [ ] optional managed PostgreSQL Pack only if real projects lack their own lifecycle
-- [ ] secret scan before exporting a task run record
+- [ ] measure valid-finding rate for each optional static Pack
+- [x] document a flaky-test policy that never converts a failed attempt into PASS
 
 ## Later, only with measured demand
 
-- [ ] observed coverage-to-test index
-- [ ] observed SQL/table relationship index
-- [ ] conservative changed-test recommendations with full-test fallback
-- [ ] CI adapter that reuses the same `verification.json`
+- [ ] runtime coverage-to-test observation index
+- [ ] runtime SQL/table observation index
+- [ ] richer compiler/bytecode graph sidecar with per-edge provenance
+- [ ] conservative test recommendations displayed as advisory only
+- [ ] CI adapter that reuses the exact `verification.json`
 - [ ] provider-neutral AI explanation of existing run records
 
-## Explicitly deferred
+## Explicitly out of the PASS oracle
 
-- guessed full Spring call graph
-- Neo4j or a graph service
-- LLM-generated PASS decisions
+- guessed Spring method calls
+- scalar “confidence” presented as truth
+- graph-based test skipping
+- LLM-generated completion decisions
 - automatic deployment or production DB access
-- CI replacement, multi-agent runtime, CRDT task store, or SaaS dashboard
+- multi-agent runtime, memory engine, CRDT store, or SaaS dashboard
 
-Model integration remains optional and last. A model may explain a run; it may not replace source binding, command execution, JUnit counts, or the verdict contract.
+Model integration remains optional and last. A model may explain a run; it may not replace source binding, command execution, fresh reports, or the verdict contract.

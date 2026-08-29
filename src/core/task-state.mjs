@@ -21,7 +21,7 @@ export const ALLOWED_TRANSITIONS = Object.freeze({
   PLAN_PROPOSED: ['PLAN_APPROVED', 'CONTEXT_READY', 'POLICY_BLOCKED'],
   PLAN_APPROVED: ['IMPLEMENTING', 'VERIFYING', 'CONTEXT_STALE', 'POLICY_BLOCKED'],
   IMPLEMENTING: ['VERIFYING', 'CONTEXT_STALE', 'POLICY_BLOCKED', 'PERMISSION_DENIED'],
-  VERIFYING: ['VERIFIED', 'VERIFY_FAILED', 'PERMISSION_DENIED'],
+  VERIFYING: ['VERIFYING', 'VERIFIED', 'VERIFY_FAILED', 'PERMISSION_DENIED'],
   VERIFIED: ['DONE'],
   VERIFY_FAILED: ['IMPLEMENTING', 'VERIFYING', 'CONTEXT_READY'],
   CONTEXT_STALE: ['CONTEXT_READY'],
@@ -30,8 +30,12 @@ export const ALLOWED_TRANSITIONS = Object.freeze({
   DONE: []
 })
 
-function cleanText(value) {
-  return typeof value === 'string' && value.trim() ? value.trim() : null
+export function normalizeTaskText(value, label, maxBytes) {
+  const normalized = typeof value === 'string' && value.trim() ? value.trim() : null
+  if (normalized && Buffer.byteLength(normalized, 'utf8') > maxBytes) {
+    throw new Error('Task ' + label + ' exceeds the ' + maxBytes + '-byte safety limit.')
+  }
+  return normalized
 }
 
 export function isTaskState(value) {
@@ -43,9 +47,9 @@ export function createTaskRecord(input, options = {}) {
   return {
     schemaVersion: 1,
     id: input.id,
-    title: cleanText(input.title) ?? input.id,
-    context: cleanText(input.context),
-    plan: cleanText(input.plan),
+    title: normalizeTaskText(input.title, 'title', 256) ?? input.id,
+    context: normalizeTaskText(input.context, 'context', 256 * 1024),
+    plan: normalizeTaskText(input.plan, 'plan', 256 * 1024),
     state: 'CONTEXT_MISSING',
     revision: 0,
     createdAt: now,
@@ -78,14 +82,14 @@ export function transitionTaskRecord(record, to, input = {}) {
     return rejected(record, to, 'transition_not_allowed')
   }
 
-  const actor = cleanText(input.actor)
+  const actor = normalizeTaskText(input.actor, 'actor', 128)
   if (!actor) {
     return rejected(record, to, 'actor_required')
   }
-  if (to === 'CONTEXT_READY' && !cleanText(record.context)) {
+  if (to === 'CONTEXT_READY' && !normalizeTaskText(record.context, 'context', 256 * 1024)) {
     return rejected(record, to, 'context_required')
   }
-  if (to === 'PLAN_PROPOSED' && !cleanText(record.plan)) {
+  if (to === 'PLAN_PROPOSED' && !normalizeTaskText(record.plan, 'plan', 256 * 1024)) {
     return rejected(record, to, 'plan_required')
   }
   if (to === 'PLAN_APPROVED' && input.approved !== true) {
@@ -116,7 +120,7 @@ export function transitionTaskRecord(record, to, input = {}) {
       from: record.state,
       to,
       actor,
-      reason: cleanText(input.reason),
+      reason: normalizeTaskText(input.reason, 'reason', 2048),
       evidenceId: input.evidence?.id ?? null,
       evidenceConfirmed: input.evidence?.confirmed === true,
       approved: input.approved === true,

@@ -4,9 +4,11 @@ import { isAbsolute, posix, relative } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 
 const GATE_ID = /^[a-z][a-z0-9-]{0,63}$/
-const CONFIG_KEYS = new Set(['schemaVersion', 'gates'])
-const GATE_KEYS = new Set(['id', 'required', 'command', 'timeoutMs', 'result'])
-const RESULT_KEYS = new Set(['type', 'reports', 'minimumTests'])
+const CONFIG_KEYS = new Set(['schemaVersion', 'context', 'gates'])
+const CONTEXT_KEYS = new Set(['profile', 'databaseDialect'])
+const GATE_KEYS = new Set(['id', 'required', 'network', 'command', 'inputs', 'timeoutMs', 'result'])
+const RESULT_KEYS = new Set(['type', 'reports', 'minimumTests', 'blockingSeverities'])
+const FINDING_SEVERITIES = new Set(['info', 'warning', 'error', 'low', 'medium', 'high', 'critical'])
 
 function assertPlainObject(value, label) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -51,15 +53,46 @@ function validateCommand(command, label) {
   return normalized
 }
 
+function validateInputs(inputs, label) {
+  if (inputs === undefined) {
+    return []
+  }
+  if (!Array.isArray(inputs) || inputs.length > 64) {
+    throw new Error(label + ' must contain at most 64 project-relative files.')
+  }
+  return [...new Set(inputs.map((entry, index) => normalizeProjectRelativePath(entry, label + '[' + index + ']')))]
+}
+
+function validateContext(context, label) {
+  if (context === undefined) {
+    return { profile: null, databaseDialect: null }
+  }
+  assertPlainObject(context, label)
+  assertOnlyKeys(context, CONTEXT_KEYS, label)
+  const normalized = {}
+  for (const key of CONTEXT_KEYS) {
+    const value = context[key]
+    if (value === undefined || value === null) {
+      normalized[key] = null
+      continue
+    }
+    if (typeof value !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(value)) {
+      throw new Error(label + '.' + key + ' must be a bounded identifier.')
+    }
+    normalized[key] = value
+  }
+  return normalized
+}
+
 function validateResult(result, label) {
   assertPlainObject(result, label)
   assertOnlyKeys(result, RESULT_KEYS, label)
-  if (result.type !== 'junit' && result.type !== 'exit-code') {
-    throw new Error(label + '.type must be junit or exit-code.')
+  if (!['junit', 'exit-code', 'findings', 'observation'].includes(result.type)) {
+    throw new Error(label + '.type must be junit, exit-code, findings, or observation.')
   }
   if (result.type === 'exit-code') {
-    if (result.reports !== undefined || result.minimumTests !== undefined) {
-      throw new Error(label + ' cannot define reports or minimumTests for exit-code results.')
+    if (result.reports !== undefined || result.minimumTests !== undefined || result.blockingSeverities !== undefined) {
+      throw new Error(label + ' cannot define reports, minimumTests, or blockingSeverities for exit-code results.')
     }
     return { type: 'exit-code' }
   }
@@ -69,11 +102,24 @@ function validateResult(result, label) {
   const reports = result.reports.map((pattern, index) =>
     normalizeProjectRelativePath(pattern, label + '.reports[' + index + ']')
   )
-  const minimumTests = result.minimumTests ?? 1
-  if (!Number.isSafeInteger(minimumTests) || minimumTests < 1 || minimumTests > 1_000_000) {
-    throw new Error(label + '.minimumTests must be an integer between 1 and 1000000.')
+  if (result.type === 'junit') {
+    if (result.blockingSeverities !== undefined) {
+      throw new Error(label + ' cannot define blockingSeverities for junit results.')
+    }
+    const minimumTests = result.minimumTests ?? 1
+    if (!Number.isSafeInteger(minimumTests) || minimumTests < 1 || minimumTests > 1_000_000) {
+      throw new Error(label + '.minimumTests must be an integer between 1 and 1000000.')
+    }
+    return { type: 'junit', reports, minimumTests }
   }
-  return { type: 'junit', reports, minimumTests }
+  if (result.minimumTests !== undefined) {
+    throw new Error(label + ' cannot define minimumTests for ' + result.type + ' results.')
+  }
+  const blockingSeverities = result.type === 'observation' ? [] : (result.blockingSeverities ?? ['error', 'high', 'critical'])
+  if (!Array.isArray(blockingSeverities) || blockingSeverities.some((entry) => !FINDING_SEVERITIES.has(entry))) {
+    throw new Error(label + '.blockingSeverities contains an invalid severity.')
+  }
+  return { type: result.type, reports, blockingSeverities: [...new Set(blockingSeverities)] }
 }
 
 export function parseVerificationConfig(text, source = '<inline>') {
@@ -107,6 +153,12 @@ export function parseVerificationConfig(text, source = '<inline>') {
     if (typeof gate.required !== 'boolean') {
       throw new Error(label + '.required must be boolean.')
     }
+    if (gate.network !== undefined && typeof gate.network !== 'boolean') {
+      throw new Error(label + '.network must be boolean when provided.')
+    }
+    if (gate.required && gate.result?.type === 'observation') {
+      throw new Error(label + '.required must be false for observation results.')
+    }
     const timeoutMs = gate.timeoutMs ?? 10 * 60 * 1000
     if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 60 * 60 * 1000) {
       throw new Error(label + '.timeoutMs must be between 1000 and 3600000.')
@@ -114,7 +166,9 @@ export function parseVerificationConfig(text, source = '<inline>') {
     return {
       id: gate.id,
       required: gate.required,
+      network: gate.network ?? false,
       command: validateCommand(gate.command, label + '.command'),
+      inputs: validateInputs(gate.inputs, label + '.inputs'),
       timeoutMs,
       result: validateResult(gate.result, label + '.result')
     }
@@ -123,7 +177,14 @@ export function parseVerificationConfig(text, source = '<inline>') {
   if (!gates.some((gate) => gate.required && gate.result.type === 'junit')) {
     throw new Error(source + ': at least one required junit gate is necessary to prevent untested success.')
   }
-  return { schemaVersion: 1, gates }
+  return { schemaVersion: 1, context: validateContext(parsed.context, source + ': context'), gates }
+}
+
+export function verificationInputPaths(config) {
+  return [...new Set([
+    '.backend-harness/verification.json',
+    ...config.gates.flatMap((gate) => [gate.command[0], ...gate.inputs])
+  ])].sort()
 }
 
 async function regularFile(root, path) {
@@ -135,32 +196,48 @@ async function regularFile(root, path) {
 export async function defaultVerificationConfig(root) {
   const windows = process.platform === 'win32'
   if (await regularFile(root, 'build.gradle') || await regularFile(root, 'build.gradle.kts')) {
+    const inputs = []
+    for (const path of ['gradle/wrapper/gradle-wrapper.properties', 'gradle/wrapper/gradle-wrapper.jar', 'gradle.properties']) {
+      if (await regularFile(root, path)) {
+        inputs.push(path)
+      }
+    }
     return {
       schemaVersion: 1,
+      context: { profile: 'test', databaseDialect: null },
       gates: [{
         id: 'tests',
         required: true,
         command: [windows ? './gradlew.bat' : './gradlew', 'test', '--offline', '--no-daemon', '--console=plain', '--rerun-tasks'],
+        inputs,
         timeoutMs: 600000,
         result: {
           type: 'junit',
-          reports: ['build/test-results/**/*.xml'],
+          reports: ['build/test-results/test/**/*.xml'],
           minimumTests: 1
         }
       }]
     }
   }
   if (await regularFile(root, 'pom.xml')) {
+    const inputs = []
+    for (const path of ['.mvn/wrapper/maven-wrapper.properties', '.mvn/wrapper/maven-wrapper.jar', '.mvn/maven.config']) {
+      if (await regularFile(root, path)) {
+        inputs.push(path)
+      }
+    }
     return {
       schemaVersion: 1,
+      context: { profile: 'test', databaseDialect: null },
       gates: [{
         id: 'tests',
         required: true,
         command: [windows ? './mvnw.cmd' : './mvnw', '-o', '-B', 'verify'],
+        inputs,
         timeoutMs: 600000,
         result: {
           type: 'junit',
-          reports: ['target/surefire-reports/*.xml', 'target/failsafe-reports/*.xml'],
+          reports: ['target/surefire-reports/TEST-*.xml', 'target/failsafe-reports/TEST-*.xml'],
           minimumTests: 1
         }
       }]

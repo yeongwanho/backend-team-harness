@@ -5,7 +5,7 @@ import { advanceTask, loadTask } from './task-store.mjs'
 import { transitionTaskRecord } from './task-state.mjs'
 
 function verificationOutcome(result) {
-  return result?.passed === true && result.tests?.tests > 0
+  return result?.passed === true && result.tests?.executed > 0
 }
 
 function stripOutputTails(result) {
@@ -56,7 +56,7 @@ export async function verifyTask(inputPath, taskId, options = {}) {
       root: loaded.root,
       task: started.record,
       sourceBinding,
-      approval: { network: false, write: false }
+      approval: { network: options.allowNetwork === true, write: false }
     })
   } catch (error) {
     const permissionDenied = error instanceof ToolPermissionError

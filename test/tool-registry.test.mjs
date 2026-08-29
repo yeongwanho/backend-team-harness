@@ -50,7 +50,28 @@ test('task state gate denies before a tool executes', async () => {
       task: { id: 'T-2', state: 'IMPLEMENTING' },
       approval: {}
     }),
-    (error) => error.code === 'task_state_denied'
+    (error) => error.code === 'execution_state_denied'
   )
   assert.equal(executions, 0)
+})
+
+test('an explicit local check operation can run without forging a task', async () => {
+  let executions = 0
+  const registry = createToolRegistry({
+    beforeExecute: assertToolAllowed,
+    tools: [{
+      id: 'build.check',
+      allowedStates: ['CHECKING'],
+      async execute() {
+        executions += 1
+      }
+    }]
+  })
+
+  await registry.execute('build.check', {}, {
+    operation: { id: 'project-check', state: 'CHECKING' },
+    approval: {}
+  })
+
+  assert.equal(executions, 1)
 })

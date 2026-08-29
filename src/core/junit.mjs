@@ -1,5 +1,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import { relative, resolve, sep } from 'node:path'
+import { XMLParser, XMLValidator } from 'fast-xml-parser'
 import { assertNoSymlinkSegments, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 
 function escapeRegex(value) {
@@ -93,73 +95,140 @@ export async function snapshotReportFiles(root, patterns) {
   const snapshot = new Map()
   for (const path of await findReportFiles(root, patterns)) {
     const metadata = await stat(path)
+    if (metadata.size > 16 * 1024 * 1024) {
+      throw new Error(relative(root, path) + ': report exceeds the 16 MiB safety limit.')
+    }
+    const content = await readFile(path)
     snapshot.set(path, {
       size: metadata.size,
       mtimeMs: metadata.mtimeMs,
-      ctimeMs: metadata.ctimeMs
+      ctimeMs: metadata.ctimeMs,
+      contentSha256: createHash('sha256').update(content).digest('hex')
     })
   }
   return snapshot
 }
 
-function decodeXml(value) {
-  return value
-    .replaceAll('&quot;', '"')
-    .replaceAll('&apos;', "'")
-    .replaceAll('&lt;', '<')
-    .replaceAll('&gt;', '>')
-    .replaceAll('&amp;', '&')
-}
-
-function attribute(source, name) {
-  const match = source.match(new RegExp('(?:^|\\s)' + name + '=(?:"([^"]*)"|\'([^\']*)\')', 'i'))
-  return match ? decodeXml(match[1] ?? match[2] ?? '') : null
-}
-
-function numericAttribute(source, name) {
-  const value = attribute(source, name)
-  if (value === null || !/^\d+$/.test(value)) {
-    return 0
-  }
-  return Number(value)
-}
-
 export function parseJUnitXml(text, source = '<inline>') {
-  const summary = { tests: 0, failures: 0, errors: 0, skipped: 0, failedTests: [] }
-  const testCasePattern = /<testcase\b([^>]*?)(?:\/>|>([\s\S]*?)<\/testcase\s*>)/gi
-  let match
-  while ((match = testCasePattern.exec(text))) {
-    const attributes = match[1]
-    const body = match[2] ?? ''
-    const failed = /<failure\b/i.test(body)
-    const errored = /<error\b/i.test(body)
-    const skipped = /<skipped\b/i.test(body)
+  if (typeof text !== 'string' || Buffer.byteLength(text, 'utf8') > 16 * 1024 * 1024) {
+    throw new Error(source + ': JUnit XML must be a string no larger than 16 MiB.')
+  }
+  if (/<!\s*(?:DOCTYPE|ENTITY)\b/i.test(text)) {
+    throw new Error(source + ': DTD and ENTITY declarations are not allowed in JUnit XML.')
+  }
+  const validation = XMLValidator.validate(text, { allowBooleanAttributes: false })
+  if (validation !== true) {
+    const detail = validation?.err?.msg ? ': ' + validation.err.msg : ''
+    throw new Error(source + ': malformed JUnit XML' + detail)
+  }
+
+  const tree = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: '',
+    preserveOrder: true,
+    processEntities: false,
+    removeNSPrefix: true
+  }).parse(text)
+  const summary = { tests: 0, executed: 0, failures: 0, errors: 0, skipped: 0, failedTests: [] }
+  let suiteFound = false
+  let declaredFailures = 0
+  let declaredErrors = 0
+
+  const declaredCount = (attributes, name) => {
+    const value = attributes?.[name]
+    return typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : 0
+  }
+
+  const containsElement = (nodes, expected) => {
+    if (!Array.isArray(nodes)) {
+      return false
+    }
+    for (const node of nodes) {
+      if (!node || typeof node !== 'object') {
+        continue
+      }
+      for (const [name, children] of Object.entries(node)) {
+        if (name === ':@') {
+          continue
+        }
+        if (name === expected || containsElement(children, expected)) {
+          return true
+        }
+      }
+    }
+    return false
+  }
+
+  const countTestcase = (node, children) => {
+    const failed = ['failure', 'flakyFailure', 'rerunFailure'].some((element) => containsElement(children, element))
+    const errored = ['error', 'flakyError', 'rerunError'].some((element) => containsElement(children, element))
+    const skipped = !failed && !errored && containsElement(children, 'skipped')
     summary.tests += 1
+    summary.executed += skipped ? 0 : 1
     summary.failures += failed ? 1 : 0
     summary.errors += errored ? 1 : 0
     summary.skipped += skipped ? 1 : 0
+    if (summary.tests > 1_000_000) {
+      throw new Error(source + ': JUnit XML exceeds the 1000000-test safety limit.')
+    }
     if (failed || errored) {
       summary.failedTests.push({
-        className: attribute(attributes, 'classname'),
-        name: attribute(attributes, 'name') ?? '<unnamed>'
+        className: typeof node[':@']?.classname === 'string' ? node[':@'].classname : null,
+        name: typeof node[':@']?.name === 'string' ? node[':@'].name : '<unnamed>'
       })
     }
   }
 
-  if (summary.tests === 0) {
-    const suites = [...text.matchAll(/<testsuite\b([^>]*)>/gi)]
-    for (const suite of suites) {
-      summary.tests += numericAttribute(suite[1], 'tests')
-      summary.failures += numericAttribute(suite[1], 'failures')
-      summary.errors += numericAttribute(suite[1], 'errors')
-      summary.skipped += numericAttribute(suite[1], 'skipped')
+  const visitSuiteChildren = (nodes) => {
+    if (!Array.isArray(nodes)) {
+      return
+    }
+    for (const node of nodes) {
+      if (!node || typeof node !== 'object') {
+        continue
+      }
+      for (const [name, children] of Object.entries(node)) {
+        if (name === ':@') {
+          continue
+        }
+        if (name === 'testsuite') {
+          suiteFound = true
+          declaredFailures = Math.max(declaredFailures, declaredCount(node[':@'], 'failures'))
+          declaredErrors = Math.max(declaredErrors, declaredCount(node[':@'], 'errors'))
+          visitSuiteChildren(children)
+          continue
+        }
+        if (name === 'testsuites') {
+          visitSuiteChildren(children)
+          continue
+        }
+        if (name === 'testcase') {
+          countTestcase(node, children)
+          continue
+        }
+      }
     }
   }
-  if (!/<testsuites?\b/i.test(text)) {
+
+  const roots = []
+  for (const node of tree) {
+    for (const [name, children] of Object.entries(node)) {
+      if (name !== ':@' && !name.startsWith('?') && !name.startsWith('#')) {
+        roots.push({ name, children })
+      }
+    }
+  }
+  if (roots.length !== 1 || !['testsuite', 'testsuites'].includes(roots[0].name)) {
+    throw new Error(source + ': document root must be testsuite or testsuites.')
+  }
+  visitSuiteChildren(tree)
+  if (!suiteFound) {
     throw new Error(source + ': no JUnit testsuite element found.')
   }
-  if (!/<\/testsuites?\s*>/i.test(text) && !/<testsuite\b[^>]*\/>/i.test(text)) {
-    throw new Error(source + ': JUnit testsuite is not closed.')
+  summary.failures = Math.max(summary.failures, declaredFailures)
+  summary.errors = Math.max(summary.errors, declaredErrors)
+  if ((summary.failures > 0 || summary.errors > 0) && summary.failedTests.length === 0) {
+    summary.failedTests.push({ className: null, name: '<suite-declared-failure>' })
   }
   return summary
 }
@@ -168,16 +237,29 @@ export async function collectJUnitResults(root, patterns, before = new Map(), op
   const matched = await findReportFiles(root, patterns)
   const fresh = []
   const stale = []
+  const contents = new Map()
   for (const path of matched) {
     const metadata = await stat(path)
+    if (metadata.size > 16 * 1024 * 1024) {
+      throw new Error(relative(root, path) + ': report exceeds the 16 MiB safety limit.')
+    }
+    const content = await readFile(path, 'utf8')
+    contents.set(path, content)
     const previous = before.get(path)
-    const changed = !previous || previous.size !== metadata.size ||
-      previous.mtimeMs !== metadata.mtimeMs || previous.ctimeMs !== metadata.ctimeMs
+    const contentSha256 = createHash('sha256').update(content).digest('hex')
+    const changed = !previous ||
+      previous.contentSha256 !== contentSha256 ||
+      previous.size !== metadata.size ||
+      previous.mtimeMs !== metadata.mtimeMs ||
+      previous.ctimeMs !== metadata.ctimeMs
     ;(changed ? fresh : stale).push(path)
   }
 
   const summary = {
+    type: 'junit',
+    evidenceTier: 'EXECUTED',
     tests: 0,
+    executed: 0,
     failures: 0,
     errors: 0,
     skipped: 0,
@@ -186,8 +268,9 @@ export async function collectJUnitResults(root, patterns, before = new Map(), op
     staleReportCount: stale.length
   }
   for (const path of fresh) {
-    const parsed = parseJUnitXml(await readFile(path, 'utf8'), relative(root, path))
+    const parsed = parseJUnitXml(contents.get(path), relative(root, path))
     summary.tests += parsed.tests
+    summary.executed += parsed.executed
     summary.failures += parsed.failures
     summary.errors += parsed.errors
     summary.skipped += parsed.skipped
@@ -199,8 +282,10 @@ export async function collectJUnitResults(root, patterns, before = new Map(), op
   let reason = null
   if (fresh.length === 0) {
     reason = matched.length === 0 ? 'junit_reports_missing' : 'junit_reports_stale'
-  } else if (summary.tests < minimumTests) {
-    reason = 'minimum_tests_not_met'
+  } else if (stale.length > 0) {
+    reason = 'junit_reports_mixed_freshness'
+  } else if (summary.executed < minimumTests) {
+    reason = 'minimum_executed_tests_not_met'
   } else if (summary.failures > 0 || summary.errors > 0) {
     reason = 'tests_failed'
   }

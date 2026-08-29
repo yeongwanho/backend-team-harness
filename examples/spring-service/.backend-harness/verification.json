@@ -1,22 +1,30 @@
 {
   "schemaVersion": 1,
+  "context": {
+    "profile": "test",
+    "databaseDialect": null
+  },
   "gates": [
     {
       "id": "tests",
       "required": true,
+      "network": true,
       "command": [
         "./gradlew",
         "test",
-        "--offline",
         "--no-daemon",
         "--console=plain",
         "--rerun-tasks"
+      ],
+      "inputs": [
+        "gradle/wrapper/gradle-wrapper.properties",
+        "gradle/wrapper/gradle-wrapper.jar"
       ],
       "timeoutMs": 600000,
       "result": {
         "type": "junit",
         "reports": [
-          "build/test-results/**/*.xml"
+          "build/test-results/test/**/*.xml"
         ],
         "minimumTests": 1
       }

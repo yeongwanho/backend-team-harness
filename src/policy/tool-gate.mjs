@@ -6,14 +6,19 @@ export class ToolPermissionError extends Error {
   }
 }
 
-export function assertToolAllowed({ tool, task, approval = {} }) {
-  if (!task || typeof task.state !== 'string') {
-    throw new ToolPermissionError('task_state_missing', 'A persisted task state is required before tool execution.')
+export function assertToolAllowed({ tool, task, operation, approval = {} }) {
+  const execution = task && typeof task.state === 'string'
+    ? task
+    : operation && typeof operation.state === 'string'
+      ? operation
+      : null
+  if (!execution) {
+    throw new ToolPermissionError('execution_state_missing', 'A persisted task or explicit operation state is required before tool execution.')
   }
-  if (!tool.allowedStates.includes(task.state)) {
+  if (!tool.allowedStates.includes(execution.state)) {
     throw new ToolPermissionError(
-      'task_state_denied',
-      'Tool ' + tool.id + ' is not allowed while task ' + task.id + ' is ' + task.state + '.'
+      'execution_state_denied',
+      'Tool ' + tool.id + ' is not allowed while ' + execution.id + ' is ' + execution.state + '.'
     )
   }
   if (tool.network === true && approval.network !== true) {

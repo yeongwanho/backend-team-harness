@@ -23,12 +23,12 @@ export async function writeGradleFixture(root, options = {}) {
   const tests = options.tests ?? 1
   const failures = options.failures ?? 0
   const errors = options.errors ?? 0
-  const testCase = tests > 0
-    ? '<testcase classname="example.VerificationTest" name="works">' +
-      (failures ? '<failure message="failed"/>' : '') +
-      (errors ? '<error message="errored"/>' : '') +
-      '</testcase>'
-    : ''
+  const testCase = Array.from({ length: tests }, (_value, index) =>
+    '<testcase classname="example.VerificationTest" name="works-' + (index + 1) + '">' +
+      (index === 0 && failures ? '<failure message="failed"/>' : '') +
+      (index === 0 && errors ? '<error message="errored"/>' : '') +
+    '</testcase>'
+  ).join('')
   await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
   await writeFile(join(root, '.gitignore'), 'build/\ntarget/\n', 'utf8')
   await writeFile(

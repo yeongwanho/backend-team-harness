@@ -1,132 +1,201 @@
 # Backend Team Harness
 
-**백엔드 변경을 “어떤 소스에서 무엇을 실행했고 실제 테스트가 몇 개 통과했는가”로 확인하는 로컬 검증 하네스입니다.**
+**서로 다른 백엔드 프로젝트에서 “완료했다”는 말을, 같은 소스에서 실제로 실행된 테스트와 재현 가능한 기록으로 바꾸는 로컬 하네스입니다.**
 
-현재 버전은 AI 모델을 호출하지 않습니다. 개발자나 AI가 코드를 작성할 수는 있지만, 완료 판정은 Git 소스 지문, 프로젝트가 선언한 명령, 새로 생성된 JUnit 결과로만 결정합니다.
+AI가 코드를 작성해도 좋고 사람이 직접 작성해도 좋습니다. BTH는 모델의 말로 PASS를 만들지 않습니다. Git 소스, 프로젝트가 선언한 명령, 방금 생성된 기계 판독 결과만 판정에 사용합니다.
 
-## 왜 필요한가
-
-`테스트했어요`라는 말만으로는 다음을 알 수 없습니다.
-
-- 검증 뒤에 코드가 바뀌지 않았는가
-- 테스트가 실제로 실행됐는가, 0개였는가
-- Gradle 단위 테스트만 돌고 Maven 통합 테스트는 빠지지 않았는가
-- 다른 개발자가 같은 조건으로 다시 실행할 수 있는가
-
-Backend Team Harness는 이 간격을 줄입니다.
+## 한눈에 보는 구조
 
 ```text
-Git source binding
-        ↓
-project-declared gates
-        ↓
-fresh JUnit reports
-        ↓
-tests > 0 and failures = errors = 0
-        ↓
-local/shared run record
+개발자 또는 AI
+      ↓
+.backend-harness/verification.json     프로젝트가 실행 방법을 소유
+      ↓
+프로젝트 단위 잠금                     같은 build/report 동시 사용 차단
+      ↓
+argv Gate Runner                       shell 문자열·외부 실행 파일 거절
+      ↓
+┌──────────────────────┬─────────────────────────┐
+│ EXECUTED             │ REPORTED                │
+│ JUnit·프로세스 실행  │ 보안·정적분석·그래프    │
+│ PASS 근거가 될 수 있음│ PASS를 만들 수 없음     │
+└──────────────────────┴─────────────────────────┘
+      ↓
+Git + 입력 파일 + 도구체인 + 결과 해시 + redaction + append-only 이력
 ```
 
-SHA-256은 실행 결과를 진실로 만드는 서명이 아닙니다. 입력을 식별하고 우연한 변경을 탐지하는 지문입니다. 신뢰의 최종 근거는 실행 기록에 포함된 명령을 같은 소스에서 다시 실행하는 것입니다.
+핵심 판정은 작고 보수적입니다.
 
-## 현재 실제로 되는 것
+```text
+PASS = 모든 required Gate 통과
+   AND required JUnit Gate 존재
+   AND executed tests >= 각 Gate의 minimumTests
+   AND failures = errors = 0
+   AND 실행 전후 source fingerprint 동일
 
-- Git commit, tracked diff, untracked content를 묶어 소스 지문을 만듭니다.
-- 실행 중 바뀌는 하네스의 task·local·generated 파일은 소스 지문에서 제외합니다.
-- 프로젝트가 소유한 실행 파일과 인자 배열만 실행합니다. 셸 문자열은 받지 않습니다.
-- 여러 필수·선택 Gate를 순서대로 실행하고 필수 Gate 실패 시 이후 실행을 중단합니다.
-- Gradle 기본값은 캐시 결과를 재사용하지 않도록 `--rerun-tasks`를 사용합니다.
-- Maven 기본값은 Failsafe 통합 테스트까지 포함하도록 `verify`를 사용합니다.
-- 현재 실행에서 새로 생성되거나 변경된 JUnit XML만 인정합니다.
-- 테스트 0개, 누락·오래된 보고서, 실패, 오류, timeout, signal을 모두 실패로 판정합니다.
-- timeout 시 POSIX 프로세스 그룹을 종료해 자식 프로세스가 남는 것을 막습니다.
-- stdout/stderr 원문 대신 크기와 SHA-256을 기록합니다.
-- `bth check`는 매일 쓰는 로컬 실행 기록을 남깁니다.
-- 승인된 작업의 `bth verify`는 Git에 공유할 수 있는 `runs/latest.json`을 남깁니다.
-- 검증 뒤 소스가 바뀌면 `DONE` 전이를 거절합니다.
+executed tests = 전체 testcase - skipped testcase
+```
 
-## 5분 사용법
+종료 코드 0, 오래된 XML, 모두 skip된 테스트, XML 속 가짜 태그, 분석 도구의 “문제 없음”만으로는 PASS가 되지 않습니다.
 
-Node.js 20 이상이 필요하며 런타임 npm 의존성은 없습니다.
+## 5분 시작
+
+Node.js 20 이상이 필요합니다.
 
 ```bash
 git clone https://github.com/yeongwanho/backend-team-harness.git
 cd backend-team-harness
+npm install
 npm test
 
-bth init /path/to/backend-project
-bth doctor /path/to/backend-project
-bth check /path/to/backend-project
+node src/cli.mjs init /path/to/backend-project
+node src/cli.mjs doctor /path/to/backend-project
+node src/cli.mjs check /path/to/backend-project
 ```
 
-Gradle 또는 Maven 빌드 파일이 있으면 `init`이 `.backend-harness/verification.json` 기본값을 생성합니다. 다른 언어·프레임워크는 프로젝트가 가진 테스트 명령과 JUnit 출력 경로를 적으면 됩니다.
+실제 실행 가능한 Gradle 예제도 포함합니다.
 
-## 실행 설정
+```bash
+node src/cli.mjs doctor examples/spring-service
+node src/cli.mjs check examples/spring-service --allow-network
+```
+
+`--allow-network`는 cold machine에서 Gradle Wrapper와 공개 의존성을 내려받는 프로젝트 Gate에 대한 명시적 승인입니다. 이것은 실행 의도를 확인하는 **승인 latch**이지 운영체제 방화벽이나 sandbox가 아닙니다. 프로젝트 실행 파일 자체가 악의적이면 선언 없이도 네트워크를 시도할 수 있으므로, 낯선 저장소는 Gate를 먼저 검토해야 합니다.
+
+## 프로젝트 실행 계약
+
+`bth init`은 Gradle/Maven Wrapper를 인식하면 `.backend-harness/verification.json`까지 만듭니다. 다른 빌드 시스템에서는 공용 지식 문서만 만들며, 아래 계약을 프로젝트의 실행 방식에 맞춰 직접 추가해야 합니다. 실행 Core는 프레임워크를 추측하지 않고 이 계약만 실행합니다.
 
 ```json
 {
   "schemaVersion": 1,
+  "context": {
+    "profile": "test",
+    "databaseDialect": "postgresql"
+  },
   "gates": [
     {
-      "id": "migration",
+      "id": "db-integration",
       "required": true,
-      "command": ["./scripts/verify-migrations"],
-      "timeoutMs": 120000,
-      "result": { "type": "exit-code" }
-    },
-    {
-      "id": "tests",
-      "required": true,
-      "command": ["./gradlew", "test", "--offline", "--no-daemon", "--console=plain", "--rerun-tasks"],
-      "timeoutMs": 600000,
+      "network": true,
+      "command": ["./gradlew", "integrationTest", "--no-daemon", "--rerun-tasks"],
+      "inputs": ["gradle.properties", "gradle/wrapper/gradle-wrapper.properties", "gradle/wrapper/gradle-wrapper.jar"],
+      "timeoutMs": 900000,
       "result": {
         "type": "junit",
-        "reports": ["build/test-results/**/*.xml"],
-        "minimumTests": 1
+        "reports": ["build/test-results/integrationTest/**/*.xml"],
+        "minimumTests": 12
       }
     }
   ]
 }
 ```
 
-규칙은 의도적으로 작습니다.
+- `command[0]`은 프로젝트 안의 일반 실행 파일이어야 합니다.
+- 명령은 argv 배열이며 `shell: false`로 실행됩니다.
+- `inputs`는 Git에서 무시됐더라도 결과에 영향을 주는 파일을 내용 해시로 묶습니다.
+- `network: true`인 Gate는 CLI의 명시적 `--allow-network` 없이는 실행되지 않습니다.
+- 하나 이상의 required JUnit Gate가 반드시 있어야 합니다.
+- `minimumTests`는 전체가 아니라 실제 실행된 테스트 수의 하한입니다.
 
-- `command[0]`은 프로젝트 내부의 일반 실행 파일이어야 합니다.
-- 절대 경로, `..`, 심볼릭 링크 실행 파일은 거절합니다.
-- 하나 이상의 필수 JUnit Gate가 있어야 합니다.
-- `exit-code` Gate만으로 `VERIFIED`를 만들 수 없습니다.
-- 설정된 명령은 신뢰한 저장소의 코드입니다. 이 도구는 운영체제 sandbox가 아닙니다.
+자동 생성되는 JVM 기본값은 기존 캐시만 쓰는 `--offline` 모드입니다. 새 PC에서 의존성을 받아야 한다면 팀이 설정에서 `--offline`을 제거하고 `network: true`를 선언한 뒤, 해당 실행에만 `--allow-network`를 줍니다.
 
-## DB 검증 연결
+## 결과 계약 두 종류
 
-하네스가 모든 프로젝트의 DB를 독점적으로 생성하지 않습니다. 프로젝트가 이미 사용하는 방식을 Gate로 연결합니다.
+| 결과 | 증거 등급 | 역할 |
+| --- | --- | --- |
+| `junit` | `EXECUTED` | fresh XML의 실행·실패·오류·skip을 판정하고 PASS 근거가 됨 |
+| `exit-code` | `EXECUTED` | compile/migration 같은 프로세스 성공을 증명하지만 단독 PASS 불가 |
+| `findings` | `REPORTED` | 보안·정적 분석 결과가 심각하면 PASS를 차단하지만 단독 PASS 불가 |
+| `observation` | `REPORTED` | 그래프·coverage 같은 참고 정보. 항상 optional이며 PASS에 영향 없음 |
 
-```text
-Testcontainers / Docker Compose / embedded DB
-                     ↓
-       project-owned migration script
-                     ↓
-      migration gate + integration-test gate
+Findings 도구는 다음의 작은 JSON 계약으로 연결합니다.
+
+```json
+{
+  "schemaVersion": 1,
+  "tool": { "id": "scanner", "version": "1.2.3" },
+  "findings": [
+    {
+      "ruleId": "security.secret",
+      "severity": "high",
+      "message": "Potential credential detected.",
+      "location": { "path": "src/config.txt", "line": 3 }
+    }
+  ],
+  "metrics": { "filesScanned": 42 }
+}
 ```
 
-프로젝트에 DB 준비 방식이 없다면 별도 스크립트나 향후 DB Pack을 추가할 수 있습니다. 운영 DB, 배포, 비밀 읽기는 기본 기능에 포함하지 않습니다.
+## 설치형 Pack
 
-## 팀 작업 흐름
-
-간단한 로컬 반복은 `bth check`만 사용합니다. 리뷰 가능한 작업 상태가 필요할 때 다음 흐름을 사용합니다.
+Pack은 Core에 회사 정책을 박아 넣지 않고, 프로젝트가 소유할 Gate와 설명을 설치합니다.
 
 ```bash
-bth task create ORDER-123 /path/to/project \
-  --title "주문 상태 조회 추가" \
-  --context "요구사항과 확인할 출처"
-bth task advance ORDER-123 CONTEXT_READY /path/to/project --by developer
-bth task plan ORDER-123 /path/to/project --text "변경·테스트·위험 계획" --by developer
-bth task advance ORDER-123 PLAN_PROPOSED /path/to/project --by developer
-bth task advance ORDER-123 PLAN_APPROVED /path/to/project --by reviewer --approve
-bth task advance ORDER-123 IMPLEMENTING /path/to/project --by developer
-bth verify ORDER-123 /path/to/project
-bth task advance ORDER-123 DONE /path/to/project --by developer
+node src/cli.mjs pack list
+node src/cli.mjs pack install secrets-gitleaks /path/to/project
+node src/cli.mjs pack install db-integration /path/to/project
+node src/cli.mjs pack install architecture /path/to/project
+node src/cli.mjs pack install contract /path/to/project
+node src/cli.mjs pack install codegraph-advisory /path/to/project
 ```
+
+| Pack | 무엇을 붙이나 | PASS 영향 |
+| --- | --- | --- |
+| `secrets-gitleaks` | 로컬 Gitleaks 결과를 비밀 본문 없이 Findings로 변환 | high/critical이면 차단, PASS 생성 불가 |
+| `db-integration` | 같은 운영 dialect의 Testcontainers/Compose 통합테스트 Gate | 실행된 JUnit이므로 근거 가능 |
+| `architecture` | ArchUnit/Spring Modulith `*ArchitectureTest` Gate | 실행된 JUnit이므로 근거 가능 |
+| `contract` | Pact/SCC/OpenAPI/message contract Gate | 실행된 JUnit이므로 근거 가능 |
+| `codegraph-advisory` | 명시적 import만 연결한 Java/Kotlin 탐색 그래프 | 참고 전용, PASS 영향 없음 |
+
+설치는 기존 Gate id나 Pack 폴더를 덮어쓰지 않으며, 변경 전 `verification.json`을 로컬 backup에 보관합니다. DB·architecture·contract Pack은 프로젝트의 실제 task/profile/test를 팀이 구현해야 하며, 준비되지 않으면 fail-closed합니다. DB Pack은 Testcontainers 이미지나 의존성을 받을 수 있어 `network: true`로 설치되며 실행할 때 `--allow-network`가 필요합니다.
+
+`bth doctor`의 `healthy`는 계약 파일·실행 파일·설정이 **구조적으로 실행 준비가 됐다**는 뜻입니다. 테스트 성공을 뜻하지 않습니다. 완료 근거는 반드시 `bth check` 또는 승인된 작업의 `bth verify` 결과로 만듭니다.
+
+## DB는 어떻게 붙나
+
+BTH가 모든 프로젝트에 두 번째 DB lifecycle을 강요하지 않습니다.
+
+```text
+프로젝트의 Testcontainers / Docker Compose / embedded DB
+                         ↓
+운영과 같은 dialect·관련 major version
+                         ↓
+empty DB migration + 필요한 upgrade path
+                         ↓
+프로젝트 integration tests → fresh JUnit → EXECUTED
+```
+
+운영 DB, 배포, 실제 비밀값은 기본 기능에 없습니다. SQLite에서 SQL 문자열 하나가 통과했다고 PostgreSQL migration이 안전하다고 주장하지 않습니다. Atlas 같은 SQL 분석기는 향후 project-owned Findings Gate로 추가할 수 있지만, 실제 dialect 통합테스트를 대체할 수 없습니다.
+
+## 코드그래프의 정확한 위치
+
+현재 그래프 Pack은 Java/Kotlin 파일, 선언된 type, 명시적 import만 인덱싱합니다. 모든 edge의 provenance는 `static-import-resolved`입니다.
+
+포함하지 않는 것:
+
+- 이름이 같다는 이유로 추측한 method call
+- Spring runtime bean wiring
+- reflection·동적 프록시
+- SQL/table 소유권 추측
+- 그래프 기반 테스트 생략
+
+그래프 파일에는 `advisory: true`, 허용 용도(`navigation`, `review-questions`), 금지 용도(`pass-verdict`, `test-skipping`)가 함께 기록됩니다.
+
+## 테스트 수 감소 방지
+
+성공한 최신 실행의 Gate별 실행 수를 하한으로 올릴 수 있습니다.
+
+```bash
+node src/cli.mjs check /path/to/project
+node src/cli.mjs baseline update /path/to/project
+```
+
+Baseline은 올리기만 하고 자동으로 낮추지 않습니다. 이후 테스트가 삭제·skip되어 실행 수가 줄면 Gate가 실패합니다.
+
+## 팀 작업 상태가 필요할 때
+
+매일 빠른 확인은 `bth check`만 사용합니다. 승인·인수인계가 필요한 변경은 task lifecycle을 사용합니다.
 
 ```text
 CONTEXT_MISSING → CONTEXT_READY → PLAN_PROPOSED → PLAN_APPROVED
@@ -138,71 +207,39 @@ CONTEXT_MISSING → CONTEXT_READY → PLAN_PROPOSED → PLAN_APPROVED
                                       VERIFY_FAILED         VERIFIED → DONE
 ```
 
-## 생성되는 구조
+`bth verify`는 승인된 task만 실행합니다. `DONE` 직전에 소스 지문을 다시 계산하고 검증 이후 변경이 있으면 거절합니다.
+
+## 기록과 보안
 
 ```text
 .backend-harness/
-├── verification.json          # 실제 실행 Gate와 결과 규칙
-├── project.md                 # 서비스 목적과 범위
-├── architecture.md            # 모듈·데이터·런타임 경계
-├── glossary.md                # 팀 용어
-├── policies/                  # API·DB·보안·오류 정책
-├── workflows/                 # 사람이 읽는 작업 절차
-├── quality-gates/             # 검토 체크리스트 스키마
-├── tasks/<id>/
-│   ├── task.md
-│   ├── task.json
-│   ├── events.jsonl
-│   ├── runs/latest.json       # 공유 가능한 검증 요약
-│   └── evidence/              # 로컬 상세 레코드, Git 제외
-└── local/runs/latest.json     # bth check 결과, Git 제외
+├── verification.json
+├── packs/
+├── tasks/<id>/runs/latest.json
+├── tasks/<id>/runs/history/*.json
+├── tasks/<id>/evidence/              # local, Git ignored
+└── local/runs/{latest.json,history/}  # local, Git ignored
 ```
 
-## 범용성
+기록에는 command argv, 프로세스 상태, 출력 byte/hash, fresh report 통계, 실행 파일 hash, Node/JDK/Wrapper 정보, 선언 profile/dialect, source fingerprint가 들어갑니다. stdout/stderr 원문은 공유 기록에서 제외합니다. 프로젝트·home·temp 절대경로와 일반적인 token/secret/credential 형태는 저장 전에 redaction합니다. JSON hash는 key 순서와 무관한 canonical serialization을 사용합니다.
 
-Core는 Gradle·Maven·Spring을 모릅니다. 프로젝트별 차이는 `verification.json`과 프로젝트 소유 실행 파일에 있습니다. 테스트에는 Gradle 형태 프로젝트와 실제 Node 테스트 러너를 사용하는 비-Java 프로젝트가 모두 포함됩니다.
+이 도구는 악의적인 저장소를 격리하는 OS sandbox가 아닙니다. 프로젝트가 소유한 실행 파일은 신뢰 경계 안에 있으므로 실행 전 검토해야 합니다.
 
-새로운 생태계를 지원하기 위해 Core Adapter를 추가하는 대신 다음만 맞추는 것이 기본 원칙입니다.
+## OMO에서 참고한 것과 아닌 것
 
-1. 프로젝트 내부 실행 파일
-2. 명령 인자 배열
-3. JUnit XML 결과 위치
+OMO 코드를 복사하거나 의존하지 않습니다. Core/adapter/project 경계, 명시적 상태, 실행 전 권한 Gate, evidence로 완료를 판정하는 일반 하네스 원칙을 백엔드 검증 문제에 맞게 독립 구현했습니다.
 
-## 현재 범위와 다음 단계
+모델 라우팅, memory engine, lifecycle hook 수십 개, 다중 에이전트 runtime은 포함하지 않습니다. BTH의 목적은 “또 하나의 AI agent”가 아니라, 사람과 AI가 낸 백엔드 변경을 같은 방식으로 검증하는 것입니다.
 
-구현됨:
-
-- [x] 안전한 초기화와 doctor
-- [x] 작업 상태·승인·이벤트 재생
-- [x] Git source binding
-- [x] 범용 Gate 실행기
-- [x] JUnit/Surefire/Failsafe 결과 집계
-- [x] 테스트 0개·stale report 차단
-- [x] 로컬·공유 실행 기록
-- [x] 검증 후 소스 변경 차단
-- [x] 실제 Maven·Gradle·Node 테스트 러너 E2E
-
-아직 주장하지 않는 것:
-
-- Code Graph 또는 변경 영향 기반 테스트 생략
-- 모든 프로젝트의 DB lifecycle 자동 관리
-- AI 모델·다중 에이전트·메모리 엔진
-- CI, 배포 플랫폼, 운영 DB 클라이언트
-- 악의적인 저장소를 격리하는 OS sandbox
-
-Code Graph는 검증의 전제 조건이 아닙니다. 실제 실행에서 수집한 coverage·SQL·테이블 관계가 필요해진 뒤 관측 기반 인덱스로 검토합니다. 그래프가 PASS 판정기가 되지는 않습니다.
-
-## OMO에서 참고한 범위
-
-OMO 코드를 복사하거나 의존하지 않습니다. Core/프로젝트 경계, 명시적 상태, Tool 실행 전 Gate, 실행 기록으로 완료를 판정하는 원칙을 백엔드 검증 문제에 맞게 독립 구현했습니다. 다중 에이전트, memory, 모델 라우팅, lifecycle hook 시스템은 포함하지 않습니다.
-
-자세한 내용:
+더 자세한 문서:
 
 - [Architecture](docs/ARCHITECTURE.md)
-- [OMO Design Mapping](docs/OMO-DESIGN-MAPPING.md)
+- [Evidence contract](docs/EVIDENCE-CONTRACT.md)
+- [Pack guide](docs/PACKS.md)
+- [OMO design mapping](docs/OMO-DESIGN-MAPPING.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Security](SECURITY.md)
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). 번들된 Gradle Wrapper와 런타임 의존성 고지는 [Third-party notices](THIRD_PARTY_NOTICES.md)에 있습니다.

@@ -63,3 +63,19 @@ test('context and plan states cannot advance without their corresponding content
     'plan_required'
   )
 })
+
+test('an interrupted VERIFYING task can start a new serialized verification attempt', () => {
+  const verifying = {
+    ...createTaskRecord({ id: 'TASK-5' }),
+    state: 'VERIFYING',
+    revision: 4
+  }
+  const retried = transitionTaskRecord(verifying, 'VERIFYING', {
+    actor: 'bth.verify',
+    reason: 'Recover an interrupted verification attempt.'
+  })
+
+  assert.equal(retried.applied, true)
+  assert.equal(retried.record.state, 'VERIFYING')
+  assert.equal(retried.record.revision, 5)
+})

@@ -1,0 +1,17 @@
+node_modules/
+coverage/
+.git/
+.github/
+.gradle/
+build/
+target/
+examples/**/.gradle/
+examples/**/build/
+examples/**/target/
+**/.backend-harness/local/
+**/.backend-harness/generated/
+**/.backend-harness/tasks/*/evidence/
+test/
+test-support/
+AGENTS.md
+CONTRIBUTING.md

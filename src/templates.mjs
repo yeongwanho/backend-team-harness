@@ -7,7 +7,7 @@ export const sharedTemplates = [
       '---',
       'name: replace-with-project-name',
       'owners: []',
-      'framework: spring-boot',
+      'framework: unknown',
       'build: unknown',
       '---',
       '',

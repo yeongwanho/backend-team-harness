@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { captureSourceBinding } from '../src/core/source-binding.mjs'
@@ -48,4 +48,51 @@ test('source binding supports a backend project inside a larger Git worktree', a
 
   assert.equal(first.projectPath, 'services/orders')
   assert.equal(second.fingerprint, first.fingerprint)
+})
+
+test('declared ignored build inputs are source-bound by content hash', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-source-explicit-'))
+  await writeFile(join(root, '.gitignore'), 'gradle.properties\n', 'utf8')
+  await writeFile(join(root, 'service.txt'), 'service\n', 'utf8')
+  await writeFile(join(root, 'gradle.properties'), 'featureFlag=one\n', 'utf8')
+  initializeGit(root)
+
+  const first = await captureSourceBinding(root, { explicitPaths: ['gradle.properties'] })
+  await writeFile(join(root, 'gradle.properties'), 'featureFlag=two\n', 'utf8')
+  const second = await captureSourceBinding(root, { explicitPaths: ['gradle.properties'] })
+
+  assert.equal(first.clean, true)
+  assert.equal(first.explicitInputs.length, 1)
+  assert.notEqual(second.fingerprint, first.fingerprint)
+})
+
+test('declared inputs cannot escape content binding through a symlink', { skip: process.platform === 'win32' }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-source-symlink-'))
+  await writeFile(join(root, 'service.txt'), 'service\n', 'utf8')
+  await writeFile(join(root, 'real.properties'), 'featureFlag=one\n', 'utf8')
+  await symlink('real.properties', join(root, 'linked.properties'))
+  initializeGit(root)
+
+  await assert.rejects(
+    captureSourceBinding(root, { explicitPaths: ['linked.properties'] }),
+    /cannot use a symbolic link/
+  )
+})
+
+test('an allowed command symlink is bound without following an intermediate link outside', { skip: process.platform === 'win32' }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-source-command-link-'))
+  const outside = await mkdtemp(join(tmpdir(), 'bth-source-command-outside-'))
+  await mkdir(join(outside, 'bin'))
+  await writeFile(join(outside, 'bin/verify'), 'outside command\n', 'utf8')
+  await symlink(outside, join(root, 'linked-tools'))
+  await writeFile(join(root, 'service.txt'), 'service\n', 'utf8')
+  initializeGit(root)
+
+  const binding = await captureSourceBinding(root, {
+    explicitPaths: ['linked-tools/bin/verify'],
+    allowSymlinkPaths: ['linked-tools/bin/verify']
+  })
+
+  assert.equal(binding.explicitInputs[0].kind, 'symlink')
+  assert.match(binding.explicitInputs[0].contentSha256, /^[a-f0-9]{64}$/)
 })

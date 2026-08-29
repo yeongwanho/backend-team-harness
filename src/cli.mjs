@@ -9,10 +9,13 @@ import {
   updateTaskContext,
   updateTaskPlan
 } from './core/task-store.mjs'
-import { captureSourceBinding } from './core/source-binding.mjs'
-import { checkProject, verifyTask } from './runtime/backend-harness.mjs'
+import { captureConfiguredSourceBinding, checkProject, verifyTask } from './runtime/backend-harness.mjs'
+import { listPacks } from './packs/catalog.mjs'
+import { installPack } from './packs/install.mjs'
+import { updateTestBaseline } from './baseline.mjs'
+import { withProjectVerificationLock } from './core/project-lock.mjs'
 
-const VERSION = '0.3.0'
+const VERSION = '0.4.0'
 
 function printHelp() {
   console.log([
@@ -21,13 +24,16 @@ function printHelp() {
     'Usage:',
     '  bth init [path] [--force] [--allow-unversioned]',
     '  bth doctor [path] [--json]',
-    '  bth check [path] [--json]',
+    '  bth check [path] [--allow-network] [--json]',
+    '  bth pack list [--json]',
+    '  bth pack install <id> [path] [--json]',
+    '  bth baseline update [path] [--json]',
     '  bth task create <id> [path] [--title <text>] [--context <text>] [--json]',
     '  bth task context <id> [path] --text <text> --by <actor> [--json]',
     '  bth task plan <id> [path] --text <text> --by <actor> [--json]',
     '  bth task status <id> [path] [--json]',
     '  bth task advance <id> <state> [path] --by <actor> [--approve] [--reason <text>] [--json]',
-    '  bth verify <id> [path] [--json]',
+    '  bth verify <id> [path] [--allow-network] [--json]',
     '  bth version',
     '',
     'Safety:',
@@ -76,10 +82,25 @@ function assertPositionalCount(values, minimum, maximum, usage) {
 
 function printResult(value, json, fallback) {
   if (json) {
-    console.log(JSON.stringify(value, null, 2))
+    console.log(JSON.stringify(stripProcessTails(value), null, 2))
   } else {
     fallback()
   }
+}
+
+function stripProcessTails(value) {
+  if (Array.isArray(value)) {
+    return value.map(stripProcessTails)
+  }
+  if (!value || typeof value !== 'object') {
+    return value
+  }
+  const outputRecord = typeof value.sha256 === 'string' && Number.isSafeInteger(value.bytes)
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => !(outputRecord && key === 'tail'))
+      .map(([key, entry]) => [key, stripProcessTails(entry)])
+  )
 }
 
 function printFailureTail(result) {
@@ -139,11 +160,11 @@ async function runTask(args) {
     })
     assertPositionalCount(parsed.positionals, 1, 2, 'bth task create <id> [path] [--title <text>] [--context <text>] [--json]')
     const [id, path = '.'] = parsed.positionals
-    const result = await createTask(path, {
+    const result = await withProjectVerificationLock(path, undefined, () => createTask(path, {
       id,
       title: parsed.options.get('--title'),
       context: parsed.options.get('--context')
-    })
+    }))
     printResult(result, parsed.flags.has('--json'), () => {
       console.log('Created task ' + id + ' in state ' + result.record.state + '.')
       console.log('Shared task record: ' + result.taskPath)
@@ -181,10 +202,10 @@ async function runTask(args) {
     }
     const [id, path = '.'] = parsed.positionals
     const update = subcommand === 'context' ? updateTaskContext : updateTaskPlan
-    const result = await update(path, id, text, {
+    const result = await withProjectVerificationLock(path, undefined, () => update(path, id, text, {
       actor,
       reason: parsed.options.get('--reason')
-    })
+    }))
     printResult(result, parsed.flags.has('--json'), () => {
       console.log('Updated task ' + id + ' ' + subcommand + ' at revision ' + result.record.revision + '.')
       if (result.event.audit.approvalInvalidated) {
@@ -211,14 +232,16 @@ async function runTask(args) {
     }
     const [id, state, path = '.'] = parsed.positionals
     const targetState = state.toUpperCase()
-    const transitionOptions = targetState === 'DONE'
-      ? { currentSourceFingerprint: (await captureSourceBinding(path)).fingerprint }
-      : {}
-    const result = await advanceTask(path, id, targetState, {
-      actor,
-      reason: parsed.options.get('--reason'),
-      approved: parsed.flags.has('--approve')
-    }, transitionOptions)
+    const result = await withProjectVerificationLock(path, undefined, async () => {
+      const transitionOptions = targetState === 'DONE'
+        ? { currentSourceFingerprint: (await captureConfiguredSourceBinding(path)).fingerprint }
+        : {}
+      return advanceTask(path, id, targetState, {
+        actor,
+        reason: parsed.options.get('--reason'),
+        approved: parsed.flags.has('--approve')
+      }, transitionOptions)
+    })
     printResult(result, parsed.flags.has('--json'), () => {
       console.log(
         result.applied
@@ -235,11 +258,59 @@ async function runTask(args) {
   throw new Error('Unknown task command: ' + subcommand)
 }
 
+async function runPack(args) {
+  const [subcommand, ...rest] = args
+  if (subcommand === 'list') {
+    const parsed = parseArguments(rest, { booleans: ['--json'] })
+    assertPositionalCount(parsed.positionals, 0, 0, 'bth pack list [--json]')
+    const packs = listPacks()
+    printResult(packs, parsed.flags.has('--json'), () => {
+      for (const pack of packs) {
+        console.log(pack.id + ' [' + pack.evidenceTier + '] — ' + pack.purpose)
+      }
+    })
+    return
+  }
+  if (subcommand === 'install') {
+    const parsed = parseArguments(rest, { booleans: ['--json'] })
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth pack install <id> [path] [--json]')
+    const [id, path = '.'] = parsed.positionals
+    const result = await installPack(path, id)
+    printResult(result, parsed.flags.has('--json'), () => {
+      console.log('Installed Pack ' + result.pack.id + ' at ' + result.path + '.')
+      console.log('Added verification gate: ' + result.gate.id + ' [' + result.pack.evidenceTier + ']')
+      console.log('Previous verification config backup: ' + result.backup)
+    })
+    return
+  }
+  throw new Error('Usage: bth pack <list|install> ...')
+}
+
+async function runBaseline(args) {
+  const [subcommand, ...rest] = args
+  if (subcommand !== 'update') {
+    throw new Error('Usage: bth baseline update [path] [--json]')
+  }
+  const parsed = parseArguments(rest, { booleans: ['--json'] })
+  assertPositionalCount(parsed.positionals, 0, 1, 'bth baseline update [path] [--json]')
+  const result = await updateTestBaseline(parsed.positionals[0] ?? '.')
+  printResult(result, parsed.flags.has('--json'), () => {
+    if (!result.changed) {
+      console.log('Test baseline already covers the latest passed run.')
+      return
+    }
+    for (const change of result.changes) {
+      console.log('Raised ' + change.gateId + ' executed-test minimum: ' + change.previous + ' → ' + change.next)
+    }
+    console.log('Previous verification config backup: ' + result.backup)
+  })
+}
+
 async function runVerify(args) {
-  const parsed = parseArguments(args, { booleans: ['--json'] })
-  assertPositionalCount(parsed.positionals, 1, 2, 'bth verify <id> [path] [--json]')
+  const parsed = parseArguments(args, { booleans: ['--json', '--allow-network'] })
+  assertPositionalCount(parsed.positionals, 1, 2, 'bth verify <id> [path] [--allow-network] [--json]')
   const [id, path = '.'] = parsed.positionals
-  const result = await verifyTask(path, id)
+  const result = await verifyTask(path, id, { allowNetwork: parsed.flags.has('--allow-network') })
   printResult(result, parsed.flags.has('--json'), () => {
     console.log('Verification ' + (result.confirmed ? 'confirmed' : 'failed') + ' for task ' + id + '.')
     console.log('Task state: ' + result.task.state)
@@ -247,7 +318,7 @@ async function runVerify(args) {
     console.log('Shared run record: ' + result.run.path)
     if (result.evidence.record.result?.tests) {
       const tests = result.evidence.record.result.tests
-      console.log('Tests: ' + tests.tests + ', failures: ' + tests.failures + ', errors: ' + tests.errors + ', skipped: ' + tests.skipped)
+      console.log('Tests: ' + tests.tests + ', executed: ' + tests.executed + ', failures: ' + tests.failures + ', errors: ' + tests.errors + ', skipped: ' + tests.skipped)
     }
     if (result.evidence.record.error) {
       console.log('Failure: ' + result.evidence.record.error.message)
@@ -262,16 +333,16 @@ async function runVerify(args) {
 }
 
 async function runCheck(args) {
-  const parsed = parseArguments(args, { booleans: ['--json'] })
-  assertPositionalCount(parsed.positionals, 0, 1, 'bth check [path] [--json]')
-  const result = await checkProject(parsed.positionals[0] ?? '.')
+  const parsed = parseArguments(args, { booleans: ['--json', '--allow-network'] })
+  assertPositionalCount(parsed.positionals, 0, 1, 'bth check [path] [--allow-network] [--json]')
+  const result = await checkProject(parsed.positionals[0] ?? '.', { allowNetwork: parsed.flags.has('--allow-network') })
   printResult(result, parsed.flags.has('--json'), () => {
     console.log('Project verification ' + (result.confirmed ? 'passed.' : 'failed.'))
     console.log('Source: ' + result.sourceBinding.fingerprint)
     console.log('Local run record: ' + result.run.path)
     if (result.result?.tests) {
       const tests = result.result.tests
-      console.log('Tests: ' + tests.tests + ', failures: ' + tests.failures + ', errors: ' + tests.errors + ', skipped: ' + tests.skipped)
+      console.log('Tests: ' + tests.tests + ', executed: ' + tests.executed + ', failures: ' + tests.failures + ', errors: ' + tests.errors + ', skipped: ' + tests.skipped)
     }
     if (result.failure) {
       console.log('Failure: ' + result.failure.message)
@@ -309,6 +380,14 @@ async function run() {
   }
   if (command === 'task') {
     await runTask(args)
+    return
+  }
+  if (command === 'pack') {
+    await runPack(args)
+    return
+  }
+  if (command === 'baseline') {
+    await runBaseline(args)
     return
   }
   if (command === 'verify') {

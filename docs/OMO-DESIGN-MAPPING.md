@@ -15,18 +15,19 @@ The useful comparison is therefore “which runtime technique has an equivalent?
 | Task persistence | `packages/senpi-task/src/store/` | `src/core/task-store.mjs` | JSONL event replay + snapshot + local lock |
 | Tool registry | OpenCode adapter tool registry | `src/core/tool-registry.mjs` | Named structured dispatch implemented |
 | Pre-tool guard | OpenCode `tool.execute.before` guard tier | `src/policy/tool-gate.mjs` | Deny-before-execute implemented |
-| Deterministic QA evidence | OMO `.omo/evidence/` QA rule | source binding + fresh JUnit ingestion + run/evidence stores | Result contract implemented; hashes are not called signatures |
+| Deterministic QA evidence | OMO `.omo/evidence/` QA rule | source/input binding + fresh JUnit/Findings + canonical run/evidence history | Result contract implemented; hashes are not called signatures |
 | Config validation | `packages/omo-config-core` | `src/config/verification.mjs`, `src/config/quality-gates.mjs` | Executable verification and review checklists are separate |
 | Lifecycle hook system | OpenCode hook composition / Senpi components | none | Not implemented |
 | Memory engine | `packages/memory-core` | none | Not implemented; Markdown context is not called memory |
 | Model routing/providers | `packages/model-core`, harness adapters | none | Not implemented |
 | Multi-agent/team runtime | team/delegate/task packages | none | Intentionally out of scope |
+| Component composition | adapter/component composition | installable project Packs over one result contract | Small independent equivalent; no OMO code reused |
 
 ## Important product difference
 
 OMO is an agent runtime: the agent is a primary worker and the harness coordinates tools, hooks, memory, tasks, and multiple host environments.
 
-Backend Team Harness is a backend verification runner with an optional developer-review lifecycle: the human or AI performs implementation, while the harness binds source, runs project gates, rejects false test success, and records rerunnable results.
+Backend Team Harness is a backend verification runner with an optional developer-review lifecycle: the human or AI performs implementation, while the harness serializes project execution, binds source and ignored inputs, separates executed from reported evidence, rejects false test success, and records rerunnable results.
 
 That difference is intentional. Porting OMO's full hook count, team mode, memory engine, or model router would add complexity without proving the backend collaboration problem.
 

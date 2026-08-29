@@ -96,7 +96,7 @@ async function inspectBuildFiles(root) {
 async function inspectFlyway(root) {
   const found = await findFiles(
     root,
-    (path, name) => path.split(sep).join('/').includes('src/main/resources/db/migration/') && name.endsWith('.sql')
+    (path, name) => path.split(sep).join('/').includes('/db/migration/') && name.endsWith('.sql')
   )
   const versioned = new Map()
   const invalid = []
@@ -110,10 +110,13 @@ async function inspectFlyway(root) {
       continue
     }
     if (versionMatch) {
-      const version = versionMatch[1]
+      const parts = versionMatch[1]
         .split(/[._]/)
         .map((part) => BigInt(part).toString())
-        .join('.')
+      while (parts.length > 1 && parts.at(-1) === '0') {
+        parts.pop()
+      }
+      const version = parts.join('.')
       if (versioned.has(version)) {
         duplicates.push([versioned.get(version), path])
       } else {
@@ -133,12 +136,15 @@ export async function doctorProject(inputPath = '.') {
   const checks = []
 
   const builds = await inspectBuildFiles(root)
+  const buildStatus = builds.valid.length > 0 ? 'pass' : builds.invalid.length > 0 ? 'fail' : 'warn'
   checks.push(check(
     'build-file',
-    builds.valid.length > 0 ? 'pass' : 'fail',
+    buildStatus,
     builds.valid.length > 0
       ? 'Recognizable Gradle/Maven build definitions found.'
-      : 'No recognizable Gradle or Maven build definition found.',
+      : builds.invalid.length > 0
+        ? 'Gradle/Maven build candidates exist but are not recognizable files.'
+        : 'No JVM build definition found; a valid project-declared verification contract may still be used.',
     builds
   ))
 
@@ -154,33 +160,33 @@ export async function doctorProject(inputPath = '.') {
     wrappers.length > 0 ? 'pass' : 'warn',
     wrappers.length > 0
       ? 'An executable build-wrapper file is available.'
-      : 'No executable build-wrapper file found; guarded verification cannot run yet.',
+      : 'No JVM build wrapper found; project-owned verification executables are checked separately.',
     { files: wrappers }
   ))
 
   const productionSources = await findFiles(
     root,
-    (path, name) => path.split(sep).join('/').includes('src/main/java/') && name.endsWith('.java')
+    (path, name) => /src\/main\/(?:java|kotlin)\//.test(path.split(sep).join('/')) && /\.(?:java|kt)$/.test(name)
   )
   checks.push(check(
     'main-source',
     productionSources.matches.length > 0 ? 'pass' : 'warn',
     productionSources.matches.length > 0
-      ? 'Java production source files detected.'
-      : 'No Java production source file found under a conventional source set.',
+      ? 'JVM production source files detected.'
+      : 'No Java/Kotlin production source file found under a conventional source set.',
     { count: productionSources.matches.length, truncated: productionSources.truncated }
   ))
 
   const testSources = await findFiles(
     root,
-    (path, name) => path.split(sep).join('/').includes('src/test/java/') && name.endsWith('.java')
+    (path, name) => /src\/test\/(?:java|kotlin)\//.test(path.split(sep).join('/')) && /\.(?:java|kt)$/.test(name)
   )
   checks.push(check(
     'test-source',
     testSources.matches.length > 0 ? 'pass' : 'warn',
     testSources.matches.length > 0
-      ? 'Java test source files detected.'
-      : 'No Java test source file found under a conventional source set.',
+      ? 'JVM test source files detected.'
+      : 'No Java/Kotlin test source file found under a conventional source set.',
     { count: testSources.matches.length, truncated: testSources.truncated }
   ))
 
@@ -261,6 +267,7 @@ export async function doctorProject(inputPath = '.') {
 
   return {
     schemaVersion: 1,
+    scope: 'structural-readiness',
     root,
     healthy: checks.every((entry) => entry.status !== 'fail'),
     checks

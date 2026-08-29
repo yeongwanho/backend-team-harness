@@ -1,10 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { spawnSync } from 'node:child_process'
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { spawn, spawnSync } from 'node:child_process'
+import { access, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
+import { acquireProjectVerificationLock } from '../src/core/project-lock.mjs'
 
 const cli = resolve('src/cli.mjs')
 
@@ -21,6 +22,8 @@ test('CLI help exposes the actual task and verification commands', () => {
   assert.match(result.stdout, /bth task create/)
   assert.match(result.stdout, /bth verify/)
   assert.match(result.stdout, /bth check/)
+  assert.match(result.stdout, /bth pack install/)
+  assert.match(result.stdout, /bth baseline update/)
 })
 
 test('CLI check provides a one-command local verification loop', async () => {
@@ -35,9 +38,34 @@ test('CLI check provides a one-command local verification loop', async () => {
   const result = JSON.parse(checked.stdout)
   assert.equal(result.confirmed, true)
   assert.equal(result.result.tests.tests, 1)
+  assert.doesNotMatch(checked.stdout, /synthetic output that must not be copied|synthetic error/)
+  assert.match(result.result.gates[0].process.stdout.sha256, /^[a-f0-9]{64}$/)
+  assert.equal('tail' in result.result.gates[0].process.stdout, false)
   const localRecord = JSON.parse(await readFile(join(root, result.run.path), 'utf8'))
   assert.equal(localRecord.taskId, null)
   assert.deepEqual(localRecord.rerun, ['bth', 'check', '.'])
+})
+
+test('CLI task mutations share the verification lock', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-cli-task-project-lock-'))
+  await writeGradleFixture(root)
+  initializeGit(root)
+  assert.equal(runCli(['init', root]).status, 0)
+  const release = await acquireProjectVerificationLock(root)
+  const child = spawn(process.execPath, [cli, 'task', 'create', 'LOCKED-1', root, '--context', 'Known'], {
+    encoding: 'utf8'
+  })
+  let stderr = ''
+  child.stderr.setEncoding('utf8')
+  child.stderr.on('data', (chunk) => { stderr += chunk })
+  const completed = new Promise((resolvePromise) => child.once('close', (code) => resolvePromise(code)))
+
+  await new Promise((resolvePromise) => setTimeout(resolvePromise, 100))
+  await assert.rejects(access(join(root, '.backend-harness/tasks/LOCKED-1')))
+  await release()
+
+  assert.equal(await completed, 0, stderr)
+  await access(join(root, '.backend-harness/tasks/LOCKED-1/task.json'))
 })
 
 test('CLI refuses implicit force overwrite in the current directory', async () => {

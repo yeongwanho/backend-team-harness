@@ -21,23 +21,25 @@ async function preparedProject(prefix = 'bth-doctor-') {
   return root
 }
 
-test('doctor accepts content-bearing Spring-style foundations', async () => {
+test('doctor accepts content-bearing JVM backend foundations', async () => {
   const root = await preparedProject()
   const result = await doctorProject(root)
 
   assert.equal(result.healthy, true)
+  assert.equal(result.scope, 'structural-readiness')
   assert.equal(result.checks.every((entry) => entry.status === 'pass'), true)
 })
 
-test('doctor blocks a repository without a build definition or shared contract', async () => {
+test('doctor blocks a repository without a shared contract or verification config', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-doctor-missing-'))
   const result = await doctorProject(root)
 
   assert.equal(result.healthy, false)
   assert.deepEqual(
     result.checks.filter((entry) => entry.status === 'fail').map((entry) => entry.id),
-    ['build-file', 'shared-contract', 'quality-gate-schema', 'verification-config']
+    ['shared-contract', 'quality-gate-schema', 'verification-config']
   )
+  assert.equal(result.checks.find((entry) => entry.id === 'build-file').status, 'warn')
 })
 
 test('directories named like files do not produce false passes', async () => {
@@ -47,8 +49,28 @@ test('directories named like files do not produce false passes', async () => {
 
   const result = await doctorProject(root)
 
-  assert.equal(result.checks.find((entry) => entry.id === 'build-file').status, 'fail')
+  assert.equal(result.checks.find((entry) => entry.id === 'build-file').status, 'warn')
   assert.equal(result.checks.find((entry) => entry.id === 'shared-contract').status, 'fail')
+})
+
+test('doctor accepts a non-JVM backend with a valid project-owned verification contract', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-doctor-generic-'))
+  await initProject(root, { allowUnversioned: true })
+  await writeFile(join(root, 'verify'), '#!/bin/sh\nexit 0\n', 'utf8')
+  await chmod(join(root, 'verify'), 0o755)
+  await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify({
+    schemaVersion: 1,
+    gates: [{
+      id: 'tests', required: true, command: ['./verify'],
+      result: { type: 'junit', reports: ['reports/*.xml'], minimumTests: 1 }
+    }]
+  }) + '\n', 'utf8')
+
+  const result = await doctorProject(root)
+
+  assert.equal(result.healthy, true)
+  assert.equal(result.checks.find((entry) => entry.id === 'build-file').status, 'warn')
+  assert.equal(result.checks.find((entry) => entry.id === 'verification-config').status, 'pass')
 })
 
 test('an empty build file does not count as a build definition', async () => {
@@ -81,6 +103,17 @@ test('invalid quality-gate YAML fails doctor instead of silently passing', async
 test('duplicate Flyway versions fail with the conflicting paths', async () => {
   const root = await preparedProject('bth-doctor-flyway-')
   await writeFile(join(root, 'src/main/resources/db/migration/V01__duplicate.sql'), 'select 2;\n', 'utf8')
+
+  const result = await doctorProject(root)
+  const flyway = result.checks.find((entry) => entry.id === 'flyway')
+
+  assert.equal(flyway.status, 'fail')
+  assert.equal(flyway.details.duplicates.length, 1)
+})
+
+test('Flyway trailing zero versions compare equal just like MigrationVersion', async () => {
+  const root = await preparedProject('bth-doctor-flyway-zero-')
+  await writeFile(join(root, 'src/main/resources/db/migration/V1.0__duplicate.sql'), 'select 2;\n', 'utf8')
 
   const result = await doctorProject(root)
   const flyway = result.checks.find((entry) => entry.id === 'flyway')
