@@ -163,6 +163,8 @@ test('a symlinked build wrapper is rejected before the external script runs', as
 
   assert.equal(result.confirmed, false)
   assert.equal(result.task.state, 'VERIFY_FAILED')
+  assert.equal(result.evidence.record.evidenceTier, 'CONTROL')
+  assert.equal(result.run.record.evidenceTier, 'CONTROL')
   assert.match(result.evidence.record.error.message, /symbolic link/)
   await assert.rejects(readFile(marker, 'utf8'), (error) => error.code === 'ENOENT')
 })

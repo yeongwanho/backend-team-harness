@@ -5,7 +5,9 @@ import {
   createInterview,
   finalizeInterview,
   loadInterview,
-  recordInterviewAnswer
+  rebindInterviewContext,
+  recordInterviewAnswer,
+  reviseInterviewAnswer
 } from '../core/interview-store.mjs'
 import { withProjectVerificationLock } from '../core/project-lock.mjs'
 import {
@@ -23,6 +25,53 @@ function sha256(value) {
 
 function answerById(record, id) {
   return record.answers.find((answer) => answer.questionId === id)?.text ?? ''
+}
+
+function hasDeclaredDatabaseImpact(interview, contextSnapshot) {
+  const answer = answerById(interview, 'data').toLowerCase()
+  const explicitlyNone = /^(no |none|없음|변경 없음|영향 없음)/.test(answer)
+  const migrations = contextSnapshot.facts
+    ?.find((entry) => entry.id === 'database.flyway')
+    ?.evidence?.files ?? []
+  return !explicitlyNone || migrations.length > 0
+}
+
+function executionSteps(interview, contextSnapshot, requiredGates) {
+  const steps = [
+    {
+      id: 'confirm-context',
+      action: 'Re-check the source-bound requirement, observed project facts, policies, and unresolved conflicts before editing.',
+      proof: 'The source fingerprint and context snapshot match the approved plan.'
+    },
+    {
+      id: 'trace-impact',
+      action: 'Trace callers, contracts, persistence, and tests inside the explicitly allowed scope.',
+      proof: 'Every proposed edit maps to an acceptance criterion or declared data impact.'
+    },
+    {
+      id: 'implement',
+      action: 'Implement the smallest change that satisfies the acceptance criteria without crossing excluded boundaries.',
+      proof: 'The diff stays inside the approved scope or returns for new approval.'
+    }
+  ]
+  if (hasDeclaredDatabaseImpact(interview, contextSnapshot)) {
+    steps.push({
+      id: 'database',
+      action: 'Apply the declared DB/data decision for ' + (contextSnapshot.verification?.context?.databaseDialect ?? 'the detected database') + ', including migration and compatibility checks.',
+      proof: 'Migration ordering, schema compatibility, and data behavior are demonstrated by the declared Gate.'
+    })
+  }
+  steps.push({
+    id: 'verify',
+    action: 'Run ' + (requiredGates.length ? requiredGates.join(', ') : 'the project-declared BTH verification contract') + ' plus the task-specific failure scenarios.',
+    proof: 'Fresh structured evidence is bound to the final Git source.'
+  })
+  steps.push({
+    id: 'review',
+    action: 'Review residual risks, exclusions, and source drift before declaring completion.',
+    proof: 'A human approves this exact plan artifact before implementation; DONE uses unchanged verified source.'
+  })
+  return steps
 }
 
 function makeArtifacts(interview, contextSnapshot) {
@@ -55,6 +104,9 @@ function makeArtifacts(interview, contextSnapshot) {
   const requiredGates = contextSnapshot.verification.gates
     .filter((gate) => gate.required)
     .map((gate) => gate.id)
+  const requiredPolicyGates = (contextSnapshot.policyGates ?? [])
+    .filter((gate) => gate.required)
+    .map((gate) => ({ name: gate.name, checks: [...gate.checks] }))
   const plan = {
     schemaVersion: 1,
     taskId: interview.taskId,
@@ -66,38 +118,8 @@ function makeArtifacts(interview, contextSnapshot) {
     requestedVerification: answerById(interview, 'verification'),
     constraintsAndExclusions: answerById(interview, 'constraints'),
     declaredRequiredGates: requiredGates,
-    steps: [
-      {
-        id: 'confirm-context',
-        action: 'Re-check the source-bound requirement, project facts, policies, and unresolved conflicts before editing.',
-        proof: 'The source fingerprint and context snapshot match the approved plan.'
-      },
-      {
-        id: 'trace-impact',
-        action: 'Trace callers, contracts, persistence, and tests inside the explicitly allowed scope.',
-        proof: 'Every proposed edit maps to an acceptance criterion or declared data impact.'
-      },
-      {
-        id: 'implement',
-        action: 'Implement the smallest change that satisfies the acceptance criteria without crossing excluded boundaries.',
-        proof: 'The diff stays inside the approved scope or records a new approval.'
-      },
-      {
-        id: 'database',
-        action: 'Apply the declared DB/data decision, including migration and compatibility checks when applicable.',
-        proof: 'The DB impact statement is explicitly demonstrated or explicitly states no impact.'
-      },
-      {
-        id: 'verify',
-        action: 'Run the project-declared BTH verification contract plus the task-specific failure scenarios.',
-        proof: 'Fresh structured evidence is bound to the final Git source.'
-      },
-      {
-        id: 'review',
-        action: 'Review residual risks, exclusions, and source drift before declaring completion.',
-        proof: 'A human approves this exact plan before implementation; DONE uses unchanged verified source.'
-      }
-    ],
+    declaredRequiredPolicyGates: requiredPolicyGates,
+    steps: executionSteps(interview, contextSnapshot, requiredGates),
     provenance: {
       requirementSha256: interview.requirementSha256,
       contextSnapshotSha256: interview.contextSnapshotSha256,
@@ -247,6 +269,31 @@ export async function answerInterview(inputPath, taskId, input, options = {}) {
   })
 }
 
+export async function reviseInterview(inputPath, taskId, input, options = {}) {
+  return withProjectVerificationLock(inputPath, options.projectLock, async () => {
+    const revised = await reviseInterviewAnswer(inputPath, taskId, input, options)
+    return {
+      ...revised,
+      nextCommand: nextCommand(taskId, revised.progress.currentQuestion, revised.root)
+    }
+  })
+}
+
+export async function rebindInterview(inputPath, taskId, input, options = {}) {
+  return withProjectVerificationLock(inputPath, options.projectLock, async () => {
+    const contextSnapshot = await inspectProjectContext(inputPath, options)
+    const rebound = await rebindInterviewContext(inputPath, taskId, {
+      actor: input.actor,
+      sourceBinding: contextSnapshot.sourceBinding,
+      contextSnapshot
+    }, options)
+    return {
+      ...rebound,
+      nextCommand: nextCommand(taskId, rebound.progress.currentQuestion, rebound.root)
+    }
+  })
+}
+
 export async function interviewStatus(inputPath, taskId) {
   const loaded = await loadInterview(inputPath, taskId)
   return {
@@ -257,11 +304,15 @@ export async function interviewStatus(inputPath, taskId) {
   }
 }
 
-async function syncFinalizedPlanToTask(root, taskId, artifacts, markdown, actor) {
+async function syncFinalizedPlanToTask(root, taskId, artifacts, artifactDigests, markdown, actor) {
   let task = await loadTask(root, taskId)
   const contextText = taskContextText(artifacts, artifacts.context.project)
   if (task.record.state === 'PLAN_PROPOSED') {
-    if (task.record.context !== contextText || task.record.plan !== markdown.trim()) {
+    if (
+      task.record.context !== contextText ||
+      task.record.plan !== markdown.trim() ||
+      task.record.planArtifactSha256 !== artifactDigests.plan
+    ) {
       throw new Error('Task plan differs from the finalized interview artifacts: ' + taskId)
     }
     return task
@@ -288,7 +339,8 @@ async function syncFinalizedPlanToTask(root, taskId, artifacts, markdown, actor)
     await updateTaskPlan(root, taskId, planText, {
       actor,
       reason: 'Materialize source-bound native interview execution plan.',
-      sourceFingerprint: artifacts.plan.sourceFingerprint
+      sourceFingerprint: artifacts.plan.sourceFingerprint,
+      artifactSha256: artifactDigests.plan
     })
   }
   task = await loadTask(root, taskId)
@@ -323,7 +375,14 @@ export async function completeInterview(inputPath, taskId, input, options = {}) 
         throw new Error('Finalized interview artifact digests do not match regenerated artifacts.')
       }
     }
-    const task = await syncFinalizedPlanToTask(finalized.root, taskId, artifacts, markdown, input.actor)
+    const task = await syncFinalizedPlanToTask(
+      finalized.root,
+      taskId,
+      artifacts,
+      finalized.record.artifactDigests,
+      markdown,
+      input.actor
+    )
     return {
       ...finalized,
       artifacts,

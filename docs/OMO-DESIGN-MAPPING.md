@@ -16,6 +16,8 @@ The useful comparison is therefore “which runtime technique has an equivalent?
 | Tool registry | OpenCode adapter tool registry | `src/core/tool-registry.mjs` | Named structured dispatch implemented |
 | Pre-tool guard | OpenCode `tool.execute.before` guard tier | `src/policy/tool-gate.mjs` | Deny-before-execute implemented |
 | Deterministic QA evidence | OMO `.omo/evidence/` QA rule | source/input binding + fresh JUnit/Findings + canonical run/evidence history | Result contract implemented; hashes are not called signatures |
+| Planning handoff | harness-specific task/prompt adapters | canonical human-approved plan digest + provider-neutral read-only JSON export | Port implemented; provider-specific execution adapters remain separate |
+| Failure continuation | task/continuation components | sealed failed-run diagnosis + exact rerun argv | Deterministic advisory equivalent; no automatic retry |
 | Config validation | `packages/omo-config-core` | `src/config/verification.mjs`, `src/config/quality-gates.mjs` | Executable verification and review checklists are separate |
 | Lifecycle hook system | OpenCode hook composition / Senpi components | none | Not implemented |
 | Memory engine | `packages/memory-core` | none | Not implemented; Markdown context is not called memory |

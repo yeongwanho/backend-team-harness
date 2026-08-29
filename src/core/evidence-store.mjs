@@ -4,6 +4,7 @@ import { relative, resolve } from 'node:path'
 import { assertNoSymlinkSegments } from '../fs-safety.mjs'
 import { taskDirectory } from './task-store.mjs'
 import { canonicalJson } from './canonical-json.mjs'
+import { evidenceTierFor } from './evidence-tier.mjs'
 import { redactForShare } from './redaction.mjs'
 
 function evidenceId(date, suffix) {
@@ -27,7 +28,7 @@ export async function recordEvidence(inputPath, taskId, input, options = {}) {
   const unredacted = {
     ...input,
     schemaVersion: 3,
-    evidenceTier: 'EXECUTED',
+    evidenceTier: evidenceTierFor(input),
     id,
     taskId: paths.id,
     recordedAt: now.toISOString()

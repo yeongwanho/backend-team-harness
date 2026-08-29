@@ -61,6 +61,7 @@ export async function verifyTask(inputPath, taskId, options = {}) {
   } catch (error) {
     const permissionDenied = error instanceof ToolPermissionError
     const evidence = await recordEvidence(loaded.root, taskId, {
+      evidenceTier: 'CONTROL',
       type: permissionDenied ? 'tool_blocked' : 'tool_error',
       toolId,
       outcome: permissionDenied ? 'blocked' : 'failed',
@@ -72,6 +73,7 @@ export async function verifyTask(inputPath, taskId, options = {}) {
       }
     }, options.evidence)
     const run = await recordRun(loaded.root, taskId, {
+      evidenceTier: 'CONTROL',
       confirmed: false,
       sourceBinding,
       evidenceId: evidence.record.id,
@@ -91,6 +93,7 @@ export async function verifyTask(inputPath, taskId, options = {}) {
 
   const confirmed = verificationOutcome(result)
   const evidence = await recordEvidence(loaded.root, taskId, {
+    evidenceTier: 'EXECUTED',
     type: 'tool_execution',
     toolId,
     outcome: confirmed ? 'confirmed' : 'failed',
@@ -99,6 +102,7 @@ export async function verifyTask(inputPath, taskId, options = {}) {
     result: stripOutputTails(result)
   }, options.evidence)
   const run = await recordRun(loaded.root, taskId, {
+    evidenceTier: 'EXECUTED',
     confirmed,
     sourceBinding,
     evidenceId: evidence.record.id,

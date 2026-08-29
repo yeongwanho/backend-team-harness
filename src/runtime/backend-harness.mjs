@@ -66,6 +66,7 @@ export async function checkProject(inputPath, options = {}) {
     }
     const confirmed = failure === null && result?.passed === true && result.tests?.executed > 0
     const run = await recordProjectRun(inputPath, {
+      evidenceTier: failure === null ? 'EXECUTED' : 'CONTROL',
       confirmed,
       sourceBinding,
       result,

@@ -15,11 +15,11 @@ AI가 코드를 작성해도 좋고 사람이 직접 작성해도 좋습니다. 
       ↓
 argv Gate Runner                       shell 문자열·외부 실행 파일 거절
       ↓
-┌──────────────────────┬─────────────────────────┐
-│ EXECUTED             │ REPORTED                │
-│ JUnit·프로세스 실행  │ 보안·정적분석·그래프    │
-│ PASS 근거가 될 수 있음│ PASS를 만들 수 없음     │
-└──────────────────────┴─────────────────────────┘
+┌──────────────────────┬─────────────────────────┬─────────────────────────┐
+│ EXECUTED             │ REPORTED                │ CONTROL                 │
+│ JUnit·프로세스 실행  │ 보안·정적분석·그래프    │ 실행 전 거부·도구 오류  │
+│ PASS 근거가 될 수 있음│ PASS를 만들 수 없음     │ 실행 증거가 아님         │
+└──────────────────────┴─────────────────────────┴─────────────────────────┘
       ↓
 Git + 입력 파일 + 도구체인 + 결과 해시 + redaction + append-only 이력
 ```
@@ -100,7 +100,7 @@ node src/cli.mjs check examples/spring-service --allow-network
 
 자동 생성되는 JVM 기본값은 기존 캐시만 쓰는 `--offline` 모드입니다. 새 PC에서 의존성을 받아야 한다면 팀이 설정에서 `--offline`을 제거하고 `network: true`를 선언한 뒤, 해당 실행에만 `--allow-network`를 줍니다.
 
-## 결과 계약 두 종류
+## 결과 계약과 증거 등급
 
 | 결과 | 증거 등급 | 역할 |
 | --- | --- | --- |
@@ -108,6 +108,7 @@ node src/cli.mjs check examples/spring-service --allow-network
 | `exit-code` | `EXECUTED` | compile/migration 같은 프로세스 성공을 증명하지만 단독 PASS 불가 |
 | `findings` | `REPORTED` | 보안·정적 분석 결과가 심각하면 PASS를 차단하지만 단독 PASS 불가 |
 | `observation` | `REPORTED` | 그래프·coverage 같은 참고 정보. 항상 optional이며 PASS에 영향 없음 |
+| 실행 전 거부·도구 오류 | `CONTROL` | 안전장치와 실패 경로의 기록. 프로젝트 동작을 실행했다는 증거가 아님 |
 
 Findings 도구는 다음의 작은 JSON 계약으로 연결합니다.
 
@@ -213,10 +214,17 @@ node src/cli.mjs interview answer USER-17 /path/to/project \
   --by developer
 
 # scope → data → verification → constraints도 같은 방식으로 답합니다.
+# 이미 답한 결정은 다른 답을 잃지 않고 고칠 수 있습니다.
+node src/cli.mjs interview revise USER-17 /path/to/project \
+  --question scope --text "users 모듈과 관련 테스트만 변경" --by reviewer
+
+# 인터뷰 도중 소스가 바뀌었다면 답을 보존한 채 현재 Git 상태에 다시 묶습니다.
+node src/cli.mjs interview rebind USER-17 /path/to/project --by developer
+
 node src/cli.mjs interview finalize USER-17 /path/to/project --by developer
 ```
 
-인터뷰 시작 시 BTH는 Git 지문, 빌드 정의, 소스·테스트 수, Flyway, 팀 문서, `verification.json` Gate를 읽기 전용으로 수집합니다. 질문은 완료 조건·변경 범위·DB 영향·검증·제약의 다섯 가지이며, 한 번에 현재 질문 하나만 답할 수 있습니다. 확정되지 않은 답은 `--status unknown` 또는 `--status conflict`로 남길 수 있지만 해결 전에는 계획을 확정하지 못합니다.
+인터뷰 시작 시 BTH는 Git 지문, 빌드 정의, 소스·테스트 수, Flyway, DB dialect, 품질 정책, `verification.json` Gate를 읽기 전용으로 수집합니다. 질문은 완료 조건·변경 범위·DB 영향·검증·제약의 다섯 가지이며, 한 번에 현재 질문 하나만 답할 수 있습니다. 질문의 힌트는 감지한 MySQL/Flyway/Gate 사실을 보여 주지만 답을 대신 채우지는 않습니다. 확정되지 않은 답은 `--status unknown` 또는 `--status conflict`로 남길 수 있지만 해결 전에는 계획을 확정하지 못합니다.
 
 `finalize`는 다음 파일을 만듭니다.
 
@@ -224,6 +232,7 @@ node src/cli.mjs interview finalize USER-17 /path/to/project --by developer
 .backend-harness/tasks/USER-17/interview/
 ├── events.jsonl              # hash-chain 감사 이력
 ├── context-snapshot.json     # 결정적으로 관찰한 프로젝트 사실
+├── context-snapshots/<sha>.json # 재바인딩해도 남는 불변 스냅샷
 ├── requirement.json
 ├── context.json
 ├── impact.json
@@ -231,13 +240,17 @@ node src/cli.mjs interview finalize USER-17 /path/to/project --by developer
 └── plan.md                   # 사람이 검토하는 실행계획
 ```
 
-계획 확정 중 Git 소스가 바뀌면 실패합니다. 확정 후 task는 `PLAN_PROPOSED`가 되며 자동 승인되지 않습니다. 사람은 내용을 검토한 뒤 아래처럼 승인합니다. 승인할 때도 계획이 묶인 소스 지문을 다시 확인하고 context/plan 해시가 들어간 승인 영수증을 task 이력에 남깁니다.
+계획 확정 중 Git 소스가 바뀌면 실패합니다. `interview rebind`를 해야 새 프로젝트 사실을 다시 수집하고 기존 답을 새 소스에 묶을 수 있습니다. 확정 후 task는 `PLAN_PROPOSED`가 되며 자동 승인되지 않습니다. 사람은 내용을 검토한 뒤 아래처럼 승인합니다. 승인 시 소스 지문뿐 아니라 canonical `plan.json` SHA-256까지 검증하고, context/plan/artifact 해시가 든 승인 영수증을 task 이력에 남깁니다.
 
 ```bash
 node src/cli.mjs task advance USER-17 PLAN_APPROVED /path/to/project --by reviewer --approve
+# 어떤 코딩 에이전트에도 넘길 수 있는 읽기 전용 JSON 계약
+node src/cli.mjs task export-plan USER-17 /path/to/project --json
 node src/cli.mjs task advance USER-17 IMPLEMENTING /path/to/project --by developer
 # 사람 또는 연결된 코딩 에이전트가 승인된 plan.md 범위만 구현
 node src/cli.mjs verify USER-17 /path/to/project
+# 실패했다면 sealed run record에서 Gate·테스트·재실행 명령을 설명
+node src/cli.mjs diagnose USER-17 /path/to/project
 ```
 
 BTH 자체가 모델을 내장하거나 임의로 코드를 수정하지는 않습니다. 그래서 어떤 코딩 에이전트나 사람과도 함께 쓸 수 있고, 계획·승인·검증 판정은 모델의 주장과 분리됩니다.
@@ -252,7 +265,7 @@ CONTEXT_MISSING → CONTEXT_READY → PLAN_PROPOSED → PLAN_APPROVED
                                       VERIFY_FAILED         VERIFIED → DONE
 ```
 
-`bth verify`는 승인된 task만 실행합니다. `DONE` 직전에 소스 지문을 다시 계산하고 검증 이후 변경이 있으면 거절합니다.
+`task export-plan`은 모델에 종속되지 않은 입력 포트이며 코드 쓰기 권한이나 완료 판정 권한을 주지 않습니다. `bth verify`는 승인된 task만 실행합니다. 실패는 `diagnose`가 최신 sealed run record에서 설명하지만 자동으로 PASS로 바꾸거나 실패 기록을 숨기지 않습니다. `DONE` 직전에 소스 지문을 다시 계산하고 검증 이후 변경이 있으면 거절합니다.
 
 ## 기록과 보안
 

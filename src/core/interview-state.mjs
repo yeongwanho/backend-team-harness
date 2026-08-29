@@ -53,6 +53,52 @@ function deriveStatus(answers) {
   return current ? 'COLLECTING' : 'READY'
 }
 
+function questionById(questionId) {
+  return INTERVIEW_QUESTIONS.find((question) => question.id === questionId) ?? null
+}
+
+function observedHint(question, contextSnapshot) {
+  if (!contextSnapshot) {
+    return question.hint
+  }
+  const observations = []
+  if (question.id === 'data') {
+    const dialect = contextSnapshot.verification?.context?.databaseDialect
+    const migrations = contextSnapshot.facts
+      ?.find((entry) => entry.id === 'database.flyway')
+      ?.evidence?.files ?? []
+    if (dialect) {
+      observations.push('감지된 DB: ' + dialect + '.')
+    }
+    if (migrations.length) {
+      observations.push('감지된 migration: ' + migrations.join(', ') + '.')
+    }
+  }
+  if (question.id === 'verification') {
+    const gates = (contextSnapshot.verification?.gates ?? [])
+      .filter((gate) => gate.required)
+      .map((gate) => gate.id + (gate.minimumTests ? ' (최소 ' + gate.minimumTests + ' tests)' : ''))
+    const policies = (contextSnapshot.policyGates ?? [])
+      .filter((gate) => gate.required)
+      .map((gate) => gate.name + ': ' + gate.checks.join(', '))
+    if (gates.length) {
+      observations.push('필수 실행 Gate: ' + gates.join('; ') + '.')
+    }
+    if (policies.length) {
+      observations.push('필수 정책 Gate: ' + policies.join('; ') + '.')
+    }
+  }
+  if (question.id === 'scope' || question.id === 'constraints') {
+    const unresolved = (contextSnapshot.facts ?? [])
+      .filter((entry) => entry.status !== 'confirmed')
+      .map((entry) => entry.id + '=' + entry.status)
+    if (unresolved.length) {
+      observations.push('확인이 필요한 프로젝트 사실: ' + unresolved.join(', ') + '.')
+    }
+  }
+  return observations.length ? question.hint + ' 현재 프로젝트 관찰: ' + observations.join(' ') : question.hint
+}
+
 export function currentInterviewQuestion(record) {
   if (record.status === 'FINALIZED') {
     return null
@@ -144,6 +190,75 @@ export function answerInterviewRecord(record, input, options = {}) {
   }
 }
 
+export function reviseInterviewRecord(record, input, options = {}) {
+  if (!record || record.schemaVersion !== INTERVIEW_SCHEMA_VERSION) {
+    throw new Error('Interview record has an unsupported schema version.')
+  }
+  if (record.status === 'FINALIZED') {
+    throw new Error('A finalized interview cannot be changed.')
+  }
+  const question = questionById(input.questionId)
+  if (!question) {
+    throw new Error('Unknown interview question: ' + input.questionId)
+  }
+  if (!record.answers.some((answer) => answer.questionId === question.id)) {
+    throw new Error('Interview answer does not exist and cannot be revised: ' + question.id)
+  }
+  const actor = normalizeTaskText(input.actor, 'actor', 128)
+  if (!actor) {
+    throw new Error('Interview revisions require an actor.')
+  }
+  const text = normalizeTaskText(input.text, 'interview answer', 64 * 1024)
+  if (!text) {
+    throw new Error('Interview answer cannot be empty.')
+  }
+  const answerStatus = input.status ?? 'answered'
+  if (!ANSWER_STATUSES.has(answerStatus)) {
+    throw new Error('Interview answer status must be answered, unknown, or conflict.')
+  }
+  const at = options.at ?? new Date().toISOString()
+  const answers = record.answers.map((answer) => answer.questionId === question.id
+    ? { questionId: question.id, status: answerStatus, text, actor, answeredAt: at }
+    : answer)
+  return {
+    ...record,
+    answers,
+    status: deriveStatus(answers),
+    revision: record.revision + 1,
+    updatedAt: at
+  }
+}
+
+export function rebindInterviewRecord(record, input, options = {}) {
+  if (!record || record.schemaVersion !== INTERVIEW_SCHEMA_VERSION) {
+    throw new Error('Interview record has an unsupported schema version.')
+  }
+  if (record.status === 'FINALIZED') {
+    throw new Error('A finalized interview cannot be rebound.')
+  }
+  const actor = normalizeTaskText(input.actor, 'actor', 128)
+  if (!actor) {
+    throw new Error('Interview rebind requires an actor.')
+  }
+  if (!input.sourceBinding?.fingerprint || !/^[a-f0-9]{64}$/.test(input.sourceBinding.fingerprint)) {
+    throw new Error('Interview rebind requires a Git source binding.')
+  }
+  if (!input.contextSnapshot || typeof input.contextSnapshot !== 'object') {
+    throw new Error('Interview rebind requires a deterministic project-context snapshot.')
+  }
+  const at = options.at ?? new Date().toISOString()
+  return {
+    ...record,
+    sourceFingerprint: input.sourceBinding.fingerprint,
+    contextSnapshotSha256: digest(input.contextSnapshot),
+    status: deriveStatus(record.answers),
+    revision: record.revision + 1,
+    bindingRevision: (record.bindingRevision ?? 0) + 1,
+    updatedAt: at,
+    artifactDigests: null
+  }
+}
+
 export function assertInterviewFinalizable(record, currentSourceFingerprint) {
   if (record.status === 'FINALIZED') {
     throw new Error('Interview is already finalized.')
@@ -189,17 +304,21 @@ export function finalizeInterviewRecord(record, input, options = {}) {
   }
 }
 
-export function interviewProgress(record) {
+export function interviewProgress(record, contextSnapshot = null) {
   const byQuestion = answerMap(record.answers)
   const questions = INTERVIEW_QUESTIONS.map((question) => ({
     ...question,
+    hint: observedHint(question, contextSnapshot),
     answer: byQuestion.get(question.id) ?? null
   }))
+  const current = currentInterviewQuestion(record)
   return {
     status: record.status,
     answered: questions.filter((question) => question.answer?.status === 'answered').length,
     total: questions.length,
-    currentQuestion: currentInterviewQuestion(record),
+    currentQuestion: current
+      ? { ...current, hint: observedHint(current, contextSnapshot) }
+      : null,
     questions
   }
 }

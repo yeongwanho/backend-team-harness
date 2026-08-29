@@ -1,6 +1,7 @@
 import { isAbsolute, relative, sep } from 'node:path'
 import { doctorProject } from '../doctor.mjs'
 import { loadVerificationConfig, verificationInputPaths } from '../config/verification.mjs'
+import { loadQualityGates } from '../config/quality-gates.mjs'
 import { captureSourceBinding } from '../core/source-binding.mjs'
 
 function portable(path) {
@@ -28,6 +29,7 @@ function checkById(doctor, id) {
 export async function inspectProjectContext(inputPath, options = {}) {
   const doctor = options.doctor ?? await doctorProject(inputPath)
   const verification = options.verification ?? await loadVerificationConfig(inputPath, { allowInferred: false })
+  const policies = options.policies ?? await loadQualityGates(doctor.root)
   const sourceBinding = options.sourceBinding ?? await captureSourceBinding(inputPath, {
     explicitPaths: verificationInputPaths(verification.config),
     allowSymlinkPaths: verification.config.gates.map((gate) => gate.command[0])
@@ -101,6 +103,13 @@ export async function inspectProjectContext(inputPath, options = {}) {
         minimumTests: gate.result.minimumTests ?? null
       }))
     },
+    policyGates: policies.gates.map((gate) => ({
+      name: gate.name,
+      required: gate.required,
+      checks: [...gate.checks],
+      file: gate.file
+    })),
+    policyDiagnostics: [...policies.diagnostics],
     policyPaths: [
       '.backend-harness/project.md',
       '.backend-harness/architecture.md',

@@ -18,10 +18,14 @@ import {
   answerInterview,
   completeInterview,
   interviewStatus,
+  rebindInterview,
+  reviseInterview,
   startInterview
 } from './runtime/interview-orchestrator.mjs'
+import { exportApprovedPlan } from './runtime/plan-export.mjs'
+import { diagnoseTaskFailure } from './runtime/failure-diagnosis.mjs'
 
-const VERSION = '0.4.0'
+const VERSION = '0.6.0'
 
 function printHelp() {
   console.log([
@@ -38,12 +42,16 @@ function printHelp() {
     '  bth task context <id> [path] --text <text> --by <actor> [--json]',
     '  bth task plan <id> [path] --text <text> --by <actor> [--json]',
     '  bth task status <id> [path] [--json]',
+    '  bth task export-plan <id> [path] [--json]',
     '  bth task advance <id> <state> [path] --by <actor> [--approve] [--reason <text>] [--json]',
     '  bth interview start <id> [path] --requirement <text> --by <actor> [--title <text>] [--json]',
     '  bth interview answer <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--json]',
+    '  bth interview revise <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--json]',
+    '  bth interview rebind <id> [path] --by <actor> [--json]',
     '  bth interview status <id> [path] [--json]',
     '  bth interview finalize <id> [path] --by <actor> [--json]',
     '  bth verify <id> [path] [--allow-network] [--json]',
+    '  bth diagnose <id> [path] [--json]',
     '  bth version',
     '',
     'Safety:',
@@ -57,6 +65,13 @@ function printHelp() {
 function printInterviewProgress(result) {
   const progress = result.progress
   console.log('Interview ' + result.record.taskId + ': ' + progress.status + ' (' + progress.answered + '/' + progress.total + ' resolved)')
+  console.log('Source: ' + result.record.sourceFingerprint)
+  if (progress.questions.some((question) => question.answer)) {
+    console.log('Decisions: ' + progress.questions
+      .filter((question) => question.answer)
+      .map((question) => question.id + '=' + question.answer.status)
+      .join(', '))
+  }
   if (progress.currentQuestion) {
     console.log('')
     console.log('[' + progress.currentQuestion.id + '] ' + progress.currentQuestion.title)
@@ -70,7 +85,7 @@ function printInterviewProgress(result) {
 async function runInterview(args) {
   const [subcommand, ...rest] = args
   if (!subcommand) {
-    throw new Error('Usage: bth interview <start|answer|status|finalize> ...')
+    throw new Error('Usage: bth interview <start|answer|revise|rebind|status|finalize> ...')
   }
 
   if (subcommand === 'start') {
@@ -124,6 +139,47 @@ async function runInterview(args) {
       actor,
       status: parsed.options.get('--status')
     })
+    printResult(result, parsed.flags.has('--json'), () => printInterviewProgress(result))
+    return
+  }
+
+  if (subcommand === 'revise') {
+    const parsed = parseArguments(rest, {
+      booleans: ['--json'],
+      values: ['--question', '--text', '--by', '--status']
+    })
+    assertPositionalCount(
+      parsed.positionals,
+      1,
+      2,
+      'bth interview revise <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--json]'
+    )
+    const questionId = parsed.options.get('--question')
+    const text = parsed.options.get('--text')
+    const actor = parsed.options.get('--by')
+    if (!questionId || !text || !actor) {
+      throw new Error('Interview revise requires --question, --text, and --by.')
+    }
+    const [id, path = '.'] = parsed.positionals
+    const result = await reviseInterview(path, id, {
+      questionId,
+      text,
+      actor,
+      status: parsed.options.get('--status')
+    })
+    printResult(result, parsed.flags.has('--json'), () => printInterviewProgress(result))
+    return
+  }
+
+  if (subcommand === 'rebind') {
+    const parsed = parseArguments(rest, { booleans: ['--json'], values: ['--by'] })
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth interview rebind <id> [path] --by <actor> [--json]')
+    const actor = parsed.options.get('--by')
+    if (!actor) {
+      throw new Error('Interview rebind requires --by <actor>.')
+    }
+    const [id, path = '.'] = parsed.positionals
+    const result = await rebindInterview(path, id, { actor })
     printResult(result, parsed.flags.has('--json'), () => printInterviewProgress(result))
     return
   }
@@ -266,7 +322,7 @@ async function runDoctor(args) {
 async function runTask(args) {
   const [subcommand, ...rest] = args
   if (!subcommand) {
-    throw new Error('Usage: bth task <create|context|plan|status|advance> ...')
+    throw new Error('Usage: bth task <create|context|plan|status|export-plan|advance> ...')
   }
 
   if (subcommand === 'create') {
@@ -296,6 +352,18 @@ async function runTask(args) {
     printResult(result, parsed.flags.has('--json'), () => {
       console.log('Task ' + id + ': ' + result.record.state + ' (revision ' + result.record.revision + ')')
       console.log('Last evidence: ' + (result.record.lastEvidenceId ?? 'none'))
+    })
+    return
+  }
+
+  if (subcommand === 'export-plan') {
+    const parsed = parseArguments(rest, { booleans: ['--json'] })
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth task export-plan <id> [path] [--json]')
+    const [id, path = '.'] = parsed.positionals
+    const result = await exportApprovedPlan(path, id)
+    printResult(result, parsed.flags.has('--json'), () => {
+      console.log('Exported approved plan ' + result.planDigest + ' for task ' + id + '.')
+      console.log('Authority: read-only plan; no write or completion verdict authority.')
     })
     return
   }
@@ -355,11 +423,21 @@ async function runTask(args) {
       const transitionOptions = targetState === 'DONE'
         ? { currentSourceFingerprint }
         : {}
+      const currentPlanArtifactSha256 = targetState === 'PLAN_APPROVED'
+        ? (await loadTask(path, id)).record.planArtifactSha256
+        : undefined
+      if (currentPlanArtifactSha256) {
+        const interview = await interviewStatus(path, id)
+        if (interview.record.artifactDigests?.plan !== currentPlanArtifactSha256) {
+          throw new Error('Canonical plan artifact stale or inconsistent with the task record.')
+        }
+      }
       return advanceTask(path, id, targetState, {
         actor,
         reason: parsed.options.get('--reason'),
         approved: parsed.flags.has('--approve'),
-        currentSourceFingerprint
+        currentSourceFingerprint,
+        currentPlanArtifactSha256
       }, transitionOptions)
     })
     printResult(result, parsed.flags.has('--json'), () => {
@@ -376,6 +454,22 @@ async function runTask(args) {
   }
 
   throw new Error('Unknown task command: ' + subcommand)
+}
+
+async function runDiagnose(args) {
+  const parsed = parseArguments(args, { booleans: ['--json'] })
+  assertPositionalCount(parsed.positionals, 1, 2, 'bth diagnose <id> [path] [--json]')
+  const [id, path = '.'] = parsed.positionals
+  const result = await diagnoseTaskFailure(path, id)
+  printResult(result, parsed.flags.has('--json'), () => {
+    console.log('Diagnosis for ' + id + ' (' + result.taskState + '):')
+    for (const gate of result.failedGates) {
+      console.log('- Gate ' + gate.id + ': ' + (gate.reason ?? gate.outcome))
+    }
+    for (const action of result.nextActions) {
+      console.log('- ' + action)
+    }
+  })
 }
 
 async function runPack(args) {
@@ -516,6 +610,10 @@ async function run() {
   }
   if (command === 'verify') {
     await runVerify(args)
+    return
+  }
+  if (command === 'diagnose') {
+    await runDiagnose(args)
     return
   }
   throw new Error('Unknown command: ' + command)

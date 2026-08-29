@@ -1,6 +1,6 @@
 # Evidence contract
 
-## Why two tiers exist
+## Why three tiers exist
 
 The harness must distinguish “a process actually exercised behavior” from “a tool reported an interpretation”. Both are useful, but they cannot carry the same authority.
 
@@ -8,8 +8,10 @@ The harness must distinguish “a process actually exercised behavior” from �
 | --- | --- | --- | --- |
 | `EXECUTED` | fresh JUnit, compile/migration exit | JUnit only, with all verdict conditions | yes |
 | `REPORTED` | Gitleaks, static policy, import graph, coverage summary | no | `findings` may; `observation` may not |
+| `CONTROL` | permission denial, unsafe executable, registry/pre-result failure | no | records why execution did not produce evidence |
 
 An empty or clean `REPORTED` result never compensates for missing tests.
+`CONTROL` is deliberately separate from `EXECUTED`: a guard working correctly proves the harness stopped an unsafe action, not that the backend behavior ran.
 
 ## Freshness
 

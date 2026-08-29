@@ -1,6 +1,6 @@
 {
   "name": "backend-team-harness",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "description": "A source-bound backend verification harness with structured test results and reproducible run records.",
   "type": "module",
   "bin": {

@@ -59,6 +59,7 @@ function taskMarkdown(record) {
     '- Current state: `' + record.state + '`',
     '- Created: ' + record.createdAt,
     '- Planned source: ' + (record.planSourceFingerprint ? '`' + record.planSourceFingerprint + '`' : '_not bound_'),
+    '- Canonical plan artifact: ' + (record.planArtifactSha256 ? '`' + record.planArtifactSha256 + '`' : '_manual plan_'),
     '- Approved: ' + (record.approvalReceipt ? record.approvalReceipt.at + ' by ' + record.approvalReceipt.actor : '_not approved_'),
     '',
     '## Context',
@@ -377,6 +378,10 @@ async function updateTaskField(inputPath, taskId, field, value, input = {}, opti
   if (planSourceFingerprint !== null && !/^[a-f0-9]{64}$/.test(planSourceFingerprint)) {
     throw new Error('Task plan source fingerprint must be a lowercase SHA-256 value.')
   }
+  const planArtifactSha256 = field === 'plan' ? (input.artifactSha256 ?? null) : null
+  if (planArtifactSha256 !== null && !/^[a-f0-9]{64}$/.test(planArtifactSha256)) {
+    throw new Error('Task plan artifact digest must be a lowercase SHA-256 value.')
+  }
 
   const paths = await harnessPaths(inputPath, taskId)
   const release = await acquireLock(paths.lockPath, options)
@@ -399,6 +404,9 @@ async function updateTaskField(inputPath, taskId, field, value, input = {}, opti
       lastEvidenceId: approvalInvalidated ? null : loaded.record.lastEvidenceId,
       planSourceFingerprint: field === 'plan'
         ? planSourceFingerprint
+        : null,
+      planArtifactSha256: field === 'plan'
+        ? planArtifactSha256
         : null,
       approvalReceipt: approvalInvalidated ? null : (loaded.record.approvalReceipt ?? null)
     }

@@ -1,9 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { mkdir, rename, unlink, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises'
 import { dirname, relative, resolve } from 'node:path'
 import { assertNoSymlinkSegments, resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { taskDirectory } from './task-store.mjs'
 import { canonicalJson } from './canonical-json.mjs'
+import { evidenceTierFor } from './evidence-tier.mjs'
 import { redactForShare } from './redaction.mjs'
 
 function compactGate(gate) {
@@ -63,7 +64,7 @@ function createRunRecord(taskId, input, rerun, projectRoot) {
     : rerun
   const base = {
     schemaVersion: 2,
-    evidenceTier: 'EXECUTED',
+    evidenceTier: evidenceTierFor(input),
     taskId,
     recordedAt: input.recordedAt ?? new Date().toISOString(),
     verdict: input.confirmed ? 'passed' : 'failed',
@@ -132,4 +133,21 @@ export async function recordProjectRun(inputPath, input) {
   await assertNoSymlinkSegments(harnessRoot, runsDir)
   const record = createRunRecord(null, input, ['bth', 'check', '.'], root)
   return { record, ...await writeRunFiles(root, runsDir, record) }
+}
+
+export async function loadLatestTaskRun(inputPath, taskId) {
+  const paths = await taskDirectory(inputPath, taskId)
+  const target = resolve(paths.taskDir, 'runs/latest.json')
+  await assertNoSymlinkSegments(paths.taskDir, target)
+  const metadata = await statPath(target)
+  if (!metadata?.isFile() || metadata.isSymbolicLink() || metadata.size > 16 * 1024 * 1024) {
+    throw new Error('Latest task run is missing, unsafe, or too large: ' + paths.id)
+  }
+  const record = JSON.parse(await readFile(target, 'utf8'))
+  const { recordSha256, ...unsigned } = record
+  const expected = createHash('sha256').update(canonicalJson(unsigned)).digest('hex')
+  if (recordSha256 !== expected || record.taskId !== paths.id) {
+    throw new Error('Latest task run is altered or belongs to a different task: ' + paths.id)
+  }
+  return { root: paths.root, path: relative(paths.root, target), record }
 }

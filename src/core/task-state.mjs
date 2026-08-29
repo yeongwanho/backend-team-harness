@@ -68,6 +68,7 @@ export function createTaskRecord(input, options = {}) {
     updatedAt: now,
     lastEvidenceId: null,
     planSourceFingerprint: null,
+    planArtifactSha256: null,
     approvalReceipt: null
   }
 }
@@ -116,6 +117,13 @@ export function transitionTaskRecord(record, to, input = {}) {
   ) {
     return rejected(record, to, 'approved_plan_source_stale')
   }
+  if (
+    to === 'PLAN_APPROVED' &&
+    record.planArtifactSha256 &&
+    input.currentPlanArtifactSha256 !== record.planArtifactSha256
+  ) {
+    return rejected(record, to, 'approved_plan_artifact_stale')
+  }
   if (to === 'VERIFIED' && (!input.evidence?.id || input.evidence.confirmed !== true)) {
     return rejected(record, to, 'confirmed_evidence_required')
   }
@@ -130,6 +138,7 @@ export function transitionTaskRecord(record, to, input = {}) {
         actor,
         at,
         sourceFingerprint: record.planSourceFingerprint ?? input.currentSourceFingerprint ?? null,
+        planArtifactSha256: record.planArtifactSha256 ?? null,
         contextSha256: createHash('sha256').update(canonicalJson({ context: record.context })).digest('hex'),
         planSha256: createHash('sha256').update(canonicalJson({ plan: record.plan })).digest('hex')
       }

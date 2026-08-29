@@ -1,0 +1,101 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
+
+const cli = resolve('src/cli.mjs')
+
+function runCli(args) {
+  return spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8' })
+}
+
+async function finalizedInterview(root, id = 'PORT-1') {
+  await writeGradleFixture(root)
+  initializeGit(root)
+  assert.equal(runCli(['init', root]).status, 0)
+  assert.equal(runCli(['interview', 'start', id, root, '--requirement', 'Add safe lookup.', '--by', 'developer']).status, 0)
+  for (const [question, text] of [
+    ['acceptance', 'Existing returns 200 and missing returns 404.'],
+    ['scope', 'Only users source and tests.'],
+    ['data', 'No schema change.'],
+    ['verification', 'Required tests and not-found scenario.'],
+    ['constraints', 'No public contract rename.']
+  ]) {
+    assert.equal(runCli(['interview', 'answer', id, root, '--question', question, '--text', text, '--by', 'developer']).status, 0)
+  }
+  const finalized = runCli(['interview', 'finalize', id, root, '--by', 'developer', '--json'])
+  assert.equal(finalized.status, 0, finalized.stderr)
+  return JSON.parse(finalized.stdout)
+}
+
+test('CLI binds approval to plan.json and exports a provider-neutral approved plan', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-plan-port-'))
+  const finalized = await finalizedInterview(root)
+  assert.match(finalized.task.planArtifactSha256, /^[a-f0-9]{64}$/)
+
+  const approved = runCli(['task', 'advance', 'PORT-1', 'PLAN_APPROVED', root, '--by', 'reviewer', '--approve'])
+  assert.equal(approved.status, 0, approved.stderr || approved.stdout)
+  const exported = runCli(['task', 'export-plan', 'PORT-1', root, '--json'])
+  assert.equal(exported.status, 0, exported.stderr)
+  const contract = JSON.parse(exported.stdout)
+  assert.equal(contract.schemaVersion, 1)
+  assert.equal(contract.authority.write, false)
+  assert.equal(contract.authority.verdict, false)
+  assert.equal(contract.plan.taskId, 'PORT-1')
+  assert.equal(contract.planDigest, finalized.task.planArtifactSha256)
+})
+
+test('CLI refuses approval after canonical plan artifact tampering', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-plan-tamper-'))
+  await finalizedInterview(root, 'TAMPER-PLAN')
+  const planPath = join(root, '.backend-harness/tasks/TAMPER-PLAN/interview/plan.json')
+  const plan = JSON.parse(await readFile(planPath, 'utf8'))
+  plan.objective = 'tampered'
+  await writeFile(planPath, JSON.stringify(plan, null, 2) + '\n', 'utf8')
+
+  const approved = runCli(['task', 'advance', 'TAMPER-PLAN', 'PLAN_APPROVED', root, '--by', 'reviewer', '--approve'])
+  assert.equal(approved.status, 1)
+  assert.match(approved.stderr + approved.stdout, /artifact has been altered|artifact stale/)
+})
+
+test('CLI refuses to export a not-yet-started plan after source drift', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-plan-export-drift-'))
+  await finalizedInterview(root, 'DRIFT-EXPORT')
+  const approved = runCli(['task', 'advance', 'DRIFT-EXPORT', 'PLAN_APPROVED', root, '--by', 'reviewer', '--approve'])
+  assert.equal(approved.status, 0, approved.stderr || approved.stdout)
+  await writeFile(join(root, 'unexpected-source.txt'), 'drift\n', 'utf8')
+
+  const exported = runCli(['task', 'export-plan', 'DRIFT-EXPORT', root, '--json'])
+  assert.equal(exported.status, 1)
+  assert.match(exported.stderr + exported.stdout, /Source changed since plan approval/)
+})
+
+test('CLI diagnose returns failed gates, failed tests, and the sealed rerun command', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-diagnose-'))
+  await writeGradleFixture(root, { exitCode: 7, failures: 1 })
+  initializeGit(root)
+  assert.equal(runCli(['init', root]).status, 0)
+  for (const command of [
+    ['task', 'create', 'FAIL-1', root, '--context', 'Known failure'],
+    ['task', 'advance', 'FAIL-1', 'CONTEXT_READY', root, '--by', 'developer'],
+    ['task', 'plan', 'FAIL-1', root, '--text', 'Run tests.', '--by', 'developer'],
+    ['task', 'advance', 'FAIL-1', 'PLAN_PROPOSED', root, '--by', 'developer'],
+    ['task', 'advance', 'FAIL-1', 'PLAN_APPROVED', root, '--by', 'reviewer', '--approve']
+  ]) {
+    const result = runCli(command)
+    assert.equal(result.status, 0, result.stderr || result.stdout)
+  }
+  assert.equal(runCli(['verify', 'FAIL-1', root]).status, 1)
+
+  const diagnosed = runCli(['diagnose', 'FAIL-1', root, '--json'])
+  assert.equal(diagnosed.status, 0, diagnosed.stderr)
+  const result = JSON.parse(diagnosed.stdout)
+  assert.equal(result.taskState, 'VERIFY_FAILED')
+  assert.deepEqual(result.rerun, ['bth', 'verify', 'FAIL-1', '.'])
+  assert.equal(result.failedGates[0].id, 'tests')
+  assert.equal(result.failedTests[0].name, 'works-1')
+  assert.equal(result.authority, 'ADVISORY')
+})

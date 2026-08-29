@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { initProject } from '../src/init-project.mjs'
@@ -9,6 +9,8 @@ import {
   answerInterview,
   completeInterview,
   interviewStatus,
+  rebindInterview,
+  reviseInterview,
   startInterview
 } from '../src/runtime/interview-orchestrator.mjs'
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
@@ -84,6 +86,12 @@ test('interview refuses finalization after project source drift', async () => {
     /source changed during the interview/
   )
   assert.equal((await loadTask(root, 'DRIFT-1')).record.state, 'CONTEXT_MISSING')
+
+  const rebound = await rebindInterview(root, 'DRIFT-1', { actor: 'developer' })
+  assert.equal(rebound.record.status, 'READY')
+  assert.notEqual(rebound.record.sourceFingerprint, 'a'.repeat(64))
+  const finalized = await completeInterview(root, 'DRIFT-1', { actor: 'developer' })
+  assert.equal(finalized.task.state, 'PLAN_PROPOSED')
 })
 
 test('unresolved answer blocks finalize and can be corrected in place', async () => {
@@ -165,4 +173,58 @@ test('concurrent answers are serialized and cannot skip a question', async () =>
   const loaded = await interviewStatus(root, 'RACE-1')
   assert.equal(loaded.record.revision, 1)
   assert.equal(loaded.progress.currentQuestion.id, 'scope')
+})
+
+test('a ready interview can revise one prior decision without losing the others', async () => {
+  const root = await initializedProject('bth-interview-revise-')
+  await startInterview(root, {
+    taskId: 'REVISE-1',
+    requirement: 'Add endpoint.',
+    actor: 'developer'
+  })
+  await answerAll(root, 'REVISE-1')
+
+  const revised = await reviseInterview(root, 'REVISE-1', {
+    questionId: 'scope',
+    text: 'Only src/users and test/users may change.',
+    actor: 'reviewer'
+  })
+
+  assert.equal(revised.record.status, 'READY')
+  assert.equal(revised.record.answers.find((answer) => answer.questionId === 'scope').text, 'Only src/users and test/users may change.')
+  assert.equal(revised.record.answers.find((answer) => answer.questionId === 'acceptance').text, 'Existing id returns 200; missing id returns 404.')
+})
+
+test('project observations specialize DB and verification questions without answering them', async () => {
+  const root = await initializedProject('bth-interview-facts-')
+  await mkdir(join(root, 'src/main/resources/db/migration'), { recursive: true })
+  await writeFile(join(root, 'src/main/resources/db/migration/V1__users.sql'), 'create table users(id bigint primary key);\n', 'utf8')
+  const verificationPath = join(root, '.backend-harness/verification.json')
+  const verification = JSON.parse(await readFile(verificationPath, 'utf8'))
+  verification.context.databaseDialect = 'mysql'
+  await writeFile(verificationPath, JSON.stringify(verification, null, 2) + '\n', 'utf8')
+  initializeGit(root)
+
+  await startInterview(root, {
+    taskId: 'FACTS-1',
+    requirement: 'Change user persistence.',
+    actor: 'developer'
+  })
+  await answerInterview(root, 'FACTS-1', {
+    questionId: 'acceptance',
+    text: 'A user can be stored and loaded.',
+    actor: 'developer'
+  })
+  await answerInterview(root, 'FACTS-1', {
+    questionId: 'scope',
+    text: 'Users persistence only.',
+    actor: 'developer'
+  })
+  const status = await interviewStatus(root, 'FACTS-1')
+
+  assert.equal(status.progress.currentQuestion.id, 'data')
+  assert.match(status.progress.currentQuestion.hint, /mysql/i)
+  assert.match(status.progress.currentQuestion.hint, /V1__users\.sql/)
+  assert.equal(status.record.answers.some((answer) => answer.questionId === 'data'), false)
+  assert.ok(status.contextSnapshot.policyGates.length > 0)
 })

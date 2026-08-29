@@ -56,6 +56,32 @@ test('a source-bound plan cannot be approved after source drift', () => {
   assert.equal(approved.record.approvalReceipt.sourceFingerprint, plannedSourceFingerprint)
 })
 
+test('an interview plan cannot be approved without the current canonical artifact digest', () => {
+  const planArtifactSha256 = 'c'.repeat(64)
+  const proposed = {
+    ...createTaskRecord({ id: 'TASK-ARTIFACT', context: 'Known', plan: 'Bound plan' }),
+    state: 'PLAN_PROPOSED',
+    revision: 2,
+    planArtifactSha256
+  }
+
+  const stale = transitionTaskRecord(proposed, 'PLAN_APPROVED', {
+    actor: 'reviewer',
+    approved: true,
+    currentPlanArtifactSha256: 'd'.repeat(64)
+  })
+  assert.equal(stale.applied, false)
+  assert.equal(stale.audit.reason, 'approved_plan_artifact_stale')
+
+  const approved = transitionTaskRecord(proposed, 'PLAN_APPROVED', {
+    actor: 'reviewer',
+    approved: true,
+    currentPlanArtifactSha256: planArtifactSha256
+  })
+  assert.equal(approved.applied, true)
+  assert.equal(approved.record.approvalReceipt.planArtifactSha256, planArtifactSha256)
+})
+
 test('VERIFIED requires confirmed evidence and DONE retains its evidence reference', () => {
   const verifying = {
     ...createTaskRecord({ id: 'TASK-3' }),

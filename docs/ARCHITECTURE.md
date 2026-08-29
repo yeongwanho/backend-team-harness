@@ -14,6 +14,7 @@ flowchart TB
   Lock --> Bind[Git + declared-input binding]
   Bind --> Registry[Tool registry + permission gate]
   Registry --> Config[verification.json]
+  Registry --> Control[CONTROL: denied or pre-result failure]
   Config --> Runner[No-shell Gate runner]
   Runner --> JUnit[Strict fresh JUnit]
   Runner --> Findings[Fresh Findings]
@@ -40,17 +41,18 @@ flowchart LR
   Q -->|answered| Q
   Q -->|all five resolved| B[Rebind current Git source]
   B -->|same fingerprint| A[requirement/context/impact/plan artifacts]
-  B -->|drift| X[Reject and restart]
+  B -->|drift| X[Reject, then explicit rebind]
   A --> P[PLAN_PROPOSED]
   P --> H[Explicit human approval]
-  H -->|same planned source| I[PLAN_APPROVED]
+  H -->|same source + plan.json digest| I[PLAN_APPROVED]
+  I --> Port[Read-only provider-neutral plan export]
 ```
 
 The interview is native BTH behavior, not a runtime bridge to another harness or an LLM. Its question catalogue and transitions are versioned in `interview-state.mjs`. It records only explicit human decisions and deterministic repository observations; it does not claim semantic code impact that no tool or person established.
 
-Interview persistence is under the owning task. `events.jsonl` is append-only and hash-chained, the project-context snapshot and four JSON artifacts are SHA-256 bound, and path/symlink/size limits match the existing task safety model. `unknown` and `conflict` answers remain the current question and fail closed.
+Interview persistence is under the owning task. `events.jsonl` is append-only and hash-chained, project-context snapshots are stored by digest, the four JSON artifacts are SHA-256 bound, and path/symlink/size limits match the existing task safety model. `unknown` and `conflict` answers remain the current question and fail closed. Project observations specialize the question hints but never create a human answer. `revise` changes one explicit decision; `rebind` preserves decisions while recording a fresh source and immutable context snapshot.
 
-Finalization is crash-recoverable across the interview and task stores: finalized artifacts are authoritative and a retry may finish materializing the unchanged task plan. The resulting task enters `PLAN_PROPOSED`, never `PLAN_APPROVED`. Approval checks the planned source fingerprint and records context/plan hashes plus actor and time. Any later context or plan update clears that receipt.
+Finalization is crash-recoverable across the interview and task stores: finalized artifacts are authoritative and a retry may finish materializing the unchanged task plan. The resulting task enters `PLAN_PROPOSED`, never `PLAN_APPROVED`. Approval checks the planned source fingerprint and canonical `plan.json` digest, then records context/plan/artifact hashes plus actor and time. Any later context or plan update clears that receipt. The provider-neutral export is read-only and explicitly carries neither write authority nor verdict authority.
 
 ## Layers
 
@@ -93,6 +95,9 @@ EXECUTED
 REPORTED
 ├─ findings    may block PASS at declared severities
 └─ observation may never change PASS
+
+CONTROL
+└─ permission denial or failure before a structured execution result; never PASS evidence
 ```
 
 This is asymmetric on purpose. A static tool can detect a reason to stop, but “no findings” cannot prove runtime behavior.
@@ -129,6 +134,8 @@ Gate executables are trusted project code. A Gate declaring `network: true` is d
 BTH does not currently provide a source-writing tool. Pack installation, baseline update, init, and task persistence are explicit CLI mutations with collision checks/backups.
 
 The planning interview may prepare work for a person or any coding agent, but BTH does not grant that actor source-write authority. Implementation remains a separate, explicit step after human plan approval.
+
+`bth diagnose` reads the latest hash-validated failed run and returns failed Gates, failed tests, the sealed rerun argv, and advisory next actions. It does not retry automatically and cannot alter a verdict.
 
 ## DB boundary
 

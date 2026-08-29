@@ -7,7 +7,9 @@ import {
   answerInterviewRecord,
   createInterviewRecord,
   finalizeInterviewRecord,
-  interviewProgress
+  interviewProgress,
+  rebindInterviewRecord,
+  reviseInterviewRecord
 } from './interview-state.mjs'
 import { taskDirectory } from './task-store.mjs'
 
@@ -90,7 +92,8 @@ async function interviewPaths(inputPath, taskId) {
     interviewDir,
     eventPath: resolve(interviewDir, 'events.jsonl'),
     snapshotPath: resolve(interviewDir, 'interview.json'),
-    contextPath: resolve(interviewDir, 'context-snapshot.json')
+    contextPath: resolve(interviewDir, 'context-snapshot.json'),
+    contextSnapshotsDir: resolve(interviewDir, 'context-snapshots')
   }
 }
 
@@ -117,6 +120,12 @@ export async function createInterview(inputPath, input, options = {}) {
     await writeFile(resolve(staging, 'events.jsonl'), serializedEvent(createdEvent(record)), { encoding: 'utf8', flag: 'wx' })
     await writeFile(resolve(staging, 'interview.json'), JSON.stringify(record, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' })
     await writeFile(resolve(staging, 'context-snapshot.json'), JSON.stringify(input.contextSnapshot, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' })
+    await mkdir(resolve(staging, 'context-snapshots'), { recursive: false })
+    await writeFile(
+      resolve(staging, 'context-snapshots', record.contextSnapshotSha256 + '.json'),
+      JSON.stringify(input.contextSnapshot, null, 2) + '\n',
+      { encoding: 'utf8', flag: 'wx' }
+    )
     await rename(staging, paths.interviewDir)
   } catch (error) {
     await rm(staging, { recursive: true, force: true }).catch(() => {})
@@ -127,7 +136,7 @@ export async function createInterview(inputPath, input, options = {}) {
     path: relative(paths.root, paths.interviewDir),
     record,
     contextSnapshot: input.contextSnapshot,
-    progress: interviewProgress(record)
+    progress: interviewProgress(record, input.contextSnapshot)
   }
 }
 
@@ -137,7 +146,7 @@ export async function loadInterview(inputPath, taskId) {
   if (!directoryStat?.isDirectory() || directoryStat.isSymbolicLink()) {
     throw new Error('Interview does not exist for task: ' + taskId)
   }
-  for (const path of [paths.eventPath, paths.contextPath]) {
+  for (const path of [paths.eventPath]) {
     await assertNoSymlinkSegments(paths.interviewDir, path)
     const metadata = await statPath(path)
     if (!metadata?.isFile() || metadata.isSymbolicLink() || metadata.size > 16 * 1024 * 1024) {
@@ -146,9 +155,32 @@ export async function loadInterview(inputPath, taskId) {
   }
   const events = parseEvents(await readFile(paths.eventPath, 'utf8'), taskId)
   const record = events.at(-1).record
-  const contextSnapshot = JSON.parse(await readFile(paths.contextPath, 'utf8'))
+  if (!/^[a-f0-9]{64}$/.test(record.contextSnapshotSha256)) {
+    throw new Error('Interview project-context snapshot digest is invalid: ' + taskId)
+  }
+  const immutableContextPath = resolve(paths.contextSnapshotsDir, record.contextSnapshotSha256 + '.json')
+  const immutableContextStat = await statPath(immutableContextPath)
+  const selectedContextPath = immutableContextStat ? immutableContextPath : paths.contextPath
+  await assertNoSymlinkSegments(paths.interviewDir, selectedContextPath)
+  const contextMetadata = await statPath(selectedContextPath)
+  if (!contextMetadata?.isFile() || contextMetadata.isSymbolicLink() || contextMetadata.size > 16 * 1024 * 1024) {
+    throw new Error('Interview project-context snapshot is missing, unsafe, or too large: ' + taskId)
+  }
+  const contextSnapshot = JSON.parse(await readFile(selectedContextPath, 'utf8'))
   if (sha256(contextSnapshot) !== record.contextSnapshotSha256) {
     throw new Error('Interview project-context snapshot has been altered: ' + taskId)
+  }
+  const legacyContextStat = await statPath(paths.contextPath)
+  if (legacyContextStat) {
+    await assertNoSymlinkSegments(paths.interviewDir, paths.contextPath)
+    if (!legacyContextStat.isFile() || legacyContextStat.isSymbolicLink() || legacyContextStat.size > 16 * 1024 * 1024) {
+      throw new Error('Interview legacy project-context snapshot is unsafe: ' + taskId)
+    }
+    const legacyContext = JSON.parse(await readFile(paths.contextPath, 'utf8'))
+    const historicalDigests = new Set(events.map((event) => event.record.contextSnapshotSha256))
+    if (!historicalDigests.has(sha256(legacyContext))) {
+      throw new Error('Interview project-context snapshot has been altered: ' + taskId)
+    }
   }
   const artifacts = {}
   if (record.status === 'FINALIZED') {
@@ -173,7 +205,7 @@ export async function loadInterview(inputPath, taskId) {
     events,
     contextSnapshot,
     artifacts,
-    progress: interviewProgress(record)
+    progress: interviewProgress(record, contextSnapshot)
   }
 }
 
@@ -200,7 +232,62 @@ export async function recordInterviewAnswer(inputPath, taskId, input, options = 
     questionId: input.questionId,
     answerStatus: input.status ?? 'answered'
   })
-  return { ...loaded, record, event, progress: interviewProgress(record) }
+  return { ...loaded, record, event, progress: interviewProgress(record, loaded.contextSnapshot) }
+}
+
+export async function reviseInterviewAnswer(inputPath, taskId, input, options = {}) {
+  const loaded = await loadInterview(inputPath, taskId)
+  const paths = await interviewPaths(loaded.root, taskId)
+  const record = reviseInterviewRecord(loaded.record, input, options)
+  const event = await persistTransition(paths, loaded.events.at(-1), 'question_revised', record, {
+    actor: input.actor,
+    questionId: input.questionId,
+    answerStatus: input.status ?? 'answered'
+  })
+  return { ...loaded, record, event, progress: interviewProgress(record, loaded.contextSnapshot) }
+}
+
+async function writeImmutableContext(paths, contextSnapshot, digest) {
+  await mkdir(paths.contextSnapshotsDir, { recursive: true })
+  await assertNoSymlinkSegments(paths.interviewDir, paths.contextSnapshotsDir)
+  const target = resolve(paths.contextSnapshotsDir, digest + '.json')
+  await assertNoSymlinkSegments(paths.interviewDir, target)
+  try {
+    await writeFile(target, JSON.stringify(contextSnapshot, null, 2) + '\n', {
+      encoding: 'utf8',
+      flag: 'wx'
+    })
+  } catch (error) {
+    if (error?.code !== 'EEXIST') {
+      throw error
+    }
+    const existing = JSON.parse(await readFile(target, 'utf8'))
+    if (sha256(existing) !== digest) {
+      throw new Error('Existing immutable context snapshot is inconsistent: ' + digest)
+    }
+  }
+  return target
+}
+
+export async function rebindInterviewContext(inputPath, taskId, input, options = {}) {
+  const loaded = await loadInterview(inputPath, taskId)
+  const paths = await interviewPaths(loaded.root, taskId)
+  const record = rebindInterviewRecord(loaded.record, input, options)
+  await writeImmutableContext(paths, input.contextSnapshot, record.contextSnapshotSha256)
+  const event = await persistTransition(paths, loaded.events.at(-1), 'context_rebound', record, {
+    actor: input.actor,
+    previousSourceFingerprint: loaded.record.sourceFingerprint,
+    sourceFingerprint: record.sourceFingerprint,
+    contextSnapshotSha256: record.contextSnapshotSha256
+  })
+  await atomicJsonWrite(paths.contextPath, input.contextSnapshot)
+  return {
+    ...loaded,
+    record,
+    event,
+    contextSnapshot: input.contextSnapshot,
+    progress: interviewProgress(record, input.contextSnapshot)
+  }
 }
 
 export async function finalizeInterview(inputPath, taskId, input, options = {}) {
@@ -233,5 +320,5 @@ export async function finalizeInterview(inputPath, taskId, input, options = {}) 
     sourceFingerprint: input.currentSourceFingerprint,
     artifactDigests
   })
-  return { ...loaded, record, event, artifactDigests, progress: interviewProgress(record) }
+  return { ...loaded, record, event, artifactDigests, progress: interviewProgress(record, loaded.contextSnapshot) }
 }
