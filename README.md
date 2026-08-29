@@ -100,6 +100,40 @@ node src/cli.mjs check examples/spring-service --allow-network
 
 자동 생성되는 JVM 기본값은 기존 캐시만 쓰는 `--offline` 모드입니다. 새 PC에서 의존성을 받아야 한다면 팀이 설정에서 `--offline`을 제거하고 `network: true`를 선언한 뒤, 해당 실행에만 `--allow-network`를 줍니다.
 
+### 실패를 더 빨리 보여 주는 선택적 순서 최적화
+
+기본값은 언제나 작성된 Gate 순서입니다. 서로 선후 의존성이 없는 required Gate만 팀이 직접 표시하면, BTH가 로컬 실행 이력으로 실패 가능성과 평균 비용을 추정해 첫 실패를 더 빨리 보여 줄 수 있습니다.
+
+```json
+{
+  "schemaVersion": 1,
+  "scheduling": {
+    "strategy": "adaptive-failure-first",
+    "minimumObservations": 5,
+    "priorFailures": 1,
+    "priorPasses": 1
+  },
+  "gates": [
+    { "id": "unit", "required": true, "reorderable": true, "command": ["./gradlew", "test"], "timeoutMs": 600000, "result": { "type": "junit", "reports": ["build/test-results/test/**/*.xml"], "minimumTests": 1 } },
+    { "id": "integration", "required": true, "reorderable": true, "command": ["./gradlew", "integrationTest"], "timeoutMs": 900000, "result": { "type": "junit", "reports": ["build/test-results/integrationTest/**/*.xml"], "minimumTests": 1 } }
+  ]
+}
+```
+
+순서는 Beta 평활한 실패확률 `p`를 평균 시간 `c`로 나눈 `p/c` 내림차순입니다. 단, 다음 경계는 바뀌지 않습니다.
+
+- `reorderable: true`가 없는 Gate는 이동하지 않습니다.
+- required Gate가 연속된 구간 안에서만 이동합니다. fixed/optional Gate를 건너지 않습니다.
+- 관측치가 부족하거나 이력이 없거나 손상됐으면 원래 순서로 돌아갑니다.
+- PASS 경로에서는 모든 Gate가 정확히 한 번 실행됩니다. 이 기능은 테스트를 선택하거나 생략하지 않습니다.
+- 이력은 순서에만 쓰이며 결과·증거 등급·테스트 수·source fingerprint·PASS에는 영향을 주지 못합니다.
+
+결정적 benchmark fixture에서는 동일한 Gate를 유지하면서 첫 실패까지의 기대시간이 `1711.98 ms → 473.88 ms`, 즉 `3.61x` 개선됩니다. 이것은 명시된 독립 fail-fast 모형의 **제한된 알고리즘 지표**이지 실제 프로젝트 전체 속도나 OMO 대비 제품 성능 주장이 아닙니다.
+
+```bash
+npm run benchmark:adaptive
+```
+
 ## 결과 계약과 증거 등급
 
 | 결과 | 증거 등급 | 역할 |
@@ -184,6 +218,15 @@ empty DB migration + 필요한 upgrade path
 - 그래프 기반 테스트 생략
 
 그래프 파일에는 `advisory: true`, 허용 용도(`navigation`, `review-questions`), 금지 용도(`pass-verdict`, `test-skipping`)가 함께 기록됩니다.
+
+그래프 Pack이 현재 소스에 묶인 성공한 observation을 만들었다면, 승인된 계획을 내보낼 때 요구사항에 맞는 코드 위치를 제한된 예산 안에서 함께 받을 수 있습니다.
+
+```bash
+node src/cli.mjs task export-plan USER-17 /path/to/project \
+  --context-budget 4000 --json
+```
+
+BTH는 요구사항의 단어를 path/type과 대조하고, exact import edge 위에서 bounded Personalized PageRank를 계산합니다. 결과에는 점수뿐 아니라 사용한 문자 수, 누락된 node 수, graph 생성값, edge provenance와 알려진 한계가 들어갑니다. 그래프가 없거나 오래됐거나 run record와 digest가 다르면 계획 export는 실패하지 않고 `codeContext.status: "unavailable"`과 이유를 돌려줍니다.
 
 ## 테스트 수 감소 방지
 
@@ -277,7 +320,8 @@ CONTEXT_MISSING → CONTEXT_READY → PLAN_PROPOSED → PLAN_APPROVED
 ├── tasks/<id>/runs/latest.json
 ├── tasks/<id>/runs/history/*.json
 ├── tasks/<id>/evidence/              # local, Git ignored
-└── local/runs/{latest.json,history/}  # local, Git ignored
+├── local/runs/{latest.json,history/}  # local, Git ignored
+└── local/optimization/gate-history.json # aggregate only, Git ignored
 ```
 
 기록에는 command argv, 프로세스 상태, 출력 byte/hash, fresh report 통계, 실행 파일 hash, Node/JDK/Wrapper 정보, 선언 profile/dialect, source fingerprint가 들어갑니다. stdout/stderr 원문은 공유 기록에서 제외합니다. 프로젝트·home·temp 절대경로와 일반적인 token/secret/credential 형태는 저장 전에 redaction합니다. JSON hash는 key 순서와 무관한 canonical serialization을 사용합니다.
@@ -296,6 +340,7 @@ OMO 코드를 복사하거나 의존하지 않습니다. Core/adapter/project �
 - [Evidence contract](docs/EVIDENCE-CONTRACT.md)
 - [Pack guide](docs/PACKS.md)
 - [OMO design mapping](docs/OMO-DESIGN-MAPPING.md)
+- [2026 adaptive harness research](docs/RESEARCH-2026-ADAPTIVE-HARNESS.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Security](SECURITY.md)
 

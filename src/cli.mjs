@@ -25,7 +25,7 @@ import {
 import { exportApprovedPlan } from './runtime/plan-export.mjs'
 import { diagnoseTaskFailure } from './runtime/failure-diagnosis.mjs'
 
-const VERSION = '0.6.0'
+const VERSION = '0.7.0'
 
 function printHelp() {
   console.log([
@@ -42,7 +42,7 @@ function printHelp() {
     '  bth task context <id> [path] --text <text> --by <actor> [--json]',
     '  bth task plan <id> [path] --text <text> --by <actor> [--json]',
     '  bth task status <id> [path] [--json]',
-    '  bth task export-plan <id> [path] [--json]',
+    '  bth task export-plan <id> [path] [--context-budget <characters>] [--json]',
     '  bth task advance <id> <state> [path] --by <actor> [--approve] [--reason <text>] [--json]',
     '  bth interview start <id> [path] --requirement <text> --by <actor> [--title <text>] [--json]',
     '  bth interview answer <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--json]',
@@ -357,13 +357,23 @@ async function runTask(args) {
   }
 
   if (subcommand === 'export-plan') {
-    const parsed = parseArguments(rest, { booleans: ['--json'] })
-    assertPositionalCount(parsed.positionals, 1, 2, 'bth task export-plan <id> [path] [--json]')
+    const parsed = parseArguments(rest, { booleans: ['--json'], values: ['--context-budget'] })
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth task export-plan <id> [path] [--context-budget <characters>] [--json]')
     const [id, path = '.'] = parsed.positionals
-    const result = await exportApprovedPlan(path, id)
+    const budgetText = parsed.options.get('--context-budget')
+    const contextBudget = budgetText === undefined ? 4000 : Number(budgetText)
+    if (!Number.isSafeInteger(contextBudget) || (contextBudget !== 0 && (contextBudget < 64 || contextBudget > 100_000))) {
+      throw new Error('--context-budget must be 0 or an integer between 64 and 100000.')
+    }
+    const result = await exportApprovedPlan(path, id, { contextBudget })
     printResult(result, parsed.flags.has('--json'), () => {
       console.log('Exported approved plan ' + result.planDigest + ' for task ' + id + '.')
       console.log('Authority: read-only plan; no write or completion verdict authority.')
+      console.log(
+        result.codeContext.status === 'available'
+          ? 'Code context: ' + result.codeContext.entries.length + ' advisory paths (' + result.codeContext.budget.usedCharacters + '/' + result.codeContext.budget.limitCharacters + ' characters).'
+          : 'Code context: unavailable (' + result.codeContext.reason + ').'
+      )
     })
     return
   }

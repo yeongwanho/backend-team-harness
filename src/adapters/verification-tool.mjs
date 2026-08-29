@@ -4,6 +4,8 @@ import { runProcess } from '../core/process-runner.mjs'
 import { captureToolchain } from '../core/toolchain.mjs'
 import { collectFindingsResults } from '../core/findings.mjs'
 import { ToolPermissionError } from '../policy/tool-gate.mjs'
+import { buildGateSchedule } from '../core/gate-scheduler.mjs'
+import { loadGateHistory, recordGateObservations } from '../core/gate-history-store.mjs'
 
 function processPassed(result) {
   return result.exitCode === 0 && result.signal === null && result.timedOut === false
@@ -40,11 +42,14 @@ export function createVerificationTool(options = {}) {
         )
       }
       const toolchain = await captureToolchain(context.root, loaded.config)
+      const gateHistory = await loadGateHistory(context.root)
+      const schedule = buildGateSchedule(loaded.config.gates, gateHistory.entries, loaded.config.scheduling)
       const gateResults = []
+      const observations = []
       const tests = emptyTestSummary()
       let blocked = false
 
-      for (const gate of loaded.config.gates) {
+      for (const gate of schedule.gates) {
         if (blocked) {
           gateResults.push({
             id: gate.id,
@@ -135,6 +140,7 @@ export function createVerificationTool(options = {}) {
           process: processResult,
           result: structuredResult
         })
+        observations.push({ gate, outcome: passed ? 'passed' : 'failed', durationMs: processResult.durationMs })
         if (gate.required && !passed) {
           blocked = true
         }
@@ -147,6 +153,35 @@ export function createVerificationTool(options = {}) {
       const requiredGates = gateResults.filter((gate) => gate.required)
       const gatesPassed = requiredGates.length > 0 && requiredGates.every((gate) => gate.outcome === 'passed') && tests.executed > 0
       const passed = gatesPassed && sourceStable
+      let historyUpdate
+      if (!sourceStable) {
+        historyUpdate = {
+          status: gateHistory.status,
+          path: gateHistory.path,
+          updated: false,
+          entryCount: gateHistory.entries.length,
+          diagnostic: 'history not updated because source changed during verification.'
+        }
+      } else {
+        try {
+          const recorded = await recordGateObservations(context.root, gateHistory, observations)
+          historyUpdate = {
+            status: recorded.status,
+            path: recorded.path,
+            updated: recorded.updated,
+            entryCount: recorded.entries.length,
+            diagnostic: recorded.diagnostic
+          }
+        } catch (error) {
+          historyUpdate = {
+            status: gateHistory.status,
+            path: gateHistory.path,
+            updated: false,
+            entryCount: gateHistory.entries.length,
+            diagnostic: 'history update failed: ' + (error instanceof Error ? error.message : String(error))
+          }
+        }
+      }
       return {
         adapter: 'configured-verification',
         configuration: loaded.source,
@@ -156,6 +191,10 @@ export function createVerificationTool(options = {}) {
         reason: !sourceStable ? 'source_changed_during_run' : gatesPassed ? null : 'required_gate_failed',
         sourceStable,
         postSourceFingerprint: postSourceBinding?.fingerprint ?? null,
+        scheduling: {
+          ...schedule.decision,
+          history: historyUpdate
+        },
         tests,
         reported: gateResults
           .filter((gate) => gate.evidenceTier === 'REPORTED')

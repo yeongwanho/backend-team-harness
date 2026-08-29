@@ -1,12 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { chmod, mkdtemp, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { initProject } from '../src/init-project.mjs'
 import { advanceTask, createTask } from '../src/core/task-store.mjs'
 import { checkProject, verifyTask } from '../src/runtime/backend-harness.mjs'
 import { initializeGit } from '../test-support/git-project.mjs'
+import { loadGateHistory, recordGateObservations } from '../src/core/gate-history-store.mjs'
 
 test('a non-Java backend can verify through a project-owned command without a new core adapter', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-generic-project-'))
@@ -78,6 +79,8 @@ test('verification fails when a gate changes bound source during the run', async
   assert.equal(result.confirmed, false)
   assert.equal(result.task.state, 'VERIFY_FAILED')
   assert.equal(result.evidence.record.result.reason, 'source_changed_during_run')
+  assert.equal(result.evidence.record.result.scheduling.history.updated, false)
+  assert.match(result.evidence.record.result.scheduling.history.diagnostic, /source changed/)
 })
 
 test('a network-declared gate requires explicit approval', async () => {
@@ -107,4 +110,70 @@ test('a network-declared gate requires explicit approval', async () => {
   const allowed = await checkProject(root, { allowNetwork: true })
   assert.equal(allowed.confirmed, true)
   assert.deepEqual(allowed.run.record.rerun, ['bth', 'check', '.', '--allow-network'])
+})
+
+test('adaptive verification reorders only opted-in gates and still executes every gate on PASS', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-adaptive-gates-'))
+  await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
+  for (const executable of ['verify-slow', 'verify-fast']) {
+    await writeFile(join(root, executable), '#!/bin/sh\nexit 0\n', 'utf8')
+    await chmod(join(root, executable), 0o755)
+  }
+  initializeGit(root)
+  await initProject(root)
+  const gates = [
+    {
+      id: 'slow', required: true, reorderable: true, network: false,
+      command: ['./verify-slow'], inputs: [], timeoutMs: 30_000,
+      result: { type: 'junit', reports: ['.backend-harness/generated/slow.xml'], minimumTests: 1 }
+    },
+    {
+      id: 'fast', required: true, reorderable: true, network: false,
+      command: ['./verify-fast'], inputs: [], timeoutMs: 30_000,
+      result: { type: 'junit', reports: ['.backend-harness/generated/fast.xml'], minimumTests: 1 }
+    }
+  ]
+  await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify({
+    schemaVersion: 1,
+    scheduling: { strategy: 'adaptive-failure-first', minimumObservations: 3, priorFailures: 1, priorPasses: 1 },
+    gates
+  }, null, 2) + '\n', 'utf8')
+  initializeGit(root)
+  let history = await loadGateHistory(root)
+  for (let index = 0; index < 3; index += 1) {
+    history = await recordGateObservations(root, history, [
+      { gate: gates[0], outcome: 'passed', durationMs: 1000 },
+      { gate: gates[1], outcome: 'failed', durationMs: 20 }
+    ])
+  }
+  const executed = []
+  const processRunner = async ({ program }) => {
+    const id = program.endsWith('verify-fast') ? 'fast' : 'slow'
+    executed.push(id)
+    await mkdir(join(root, '.backend-harness/generated'), { recursive: true })
+    await writeFile(
+      join(root, '.backend-harness/generated/' + id + '.xml'),
+      '<testsuite tests="1"><testcase name="' + id + '"/></testsuite>\n',
+      'utf8'
+    )
+    return {
+      exitCode: 0,
+      signal: null,
+      timedOut: false,
+      startedAt: '2026-08-30T00:00:00.000Z',
+      finishedAt: '2026-08-30T00:00:00.010Z',
+      durationMs: id === 'fast' ? 20 : 1000,
+      stdout: { sha256: '0'.repeat(64), bytes: 0, tail: '' },
+      stderr: { sha256: '0'.repeat(64), bytes: 0, tail: '' }
+    }
+  }
+
+  const result = await checkProject(root, { processRunner })
+
+  assert.equal(result.confirmed, true, JSON.stringify(result, null, 2))
+  assert.deepEqual(executed, ['fast', 'slow'])
+  assert.deepEqual(result.result.gates.map((entry) => entry.id), ['fast', 'slow'])
+  assert.equal(result.result.scheduling.applied, true)
+  assert.equal(result.run.record.scheduling.applied, true)
+  assert.equal(new Set(executed).size, gates.length)
 })

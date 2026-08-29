@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
@@ -46,6 +46,42 @@ test('CLI binds approval to plan.json and exports a provider-neutral approved pl
   assert.equal(contract.authority.verdict, false)
   assert.equal(contract.plan.taskId, 'PORT-1')
   assert.equal(contract.planDigest, finalized.task.planArtifactSha256)
+  assert.equal(contract.codeContext.status, 'unavailable')
+})
+
+test('approved plan export includes source-bound budgeted codegraph context when available', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-plan-code-context-'))
+  await writeGradleFixture(root)
+  await mkdir(join(root, 'src/main/java/orders'), { recursive: true })
+  await writeFile(
+    join(root, 'src/main/java/orders/OrdersController.java'),
+    'package orders;\nimport orders.OrdersService;\nclass OrdersController {}\n',
+    'utf8'
+  )
+  await writeFile(join(root, 'src/main/java/orders/OrdersService.java'), 'package orders;\nclass OrdersService {}\n', 'utf8')
+  initializeGit(root)
+  assert.equal(runCli(['init', root]).status, 0)
+  assert.equal(runCli(['pack', 'install', 'codegraph-advisory', root]).status, 0)
+  const checked = runCli(['check', root, '--json'])
+  assert.equal(checked.status, 0, checked.stderr || checked.stdout)
+  for (const command of [
+    ['task', 'create', 'MAP-1', root, '--context', 'Change OrdersController lookup behavior.'],
+    ['task', 'advance', 'MAP-1', 'CONTEXT_READY', root, '--by', 'developer'],
+    ['task', 'plan', 'MAP-1', root, '--text', 'Inspect OrdersController and its exact project dependencies.', '--by', 'developer'],
+    ['task', 'advance', 'MAP-1', 'PLAN_PROPOSED', root, '--by', 'developer'],
+    ['task', 'advance', 'MAP-1', 'PLAN_APPROVED', root, '--by', 'reviewer', '--approve']
+  ]) {
+    const result = runCli(command)
+    assert.equal(result.status, 0, result.stderr || result.stdout)
+  }
+
+  const exported = runCli(['task', 'export-plan', 'MAP-1', root, '--context-budget', '700', '--json'])
+  assert.equal(exported.status, 0, exported.stderr || exported.stdout)
+  const contract = JSON.parse(exported.stdout)
+  assert.equal(contract.codeContext.status, 'available')
+  assert.equal(contract.codeContext.entries[0].path, 'src/main/java/orders/OrdersController.java')
+  assert.ok(contract.codeContext.budget.usedCharacters <= 700)
+  assert.equal(contract.codeContext.authority.advisory, true)
 })
 
 test('CLI refuses approval after canonical plan artifact tampering', async () => {

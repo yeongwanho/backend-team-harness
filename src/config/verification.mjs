@@ -4,9 +4,10 @@ import { isAbsolute, posix, relative } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 
 const GATE_ID = /^[a-z][a-z0-9-]{0,63}$/
-const CONFIG_KEYS = new Set(['schemaVersion', 'context', 'gates'])
+const CONFIG_KEYS = new Set(['schemaVersion', 'context', 'scheduling', 'gates'])
 const CONTEXT_KEYS = new Set(['profile', 'databaseDialect'])
-const GATE_KEYS = new Set(['id', 'required', 'network', 'command', 'inputs', 'timeoutMs', 'result'])
+const SCHEDULING_KEYS = new Set(['strategy', 'minimumObservations', 'priorFailures', 'priorPasses'])
+const GATE_KEYS = new Set(['id', 'required', 'reorderable', 'network', 'command', 'inputs', 'timeoutMs', 'result'])
 const RESULT_KEYS = new Set(['type', 'reports', 'minimumTests', 'blockingSeverities'])
 const FINDING_SEVERITIES = new Set(['info', 'warning', 'error', 'low', 'medium', 'high', 'critical'])
 
@@ -84,6 +85,37 @@ function validateContext(context, label) {
   return normalized
 }
 
+function boundedPositiveInteger(value, fallback, label, maximum) {
+  const normalized = value ?? fallback
+  if (!Number.isSafeInteger(normalized) || normalized < 1 || normalized > maximum) {
+    throw new Error(label + ' must be an integer between 1 and ' + maximum + '.')
+  }
+  return normalized
+}
+
+function validateScheduling(scheduling, label) {
+  if (scheduling === undefined) {
+    return {
+      strategy: 'configured',
+      minimumObservations: 5,
+      priorFailures: 1,
+      priorPasses: 1
+    }
+  }
+  assertPlainObject(scheduling, label)
+  assertOnlyKeys(scheduling, SCHEDULING_KEYS, label)
+  const strategy = scheduling.strategy ?? 'configured'
+  if (!['configured', 'adaptive-failure-first'].includes(strategy)) {
+    throw new Error(label + '.strategy must be configured or adaptive-failure-first.')
+  }
+  return {
+    strategy,
+    minimumObservations: boundedPositiveInteger(scheduling.minimumObservations, 5, label + '.minimumObservations', 10_000),
+    priorFailures: boundedPositiveInteger(scheduling.priorFailures, 1, label + '.priorFailures', 10_000),
+    priorPasses: boundedPositiveInteger(scheduling.priorPasses, 1, label + '.priorPasses', 10_000)
+  }
+}
+
 function validateResult(result, label) {
   assertPlainObject(result, label)
   assertOnlyKeys(result, RESULT_KEYS, label)
@@ -153,6 +185,12 @@ export function parseVerificationConfig(text, source = '<inline>') {
     if (typeof gate.required !== 'boolean') {
       throw new Error(label + '.required must be boolean.')
     }
+    if (gate.reorderable !== undefined && typeof gate.reorderable !== 'boolean') {
+      throw new Error(label + '.reorderable must be boolean when provided.')
+    }
+    if (gate.reorderable === true && gate.required !== true) {
+      throw new Error(label + ': only required gates may be reorderable.')
+    }
     if (gate.network !== undefined && typeof gate.network !== 'boolean') {
       throw new Error(label + '.network must be boolean when provided.')
     }
@@ -166,6 +204,7 @@ export function parseVerificationConfig(text, source = '<inline>') {
     return {
       id: gate.id,
       required: gate.required,
+      reorderable: gate.reorderable ?? false,
       network: gate.network ?? false,
       command: validateCommand(gate.command, label + '.command'),
       inputs: validateInputs(gate.inputs, label + '.inputs'),
@@ -177,7 +216,12 @@ export function parseVerificationConfig(text, source = '<inline>') {
   if (!gates.some((gate) => gate.required && gate.result.type === 'junit')) {
     throw new Error(source + ': at least one required junit gate is necessary to prevent untested success.')
   }
-  return { schemaVersion: 1, context: validateContext(parsed.context, source + ': context'), gates }
+  return {
+    schemaVersion: 1,
+    context: validateContext(parsed.context, source + ': context'),
+    scheduling: validateScheduling(parsed.scheduling, source + ': scheduling'),
+    gates
+  }
 }
 
 export function verificationInputPaths(config) {
@@ -265,7 +309,10 @@ export async function loadVerificationConfig(root, options = {}) {
   if (!inferred) {
     throw new Error('Verification config is missing and no Gradle/Maven project default can be inferred.')
   }
-  return { config: inferred, source: 'inferred-jvm-default' }
+  return {
+    config: parseVerificationConfig(JSON.stringify(inferred), 'inferred-jvm-default'),
+    source: 'inferred-jvm-default'
+  }
 }
 
 export async function resolveGateExecutable(root, command) {

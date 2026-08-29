@@ -13,6 +13,12 @@ The harness must distinguish “a process actually exercised behavior” from �
 An empty or clean `REPORTED` result never compensates for missing tests.
 `CONTROL` is deliberately separate from `EXECUTED`: a guard working correctly proves the harness stopped an unsafe action, not that the backend behavior ran.
 
+## Scheduling is provenance, not evidence
+
+A sealed run records configured order, selected order, per-Gate signature, observation count, Beta-smoothed failure probability, mean duration, score, segment boundary, and optimizer history status. This explains why an eligible Gate moved.
+
+The local history contains aggregates only: signature, Gate id, sample/failure counts, total duration, and last observation time. It is not an evidence tier. It may select order but may not change a process result, parsed report, evidence authority, source binding, executed-test count, or final verdict. Missing or corrupt history falls back to configured order; a corrupt file is not overwritten implicitly. A run whose source changes during verification is never learned into the optimizer.
+
 ## Freshness
 
 Before a result-producing Gate starts, BTH snapshots matching files by path, size, mtime, ctime, and content hash. After the process exits, only new or changed reports are ingested. A matching but unchanged report is stale, and a fresh/stale mixture also fails the Gate rather than ignoring an old sibling report.
@@ -60,3 +66,5 @@ Raw build output is not copied into evidence or JSON CLI output. Interactive fai
 ## Reproduction
 
 The authoritative proof remains re-execution. `rerun` in the record contains the CLI argv, including `--allow-network` when a declared Gate needed it. A second machine should compare verdict, source fingerprint, executed counts, Gate outcomes, and tool versions—not timestamps, durations, or output hashes that may legitimately differ.
+
+Adaptive order may also legitimately differ when the two machines have different local aggregate histories. Reviewers should compare the recorded schedule and confirm that Gate identities, segment constraints, and PASS-path completeness are preserved.

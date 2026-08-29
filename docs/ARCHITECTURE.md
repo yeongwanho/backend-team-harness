@@ -15,7 +15,10 @@ flowchart TB
   Bind --> Registry[Tool registry + permission gate]
   Registry --> Config[verification.json]
   Registry --> Control[CONTROL: denied or pre-result failure]
-  Config --> Runner[No-shell Gate runner]
+  Config --> Schedule[Configured order or opt-in adaptive schedule]
+  Schedule --> Runner[No-shell Gate runner]
+  Runner --> Aggregate[Local bounded aggregate history]
+  Aggregate -. order only .-> Schedule
   Runner --> JUnit[Strict fresh JUnit]
   Runner --> Findings[Fresh Findings]
   Runner --> Observation[Fresh Observation]
@@ -70,7 +73,9 @@ Finalization is crash-recoverable across the interview and task stores: finalize
 
 ### Configured adapter
 
-`verification-tool.mjs` knows result contracts, not frameworks. It resolves each project-contained executable, runs Gates in order, fails fast after a required failure, and rebinds source after execution.
+`verification-tool.mjs` knows result contracts, not frameworks. It resolves each project-contained executable, selects configured order or an opt-in schedule, fails fast after a required failure, and rebinds source after execution.
+
+Adaptive scheduling is deliberately narrower than test-impact analysis. Only contiguous required Gates marked `reorderable: true` can move. With Beta-smoothed failure probability `p_i` and observed mean duration `c_i`, eligible Gates are ordered by descending `p_i/c_i`, the pairwise optimum for an independent fail-fast model. A fixed or optional Gate is a hard boundary. Insufficient, missing, unsafe, or corrupt local history preserves configured order. The scheduler never removes a Gate and cannot alter evidence or verdict authority.
 
 ### Project contract and Packs
 
@@ -145,7 +150,9 @@ This prevents a universal Core lifecycle from conflicting with real service setu
 
 ## Advisory graph
 
-The bundled graph Pack is an import graph, not a call graph. It records generation, provenance, coverage gaps, allowed uses, and forbidden uses. Cycles are legal; no DAG assumption is made.
+The bundled graph Pack is an import graph, not a call graph. It records generation, provenance, coverage gaps, global directed PageRank, allowed uses, and forbidden uses. Cycles are legal; no DAG assumption is made.
+
+Approved plan export may derive bounded query-personalized context from that graph. It first requires a successful graph observation in the latest sealed project run, an unchanged source fingerprint, and matching report bytes/digest. Lexical path/type matches seed Personalized PageRank; propagation follows stored exact import edges only. Selection has a hard character budget and remains `REPORTED/advisory`.
 
 A richer future sidecar must remain rebuildable and advisory. Compiler/bytecode/runtime provenance should outrank heuristic edges, and no graph may silently choose fewer tests for a PASS run.
 

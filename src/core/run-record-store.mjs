@@ -74,6 +74,7 @@ function createRunRecord(taskId, input, rerun, projectRoot) {
     verificationReason: input.result?.reason ?? null,
     sourceStable: input.result?.sourceStable ?? null,
     postSourceFingerprint: input.result?.postSourceFingerprint ?? null,
+    scheduling: input.result?.scheduling ?? null,
     tests: input.result?.tests ?? { tests: 0, executed: 0, failures: 0, errors: 0, skipped: 0 },
     reported: input.result?.reported ?? [],
     gates: (input.result?.gates ?? []).map(compactGate),

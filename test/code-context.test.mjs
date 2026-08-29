@@ -1,0 +1,128 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { initProject } from '../src/init-project.mjs'
+import { captureConfiguredSourceBinding } from '../src/runtime/backend-harness.mjs'
+import { recordProjectRun } from '../src/core/run-record-store.mjs'
+import { loadBudgetedCodeContext, rankCodeContext } from '../src/core/code-context.mjs'
+import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
+
+function graphDocument() {
+  return {
+    schemaVersion: 1,
+    tool: { id: 'bth-import-graph', version: '1.1.0' },
+    findings: [],
+    metrics: { nodes: 4, edges: 2 },
+    graph: {
+      schemaVersion: 1,
+      generatedAt: '2026-08-30T00:00:00.000Z',
+      generation: 'a'.repeat(64),
+      advisory: true,
+      permittedUses: ['navigation', 'review-questions'],
+      forbiddenUses: ['pass-verdict', 'test-skipping'],
+      nodes: [
+        { id: 'controller', path: 'src/main/java/orders/OrdersController.java', language: 'java', qualifiedName: 'orders.OrdersController' },
+        { id: 'service', path: 'src/main/java/orders/OrdersService.java', language: 'java', qualifiedName: 'orders.OrdersService' },
+        { id: 'repository', path: 'src/main/java/orders/OrdersRepository.java', language: 'java', qualifiedName: 'orders.OrdersRepository' },
+        { id: 'unrelated', path: 'src/main/java/audit/AuditClock.java', language: 'java', qualifiedName: 'audit.AuditClock' }
+      ],
+      edges: [
+        { from: 'controller', to: 'service', kind: 'imports', provenance: 'static-import-resolved' },
+        { from: 'service', to: 'repository', kind: 'imports', provenance: 'static-import-resolved' }
+      ]
+    }
+  }
+}
+
+test('query-aware PageRank keeps the lexical entry point and exact graph neighbors inside budget', () => {
+  const document = graphDocument()
+  const result = rankCodeContext(document, 'Change OrdersController lookup behavior', { budgetCharacters: 700 })
+
+  assert.equal(result.status, 'available')
+  assert.equal(result.algorithm.id, 'bounded-personalized-pagerank')
+  assert.ok(result.query.seededNodeCount >= 1)
+  assert.equal(result.entries[0].path, 'src/main/java/orders/OrdersController.java')
+  assert.ok(result.entries.some((entry) => entry.path.endsWith('OrdersService.java')))
+  assert.ok(result.budget.usedCharacters <= result.budget.limitCharacters)
+  assert.equal(result.budget.usedCharacters, result.entries.reduce((sum, entry) => sum + JSON.stringify(entry).length, 0))
+  assert.ok(result.entries.every((entry) => document.graph.nodes.some((node) => node.path === entry.path)))
+  assert.deepEqual(result.authority.forbiddenUses, ['pass-verdict', 'test-skipping'])
+})
+
+test('no lexical match uses a deterministic global fallback instead of inventing relevance', () => {
+  const first = rankCodeContext(graphDocument(), '한국어 요구사항만 있음', { budgetCharacters: 700 })
+  const second = rankCodeContext(graphDocument(), '한국어 요구사항만 있음', { budgetCharacters: 700 })
+
+  assert.equal(first.query.mode, 'global-fallback')
+  assert.deepEqual(first.entries, second.entries)
+  assert.equal(first.query.matchedTokens.length, 0)
+})
+
+test('budget is a hard bound and reports omitted nodes', () => {
+  const result = rankCodeContext(graphDocument(), 'OrdersController', { budgetCharacters: 180 })
+
+  assert.ok(result.budget.usedCharacters <= 180)
+  assert.ok(result.budget.omittedNodes > 0)
+  assert.ok(result.entries.length < graphDocument().graph.nodes.length)
+})
+
+test('unsafe graph contracts are rejected before ranking', () => {
+  const unsafe = graphDocument()
+  unsafe.graph.advisory = false
+  assert.throws(() => rankCodeContext(unsafe, 'orders', { budgetCharacters: 700 }), /advisory/)
+
+  const invented = graphDocument()
+  invented.graph.edges[0].provenance = 'name-guess'
+  assert.throws(() => rankCodeContext(invented, 'orders', { budgetCharacters: 700 }), /provenance/)
+})
+
+test('loader accepts only a graph digest bound to the current sealed project run', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-code-context-bound-'))
+  await writeGradleFixture(root)
+  initializeGit(root)
+  await initProject(root)
+  const graphPath = join(root, '.backend-harness/generated/packs/codegraph-advisory/graph.json')
+  await mkdir(join(root, '.backend-harness/generated/packs/codegraph-advisory'), { recursive: true })
+  const graphText = JSON.stringify(graphDocument(), null, 2) + '\n'
+  await writeFile(graphPath, graphText, 'utf8')
+  const source = await captureConfiguredSourceBinding(root)
+  await recordProjectRun(root, {
+    confirmed: true,
+    sourceBinding: source,
+    result: {
+      configuration: '.backend-harness/verification.json',
+      reason: null,
+      sourceStable: true,
+      tests: { tests: 1, executed: 1, failures: 0, errors: 0, skipped: 0 },
+      gates: [{
+        id: 'codegraph', required: false, outcome: 'passed', evidenceTier: 'REPORTED',
+        result: {
+          type: 'observation', evidenceTier: 'REPORTED', reportFiles: ['.backend-harness/generated/packs/codegraph-advisory/graph.json'],
+          reportDigests: [{
+            path: '.backend-harness/generated/packs/codegraph-advisory/graph.json',
+            sha256: createHash('sha256').update(graphText).digest('hex'),
+            bytes: Buffer.byteLength(graphText)
+          }]
+        }
+      }]
+    }
+  })
+
+  const loaded = await loadBudgetedCodeContext(root, 'OrdersController', {
+    budgetCharacters: 700,
+    sourceFingerprint: source.fingerprint
+  })
+  assert.equal(loaded.status, 'available')
+  assert.match(loaded.provenance.reportSha256, /^[a-f0-9]{64}$/)
+
+  await writeFile(graphPath, graphText + ' ', 'utf8')
+  const tampered = await loadBudgetedCodeContext(root, 'OrdersController', {
+    budgetCharacters: 700,
+    sourceFingerprint: source.fingerprint
+  })
+  assert.equal(tampered.status, 'unavailable')
+  assert.equal(tampered.reason, 'graph_digest_mismatch')
+})

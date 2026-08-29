@@ -86,10 +86,48 @@ for (const node of nodes) {
   delete node.imports
 }
 
+const nodeIndex = new Map(nodes.map((node, index) => [node.id, index]))
+const outgoing = nodes.map(() => [])
+for (const edge of edges) {
+  outgoing[nodeIndex.get(edge.from)].push(nodeIndex.get(edge.to))
+}
+const damping = 0.85
+const maxIterations = 30
+let ranks = nodes.map(() => nodes.length === 0 ? 0 : 1 / nodes.length)
+let residual = 0
+let iterations = 0
+for (; iterations < maxIterations && nodes.length > 0; iterations += 1) {
+  const next = nodes.map(() => (1 - damping) / nodes.length)
+  let dangling = 0
+  for (let from = 0; from < nodes.length; from += 1) {
+    if (outgoing[from].length === 0) {
+      dangling += ranks[from]
+      continue
+    }
+    const contribution = damping * ranks[from] / outgoing[from].length
+    for (const to of outgoing[from]) {
+      next[to] += contribution
+    }
+  }
+  const danglingContribution = damping * dangling / nodes.length
+  for (let index = 0; index < next.length; index += 1) {
+    next[index] += danglingContribution
+  }
+  residual = next.reduce((sum, value, index) => sum + Math.abs(value - ranks[index]), 0)
+  ranks = next
+  if (residual < 1e-10) {
+    iterations += 1
+    break
+  }
+}
+for (let index = 0; index < nodes.length; index += 1) {
+  nodes[index].globalRank = ranks[index]
+}
+
 await mkdir(dirname(output), { recursive: true })
 await writeFile(output, JSON.stringify({
   schemaVersion: 1,
-  tool: { id: 'bth-import-graph', version: '1.0.0' },
+  tool: { id: 'bth-import-graph', version: '1.1.0' },
   findings: [
     ...(unresolvedImports > 0 ? [{
       ruleId: 'graph.coverage.unresolved-imports',
@@ -117,7 +155,8 @@ await writeFile(output, JSON.stringify({
     ambiguousImports,
     duplicateTypes: [...typeByName.values()].filter((entries) => entries.length > 1).length,
     oversizedFiles,
-    indexedBytes
+    indexedBytes,
+    rankedNodes: nodes.length
   },
   graph: {
     schemaVersion: 1,
@@ -126,6 +165,14 @@ await writeFile(output, JSON.stringify({
     advisory: true,
     permittedUses: ['navigation', 'review-questions'],
     forbiddenUses: ['pass-verdict', 'test-skipping'],
+    ranking: {
+      algorithm: 'pagerank',
+      damping,
+      maxIterations,
+      iterations,
+      residual,
+      queryPersonalized: false
+    },
     nodes,
     edges
   }

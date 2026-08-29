@@ -1,0 +1,354 @@
+import { createHash } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
+import { isAbsolute, posix } from 'node:path'
+import { resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
+import { canonicalJson } from './canonical-json.mjs'
+
+const MAX_NODES = 100_000
+const MAX_EDGES = 500_000
+const DAMPING = 0.85
+const MAX_ITERATIONS = 30
+const TOLERANCE = 1e-10
+const GRAPH_PATH = '.backend-harness/generated/packs/codegraph-advisory/graph.json'
+const RUN_PATH = '.backend-harness/local/runs/latest.json'
+const MAX_REPORT_BYTES = 16 * 1024 * 1024
+
+function assertObject(value, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(label + ' must be an object.')
+  }
+}
+
+function safeGraphPath(value, label) {
+  if (typeof value !== 'string' || !value || value.length > 4096 || value.includes('\0')) {
+    throw new Error(label + ' is invalid.')
+  }
+  const normalized = value.replaceAll('\\', '/')
+  if (isAbsolute(normalized) || /^[A-Za-z]:\//.test(normalized) || normalized.split('/').some((part) => !part || part === '..')) {
+    throw new Error(label + ' must stay inside the project.')
+  }
+  return posix.normalize(normalized.replace(/^\.\//, ''))
+}
+
+function validateGraph(document) {
+  assertObject(document, 'graph document')
+  if (document.schemaVersion !== 1) {
+    throw new Error('graph document schemaVersion must be 1.')
+  }
+  assertObject(document.graph, 'graph')
+  const graph = document.graph
+  if (graph.schemaVersion !== 1 || graph.advisory !== true) {
+    throw new Error('graph must be a schemaVersion 1 advisory graph.')
+  }
+  if (!Array.isArray(graph.permittedUses) || !graph.permittedUses.includes('navigation')) {
+    throw new Error('graph must permit navigation.')
+  }
+  if (!Array.isArray(graph.forbiddenUses) || !graph.forbiddenUses.includes('pass-verdict') || !graph.forbiddenUses.includes('test-skipping')) {
+    throw new Error('graph must forbid PASS verdicts and test skipping.')
+  }
+  if (!Array.isArray(graph.nodes) || graph.nodes.length > MAX_NODES) {
+    throw new Error('graph nodes exceed the safety limit.')
+  }
+  if (!Array.isArray(graph.edges) || graph.edges.length > MAX_EDGES) {
+    throw new Error('graph edges exceed the safety limit.')
+  }
+  const ids = new Set()
+  const paths = new Set()
+  const nodes = graph.nodes.map((node, index) => {
+    assertObject(node, 'nodes[' + index + ']')
+    if (typeof node.id !== 'string' || !/^[A-Za-z0-9._:-]{1,128}$/.test(node.id) || ids.has(node.id)) {
+      throw new Error('nodes[' + index + '].id is invalid or duplicated.')
+    }
+    const path = safeGraphPath(node.path, 'nodes[' + index + '].path')
+    if (paths.has(path)) {
+      throw new Error('nodes[' + index + '].path is duplicated.')
+    }
+    if (typeof node.qualifiedName !== 'string' || !node.qualifiedName || node.qualifiedName.length > 1024) {
+      throw new Error('nodes[' + index + '].qualifiedName is invalid.')
+    }
+    if (!['java', 'kotlin'].includes(node.language)) {
+      throw new Error('nodes[' + index + '].language is invalid.')
+    }
+    ids.add(node.id)
+    paths.add(path)
+    return { id: node.id, path, language: node.language, qualifiedName: node.qualifiedName }
+  })
+  const edges = graph.edges.map((edge, index) => {
+    assertObject(edge, 'edges[' + index + ']')
+    if (!ids.has(edge.from) || !ids.has(edge.to)) {
+      throw new Error('edges[' + index + '] references an unknown node.')
+    }
+    if (edge.kind !== 'imports' || edge.provenance !== 'static-import-resolved') {
+      throw new Error('edges[' + index + '] has unsupported kind or provenance.')
+    }
+    return { from: edge.from, to: edge.to }
+  })
+  return {
+    nodes,
+    edges,
+    generatedAt: typeof graph.generatedAt === 'string' ? graph.generatedAt : null,
+    generation: typeof graph.generation === 'string' ? graph.generation : null,
+    permittedUses: [...graph.permittedUses],
+    forbiddenUses: [...graph.forbiddenUses]
+  }
+}
+
+function lexicalTerms(value) {
+  const expanded = String(value)
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .toLowerCase()
+  const parts = expanded.match(/[a-z0-9_$]{2,}/g) ?? []
+  const compact = String(value).toLowerCase().match(/[a-z0-9_$]{4,}/g) ?? []
+  return [...new Set([...parts, ...compact])].slice(0, 64)
+}
+
+function personalization(nodes, query) {
+  const queryTerms = lexicalTerms(query)
+  const nodeTerms = nodes.map((node) => new Set(lexicalTerms(node.path + ' ' + node.qualifiedName)))
+  const raw = nodeTerms.map((terms) => {
+    return queryTerms.reduce((weight, token) => weight + (terms.has(token) ? 1 : 0), 0)
+  })
+  const matchedTokens = queryTerms.filter((token) => nodeTerms.some((terms) => terms.has(token)))
+  const seededNodeCount = raw.filter((weight) => weight > 0).length
+  if (seededNodeCount === 0) {
+    return {
+      weights: nodes.map(() => nodes.length === 0 ? 0 : 1 / nodes.length),
+      mode: 'global-fallback',
+      matchedTokens: [],
+      seededNodeCount: 0
+    }
+  }
+  const total = raw.reduce((sum, value) => sum + value, 0)
+  return {
+    weights: raw.map((value) => value / total),
+    mode: 'query-personalized',
+    matchedTokens,
+    seededNodeCount
+  }
+}
+
+function pageRank(nodes, edges, teleport) {
+  if (nodes.length === 0) {
+    return { scores: [], iterations: 0, residual: 0 }
+  }
+  const indexes = new Map(nodes.map((node, index) => [node.id, index]))
+  const adjacency = nodes.map(() => new Map())
+  for (const edge of edges) {
+    const from = indexes.get(edge.from)
+    const to = indexes.get(edge.to)
+    adjacency[from].set(to, (adjacency[from].get(to) ?? 0) + 1)
+    adjacency[to].set(from, (adjacency[to].get(from) ?? 0) + 0.5)
+  }
+  const outgoingWeights = adjacency.map((links) => {
+    let total = 0
+    for (const weight of links.values()) {
+      total += weight
+    }
+    return total
+  })
+  let scores = [...teleport]
+  let residual = Number.POSITIVE_INFINITY
+  let iterations = 0
+  for (; iterations < MAX_ITERATIONS; iterations += 1) {
+    const next = teleport.map((weight) => (1 - DAMPING) * weight)
+    let dangling = 0
+    for (let from = 0; from < nodes.length; from += 1) {
+      const links = adjacency[from]
+      const totalWeight = outgoingWeights[from]
+      if (totalWeight === 0) {
+        dangling += scores[from]
+        continue
+      }
+      for (const [to, weight] of links) {
+        next[to] += DAMPING * scores[from] * weight / totalWeight
+      }
+    }
+    if (dangling > 0) {
+      for (let index = 0; index < next.length; index += 1) {
+        next[index] += DAMPING * dangling * teleport[index]
+      }
+    }
+    residual = next.reduce((sum, value, index) => sum + Math.abs(value - scores[index]), 0)
+    scores = next
+    if (residual < TOLERANCE) {
+      iterations += 1
+      break
+    }
+  }
+  return { scores, iterations, residual }
+}
+
+function withEntryCost(candidate) {
+  let costCharacters = 0
+  while (true) {
+    const entry = { ...candidate, costCharacters }
+    const nextCost = JSON.stringify(entry).length
+    if (nextCost === costCharacters) {
+      return entry
+    }
+    costCharacters = nextCost
+  }
+}
+
+export function rankCodeContext(document, query, options = {}) {
+  const graph = validateGraph(document)
+  const budgetCharacters = options.budgetCharacters ?? 4000
+  if (!Number.isSafeInteger(budgetCharacters) || budgetCharacters < 64 || budgetCharacters > 100_000) {
+    throw new Error('Context budget must be an integer between 64 and 100000 characters.')
+  }
+  const seed = personalization(graph.nodes, query)
+  const ranked = pageRank(graph.nodes, graph.edges, seed.weights)
+  const finalScores = seed.mode === 'query-personalized'
+    ? ranked.scores.map((score, index) => 0.4 * score + 0.6 * seed.weights[index])
+    : ranked.scores
+  const candidates = graph.nodes
+    .map((node, index) => ({
+      path: node.path,
+      qualifiedName: node.qualifiedName,
+      language: node.language,
+      score: Number(finalScores[index].toPrecision(12)),
+      provenance: ['graph-node', 'static-import-resolved']
+    }))
+    .sort((left, right) => right.score - left.score || left.path.localeCompare(right.path))
+  const entries = []
+  let usedCharacters = 0
+  for (const candidate of candidates) {
+    const entry = withEntryCost(candidate)
+    if (usedCharacters + entry.costCharacters > budgetCharacters) {
+      continue
+    }
+    entries.push(entry)
+    usedCharacters += entry.costCharacters
+  }
+  return {
+    status: 'available',
+    authority: {
+      evidenceTier: 'REPORTED',
+      advisory: true,
+      permittedUses: graph.permittedUses,
+      forbiddenUses: graph.forbiddenUses
+    },
+    graph: {
+      generation: graph.generation,
+      generatedAt: graph.generatedAt,
+      nodes: graph.nodes.length,
+      edges: graph.edges.length
+    },
+    algorithm: {
+      id: 'bounded-personalized-pagerank',
+      damping: DAMPING,
+      reverseEdgeWeight: 0.5,
+      lexicalPriorBlend: seed.mode === 'query-personalized' ? 0.6 : 0,
+      maxIterations: MAX_ITERATIONS,
+      iterations: ranked.iterations,
+      residual: ranked.residual
+    },
+    query: {
+      mode: seed.mode,
+      matchedTokens: seed.matchedTokens,
+      seededNodeCount: seed.seededNodeCount
+    },
+    budget: {
+      limitCharacters: budgetCharacters,
+      usedCharacters,
+      omittedNodes: candidates.length - entries.length
+    },
+    entries,
+    limitations: [
+      'Exact explicit Java/Kotlin imports only; this is not a call graph.',
+      'Reflection, runtime dependency injection, generated code, and SQL ownership are not resolved.',
+      'Ranking may guide navigation or review questions only.'
+    ]
+  }
+}
+
+function unavailable(reason, diagnostic, budgetCharacters) {
+  return {
+    status: 'unavailable',
+    reason,
+    diagnostic,
+    authority: {
+      evidenceTier: 'REPORTED',
+      advisory: true,
+      permittedUses: ['navigation', 'review-questions'],
+      forbiddenUses: ['pass-verdict', 'test-skipping']
+    },
+    budget: { limitCharacters: budgetCharacters, usedCharacters: 0, omittedNodes: 0 },
+    entries: []
+  }
+}
+
+export async function loadBudgetedCodeContext(inputPath, query, options = {}) {
+  const budgetCharacters = options.budgetCharacters ?? 4000
+  if (budgetCharacters === 0) {
+    return unavailable('disabled', 'Context budget is zero.', 0)
+  }
+  if (!Number.isSafeInteger(budgetCharacters) || budgetCharacters < 64 || budgetCharacters > 100_000) {
+    throw new Error('Context budget must be zero or an integer between 64 and 100000 characters.')
+  }
+  if (typeof options.sourceFingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(options.sourceFingerprint)) {
+    return unavailable('source_fingerprint_required', 'A current source fingerprint is required.', budgetCharacters)
+  }
+  const root = await resolveReadableRoot(inputPath)
+  let graphPath
+  let runPath
+  try {
+    graphPath = await resolveSafeProjectPath(root, GRAPH_PATH)
+    runPath = await resolveSafeProjectPath(root, RUN_PATH)
+  } catch (error) {
+    return unavailable('unsafe_path', error instanceof Error ? error.message : String(error), budgetCharacters)
+  }
+  const [graphMetadata, runMetadata] = await Promise.all([statPath(graphPath), statPath(runPath)])
+  if (!graphMetadata) {
+    return unavailable('graph_missing', 'Run the installed codegraph-advisory Gate with `bth check` first.', budgetCharacters)
+  }
+  if (!runMetadata) {
+    return unavailable('bound_run_missing', 'A sealed project check containing the graph is required.', budgetCharacters)
+  }
+  if (!graphMetadata.isFile() || graphMetadata.isSymbolicLink() || graphMetadata.size > MAX_REPORT_BYTES) {
+    return unavailable('graph_unsafe', 'Graph report is not a bounded regular non-symbolic link file.', budgetCharacters)
+  }
+  if (!runMetadata.isFile() || runMetadata.isSymbolicLink() || runMetadata.size > MAX_REPORT_BYTES) {
+    return unavailable('bound_run_unsafe', 'Latest project run is not a bounded regular non-symbolic link file.', budgetCharacters)
+  }
+
+  let run
+  try {
+    run = JSON.parse(await readFile(runPath, 'utf8'))
+  } catch (error) {
+    return unavailable('bound_run_invalid', 'Latest project run has invalid JSON: ' + error.message, budgetCharacters)
+  }
+  const { recordSha256, ...unsignedRun } = run
+  const expectedRunSha = createHash('sha256').update(canonicalJson(unsignedRun)).digest('hex')
+  if (recordSha256 !== expectedRunSha) {
+    return unavailable('bound_run_invalid', 'Latest project run seal does not match its content.', budgetCharacters)
+  }
+  if (run.source?.fingerprint !== options.sourceFingerprint) {
+    return unavailable('bound_run_source_stale', 'Latest graph run belongs to a different source fingerprint.', budgetCharacters)
+  }
+  const graphGate = run.gates?.find((gate) => gate.id === 'codegraph' && gate.outcome === 'passed')
+  const digest = graphGate?.result?.reportDigests?.find((entry) => entry.path === GRAPH_PATH)
+  if (!digest || typeof digest.sha256 !== 'string' || !Number.isSafeInteger(digest.bytes)) {
+    return unavailable('graph_not_bound', 'Latest project run does not bind a successful codegraph report.', budgetCharacters)
+  }
+  const graphText = await readFile(graphPath, 'utf8')
+  const actualSha = createHash('sha256').update(graphText).digest('hex')
+  if (actualSha !== digest.sha256 || Buffer.byteLength(graphText) !== digest.bytes) {
+    return unavailable('graph_digest_mismatch', 'Graph content no longer matches the sealed project run.', budgetCharacters)
+  }
+  try {
+    const ranked = rankCodeContext(JSON.parse(graphText), query, { budgetCharacters })
+    return {
+      ...ranked,
+      provenance: {
+        graphPath: GRAPH_PATH,
+        reportSha256: actualSha,
+        runPath: RUN_PATH,
+        runRecordSha256: recordSha256,
+        sourceFingerprint: options.sourceFingerprint
+      }
+    }
+  } catch (error) {
+    return unavailable('graph_invalid', error instanceof Error ? error.message : String(error), budgetCharacters)
+  }
+}

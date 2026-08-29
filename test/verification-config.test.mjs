@@ -25,6 +25,37 @@ test('verification config accepts a project-owned command and structured JUnit r
   assert.equal(config.gates[0].id, 'integration-tests')
   assert.equal(config.gates[0].result.minimumTests, 3)
   assert.deepEqual(config.gates[0].inputs, ['gradle.properties', '.env.test'])
+  assert.equal(config.scheduling.strategy, 'configured')
+  assert.equal(config.gates[0].reorderable, false)
+})
+
+test('adaptive scheduling is explicit and only required gates may opt into reordering', () => {
+  const config = parseVerificationConfig(JSON.stringify({
+    schemaVersion: 1,
+    scheduling: {
+      strategy: 'adaptive-failure-first',
+      minimumObservations: 4,
+      priorFailures: 1,
+      priorPasses: 3
+    },
+    gates: [{
+      id: 'tests', required: true, reorderable: true, command: ['./verify'],
+      result: { type: 'junit', reports: ['reports/junit.xml'], minimumTests: 1 }
+    }]
+  }))
+
+  assert.equal(config.scheduling.strategy, 'adaptive-failure-first')
+  assert.equal(config.scheduling.minimumObservations, 4)
+  assert.equal(config.gates[0].reorderable, true)
+
+  assert.throws(() => parseVerificationConfig(JSON.stringify({
+    schemaVersion: 1,
+    scheduling: { strategy: 'adaptive-failure-first' },
+    gates: [
+      { id: 'tests', required: true, command: ['./verify'], result: { type: 'junit', reports: ['reports/junit.xml'] } },
+      { id: 'graph', required: false, reorderable: true, command: ['./graph'], result: { type: 'observation', reports: ['reports/graph.json'] } }
+    ]
+  })), /only required gates may be reorderable/)
 })
 
 test('verification config rejects external executables, traversal, and exit-only success', () => {

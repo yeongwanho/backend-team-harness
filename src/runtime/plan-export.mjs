@@ -3,12 +3,13 @@ import { canonicalJson } from '../core/canonical-json.mjs'
 import { loadInterview } from '../core/interview-store.mjs'
 import { loadTask } from '../core/task-store.mjs'
 import { captureConfiguredSourceBinding } from './backend-harness.mjs'
+import { loadBudgetedCodeContext } from '../core/code-context.mjs'
 
 function sha256(value) {
   return createHash('sha256').update(canonicalJson(value)).digest('hex')
 }
 
-export async function exportApprovedPlan(inputPath, taskId) {
+export async function exportApprovedPlan(inputPath, taskId, options = {}) {
   const loaded = await loadTask(inputPath, taskId)
   const task = loaded.record
   if (!task.approvalReceipt || !['PLAN_APPROVED', 'IMPLEMENTING', 'VERIFYING', 'VERIFY_FAILED', 'VERIFIED', 'DONE'].includes(task.state)) {
@@ -49,6 +50,11 @@ export async function exportApprovedPlan(inputPath, taskId) {
     planDigest = sha256(plan)
   }
 
+  const codeContext = await loadBudgetedCodeContext(loaded.root, canonicalJson(plan), {
+    budgetCharacters: options.contextBudget ?? 4000,
+    sourceFingerprint: currentSource.fingerprint
+  })
+
   return {
     schemaVersion: 1,
     type: 'bth.approved-execution-plan',
@@ -56,6 +62,7 @@ export async function exportApprovedPlan(inputPath, taskId) {
     taskState: task.state,
     planDigest,
     plan,
+    codeContext,
     approval: task.approvalReceipt,
     provenance: {
       source,

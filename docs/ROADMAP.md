@@ -60,6 +60,21 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] bounded exhaustive state-machine invariant test
 - [ ] execution adapters for specific coding agents; each must consume the same export and keep BTH verdict authority unchanged
 
+## 0.7 — Safe adaptive feedback and budgeted code context
+
+- [x] configured-order default and explicit per-Gate reorderability
+- [x] contiguous required-Gate boundaries that fixed/optional Gates cannot cross
+- [x] Beta-smoothed failure estimates with minimum observations
+- [x] `p/c` ordering for the declared independent fail-fast model
+- [x] bounded, symlink-safe, aggregate-only local history with corrupt-state fallback
+- [x] complete schedule provenance in sealed run records
+- [x] deterministic benchmark that preserves Gate identity and proves a scoped `3.61x` expected-feedback improvement
+- [x] deterministic global PageRank in the advisory Java/Kotlin import graph
+- [x] source/run/digest-bound Personalized PageRank context for approved plan export
+- [x] hard context budget, provenance, limitations, and explained unavailable fallback
+- [ ] measure real failure-feedback latency and Gate correlation on two independently maintained backends
+- [ ] benchmark code localization with gold regions using Recall@budget and downstream completion
+
 ## Later, only with measured demand
 
 - [ ] runtime coverage-to-test observation index

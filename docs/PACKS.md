@@ -58,6 +58,16 @@ The bundled graph is intentionally conservative. It indexes Java/Kotlin files/ty
 
 Each edge records `static-import-resolved`. Wildcards and external imports count as unresolved coverage gaps. Duplicate qualified type declarations make a matching import ambiguous, so the Pack reports the ambiguity and creates no edge. The output carries a deterministic `generation` hash and a non-deterministic `generatedAt` timestamp.
 
+The generated graph also includes a deterministic global directed PageRank for broad navigation. When an approved task is exported, BTH can compute a separate query-aware ranking with a hard character budget:
+
+1. verify that the graph digest and byte count match a successful observation in the latest sealed run;
+2. require that run and the current project have the same source fingerprint;
+3. seed nodes whose path or qualified type name matches bounded requirement terms;
+4. propagate only over exact stored imports, with reverse traversal at half weight;
+5. blend lexical prior and graph score, then include only complete entries that fit the requested budget.
+
+No match falls back to global graph importance rather than inventing semantic relevance. A missing, stale, tampered, oversized, symlinked, or contract-invalid graph produces an explained `unavailable` result and never blocks plan export.
+
 Allowed uses:
 
 - navigation
