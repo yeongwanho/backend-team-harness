@@ -19,18 +19,18 @@ function dockerReady() {
   return docker(['info', '--format', '{{.ServerVersion}}']).status === 0
 }
 
-function postgresContainerIds() {
-  const result = docker(['ps', '-aq', '--filter', 'ancestor=postgres:16-alpine'])
+function mysqlContainerIds() {
+  const result = docker(['ps', '-aq', '--filter', 'ancestor=mysql:8.4.11'])
   if (result.status !== 0) {
     throw new Error(result.stderr || result.stdout || 'docker ps failed')
   }
   return new Set(result.stdout.split('\n').filter(Boolean))
 }
 
-async function waitForPostgresCleanup(before) {
+async function waitForMySqlCleanup(before) {
   let leaked = []
   for (let attempt = 0; attempt < 40; attempt += 1) {
-    leaked = [...postgresContainerIds()].filter((id) => !before.has(id))
+    leaked = [...mysqlContainerIds()].filter((id) => !before.has(id))
     if (leaked.length === 0) {
       return
     }
@@ -39,7 +39,7 @@ async function waitForPostgresCleanup(before) {
   for (const id of leaked) {
     docker(['rm', '-f', id])
   }
-  assert.fail('PostgreSQL Testcontainers cleanup left containers behind: ' + leaked.join(', '))
+  assert.fail('MySQL Testcontainers cleanup left containers behind: ' + leaked.join(', '))
 }
 
 async function configureMode(configPath, mode, timeoutMs = 900000) {
@@ -51,8 +51,8 @@ async function configureMode(configPath, mode, timeoutMs = 900000) {
   await writeFile(configPath, JSON.stringify(config, null, 2) + '\n', 'utf8')
 }
 
-test('DB Pack runs real PostgreSQL migrations and integration behavior', { skip: !enabled || !dockerReady() }, async () => {
-  const root = await mkdtemp(join(tmpdir(), 'bth-real-postgres-'))
+test('DB Pack runs real MySQL migrations and integration behavior', { skip: !enabled || !dockerReady() }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-real-mysql-'))
   const example = resolve('examples/spring-service')
   await cp(example, root, {
     recursive: true,
@@ -65,21 +65,21 @@ test('DB Pack runs real PostgreSQL migrations and integration behavior', { skip:
   await installPack(root, 'db-integration')
   const configPath = join(root, '.backend-harness/verification.json')
   const config = JSON.parse(await readFile(configPath, 'utf8'))
-  config.context = { profile: 'integration-test', databaseDialect: 'postgresql' }
+  config.context = { profile: 'integration-test', databaseDialect: 'mysql' }
   config.gates[0].network = true
   config.gates[0].command = config.gates[0].command.filter((entry) => entry !== '--offline')
   await writeFile(configPath, JSON.stringify(config, null, 2) + '\n', 'utf8')
 
   try {
-    const successBefore = postgresContainerIds()
+    const successBefore = mysqlContainerIds()
     const result = await checkProject(root, { allowNetwork: true })
 
     assert.equal(result.confirmed, true, JSON.stringify(result.result, null, 2))
     const dbGate = result.result.gates.find((gate) => gate.id === 'db-integration')
     assert.equal(dbGate.outcome, 'passed')
     assert.equal(dbGate.result.executed, 1)
-    assert.equal(result.result.toolchain.declaredContext.databaseDialect, 'postgresql')
-    await waitForPostgresCleanup(successBefore)
+    assert.equal(result.result.toolchain.declaredContext.databaseDialect, 'mysql')
+    await waitForMySqlCleanup(successBefore)
 
     for (const scenario of [
       { mode: 'assertion-failure', expectedReason: 'process_failed', timeoutMs: 900000 },
@@ -87,12 +87,12 @@ test('DB Pack runs real PostgreSQL migrations and integration behavior', { skip:
       { mode: 'timeout', expectedReason: 'process_timed_out', timeoutMs: 15000 }
     ]) {
       await configureMode(configPath, scenario.mode, scenario.timeoutMs)
-      const before = postgresContainerIds()
+      const before = mysqlContainerIds()
       const failed = await checkProject(root, { allowNetwork: true })
       const failedGate = failed.result.gates.find((gate) => gate.id === 'db-integration')
       assert.equal(failed.confirmed, false)
       assert.equal(failedGate.reason, scenario.expectedReason)
-      await waitForPostgresCleanup(before)
+      await waitForMySqlCleanup(before)
     }
   } finally {
     await rm(root, { recursive: true, force: true })

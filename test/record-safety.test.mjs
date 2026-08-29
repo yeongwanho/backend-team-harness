@@ -18,12 +18,12 @@ test('canonical JSON hashes equivalent objects identically', () => {
 test('shareable records redact project paths and common credential forms', () => {
   const result = redactForShare({
     failure: '/work/service/build failed ' + 'pass' + 'word=hunter2',
-    endpoint: 'postgresql://' + 'user' + ':pa' + 'ss@localhost/db',
+    endpoint: 'mysql://' + 'user' + ':pa' + 'ss@localhost/db',
     token: ['gh', 'p_', 'abcdefghijklmnopqrstuvwxyz123456'].join('')
   }, { projectRoot: '/work/service' })
 
   assert.equal(result.value.failure, '<project>/build failed password=<redacted>')
-  assert.equal(result.value.endpoint, 'postgresql://<redacted>@localhost/db')
+  assert.equal(result.value.endpoint, 'mysql://<redacted>@localhost/db')
   assert.equal(result.value.token, '<redacted-github-token>')
   assert.equal(result.redactionsApplied, 4)
 })

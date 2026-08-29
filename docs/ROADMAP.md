@@ -31,7 +31,7 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] executable API/message contract recipe/Gate
 - [x] conservative advisory Java/Kotlin import graph
 - [x] Flyway duplicate comparison matching trailing-zero `MigrationVersion` semantics
-- [x] prove DB teardown after success, assertion failure, process failure, and timeout against a disposable real PostgreSQL container
+- [x] prove Flyway migration, MySQL-specific behavior, and DB teardown after success, assertion failure, process failure, and timeout against a pinned disposable MySQL 8.4 container
 - [ ] add a project-owned Atlas Findings recipe after its dialect/dev database lifecycle is specified
 - [ ] add Liquibase-specific adoption evidence when a real project needs it
 

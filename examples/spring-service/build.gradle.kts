@@ -25,11 +25,11 @@ configurations[integrationTest.runtimeOnlyConfigurationName]
     .extendsFrom(configurations.testRuntimeOnly.get())
 
 dependencies {
-    add(integrationTest.implementationConfigurationName, "org.testcontainers:junit-jupiter:1.21.3")
-    add(integrationTest.implementationConfigurationName, "org.testcontainers:postgresql:1.21.3")
-    add(integrationTest.implementationConfigurationName, "org.postgresql:postgresql:42.7.7")
-    add(integrationTest.implementationConfigurationName, "org.flywaydb:flyway-core:11.13.2")
-    add(integrationTest.implementationConfigurationName, "org.flywaydb:flyway-database-postgresql:11.13.2")
+    add(integrationTest.implementationConfigurationName, "org.testcontainers:testcontainers-junit-jupiter:2.0.5")
+    add(integrationTest.implementationConfigurationName, "org.testcontainers:testcontainers-mysql:2.0.5")
+    add(integrationTest.implementationConfigurationName, "com.mysql:mysql-connector-j:26.7.0")
+    add(integrationTest.implementationConfigurationName, "org.flywaydb:flyway-core:13.4.0")
+    add(integrationTest.implementationConfigurationName, "org.flywaydb:flyway-mysql:13.4.0")
 }
 
 java {
@@ -43,7 +43,7 @@ tasks.test {
 }
 
 tasks.register<Test>("integrationTest") {
-    description = "Runs PostgreSQL integration tests in an isolated Testcontainers database."
+    description = "Runs MySQL 8.4 integration tests in an isolated Testcontainers database."
     group = "verification"
     testClassesDirs = integrationTest.output.classesDirs
     classpath = integrationTest.runtimeClasspath

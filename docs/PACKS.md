@@ -29,9 +29,11 @@ The generated Gate declares `network: true` because dependency resolution and Te
 
 Gradle expects an `integrationTest` task. Maven expects a `db-integration` profile executed by Failsafe. Adapt the generated Gate rather than building another lifecycle inside BTH.
 
+The maintained reference implementation currently targets MySQL 8.4 LTS with a pinned `mysql:8.4.11` Testcontainers image. It proves Flyway migration, MySQL-specific column behavior, JDBC reads/writes, and teardown across successful, failed, abruptly terminated, and timed-out test processes. The Core remains database-neutral; a project running another database must replace the project-owned lifecycle and declare its real dialect.
+
 Required project proof:
 
-1. Same production dialect and relevant major version.
+1. Same production dialect and relevant major version; for the reference path, MySQL 8.4.
 2. Empty-schema migration from the first migration.
 3. Important upgrade path when old data/schema compatibility matters.
 4. Application integration tests, not only DDL parsing.

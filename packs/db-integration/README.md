@@ -13,4 +13,6 @@ Before running it, make the generated command real:
 - Prove containers/processes are removed after success, failure, and timeout.
 - Keep credentials synthetic. Never point the Pack at production.
 
-The Pack does not add a second hidden database lifecycle and does not claim that SQLite proves PostgreSQL/MySQL migration safety.
+The first reference path is MySQL 8.4 LTS. For a Gradle/JUnit project, use a pinned MySQL image, Testcontainers' MySQL and JUnit Jupiter modules, the official Connector/J driver, and Flyway's MySQL module. The runnable repository example shows the complete wiring. Keep the project's production MySQL major version authoritative if it differs from the reference fixture.
+
+The Pack does not add a second hidden database lifecycle and does not claim that H2 or SQLite proves MySQL migration safety.

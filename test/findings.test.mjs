@@ -85,7 +85,7 @@ async function findingsProject(blocking = false) {
   await initProject(root)
   await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify({
     schemaVersion: 1,
-    context: { profile: 'test', databaseDialect: 'postgresql' },
+    context: { profile: 'test', databaseDialect: 'mysql' },
     gates: [
       {
         id: 'secrets', required: true, command: ['./scan'],

@@ -71,7 +71,7 @@ node src/cli.mjs check examples/spring-service --allow-network
   "schemaVersion": 1,
   "context": {
     "profile": "test",
-    "databaseDialect": "postgresql"
+    "databaseDialect": "mysql"
   },
   "gates": [
     {
@@ -166,7 +166,9 @@ empty DB migration + 필요한 upgrade path
 프로젝트 integration tests → fresh JUnit → EXECUTED
 ```
 
-운영 DB, 배포, 실제 비밀값은 기본 기능에 없습니다. SQLite에서 SQL 문자열 하나가 통과했다고 PostgreSQL migration이 안전하다고 주장하지 않습니다. Atlas 같은 SQL 분석기는 향후 project-owned Findings Gate로 추가할 수 있지만, 실제 dialect 통합테스트를 대체할 수 없습니다.
+현재 참조 구현은 MySQL 8.4 LTS를 기준으로 합니다. 예제는 고정된 `mysql:8.4.11` 이미지를 사용해 Flyway migration, MySQL `JSON`·`ENUM`·`utf8mb4`, 실제 JDBC 왕복, 실패·시간초과 뒤 컨테이너 정리를 검증합니다. Core는 MySQL에 종속되지 않지만, 지금 DB Pack의 첫 번째 실전 지원 경로는 MySQL입니다.
+
+운영 DB, 배포, 실제 비밀값은 기본 기능에 없습니다. H2나 SQLite에서 SQL 문자열 하나가 통과했다고 MySQL migration이 안전하다고 주장하지 않습니다. Atlas 같은 SQL 분석기는 향후 project-owned Findings Gate로 추가할 수 있지만, 실제 MySQL 통합테스트를 대체할 수 없습니다.
 
 ## 코드그래프의 정확한 위치
 
