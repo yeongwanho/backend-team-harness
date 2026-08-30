@@ -12,8 +12,16 @@ const ROLE_SUFFIXES = Object.freeze({
 
 function moduleForPath(path) {
   const normalized = String(path ?? '').replaceAll('\\', '/')
-  const marker = normalized.indexOf('/src/')
-  return marker <= 0 ? 'root' : normalized.slice(0, marker)
+  const parts = normalized.split('/').filter(Boolean)
+  if (['src', 'app', 'test', 'tests'].includes(parts[0])) return 'root'
+  const marker = parts.findIndex((part) => ['src', 'app', 'test', 'tests'].includes(part))
+  return marker <= 0 ? 'root' : parts.slice(0, marker).join('/')
+}
+
+function fileStem(path) {
+  return String(path).split('/').at(-1)
+    .replace(/\.(?:ts|tsx|js|jsx|mjs|cjs|py|java|kt)$/, '')
+    .replace(/(?:[.-](?:spec|test)|_test)$/, '')
 }
 
 function citation(file) {
@@ -52,8 +60,10 @@ function layerObservation(role, files) {
 function testPairing(files) {
   const production = new Map()
   const tests = []
+  let testFileCount = 0
   for (const file of files) {
     const isTest = (file.roles ?? []).includes('test')
+    if (isTest) testFileCount += 1
     for (const declaration of file.declarations ?? []) {
       if (isTest) {
         const base = declaration.name.replace(/(?:IntegrationTest|Tests|Test|IT)$/, '')
@@ -62,13 +72,17 @@ function testPairing(files) {
         production.set(declaration.name, { path: file.path, contentSha256: file.contentSha256 ?? null })
       }
     }
+    const stem = fileStem(file.path)
+    if (isTest) tests.push({ base: stem, path: file.path, contentSha256: file.contentSha256 ?? null })
+    else production.set(stem, { path: file.path, contentSha256: file.contentSha256 ?? null })
   }
   const pairs = tests.flatMap((test) => {
     const source = production.get(test.base)
     return source ? [{ production: source.path, productionSha256: source.contentSha256, test: test.path, testSha256: test.contentSha256 }] : []
   }).sort((left, right) => left.production.localeCompare(right.production) || left.test.localeCompare(right.test))
   return {
-    status: pairs.length ? 'observed' : 'not-observed',
+    status: testFileCount > 0 ? 'observed' : 'not-observed',
+    count: testFileCount,
     pairs: pairs.slice(0, 32),
     omittedPairCount: Math.max(0, pairs.length - 32)
   }
@@ -174,6 +188,6 @@ export function compileProjectConventions(code = {}, migrationIndex = null) {
           'Observed patterns describe indexed source; they are not automatically team-declared blocker policy.',
           'Runtime wiring, reflection, generated code, dynamic SQL, and method-level semantics are not resolved.'
         ]
-      : ['No indexed Java/Kotlin source was available; project conventions remain unknown.']
+      : ['No indexed supported backend source was available; project conventions remain unknown.']
   }
 }

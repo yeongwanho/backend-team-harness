@@ -29,7 +29,7 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] production-dialect DB integration-test recipe/Gate
 - [x] executable architecture-test recipe/Gate
 - [x] executable API/message contract recipe/Gate
-- [x] conservative advisory Java/Kotlin import graph
+- [x] conservative advisory Java/Kotlin/TypeScript/JavaScript/Python structure graph
 - [x] Flyway duplicate comparison matching trailing-zero `MigrationVersion` semantics
 - [x] prove Flyway migration, MySQL-specific behavior, and DB teardown after success, assertion failure, process failure, and timeout against a pinned disposable MySQL 8.4 container
 - [ ] add a project-owned Atlas Findings recipe after its dialect/dev database lifecycle is specified
@@ -69,7 +69,7 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] bounded, symlink-safe, aggregate-only local history with corrupt-state fallback
 - [x] complete schedule provenance in sealed run records
 - [x] deterministic analytical fixture that preserves Gate identity and calculates a scoped `3.61x` expected-feedback improvement under the declared model
-- [x] deterministic global PageRank in the advisory Java/Kotlin import graph
+- [x] deterministic global PageRank in the advisory polyglot backend graph
 - [x] source/run/digest-bound Personalized PageRank context for approved plan export
 - [x] hard context budget, provenance, limitations, and explained unavailable fallback
 - [ ] measure real failure-feedback latency and Gate correlation on two independently maintained backends
@@ -157,6 +157,8 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] bounded numeric token/cost telemetry recorded as advisory evidence only
 - [x] mock-provider end-to-end edit, write-policy, recovery, and verification tests
 - [x] one Codex and one Claude full-path implementation smoke on separate synthetic Java repositories, including real edit and Gate execution
+- [x] unique Jest/Vitest/Pytest bootstrap with project-local offline runners and truthful missing-runtime doctor status
+- [x] bounded on-demand provider code context with source-drift detection and nested-backend scoping
 - [ ] measured real-provider implementation on two unrelated backend tasks
 - [ ] compare tokens, time, valid edit rate, and repair rate against direct Codex/Claude execution
 - [ ] lightweight non-writing question/inspection router; implementation profiles do not yet turn BTH into a chat harness

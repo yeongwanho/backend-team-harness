@@ -85,7 +85,7 @@ function normalizedDiscoveredConventions(conventions) {
         examples: [],
         authority: { sourcePatternObservationOnly: true, queryPlanExecuted: false, databaseMetadataInspected: false, nPlusOneConfirmed: false }
       },
-      tests: { status: 'not-observed', pairs: [] },
+      tests: { status: 'not-observed', count: 0, pairs: [] },
       limitations: ['No source-bound convention observation was available.']
     }
   }
@@ -167,6 +167,7 @@ function normalizedDiscoveredConventions(conventions) {
     },
     tests: {
       status: OBSERVATION_STATUSES.has(conventions.tests?.status) ? conventions.tests.status : 'not-observed',
+      count: Number.isSafeInteger(conventions.tests?.count) ? conventions.tests.count : 0,
       pairs: (conventions.tests?.pairs ?? []).slice(0, 32).map((pair) => ({
         production: boundedText(pair?.production, 4096),
         productionSha256: boundedText(pair?.productionSha256, 128),

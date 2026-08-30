@@ -94,7 +94,7 @@ node src/cli.mjs check examples/spring-service --acknowledge-network-risk
 
 ## 프로젝트 실행 계약
 
-`bth init`은 Gradle/Maven Wrapper를 인식하면 `.backend-harness/verification.json`까지 만듭니다. 다른 빌드 시스템에서는 공용 지식 문서만 만들며, 아래 계약을 프로젝트의 실행 방식에 맞춰 직접 추가해야 합니다. 실행 Core는 프레임워크를 추측하지 않고 이 계약만 실행합니다.
+`bth init`은 Gradle/Maven Wrapper 또는 저장소가 선언한 고유한 Jest·Vitest·Pytest 구성을 인식하면 `.backend-harness/verification.json`과 OS별 프로젝트 전용 실행 래퍼까지 만듭니다. 여러 테스트 프로젝트가 충돌하거나 지원되지 않는 빌드라면 하나를 임의 선택하지 않고 팀이 아래 계약을 직접 정하도록 멈춥니다. Node는 프로젝트 `node_modules`의 실행 파일만, Python은 프로젝트 `.venv` 또는 `uv run --offline`만 사용하며 의존성을 자동 설치하거나 네트워크를 켜지 않습니다. 실행 Core는 이 계약만 실행합니다.
 
 ```json
 {
@@ -126,12 +126,12 @@ node src/cli.mjs check examples/spring-service --acknowledge-network-risk
 - `inputs`는 Git에서 무시됐더라도 결과에 영향을 주는 파일을 내용 해시로 묶습니다.
 - `network: true`인 Gate는 CLI의 명시적 `--acknowledge-network-risk` 없이는 실행되지 않습니다.
 - `dependsOn`은 선행 Gate가 통과하기 전 실행을 막습니다. 필수 Gate가 선택적 observation에 의존하는 구성은 거절됩니다.
-- 하나 이상의 required JUnit Gate가 반드시 있어야 합니다.
+- 하나 이상의 required JUnit Gate가 반드시 있어야 합니다. 여기서 JUnit은 JVM 전용이라는 뜻이 아니라 Jest·Vitest·Pytest 결과도 같은 엄격한 testcase 계약으로 직렬화한다는 뜻입니다.
 - `minimumTests`는 전체가 아니라 실제 실행된 테스트 수의 하한입니다.
 
 역사적인 경로명인 `.backend-harness/quality-gates/*.yaml`은 **사람이 계획·리뷰 때 확인할 체크리스트**입니다. `required: true`는 계획에서 반드시 다뤄야 한다는 뜻이지 자동 실행됐다는 뜻이 아닙니다. PASS를 차단하거나 만드는 실행 권한은 오직 `verification.json`에 선언된 Gate에 있습니다.
 
-자동 생성되는 JVM 기본값은 기존 캐시만 쓰는 `--offline` 모드입니다. 새 PC에서 의존성을 받아야 한다면 팀이 설정에서 `--offline`을 제거하고 `network: true`를 선언한 뒤, 해당 실행에만 `--acknowledge-network-risk`를 줍니다.
+자동 생성되는 JVM 기본값은 기존 캐시만 쓰는 `--offline` 모드입니다. portable 기본값도 설치된 프로젝트 로컬 런타임 또는 `uv --offline`만 허용합니다. 새 PC에서 의존성을 받아야 한다면 하네스 밖에서 먼저 설치하거나, 팀이 Gate에서 네트워크 필요성을 명시적으로 선언하고 해당 실행에만 `--acknowledge-network-risk`를 줍니다.
 
 ### 실패를 더 빨리 보여 주는 선택적 순서 최적화
 
@@ -228,7 +228,7 @@ node src/cli.mjs pack install codegraph-advisory /path/to/project
 
 ## 프로젝트 규칙과 모순을 먼저 확인하기
 
-`bth intelligence inspect`는 모델에게 저장소를 추측시키기 전에 Git 상태, 빌드·Wrapper, 지식 문서, Flyway 변경, DB dialect, 실행 Gate, Java/Kotlin 선언·route·entity·test 구조를 제한된 범위로 수집합니다.
+`bth intelligence inspect`는 모델에게 저장소를 추측시키기 전에 Git 상태, 빌드·Wrapper, 지식 문서, Flyway 변경, DB dialect, 실행 Gate, Java/Kotlin/TypeScript/JavaScript/Python의 선언·계층·route·entity/table·test 구조를 제한된 범위로 수집합니다. 중첩된 portable backend가 하나로 식별되면 그 경로만 관찰해 sibling frontend 규칙을 섞지 않습니다.
 
 ```bash
 node src/cli.mjs intelligence inspect /path/to/project
@@ -241,7 +241,7 @@ node src/cli.mjs intelligence inspect /path/to/project --no-cache --json
 
 `inspect` 자체는 캐시를 쓰거나 갱신하지 않습니다. `warm-cache`만 `.backend-harness/local/cache/`에 원자적으로 기록하며 이 경로는 공유 Git 상태에서 제외됩니다. 캐시는 Git 소스 지문과 HEAD에 묶이고, 소스가 바뀌면 변경된 Java/Kotlin만 다시 파싱합니다. Git이 무시한 JVM 소스나 submodule 내부 소스가 색인 범위에 있으면 루트 지문만으로 내용을 증명할 수 없으므로 캐시를 사용하지 않습니다. 캐시가 없거나 오래됐거나 변조·손상·과대·symlink 상태이면 검사 실패를 숨기지 않고 새 색인으로 돌아갑니다. 결과의 `code.metrics.parsedFiles`, `reusedFiles`, `readBytes`로 실제 재사용량을 확인할 수 있습니다.
 
-`.backend-harness/project-rules.json`의 규칙은 `confirmed`, `unknown`, `conflict` 세 상태로 평가됩니다. 근거가 없거나 서로 충돌하면 성공으로 올리지 않습니다. `blocker` 규칙이 해결되지 않으면 인터뷰의 계획 확정도 막히며, 각 결과에는 규칙을 정한 문서 경로·section과 실제 fact 근거가 함께 남습니다. 출처는 프로젝트 안의 일반 Markdown 파일과 실제 존재하는 제목이어야 하므로, 가짜 절 이름이나 symlink 출처는 설정 단계에서 거절됩니다. 기본 템플릿은 실행된 JUnit Gate, 기존 Flyway migration 불변성, 필수 지식 문서, 명시적 DB dialect를 검사하지만 회사별 규칙은 팀이 이 파일과 연결된 정책 문서에서 소유해야 합니다.
+`.backend-harness/project-rules.json`의 규칙은 `confirmed`, `unknown`, `conflict` 세 상태로 평가됩니다. 근거가 없거나 서로 충돌하면 성공으로 올리지 않습니다. `blocker` 규칙이 해결되지 않으면 인터뷰의 계획 확정도 막히며, 각 결과에는 규칙을 정한 문서 경로·section과 실제 fact 근거가 함께 남습니다. 출처는 프로젝트 안의 일반 Markdown 파일과 실제 존재하는 제목이어야 하므로, 가짜 절 이름이나 symlink 출처는 설정 단계에서 거절됩니다. 기본 템플릿은 구조화된 테스트 결과를 내는 required JUnit Gate, 기존 Flyway migration 불변성, 필수 지식 문서, 명시적 DB dialect를 검사하지만 회사별 규칙은 팀이 이 파일과 연결된 정책 문서에서 소유해야 합니다.
 
 내장 fact에 없는 회사 규칙은 `.backend-harness/project-facts.json`에서 `project.*` 이름으로 선언합니다. 각 값은 프로젝트 안의 Markdown 문서와 실제 제목을 가리켜야 하며, BTH는 문서 SHA-256까지 남깁니다. 여러 provider가 같은 fact에 다른 값을 주면 `conflict`가 되고, 프로젝트 fact가 `git.*`, `database.*` 같은 내장 권한을 덮어쓰는 것은 거절됩니다. `project-declared` fact는 계획·질문·규칙 평가의 근거일 뿐 테스트 PASS 권한은 없습니다.
 
@@ -286,7 +286,7 @@ empty DB migration + 필요한 upgrade path
 
 ## 코드그래프의 정확한 위치
 
-현재 그래프 Pack은 Java/Kotlin 파일의 복수 type 선언을 인덱싱하고, 고유하게 해석된 import·상속·구현과 보수적인 field/constructor 주입·테스트 이름 관계를 서로 다른 provenance로 기록합니다. Controller route, JPA entity/table, source role도 node metadata에 남깁니다.
+현재 그래프는 Java/Kotlin의 복수 type 선언·상속·구현·보수적 주입 관계와 TypeScript/JavaScript/Python의 고유하게 해석된 정적 module import를 서로 다른 provenance로 기록합니다. route, 명시적 table, source role, 테스트 관계와 SQL·설정·템플릿의 경로 전용 artifact도 node metadata에 남깁니다.
 
 포함하지 않는 것:
 
@@ -298,7 +298,7 @@ empty DB migration + 필요한 upgrade path
 
 그래프 파일에는 `advisory: true`, 허용 용도(`navigation`, `review-questions`, `impact-localization`), 금지 용도(`pass-verdict`, `test-skipping`)가 함께 기록됩니다. edge 가중치, 방향별 의존/피의존 도달성, 반복형 SCC 분석, weighted PageRank를 사용하지만 컴파일러 call graph인 척하지 않습니다. 두 권한 목록은 각각 최대 16개의 짧은 식별자로 제한되어 작은 context budget을 우회해 응답을 부풀릴 수 없습니다. 생성 파일은 loader와 같은 16 MiB 상한을 넘으면 생성 단계에서 실패합니다.
 
-그래프 Pack이 현재 소스에 묶인 성공한 observation을 만들었다면, 승인된 계획을 내보낼 때 요구사항에 맞는 코드 위치를 제한된 예산 안에서 함께 받을 수 있습니다.
+그래프 Pack이 현재 소스에 묶인 성공한 observation을 만들었다면 그 봉인된 결과를 재사용합니다. `bth work` 구현 시 선행 graph run이 없으면 현재 source fingerprint를 전후로 확인하면서 메모리에만 bounded graph를 만들고, 요구사항과 가까운 production/test 경로를 제한된 예산 안에서 전달합니다. 중첩 backend가 하나로 관찰되면 sibling frontend는 이 즉석 그래프에서도 제외합니다. 즉석 그래프는 저장되지 않고 PASS 권한도 없습니다.
 
 ```bash
 node src/cli.mjs task export-plan USER-17 /path/to/project \
@@ -360,7 +360,7 @@ node src/cli.mjs interview rebind USER-17 /path/to/project --by developer
 node src/cli.mjs interview finalize USER-17 /path/to/project --by developer
 ```
 
-`bth intelligence inspect /path --no-cache`는 `.backend-harness/verification.json`이나 초기화된 계약이 전혀 없어도 Git 저장소를 수정하지 않고 실행됩니다. 이때 추론한 Gate는 설명용일 뿐 `verification.status: missing`, `overallStatus: unknown`으로 남으며 PASS 권한을 갖지 않습니다. `bth init`은 실제 Gradle/Maven 정의, Spring Boot 단서, wrapper 버전, 모듈별 `src/test` 위치를 읽어 프로젝트 문서와 JUnit report 패턴을 생성합니다. `doctor`는 활성 Java와 Gradle wrapper의 공식 런타임 호환성, 모든 테스트 모듈의 report coverage를 함께 검사하며 모르는 상태를 `healthy`로 승격하지 않습니다.
+`bth intelligence inspect /path --no-cache`는 `.backend-harness/verification.json`이나 초기화된 계약이 전혀 없어도 Git 저장소를 수정하지 않고 실행됩니다. 이때 추론한 Gate는 설명용일 뿐 `verification.status: missing`, `overallStatus: unknown`으로 남으며 PASS 권한을 갖지 않습니다. `bth init`은 실제 Gradle/Maven 정의와 wrapper/JVM 호환성뿐 아니라 저장소가 선언한 Jest·Vitest·Pytest와 중첩 test project를 읽어 프로젝트 문서·전용 실행 래퍼·JUnit report 계약을 생성합니다. `doctor`는 필요한 project-local runtime, 모든 탐지 모듈의 report coverage, JVM이면 활성 Java와 wrapper 호환성을 함께 검사하며 모르는 상태를 `healthy`로 승격하지 않습니다.
 
 인터뷰 시작 시 BTH는 Git 지문, 빌드 정의, 소스·테스트 수, Flyway, DB dialect, 품질 정책, `verification.json` Gate를 읽기 전용으로 수집합니다. 파일별 JVM 색인은 `bth intelligence inspect`에서 볼 수 있고, 장기 보관 인터뷰 스냅샷에는 크기 폭증을 막기 위해 파일 목록 대신 집계·누락 수만 남깁니다. 질문은 완료 조건·변경 범위·DB 영향·검증·제약의 다섯 가지이며, 한 번에 현재 질문 하나만 답할 수 있습니다. 질문의 힌트는 감지한 MySQL/Flyway/Gate 사실을 보여 주지만 답을 대신 채우지는 않습니다. 확정되지 않은 답은 `--status unknown` 또는 `--status conflict`로 남길 수 있지만 해결 전에는 계획을 확정하지 못합니다. `--claims`를 사용하면 DB 변경/migration, 포함·제외 모듈, 필수 Gate, 공개 API 호환성처럼 명시된 조합만 Core가 검사합니다. 자연어 의미를 추측하지 않으며, 후보 해소는 후보 내용과 현재 context snapshot의 SHA-256, actor·사유·시간에 묶입니다. `rebind`로 context가 바뀌면 같은 문장으로 보이는 후보도 다시 검토해야 합니다.
 
@@ -440,7 +440,7 @@ BTH Core는 모델을 PASS 판정기로 사용하지 않습니다. 대신 설치
 
 `auto`는 구조화된 interview claims와 source-bound 규칙·인접 코드 근거로 작업 강도를 정합니다. migration이 필요하거나, DB 변경인데 migration 필요 여부가 미확정이거나, 공개 API 호환성을 지키지 못하는 변경은 `deep`(12,000자/high effort)입니다. 반대로 단일 모듈·migration 없음·DB 영향 명시·API 호환성 유지가 모두 확인되고, 차단 규칙이 해결됐으며, 현재 source에 묶인 관련 코드 경로도 있을 때만 DB를 읽고 쓰거나 호환 가능한 CRUD API를 추가하는 작업을 `fast`(2,000자/low effort)로 선택합니다. 차단 규칙이나 인접 코드 근거가 미확정이면 `balanced`(6,000자/medium effort), 차단 규칙이 충돌하면 `deep`입니다. 비차단 경고의 미확정은 숨기지 않고 provider request에 유지하되 그 자체만으로 작은 작업을 느리게 만들지는 않으며, 알려진 비차단 충돌은 balanced로 올립니다. 승인된 task 본문은 fast/balanced/deep별 8,000/24,000/64,000자로 별도 제한하며, 자동 모드의 큰 작업은 deep으로 올리고 64,000자를 넘으면 작업을 나누도록 실패합니다. 모르는 작업을 가볍다고 추측하지 않습니다. 명시적 `--mode fast|balanced|deep` 설정과 64~32,768자의 code-context override도 기록됩니다.
 
-provider request에는 승인된 계획, 허용 경로·diff budget, source-bound codegraph의 제한된 상위 문맥, `projectConventions` 규칙·지식 문서·인접 코드 경로, 직전 실패 요약만 들어갑니다. 소스 본문 전체를 복사하지 않고 프로젝트 상대 경로를 전달합니다. 요청 파일 자체도 실행 전후 SHA-256으로 봉인됩니다. provider는 편집 전에 선언된 규칙·관련 지식 문서와 최소 한 개의 인접 production/test 예제를 읽고, 이름·계층·DTO/오류·트랜잭션·영속성·테스트 관례를 보존하도록 지시받습니다. MySQL/JPA 작업에는 query shape, 인덱스 선언, transaction, lock, fetch/N+1 후보를 별도 검토하되 정적 패턴을 실제 query plan이나 runtime 결함으로 과장하지 않습니다. 차단 규칙을 확인할 수 없거나 코드와 충돌하면 추측해 수정하지 않습니다. provider 수정 뒤 BTH는 변경 경로에 맞는 feedback Gate를 먼저 실행하고, 통과했을 때만 전체 필수 Gate를 실행합니다. 최종 PASS에서 전체 Gate를 생략하지 않습니다. provider의 서로 다른 출력은 input/output/cache/reasoning/total token, USD 비용, 시간, turn의 공통 schema로 정규화하며 관찰값일 뿐 PASS 권한은 없습니다. 코드 변경이 전혀 없으면 첫 호출에서 `no-source-change`로 멈추고 Gate와 맹목적 recovery를 실행하지 않습니다. 내장 provider는 이미 로그인된 로컬 CLI 세션을 사용하며 API-key 환경변수는 의도적으로 전달하지 않습니다.
+provider request에는 승인된 계획, 허용 경로·diff budget, 봉인된 graph 또는 현재 source에서 즉석 생성한 bounded graph의 제한된 상위 문맥, `projectConventions` 규칙·지식 문서·인접 코드 경로, 직전 실패 요약만 들어갑니다. 소스 본문 전체를 복사하지 않고 프로젝트 상대 경로를 전달합니다. 즉석 graph 전후에 source fingerprint가 바뀌면 구현을 시작하지 않습니다. 요청 파일 자체도 실행 전후 SHA-256으로 봉인됩니다. provider는 편집 전에 선언된 규칙·관련 지식 문서와 최소 한 개의 인접 production/test 예제를 읽고, 이름·계층·DTO/오류·트랜잭션·영속성·테스트 관례를 보존하도록 지시받습니다. MySQL/JPA 작업에는 query shape, 인덱스 선언, transaction, lock, fetch/N+1 후보를 별도 검토하되 정적 패턴을 실제 query plan이나 runtime 결함으로 과장하지 않습니다. 차단 규칙을 확인할 수 없거나 코드와 충돌하면 추측해 수정하지 않습니다. provider 수정 뒤 BTH는 변경 경로에 맞는 feedback Gate를 먼저 실행하고, 통과했을 때만 전체 필수 Gate를 실행합니다. 최종 PASS에서 전체 Gate를 생략하지 않습니다. provider의 서로 다른 출력은 input/output/cache/reasoning/total token, USD 비용, 시간, turn의 공통 schema로 정규화하며 관찰값일 뿐 PASS 권한은 없습니다. 코드 변경이 전혀 없으면 첫 호출에서 `no-source-change`로 멈추고 Gate와 맹목적 recovery를 실행하지 않습니다. 내장 provider는 이미 로그인된 로컬 CLI 세션을 사용하며 API-key 환경변수는 의도적으로 전달하지 않습니다.
 
 `fast`가 제한하는 것은 BTH가 추가하는 task·code context와 provider effort입니다. 각 CLI가 자체적으로 붙이는 system prompt, tool schema, cache traffic까지 작아진다는 뜻은 아닙니다. 2026-08-30의 작은 합성 Java 구현 smoke에서 BTH request는 각각 약 1.6 KiB였지만 Codex는 총 input 97,449(그중 cached 82,688), Claude는 input 6 + cache creation 13,849 + cache read 80,424와 약 $0.076을 보고했습니다. 이 값은 한 환경의 관찰값이지 일반 성능 보장이 아닙니다. Claude는 `--max-budget-usd`를 전달할 수 있지만 현재 사용한 Codex CLI에는 같은 달러 상한이 없어 effort·timeout·attempt 한도로만 제한합니다. 따라서 내장 provider는 승인된 구현용이며, 짧은 질문을 항상 저비용으로 답하는 chat router는 아직 아닙니다.
 

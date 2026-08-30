@@ -77,3 +77,15 @@ test('semantic graph names Kotlin modifier declarations instead of indexing the 
   assert.equal(nodesByType.get('example.UserKind').qualifiedName, 'example.UserKind')
   assert.equal(relation.kind, 'implements')
 })
+
+test('semantic graph can stay inside one backend while retaining project-relative paths', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-semantic-scope-'))
+  await mkdir(join(root, 'backend/app'), { recursive: true })
+  await mkdir(join(root, 'frontend/src'), { recursive: true })
+  await writeFile(join(root, 'backend/app/users.py'), 'class User: pass\n')
+  await writeFile(join(root, 'frontend/src/users.ts'), 'export class FrontendUser {}\n')
+
+  const document = await indexProjectGraph(root, { projectPath: 'backend' })
+
+  assert.deepEqual(document.graph.nodes.map((node) => node.path), ['backend/app/users.py'])
+})

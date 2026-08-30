@@ -21,6 +21,7 @@ import { advanceTask, loadTask, recordImplementationLifecycle } from '../core/ta
 import { assertTaskId } from '../core/task-state.mjs'
 import { loadInterview } from '../core/interview-store.mjs'
 import { loadBudgetedCodeContext } from '../core/code-context.mjs'
+import { inspectBoundSourceCodeContext } from '../adapters/bounded-code-context.mjs'
 import { buildProjectConventions, projectRuleReadiness } from '../core/project-conventions.mjs'
 import { assertNoSymlinkSegments, assertRelativeChild, resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { captureConfiguredSourceBinding, checkProject } from './backend-harness.mjs'
@@ -449,18 +450,34 @@ async function prepareProviderPlanning(root, task, config, sourceBinding) {
     conventionsReady: planningContext.conventions?.status === 'observed'
   }
   let profile = selectImplementationProfile(profileInput)
-  let codeContext = await loadBudgetedCodeContext(root, planQuery(task), {
-    budgetCharacters: profile.contextBudgetCharacters,
-    sourceFingerprint: sourceBinding.fingerprint
-  })
+  const conventionModules = (planningContext.conventions?.modules ?? []).filter((module) => module !== 'root')
+  const codegraphProjectPath = conventionModules.length === 1 ? conventionModules[0] : '.'
+  const loadContext = async (budgetCharacters) => {
+    const persisted = await loadBudgetedCodeContext(root, planQuery(task), {
+      budgetCharacters,
+      sourceFingerprint: sourceBinding.fingerprint
+    })
+    if (persisted.status === 'available') return persisted
+    return inspectBoundSourceCodeContext(root, planQuery(task), {
+      budgetCharacters,
+      sourceFingerprint: sourceBinding.fingerprint,
+      indexerOptions: { projectPath: codegraphProjectPath }
+    })
+  }
+  let codeContext = await loadContext(profile.contextBudgetCharacters)
+  let currentSource = await captureConfiguredSourceBinding(root)
+  if (currentSource.fingerprint !== sourceBinding.fingerprint) {
+    throw new Error('Project source changed while the bounded implementation context was being inspected; restart from the new source.')
+  }
   let projectConventions = buildProjectConventions(planningContext.projectRuleEvaluation, planningContext.knowledge, codeContext, planningContext.conventions)
   if (config.adapter.mode === 'auto' && profile.selected === 'fast') {
     profile = selectImplementationProfile({ ...profileInput, adjacentCodeReady: projectConventions.adjacentCode.status === 'confirmed' })
     if (profile.selected !== 'fast') {
-      codeContext = await loadBudgetedCodeContext(root, planQuery(task), {
-        budgetCharacters: profile.contextBudgetCharacters,
-        sourceFingerprint: sourceBinding.fingerprint
-      })
+      codeContext = await loadContext(profile.contextBudgetCharacters)
+      currentSource = await captureConfiguredSourceBinding(root)
+      if (currentSource.fingerprint !== sourceBinding.fingerprint) {
+        throw new Error('Project source changed while the bounded implementation context was being inspected; restart from the new source.')
+      }
       projectConventions = buildProjectConventions(planningContext.projectRuleEvaluation, planningContext.knowledge, codeContext, planningContext.conventions)
     }
   }

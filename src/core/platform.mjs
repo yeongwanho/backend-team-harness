@@ -6,6 +6,7 @@ export function projectExecutableForPlatform(command, platform = process.platfor
   const normalized = command.replaceAll('\\', '/')
   if (/(^|\/)gradlew$/i.test(normalized)) return command + '.bat'
   if (/(^|\/)mvnw$/i.test(normalized)) return command + '.cmd'
+  if (/(^|\/)\.backend-harness\/bin\/verify-portable$/i.test(normalized)) return command + '.cmd'
   return command
 }
 

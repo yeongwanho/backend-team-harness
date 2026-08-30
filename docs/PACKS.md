@@ -73,6 +73,8 @@ The generated graph also includes a deterministic global directed PageRank for b
 
 No match falls back to global graph importance rather than inventing semantic relevance. Authority lists are bounded to 16 short identifiers each, so they cannot inflate a tiny entry budget into an unbounded payload. A missing, stale, tampered, oversized, symlinked, or contract-invalid graph produces an explained `unavailable` result and never blocks plan export.
 
+The provider implementation path prefers this sealed graph. If it is absent, `bth work --run` may build the same bounded graph in memory, verify that the source fingerprint did not move during inspection, and discard it after creating the sealed provider request. When one nested portable backend was uniquely identified from its test build, this fallback indexes only that project-relative backend path. It remains advisory and cannot create PASS or remove tests.
+
 Allowed uses:
 
 - navigation

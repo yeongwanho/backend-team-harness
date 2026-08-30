@@ -8,6 +8,7 @@ import { initProject } from '../src/init-project.mjs'
 import { captureConfiguredSourceBinding } from '../src/runtime/backend-harness.mjs'
 import { recordProjectRun } from '../src/core/run-record-store.mjs'
 import { loadBudgetedCodeContext, rankCodeContext } from '../src/core/code-context.mjs'
+import { inspectBoundSourceCodeContext } from '../src/adapters/bounded-code-context.mjs'
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
 import { IMPACT_GOLD_V1 } from './fixtures/impact-gold-v1.mjs'
 
@@ -253,4 +254,46 @@ test('loader accepts only a graph digest bound to the current sealed project run
   })
   assert.equal(tampered.status, 'unavailable')
   assert.equal(tampered.reason, 'graph_digest_mismatch')
+})
+
+test('on-demand context stays bounded, source-labelled, and non-persistent', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-live-code-context-'))
+  const fingerprint = 'c'.repeat(64)
+  const result = await inspectBoundSourceCodeContext(root, 'OrdersController', {
+    budgetCharacters: 700,
+    sourceFingerprint: fingerprint,
+    indexProjectGraph: async () => graphDocument()
+  })
+
+  assert.equal(result.status, 'available')
+  assert.equal(result.entries[0].path, 'src/main/java/orders/OrdersController.java')
+  assert.deepEqual(result.provenance, {
+    mode: 'bounded-read-only-source-snapshot',
+    graphGeneration: 'a'.repeat(64),
+    sourceFingerprint: fingerprint,
+    persisted: false
+  })
+})
+
+test('on-demand context explains absent identity and bounded index failures without inventing paths', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-live-code-context-fail-'))
+  const missingIdentity = await inspectBoundSourceCodeContext(root, 'orders', {
+    budgetCharacters: 700,
+    sourceFingerprint: 'not-a-fingerprint'
+  })
+  const failed = await inspectBoundSourceCodeContext(root, 'orders', {
+    budgetCharacters: 700,
+    sourceFingerprint: 'd'.repeat(64),
+    indexProjectGraph: async () => { throw new Error('bounded fixture failure') }
+  })
+  const disabled = await inspectBoundSourceCodeContext(root, 'orders', {
+    budgetCharacters: 0,
+    sourceFingerprint: 'd'.repeat(64)
+  })
+
+  assert.equal(missingIdentity.reason, 'source_fingerprint_required')
+  assert.equal(failed.reason, 'live_graph_failed')
+  assert.match(failed.diagnostic, /bounded fixture failure/)
+  assert.deepEqual(failed.entries, [])
+  assert.equal(disabled.reason, 'disabled')
 })

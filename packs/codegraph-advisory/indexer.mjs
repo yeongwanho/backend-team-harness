@@ -23,12 +23,23 @@ function portable(path) {
   return path.split(sep).join('/')
 }
 
+function normalizedProjectPath(value) {
+  const path = String(value ?? '.').replaceAll('\\', '/')
+  if (path === '.') return path
+  if (path.startsWith('/') || path.split('/').some((part) => !part || part === '.' || part === '..')) {
+    throw new Error('Codegraph project path must be a normalized relative path.')
+  }
+  return path
+}
+
 function boundedSearchTerms(values) {
   return [...new Set(values.flatMap((value) => String(value).match(/[A-Za-z_$][A-Za-z0-9_$]{1,127}/g) ?? []))]
     .slice(0, 128)
 }
 
-async function discover(root) {
+async function discover(root, options = {}) {
+  const projectPath = normalizedProjectPath(options.projectPath)
+  const inProject = (path) => projectPath === '.' || path === projectPath || path.startsWith(projectPath + '/')
   const files = []
   let visitedEntries = 0
   let skippedSymlinks = 0
@@ -48,7 +59,7 @@ async function discover(root) {
         continue
       }
       if (entry.isDirectory()) await visit(path)
-      else if (entry.isFile() && INDEXED_FILE.test(portable(relative(root, path)))) {
+      else if (entry.isFile() && inProject(portable(relative(root, path))) && INDEXED_FILE.test(portable(relative(root, path)))) {
         if (files.length >= MAX_FILES) throw new Error('Codegraph safety limit exceeded (' + MAX_ENTRIES + ' entries or ' + MAX_FILES + ' source files).')
         files.push(path)
       }
@@ -390,7 +401,7 @@ function pageRank(nodes, edges) {
 }
 
 export async function indexProjectGraph(root = process.cwd(), options = {}) {
-  const discovered = await discover(root)
+  const discovered = await discover(root, options)
   let indexedBytes = 0, oversizedFiles = 0
   const readable = []
   for (const path of discovered.files) {

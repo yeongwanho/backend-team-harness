@@ -6,6 +6,7 @@ import { projectExecutableForPlatform } from '../core/platform.mjs'
 import { reportGlobBase, reportPatternsMayOverlap } from '../core/report-glob.mjs'
 import { inspectJvmBuild } from '../core/jvm-build-discovery.mjs'
 import { scanProjectManifest } from '../core/project-manifest.mjs'
+import { inspectPortableTestBuild, portableVerificationConfig } from '../core/portable-test-discovery.mjs'
 
 const GATE_ID = /^[a-z][a-z0-9-]{0,63}$/
 const CONFIG_KEYS = new Set(['schemaVersion', 'context', 'scheduling', 'gates'])
@@ -330,8 +331,7 @@ export async function defaultVerificationConfig(root, options = {}) {
   const detection = options.detection ?? await inspectJvmBuild(root, manifest, {
     inspectRuntime: false
   })
-  if (!detection.canGenerateVerification) return null
-  if (detection.system === 'gradle') {
+  if (detection.canGenerateVerification && detection.system === 'gradle') {
     return {
       schemaVersion: 1,
       context: { profile: 'test', databaseDialect: null },
@@ -349,7 +349,7 @@ export async function defaultVerificationConfig(root, options = {}) {
       }]
     }
   }
-  if (detection.system === 'maven') {
+  if (detection.canGenerateVerification && detection.system === 'maven') {
     return {
       schemaVersion: 1,
       context: { profile: 'test', databaseDialect: null },
@@ -367,7 +367,8 @@ export async function defaultVerificationConfig(root, options = {}) {
       }]
     }
   }
-  return null
+  const portable = options.portableDetection ?? await inspectPortableTestBuild(root, manifest)
+  return portableVerificationConfig(portable)
 }
 
 export async function loadVerificationConfig(root, options = {}) {
@@ -387,7 +388,7 @@ export async function loadVerificationConfig(root, options = {}) {
   }
   const inferred = await defaultVerificationConfig(root)
   if (!inferred) {
-    throw new Error('Verification config is missing and no Gradle/Maven project default can be inferred.')
+    throw new Error('Verification config is missing and no unique Gradle, Maven, Jest, Vitest, or Pytest default can be inferred.')
   }
   return {
     config: parseVerificationConfig(JSON.stringify(inferred), 'inferred-jvm-default'),

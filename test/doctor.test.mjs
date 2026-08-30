@@ -75,6 +75,22 @@ test('doctor accepts a non-JVM backend with a valid project-owned verification c
   assert.equal(result.checks.find((entry) => entry.id === 'verification-config').status, 'pass')
 })
 
+test('doctor reports a generated portable test contract as unknown until pinned dependencies are installed', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-doctor-portable-runtime-'))
+  await writeFile(join(root, 'package.json'), JSON.stringify({
+    name: 'api', scripts: { test: 'jest' }, devDependencies: { jest: '1.0.0' }
+  }) + '\n')
+  await initProject(root, { allowUnversioned: true })
+
+  const result = await doctorProject(root)
+  const runtime = result.checks.find((entry) => entry.id === 'test-runtime')
+
+  assert.equal(result.readiness, 'unknown')
+  assert.equal(result.healthy, false)
+  assert.equal(runtime.status, 'warn')
+  assert.match(runtime.message, /install pinned dependencies/i)
+})
+
 test('an empty build file does not count as a build definition', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-doctor-empty-build-'))
   await writeFile(join(root, 'build.gradle.kts'), '', 'utf8')

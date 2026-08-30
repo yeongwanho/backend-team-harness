@@ -81,5 +81,5 @@ test('compiler returns an explicit unknown boundary when no supported source exi
   assert.equal(result.status, 'unknown')
   assert.deepEqual(result.layers, [])
   assert.deepEqual(result.modules, [])
-  assert.match(result.limitations[0], /Java\/Kotlin/)
+  assert.match(result.limitations[0], /supported backend source/)
 })

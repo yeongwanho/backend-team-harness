@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 import { loadQualityGates } from './config/quality-gates.mjs'
 import { loadVerificationConfig, resolveGateExecutable } from './config/verification.mjs'
 import { inspectJvmBuild, JVM_BUILD_DISCOVERY } from './core/jvm-build-discovery.mjs'
+import { inspectPortableTestBuild } from './core/portable-test-discovery.mjs'
 import { scanProjectManifest } from './core/project-manifest.mjs'
 import { reportGlobRegex } from './core/report-glob.mjs'
 import { resolveReadableRoot, statPath } from './fs-safety.mjs'
@@ -106,38 +107,45 @@ export async function doctorProject(inputPath = '.', options = {}) {
   const detectionOptions = { processRunner: options.processRunner }
   if (Object.hasOwn(options, 'javaRuntimeMajor')) detectionOptions.javaRuntimeMajor = options.javaRuntimeMajor
   const detection = await inspectJvmBuild(root, manifest, detectionOptions)
+  const portableDetection = detection.status === 'unknown'
+    ? await inspectPortableTestBuild(root, manifest)
+    : null
+  const activeDetection = portableDetection?.status === 'confirmed' || portableDetection?.status === 'conflict'
+    ? portableDetection
+    : detection
 
   const builds = await inspectBuildFiles(root, manifest)
-  const buildStatus = builds.valid.length > 0 ? 'pass' : builds.invalid.length > 0 ? 'fail' : 'warn'
+  const portableBuildFiles = portableDetection?.status === 'confirmed' ? portableDetection.buildInputs : []
+  const buildStatus = builds.valid.length > 0 || portableBuildFiles.length > 0 ? 'pass' : builds.invalid.length > 0 ? 'fail' : 'warn'
   checks.push(check(
     'build-file',
     buildStatus,
-    builds.valid.length > 0
-      ? 'Recognizable Gradle/Maven build definitions found.'
+    builds.valid.length > 0 || portableBuildFiles.length > 0
+      ? 'Recognizable backend build and test definitions found.'
       : builds.invalid.length > 0
         ? 'Gradle/Maven build candidates exist but are not recognizable files.'
         : 'No JVM build definition found; a valid project-declared verification contract may still be used.',
-    builds
+    { ...builds, portable: portableBuildFiles }
   ))
 
   checks.push(check(
     'build-metadata',
-    detection.status === 'confirmed' ? 'pass' : detection.status === 'conflict' ? 'fail' : 'warn',
-    detection.status === 'confirmed'
+    activeDetection.status === 'confirmed' ? 'pass' : activeDetection.status === 'conflict' ? 'fail' : 'warn',
+    activeDetection.status === 'confirmed'
       ? 'Build system, modules, framework hints, and report locations were detected from repository files.'
-      : detection.status === 'conflict'
+      : activeDetection.status === 'conflict'
         ? 'Build metadata is conflicting or contains unrecognized build definitions.'
         : 'Build metadata could not be identified confidently.',
     {
-      status: detection.status,
-      system: detection.system,
-      build: detection.label,
-      framework: detection.framework,
-      buildFiles: detection.buildFiles,
-      invalidBuildFiles: detection.invalidBuildFiles,
-      productionModules: detection.productionModules,
-      testModules: detection.testModules,
-      diagnostics: detection.diagnostics
+      status: activeDetection.status,
+      system: activeDetection.system,
+      build: activeDetection.label,
+      framework: activeDetection.framework,
+      buildFiles: activeDetection.buildFiles ?? activeDetection.buildInputs ?? [],
+      invalidBuildFiles: activeDetection.invalidBuildFiles ?? [],
+      productionModules: activeDetection.productionModules ?? [],
+      testModules: activeDetection.testModules ?? (activeDetection.projectPath ? [activeDetection.projectPath] : []),
+      diagnostics: activeDetection.diagnostics
     }
   ))
 
@@ -157,7 +165,9 @@ export async function doctorProject(inputPath = '.', options = {}) {
     { files: wrappers }
   ))
 
-  const compatibilityStatus = detection.compatibility.status === 'conflict'
+  const compatibilityStatus = activeDetection !== detection
+    ? 'warn'
+    : detection.compatibility.status === 'conflict'
     ? 'fail'
     : detection.status === 'confirmed' && detection.compatibility.status === 'confirmed'
       ? 'pass'
@@ -165,7 +175,7 @@ export async function doctorProject(inputPath = '.', options = {}) {
   checks.push(check(
     'jvm-toolchain',
     compatibilityStatus,
-    detection.compatibility.reason,
+    activeDetection !== detection ? 'JVM toolchain compatibility is not applicable to the detected portable test project.' : detection.compatibility.reason,
     {
       system: detection.system,
       gradleVersion: detection.system === 'gradle' ? detection.wrapper.version : null,
@@ -180,29 +190,54 @@ export async function doctorProject(inputPath = '.', options = {}) {
     }
   ))
 
+  let portableRuntime = null
+  if (portableDetection?.status === 'confirmed') {
+    const directory = portableDetection.projectPath === '.' ? '' : portableDetection.projectPath + '/'
+    const candidates = portableDetection.framework === 'jest'
+      ? [directory + 'node_modules/jest/bin/jest.js']
+      : portableDetection.framework === 'vitest'
+        ? [directory + 'node_modules/vitest/vitest.mjs']
+        : [directory + '.venv/bin/python', directory + '.venv/Scripts/python.exe']
+    const available = []
+    for (const path of candidates) if (await regularFile(root, path)) available.push(path)
+    portableRuntime = { framework: portableDetection.framework, candidates, available }
+    checks.push(check(
+      'test-runtime',
+      available.length > 0 ? 'pass' : 'warn',
+      available.length > 0
+        ? 'The detected portable test runtime is installed inside the project.'
+        : 'The portable test contract is configured, but its project-local runtime is not installed; install pinned dependencies before implementation.',
+      portableRuntime
+    ))
+  }
+
   const productionSources = matchingFiles(
     manifest,
-    (path, name) => /src\/main\/(?:java|kotlin)\//.test(path) && /\.(?:java|kt)$/.test(name)
+    (path, name) => /src\/main\/(?:java|kotlin)\//.test(path) && /\.(?:java|kt)$/.test(name) ||
+      /(?:^|\/)src\//.test(path) && /\.(?:ts|tsx|js|jsx|mjs|cjs)$/.test(name) && !/(?:\.spec|\.test)\.[^.]+$/.test(name) ||
+      /(?:^|\/)(?:app|src)\//.test(path) && /\.py$/.test(name) && !/(?:^|\/)tests?\//.test(path) && !/(?:^|\/)test_[^/]+\.py$|_test\.py$/.test(path)
   )
   checks.push(check(
     'main-source',
     productionSources.matches.length > 0 ? 'pass' : 'warn',
     productionSources.matches.length > 0
-      ? 'JVM production source files detected.'
-      : 'No Java/Kotlin production source file found under a conventional source set.',
+      ? 'Conventional backend production source files detected.'
+      : 'No supported production source file found under a conventional source set.',
     { count: productionSources.matches.length, truncated: productionSources.truncated }
   ))
 
   const testSources = matchingFiles(
     manifest,
-    (path, name) => /src\/test\/(?:java|kotlin)\//.test(path) && /\.(?:java|kt)$/.test(name)
+    (path, name) => /src\/test\/(?:java|kotlin)\//.test(path) && /\.(?:java|kt)$/.test(name) ||
+      /(?:^|[.-])(?:spec|test)\.(?:ts|tsx|js|jsx|mjs|cjs)$/.test(name) ||
+      /(?:^|\/)tests?\//.test(path) && /\.py$/.test(name) || /(?:^|\/)test_[^/]+\.py$|_test\.py$/.test(path)
   )
   checks.push(check(
     'test-source',
     testSources.matches.length > 0 ? 'pass' : 'warn',
     testSources.matches.length > 0
-      ? 'JVM test source files detected.'
-      : 'No Java/Kotlin test source file found under a conventional source set.',
+      ? 'Conventional backend test source files detected.'
+      : 'No supported test source file found under a conventional source set.',
     { count: testSources.matches.length, truncated: testSources.truncated }
   ))
 
@@ -293,7 +328,9 @@ export async function doctorProject(inputPath = '.', options = {}) {
         : []
     return candidates.length > 0 && !candidates.some((candidate) => junitReports.some((pattern) => reportGlobRegex(pattern).test(candidate)))
   })
-  const coverageApplicable = ['gradle', 'maven'].includes(detection.system) && detection.testModules.length > 0
+  const portableTestModules = portableDetection?.status === 'confirmed' ? [portableDetection.projectPath] : []
+  if (portableTestModules.length > 0 && junitReports.length === 0) uncoveredTestModules.push(...portableTestModules)
+  const coverageApplicable = ['gradle', 'maven'].includes(detection.system) && detection.testModules.length > 0 || portableTestModules.length > 0
   const coverageStatus = !coverageApplicable
     ? 'warn'
     : verificationDiagnostics.length > 0 || uncoveredTestModules.length > 0
@@ -303,13 +340,13 @@ export async function doctorProject(inputPath = '.', options = {}) {
     'verification-coverage',
     coverageStatus,
     !coverageApplicable
-      ? 'No conventional JVM test module was detected, so generated JUnit coverage cannot be proven.'
+      ? 'No conventional supported test module was detected, so generated JUnit coverage cannot be proven.'
       : uncoveredTestModules.length > 0
         ? 'Required JUnit report patterns do not cover every detected test module.'
         : 'Required JUnit report patterns cover every detected test module.',
     {
-      system: detection.system,
-      testModules: detection.testModules,
+      system: activeDetection.system,
+      testModules: ['gradle', 'maven'].includes(detection.system) ? detection.testModules : portableTestModules,
       uncoveredTestModules,
       reports: junitReports
     }
@@ -318,7 +355,8 @@ export async function doctorProject(inputPath = '.', options = {}) {
   const failures = checks.filter((entry) => entry.status === 'fail')
   const criticalUnknowns = checks.filter((entry) => entry.status === 'warn' && (
     entry.id === 'jvm-toolchain' && detection.status === 'confirmed' ||
-    entry.id === 'verification-coverage' && coverageApplicable
+    entry.id === 'verification-coverage' && coverageApplicable ||
+    entry.id === 'test-runtime' && portableRuntime !== null
   ))
   const readiness = failures.length > 0 ? 'blocked' : criticalUnknowns.length > 0 ? 'unknown' : 'ready'
 

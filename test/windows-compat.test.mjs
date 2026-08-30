@@ -16,6 +16,7 @@ import { gateForPack, getPack } from '../src/packs/catalog.mjs'
 test('shared Gradle and Maven wrapper commands resolve to Windows launchers', () => {
   assert.equal(projectExecutableForPlatform('./gradlew', 'win32'), './gradlew.bat')
   assert.equal(projectExecutableForPlatform('./mvnw', 'win32'), './mvnw.cmd')
+  assert.equal(projectExecutableForPlatform('./.backend-harness/bin/verify-portable', 'win32'), './.backend-harness/bin/verify-portable.cmd')
   assert.equal(projectExecutableForPlatform('./tools/verify.cmd', 'win32'), './tools/verify.cmd')
   assert.equal(projectExecutableForPlatform('./gradlew', 'linux'), './gradlew')
 })

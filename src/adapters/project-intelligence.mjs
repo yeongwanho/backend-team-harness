@@ -8,6 +8,8 @@ import { inspectJvmProject } from '../core/jvm-project-index.mjs'
 import { inspectKnowledgeDocuments } from '../core/knowledge-index.mjs'
 import { compileProjectConventions } from '../core/convention-compiler.mjs'
 import { inspectMysqlMigrationIndexes } from '../core/mysql-migration-index.mjs'
+import { inspectPortableProject } from '../core/portable-project-index.mjs'
+import { inspectPortableTestBuild } from '../core/portable-test-discovery.mjs'
 import { buildSafeEnvironment } from '../core/process-runner.mjs'
 import { PROJECT_MANIFEST, scanProjectManifest } from '../core/project-manifest.mjs'
 import { withProjectVerificationLock } from '../core/project-lock.mjs'
@@ -217,6 +219,7 @@ export async function inspectProjectIntelligence(inputPath, options = {}) {
   }
   const context = options.context ?? await inspectProjectContext(root, { ...options, manifestOptions })
   const manifest = options.manifest ?? context[PROJECT_MANIFEST] ?? await scanProjectManifest(root, manifestOptions)
+  const portableDetection = await inspectPortableTestBuild(root, manifest)
   const gitChangesPromise = inspectGitChanges(root, context.sourceBinding.projectPath)
   let cache = { root, path: '.backend-harness/local/cache/jvm-index.json', status: 'disabled', diagnostic: null }
   if (options.useCache !== false) {
@@ -259,9 +262,13 @@ export async function inspectProjectIntelligence(inputPath, options = {}) {
   } else {
     codePromise = inspectJvmProject(root, { ...(options.jvm ?? {}), manifest })
   }
-  const [knowledge, indexedCode, gitChanges, ruleContract, projectFactContract, mysqlMigrationIndex] = await Promise.all([
+  const [knowledge, indexedCode, portableCode, gitChanges, ruleContract, projectFactContract, mysqlMigrationIndex] = await Promise.all([
     inspectKnowledgeDocuments(root),
     codePromise,
+    inspectPortableProject(root, manifest, {
+      enabled: portableDetection.status === 'confirmed',
+      projectPath: portableDetection.projectPath ?? '.'
+    }),
     gitChangesPromise,
     loadProjectRules(root),
     loadProjectFacts(root),
@@ -269,7 +276,8 @@ export async function inspectProjectIntelligence(inputPath, options = {}) {
   ])
   const { index: _cachedIndex, root: _cacheRoot, ...cacheMetadata } = cache
   const code = { ...indexedCode, cache: cacheMetadata }
-  const conventions = compileProjectConventions(code, mysqlMigrationIndex)
+  const portableFiles = indexedCode.files.length === 0 ? portableCode.files : []
+  const conventions = compileProjectConventions({ files: [...indexedCode.files, ...portableFiles] }, mysqlMigrationIndex)
   const builtInFacts = factsFrom(context, knowledge, code, gitChanges)
   const projectFacts = mergeProjectFacts(builtInFacts, projectFactContract.facts)
   const facts = [...builtInFacts, ...projectFacts]

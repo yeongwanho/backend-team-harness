@@ -182,8 +182,11 @@ test('approved implementation runs in a detached worktree, verifies changes, and
   assert.doesNotMatch(humanCli.stdout, /undefined/)
 })
 
-test('built-in provider receives a bounded approved request and produces a fully verified isolated change', async () => {
+test('built-in provider receives a bounded approved request with on-demand adjacent code and produces a fully verified isolated change', async () => {
   const root = await approvedImplementationProject({
+    projectFiles: {
+      'src/main/java/example/FixtureService.java': 'package example; class FixtureService {}\n'
+    },
     providerConfig: {
       schemaVersion: 2,
       adapter: {
@@ -223,10 +226,16 @@ test('built-in provider receives a bounded approved request and produces a fully
   assert.deepEqual(capturedRequest.implementation.allowedPrefixes, ['src/'])
   assert.equal(capturedRequest.authority.deployment, false)
   assert.equal(capturedRequest.codeContext.budget.limitCharacters, 6000)
+  assert.equal(capturedRequest.codeContext.status, 'available', JSON.stringify(capturedRequest.codeContext, null, 2))
+  assert.equal(capturedRequest.codeContext.provenance.mode, 'bounded-read-only-source-snapshot')
+  assert.ok(capturedRequest.codeContext.entries.length > 0, JSON.stringify({
+    codeContext: capturedRequest.codeContext,
+    modules: capturedRequest.projectConventions.discovered.modules
+  }, null, 2))
   assert.equal(capturedRequest.projectConventions.schemaVersion, 1)
   assert.equal(capturedRequest.projectConventions.status, 'unknown')
   assert.equal(capturedRequest.projectConventions.projectRules.status, 'unknown')
-  assert.deepEqual(capturedRequest.projectConventions.adjacentCode.paths, [])
+  assert.ok(capturedRequest.projectConventions.adjacentCode.paths.length > 0)
   assert.equal(capturedRequest.projectConventions.requiredBeforeEdit.inspectAdjacentProductionAndTests, true)
   assert.equal(capturedRequest.projectConventions.authority.verdictAuthority, false)
   assert.equal(result.record.attempts[0].invocation.usage['usage.input_tokens'], 100)

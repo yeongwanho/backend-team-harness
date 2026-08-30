@@ -50,7 +50,7 @@ const PACKS = Object.freeze({
   }),
   'codegraph-advisory': Object.freeze({
     id: 'codegraph-advisory',
-    title: 'Advisory Java/Kotlin import graph',
+    title: 'Advisory polyglot backend structure graph',
     evidenceTier: 'REPORTED',
     purpose: 'Create a generation-stamped import graph with explicit provenance; it never changes PASS.',
     files: ['README.md', 'run', 'run.mjs', 'indexer.mjs', 'graph-report.mjs'],

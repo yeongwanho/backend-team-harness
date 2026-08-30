@@ -1,0 +1,252 @@
+import { readFile } from 'node:fs/promises'
+import { posix } from 'node:path'
+import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
+
+const MAX_BUILD_BYTES = 1024 * 1024
+const MAX_CANDIDATES = 32
+
+async function boundedText(root, path) {
+  const target = await resolveSafeProjectPath(root, path)
+  const metadata = await statPath(target)
+  if (!metadata?.isFile() || metadata.isSymbolicLink() || metadata.size > MAX_BUILD_BYTES) return null
+  return readFile(target, 'utf8')
+}
+
+function parent(path) {
+  const value = posix.dirname(path)
+  return value === '.' ? '.' : value
+}
+
+function under(directory, name) {
+  return directory === '.' ? name : directory + '/' + name
+}
+
+function dependenciesOf(document) {
+  return { ...(document.dependencies ?? {}), ...(document.devDependencies ?? {}), ...(document.peerDependencies ?? {}) }
+}
+
+const SAFE_NODE_TEST_TOKEN = /^[A-Za-z0-9_./:@,+%=-]+$/
+const SHELL_TEST_SYNTAX = /[;&|><`'"$\\\r\n]/
+const MAX_TEST_ARGUMENTS = 32
+const MAX_TEST_SCRIPT_BYTES = 4096
+
+function conflictsWithHarnessReporter(framework, argument) {
+  const normalized = argument.toLowerCase()
+  if (normalized === '--watch' || normalized === '--watchall' || normalized === '--watchall=false' || normalized === '--ui') return true
+  if (framework === 'jest') {
+    return normalized === '--json' || normalized.startsWith('--outputfile')
+  }
+  return normalized === '--run' || normalized.startsWith('--reporter') || normalized.startsWith('--outputfile')
+}
+
+function parseDirectNodeTestScript(script, framework) {
+  const trimmed = script.trim()
+  if (!trimmed || Buffer.byteLength(trimmed) > MAX_TEST_SCRIPT_BYTES || SHELL_TEST_SYNTAX.test(trimmed)) return null
+  const tokens = trimmed.split(/\s+/)
+  if (tokens.shift() !== framework || tokens.length > MAX_TEST_ARGUMENTS) return null
+  if (framework === 'vitest' && tokens[0] === 'run') tokens.shift()
+  if (tokens.some((argument) => !SAFE_NODE_TEST_TOKEN.test(argument) || conflictsWithHarnessReporter(framework, argument))) return null
+  return tokens.filter((argument) => !(framework === 'jest' && argument.toLowerCase() === '--runinband'))
+}
+
+async function nodeCandidates(root, manifest) {
+  const results = []
+  for (const path of manifest.files.filter((entry) => entry === 'package.json' || entry.endsWith('/package.json')).slice(0, MAX_CANDIDATES)) {
+    const text = await boundedText(root, path)
+    if (!text) continue
+    let document
+    try { document = JSON.parse(text) } catch { continue }
+    const script = typeof document.scripts?.test === 'string' ? document.scripts.test : ''
+    const dependencies = dependenciesOf(document)
+    const jestArgs = typeof dependencies.jest === 'string' ? parseDirectNodeTestScript(script, 'jest') : null
+    const vitestArgs = typeof dependencies.vitest === 'string' ? parseDirectNodeTestScript(script, 'vitest') : null
+    const framework = jestArgs ? 'jest' : vitestArgs ? 'vitest' : null
+    if (!framework) continue
+    const projectPath = parent(path)
+    const buildInputs = [path]
+    for (const lock of ['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock', 'bun.lockb']) {
+      const candidate = under(projectPath, lock)
+      if (manifest.files.includes(candidate)) buildInputs.push(candidate)
+    }
+    results.push({
+      system: 'node-' + framework,
+      framework,
+      projectPath,
+      buildInputs,
+      testArgs: framework === 'jest' ? jestArgs : vitestArgs
+    })
+  }
+  return results
+}
+
+async function pythonCandidates(root, manifest) {
+  const results = []
+  for (const path of manifest.files.filter((entry) => entry === 'pyproject.toml' || entry.endsWith('/pyproject.toml')).slice(0, MAX_CANDIDATES)) {
+    const text = await boundedText(root, path)
+    if (!text || !/(?:^|[\s"'])pytest(?:[<>=!~\s"']|$)/m.test(text)) continue
+    const projectPath = parent(path)
+    const buildInputs = [path]
+    for (const lock of ['uv.lock', 'poetry.lock', 'pdm.lock']) {
+      const candidate = under(projectPath, lock)
+      if (manifest.files.includes(candidate)) buildInputs.push(candidate)
+    }
+    results.push({ system: 'python-pytest', framework: 'pytest', projectPath, buildInputs })
+  }
+  return results
+}
+
+export async function inspectPortableTestBuild(root, manifest) {
+  const candidates = [...await nodeCandidates(root, manifest), ...await pythonCandidates(root, manifest)]
+  if (candidates.length !== 1) {
+    return {
+      status: candidates.length > 1 ? 'conflict' : 'unknown',
+      system: null,
+      label: candidates.length > 1 ? 'ambiguous-portable-tests' : 'unknown',
+      framework: 'unknown',
+      projectPath: null,
+      buildInputs: [],
+      canGenerateVerification: false,
+      candidates,
+      diagnostics: candidates.length > 1
+        ? ['Multiple portable test projects were detected; select one explicitly instead of guessing.']
+        : ['No unique Jest, Vitest, or Pytest project was detected from bounded build metadata.']
+    }
+  }
+  const selected = candidates[0]
+  return {
+    status: 'confirmed',
+    ...selected,
+    label: selected.projectPath === '.' ? selected.system : selected.system + ':' + selected.projectPath,
+    canGenerateVerification: true,
+    candidates,
+    diagnostics: []
+  }
+}
+
+function portableRunnerSource(detection) {
+  const projectPath = JSON.stringify(detection.projectPath)
+  const framework = JSON.stringify(detection.framework)
+  const testArgs = JSON.stringify(detection.testArgs ?? [])
+  return `#!/usr/bin/env node
+import { spawn } from 'node:child_process'
+import { access, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
+import { constants } from 'node:fs'
+import { resolve } from 'node:path'
+
+const root = process.cwd()
+const projectPath = ${projectPath}
+const framework = ${framework}
+const testArgs = ${testArgs}
+const project = resolve(root, projectPath)
+const reportDirectory = resolve(root, '.backend-harness/local/reports/tests')
+const report = resolve(reportDirectory, 'junit.xml')
+const raw = resolve(reportDirectory, 'jest.json')
+await mkdir(reportDirectory, { recursive: true })
+
+function run(program, args, options = {}) {
+  return new Promise((resolvePromise, reject) => {
+    const child = spawn(program, args, { cwd: options.cwd ?? project, env: options.env ?? process.env, shell: false, stdio: 'inherit', windowsHide: true })
+    child.once('error', reject)
+    child.once('close', (code, signal) => resolvePromise({ code, signal }))
+  })
+}
+
+function xml(value) {
+  return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
+}
+
+async function exists(path) {
+  try { await access(path, constants.R_OK); return true } catch { return false }
+}
+
+let result
+if (framework === 'jest') {
+  const entry = resolve(project, 'node_modules/jest/bin/jest.js')
+  if (!await exists(entry)) throw new Error('Local Jest is missing; install the pinned project dependencies before verification.')
+  result = await run(process.execPath, [entry, ...testArgs, '--runInBand', '--json', '--outputFile=' + raw])
+  if (await exists(raw)) {
+    const metadata = await stat(raw)
+    if (metadata.size > 16 * 1024 * 1024) throw new Error('Jest JSON exceeded the 16 MiB conversion limit.')
+    const document = JSON.parse(await readFile(raw, 'utf8'))
+    const cases = (document.testResults ?? []).flatMap((suite) => suite.assertionResults ?? [])
+    if (cases.length > 100000) throw new Error('Jest reported more than 100000 test cases.')
+    const failures = cases.filter((entry) => entry.status === 'failed').length
+    const skipped = cases.filter((entry) => ['pending', 'todo', 'disabled'].includes(entry.status)).length
+    const body = cases.map((entry, index) => {
+      const name = xml(entry.fullName ?? entry.title ?? ('test-' + index))
+      if (entry.status === 'failed') return '<testcase name="' + name + '"><failure message="failed"/></testcase>'
+      if (['pending', 'todo', 'disabled'].includes(entry.status)) return '<testcase name="' + name + '"><skipped/></testcase>'
+      return '<testcase name="' + name + '"/>'
+    }).join('')
+    const output = '<?xml version="1.0" encoding="UTF-8"?><testsuite name="jest" tests="' + cases.length + '" failures="' + failures + '" errors="0" skipped="' + skipped + '">' + body + '</testsuite>\\n'
+    if (Buffer.byteLength(output) > 16 * 1024 * 1024) throw new Error('Converted JUnit report exceeded 16 MiB.')
+    await writeFile(report, output, { encoding: 'utf8', flag: 'wx' })
+    await rm(raw, { force: true })
+  }
+} else if (framework === 'vitest') {
+  const entry = resolve(project, 'node_modules/vitest/vitest.mjs')
+  if (!await exists(entry)) throw new Error('Local Vitest is missing; install the pinned project dependencies before verification.')
+  result = await run(process.execPath, [entry, 'run', ...testArgs, '--reporter=junit', '--outputFile=' + report])
+} else {
+  const venv = process.platform === 'win32'
+    ? resolve(project, '.venv/Scripts/python.exe')
+    : resolve(project, '.venv/bin/python')
+  if (await exists(venv)) {
+    result = await run(venv, ['-m', 'pytest', '--junitxml=' + report])
+  } else {
+    result = await run(process.platform === 'win32' ? 'uv.exe' : 'uv', ['run', '--offline', '--project', project, 'pytest', '--junitxml=' + report], {
+      cwd: root,
+      env: { ...process.env, UV_OFFLINE: '1' }
+    })
+  }
+}
+
+if (result.signal) process.kill(process.pid, result.signal)
+process.exitCode = result.code ?? 1
+`
+}
+
+export function portableVerificationTemplates(detection) {
+  if (!detection?.canGenerateVerification) return []
+  return [
+    {
+      path: '.backend-harness/bin/verify-portable.mjs',
+      content: portableRunnerSource(detection)
+    },
+    {
+      path: '.backend-harness/bin/verify-portable',
+      executable: true,
+      content: '#!/bin/sh\nexec "$BTH_NODE" ".backend-harness/bin/verify-portable.mjs"\n'
+    },
+    {
+      path: '.backend-harness/bin/verify-portable.cmd',
+      content: '@echo off\r\n"%BTH_NODE%" ".backend-harness\\bin\\verify-portable.mjs"\r\n'
+    }
+  ]
+}
+
+export function portableVerificationConfig(detection) {
+  if (!detection?.canGenerateVerification) return null
+  return {
+    schemaVersion: 1,
+    context: { profile: 'test', databaseDialect: null },
+    gates: [{
+      id: 'tests',
+      required: true,
+      feedback: true,
+      pathPrefixes: [detection.projectPath === '.' ? '' : detection.projectPath].filter(Boolean),
+      command: ['./.backend-harness/bin/verify-portable'],
+      inputs: [
+        ...detection.buildInputs,
+        '.backend-harness/bin/verify-portable.mjs',
+        '.backend-harness/bin/verify-portable.cmd'
+      ],
+      timeoutMs: 600000,
+      result: {
+        type: 'junit',
+        reports: ['.backend-harness/local/reports/tests/*.xml'],
+        minimumTests: 1
+      }
+    }]
+  }
+}

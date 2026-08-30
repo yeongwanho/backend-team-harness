@@ -7,7 +7,13 @@ const SKIPPED_DIRECTORIES = new Set([
   '.git',
   '.gradle',
   '.backend-harness',
+  '.agents',
+  '.claude',
+  '.codex',
+  '.venv',
   'build',
+  'coverage',
+  'dist',
   'node_modules',
   'out',
   'target'

@@ -1,10 +1,11 @@
-import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises'
 import { dirname, join, relative, resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { sharedTemplates } from './templates.mjs'
 import { defaultVerificationConfig } from './config/verification.mjs'
 import { inspectJvmBuild } from './core/jvm-build-discovery.mjs'
 import { scanProjectManifest } from './core/project-manifest.mjs'
+import { inspectPortableTestBuild, portableVerificationTemplates } from './core/portable-test-discovery.mjs'
 import {
   assertNoSymlinkSegments,
   resolveExistingProjectRoot,
@@ -48,18 +49,23 @@ export async function initProject(inputPath = '.', options = {}) {
     onReadError: 'throw'
   })
   const detection = await inspectJvmBuild(root, manifest, { inspectRuntime: false })
-  const detectedVerification = await defaultVerificationConfig(root, { manifest, detection })
+  const portableDetection = detection.canGenerateVerification
+    ? null
+    : await inspectPortableTestBuild(root, manifest)
+  const activeDetection = detection.canGenerateVerification ? detection : portableDetection
+  const detectedVerification = await defaultVerificationConfig(root, { manifest, detection, portableDetection })
   const detectedTemplates = sharedTemplates.map((template) => {
     if (template.path !== '.backend-harness/project.md') return template
     return {
       ...template,
       content: template.content
-        .replace('framework: unknown', 'framework: ' + detection.framework)
-        .replace('build: unknown', 'build: ' + detection.label)
+        .replace('framework: unknown', 'framework: ' + activeDetection.framework)
+        .replace('build: unknown', 'build: ' + activeDetection.label)
     }
   })
+  const portableTemplates = portableVerificationTemplates(portableDetection)
   const templates = detectedVerification
-    ? [...detectedTemplates, {
+    ? [...detectedTemplates, ...portableTemplates, {
         path: '.backend-harness/verification.json',
         content: JSON.stringify(detectedVerification, null, 2) + '\n'
       }]
@@ -103,9 +109,11 @@ export async function initProject(inputPath = '.', options = {}) {
       await writeFile(backup, await readFile(write.target), { flag: 'wx' })
       backups.push(relative(root, backup))
       await atomicReplace(write.target, write.template.content)
+      if (write.template.executable) await chmod(write.target, 0o755)
       updated.push(write.template.path)
     } else {
       await writeFile(write.target, write.template.content, { encoding: 'utf8', flag: 'wx' })
+      if (write.template.executable) await chmod(write.target, 0o755)
       created.push(write.template.path)
     }
   }
@@ -117,14 +125,14 @@ export async function initProject(inputPath = '.', options = {}) {
     skipped,
     backups,
     detection: {
-      status: detection.status,
-      system: detection.system,
-      build: detection.label,
-      framework: detection.framework,
-      productionModules: detection.productionModules,
-      testModules: detection.testModules,
-      wrapper: detection.wrapper,
-      diagnostics: detection.diagnostics
+      status: activeDetection.status,
+      system: activeDetection.system,
+      build: activeDetection.label,
+      framework: activeDetection.framework,
+      productionModules: activeDetection.productionModules ?? [],
+      testModules: activeDetection.testModules ?? (activeDetection.projectPath ? [activeDetection.projectPath] : []),
+      wrapper: activeDetection.wrapper ?? null,
+      diagnostics: activeDetection.diagnostics
     }
   }
 }

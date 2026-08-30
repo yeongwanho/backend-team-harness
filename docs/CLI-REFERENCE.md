@@ -38,3 +38,5 @@ bth verify <id> [path] [--acknowledge-network-risk] [--json]
 bth diagnose <id> [path] [--json]
 bth version
 ```
+
+`bth init` generates a verification contract for a recognized Gradle/Maven wrapper or one uniquely detected project-declared Jest, Vitest, or Pytest test project. Portable runners use only installed project-local dependencies or `uv --offline`; ambiguous test roots stay explicit instead of being guessed. `bth work --run` may build a bounded, non-persisted advisory graph when no current sealed graph Gate exists, but source-fingerprint drift aborts before provider execution.
