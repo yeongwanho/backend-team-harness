@@ -11,6 +11,7 @@ import { checkProject } from '../runtime/backend-harness.mjs'
 import { implementationStatus, resetImplementation } from '../runtime/implementation-orchestrator.mjs'
 import { runWork } from '../runtime/work-orchestrator.mjs'
 import { scoreProviderCase } from './provider-comparison.mjs'
+import { compactImplementationVerification, implementationFailureSummary } from '../core/implementation-verification.mjs'
 
 const execute = promisify(execFile)
 const MAX_GIT_OUTPUT = 16 * 1024 * 1024
@@ -122,7 +123,7 @@ async function requestMetrics(workspace, attempt) {
     codeContextPaths: paths,
     codeContextCharacters: request.codeContext?.budget?.usedCharacters ?? null,
     projectRuleCount: request.projectConventions?.projectRules?.rules?.length ?? 0,
-    knowledgeDocumentCount: request.projectConventions?.knowledgeDocuments?.documents?.length ?? 0
+    knowledgeDocumentCount: request.projectConventions?.knowledgeDocuments?.paths?.length ?? 0
   }
 }
 
@@ -216,6 +217,7 @@ async function runBthLane(root, task, repositoryConfig, input, options) {
         preparation: record?.preparation ?? null,
         verificationTests: record?.verification?.tests ?? null,
         verificationGates: (record?.verification?.gates ?? []).map(gate => ({ id: gate.id, outcome: gate.outcome })),
+        implementationDiagnosis: record ? implementationFailureSummary(record) : null,
         request: request ? {
           bytes: request.bytes,
           codeContextEntries: request.codeContextPaths.length,
@@ -270,13 +272,15 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
   let verificationConfirmed = false
   let verificationFailure = null
   let verificationTests = null
+  let verificationDiagnostic = null
   if (processPassed(run.process) && paths.length > 0 && ruleViolations.length === 0) {
     try {
       await initProject(root, { preferredSystem: repositoryConfig.buildSystem })
       const checked = await (options.projectChecker ?? checkProject)(root, { allowNetwork: true })
       verificationConfirmed = checked.confirmed === true
+      verificationDiagnostic = compactImplementationVerification(checked)
       verificationTests = checked.result?.tests ?? null
-      verificationFailure = checked.confirmed ? null : checked.result?.failure?.code ?? 'verification-failed'
+      verificationFailure = checked.confirmed ? null : verificationDiagnostic.failure?.code ?? 'verification-failed'
     } catch (error) {
       verificationFailure = error?.code ?? 'verification-exception'
     }
@@ -299,6 +303,7 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
       providerFailureCode: run.metadata?.failure?.code ?? null,
       verificationFailureCode: verificationFailure,
       verificationTests,
+      verificationDiagnostic,
       request: { promptBytes: Buffer.byteLength(prompt) },
       providerActivity: run.metadata?.activity ?? null,
       process: {

@@ -3,6 +3,7 @@ import { constants } from 'node:fs'
 import { open } from 'node:fs/promises'
 import { posix } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
+import { javascriptSourceView as javascriptView, pythonCodeView as pythonCode } from './source-pattern-view.mjs'
 
 const MAX_FILES = 128
 const MAX_FILE_BYTES = 256 * 1024
@@ -12,23 +13,6 @@ function inside(base, value) {
   if (typeof value !== 'string' || !value || /[\\\0:$%]/.test(value) || value.startsWith('/')) return null
   const path = posix.normalize(posix.join(base, value))
   return path === '..' || path.startsWith('../') || path.startsWith('/') ? null : path
-}
-
-// Do not import a DataSource or execute its scripts. Mask strings/comments before
-// finding declaration patterns; retain only literal positions for static paths.
-function javascriptView(text) {
-  const literals = []
-  const code = text.replace(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\/\*[\s\S]*?\*\/|\/\/[^\r\n]*/g, (value, offset) => {
-    if (/^["'`]/.test(value)) literals.push({ offset, end: offset + value.length, value: value.slice(1, -1) })
-    return ' '.repeat(value.length)
-  })
-  return /["'`]/.test(code) ? { code: '', literals: [] } : { code, literals }
-}
-
-function pythonCode(text) {
-  const code = text.replace(/'''[\s\S]*?'''|"""[\s\S]*?"""|'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|#[^\r\n]*/g,
-    (value) => value.replace(/[^\r\n]/g, ' '))
-  return /["']/.test(code) ? '' : code
 }
 
 function typeormDirectories(text, sourcePath, projectPath) {

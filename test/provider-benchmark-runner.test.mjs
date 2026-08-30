@@ -87,7 +87,10 @@ test('prepared BTH lane seals one isolated verified change and records normalize
   assert.deepEqual(result.score.changedPaths, task.goldPaths)
   assert.equal(result.score.usage.tokens.total, 15)
   assert.ok(result.observation.evidence.request.bytes > 0)
+  assert.ok(result.observation.evidence.request.knowledgeDocumentCount > 0)
   assert.equal(result.observation.evidence.workspaceRetainedForAudit, false)
+  assert.equal(result.observation.evidence.implementationDiagnosis.failure, null)
+  assert.equal(result.observation.evidence.implementationDiagnosis.attemptOutcomes[0].outcome, 'passed')
 })
 
 test('prepared direct lane uses the same verification contract after provider execution', async () => {
@@ -181,4 +184,22 @@ test('an evaluator exception preserves implementation evidence but leaves task s
   assert.equal(result.score.successAt1, null)
   assert.equal(result.observation.acceptance.reason, 'oracle-evaluation-failed')
   assert.doesNotMatch(JSON.stringify(result), /private diagnostic/)
+})
+
+test('direct lane retains the same bounded gate failure evidence without promoting verification or exporting assertion bodies', async () => {
+  const root = await project('bth-comparison-direct-diagnostic-')
+  const result = await runPreparedComparisonCase(root, task, repositoryConfig, {
+    lane: 'direct', provider: 'codex', mode: 'balanced', model: null, maxAttempts: 1, timeoutMs: 30_000, maxBudgetUsd: null
+  }, {
+    directProviderRunner: fixtureProvider,
+    projectChecker: async () => ({ confirmed: false, result: {
+      reason: 'required_gate_failed', tests: { tests: 1, executed: 1, failures: 1, errors: 0, skipped: 0 },
+      gates: [{ id: 'tests', required: true, outcome: 'failed', reason: 'process_failed', process: { exitCode: 1, stderr: 'private-output' }, result: { reason: 'tests_failed', failedTests: [{ className: 'Mapping', name: 'maps saved value', message: 'private-assertion' }] } }]
+    } })
+  })
+  assert.equal(result.score.successAt1, false)
+  assert.equal(result.observation.evidence.verificationFailureCode, 'required_gate_failed')
+  assert.equal(result.observation.evidence.verificationDiagnostic.gates[0].structuredReason, 'tests_failed')
+  assert.equal(result.observation.evidence.verificationDiagnostic.gates[0].failedTests[0].name, 'maps saved value')
+  assert.doesNotMatch(JSON.stringify(result), /private-output|private-assertion/)
 })

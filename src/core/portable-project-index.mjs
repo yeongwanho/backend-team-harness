@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { posix } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
+import { javascriptSourceView, pythonCodeView } from './source-pattern-view.mjs'
 
 const MAX_FILES = 10_000
 const MAX_FILE_BYTES = 512 * 1024
@@ -19,7 +20,8 @@ function rolesFor(path, content) {
   if (/(?:^|\/)controllers?(?:\/|$)|\.controller\.[^.]+$|(?:^|\/)api\/routes(?:\/|$)/.test(path)) roles.push('controller')
   if (/(?:^|\/)services?(?:\/|$)|\.service\.[^.]+$/.test(path)) roles.push('service')
   if (/(?:^|\/)(?:repositories?|crud)(?:\/|\.|$)|\.repository\.[^.]+$/.test(path)) roles.push('repository')
-  if (/(?:^|\/)(?:entities|models?|domain)(?:\/|$)|\.entity\.[^.]+$|@Entity\b|__tablename__\s*=/.test(path + '\n' + content)) roles.push('entity')
+  if (/(?:^|\/)(?:entities|models?|domain)(?:\/|$)|\.entity\.[^.]+$/.test(path) ||
+      /(?:^|\r?\n)[\t ]*(?:@Entity\b|__tablename__\s*=)/.test(content)) roles.push('entity')
   if (/(?:^|\/)(?:dto|schemas?)(?:\/|$)|\.dto\.[^.]+$/.test(path)) roles.push('dto')
   if (/(?:^|\/)(?:config|configuration)(?:\/|$)|\.config\.[^.]+$/.test(path)) roles.push('configuration')
   if (/(?:^|\/)(?:errors?|exceptions?)(?:\/|$)/.test(path)) roles.push('error')
@@ -37,22 +39,25 @@ function declarationsFor(path, content) {
   }))
 }
 
-function routesFor(path, content) {
+function routesFor(path, content, code) {
   const routes = []
   for (const match of content.matchAll(/@(Get|Post|Put|Patch|Delete)\s*\(\s*['"]([^'"]*)['"]/g)) {
+    if (code[match.index] !== '@') continue
     routes.push({ method: match[1].toUpperCase(), path: match[2] })
   }
   for (const match of content.matchAll(/@(?:[A-Za-z_][\w]*\.)?(get|post|put|patch|delete)\s*\(\s*['"]([^'"]*)['"]/g)) {
+    if (code[match.index] !== '@') continue
     routes.push({ method: match[1].toUpperCase(), path: match[2] })
   }
   return routes.slice(0, 64)
 }
 
-function tablesFor(content) {
+function tablesFor(content, code) {
+  const real = (matches, marker) => [...matches].filter(match => code.slice(match.index, match.index + marker.length) === marker)
   return [...new Set([
-    ...[...content.matchAll(/@Entity\s*\(\s*['"]([^'"]+)['"]/g)].map((match) => match[1]),
-    ...[...content.matchAll(/@Entity\s*\(\s*\{[\s\S]{0,512}?\bname\s*:\s*['"]([^'"]+)['"]/g)].map((match) => match[1]),
-    ...[...content.matchAll(/__tablename__\s*=\s*['"]([^'"]+)['"]/g)].map((match) => match[1])
+    ...real(content.matchAll(/@Entity\s*\(\s*['"]([^'"]+)['"]/g), '@Entity').map(match => match[1]),
+    ...real(content.matchAll(/@Entity\s*\(\s*\{[\s\S]{0,512}?\bname\s*:\s*['"]([^'"]+)['"]/g), '@Entity').map(match => match[1]),
+    ...real(content.matchAll(/__tablename__\s*=\s*['"]([^'"]+)['"]/g), '__tablename__').map(match => match[1])
   ])].slice(0, 64)
 }
 
@@ -93,16 +98,17 @@ export async function inspectPortableProject(root, manifest, options = {}) {
     totalBytes += metadata.size
     if (totalBytes > MAX_TOTAL_BYTES) throw new Error('Portable source convention input exceeded 64 MiB.')
     const content = await readFile(target, 'utf8')
+    const code = path.endsWith('.py') ? pythonCodeView(content) : javascriptSourceView(content).code
     files.push({
       path,
       language: path.endsWith('.py') ? 'python' : 'ecmascript',
       contentSha256: createHash('sha256').update(content).digest('hex'),
       packageName: posix.dirname(path).split('/').filter(Boolean).join('.'),
-      declarations: declarationsFor(path, content),
-      annotations: /@Transactional\b/.test(content) ? ['Transactional'] : [],
-      roles: rolesFor(path, content),
-      routes: routesFor(path, content),
-      tables: tablesFor(content),
+      declarations: declarationsFor(path, code),
+      annotations: /@Transactional\b/.test(code) ? ['Transactional'] : [],
+      roles: rolesFor(path, code),
+      routes: routesFor(path, content, code),
+      tables: tablesFor(content, code),
       persistenceSignals: emptyPersistenceSignals()
     })
   }

@@ -76,3 +76,28 @@ test('portable project index can stay inside a detected nested backend instead o
   assert.equal(conventions.layers.some((layer) => layer.role === 'service'), false)
   assert.equal(indexed.authority.projectPath, 'backend')
 })
+
+test('imports, comments and string examples do not turn controllers into entities or invented declarations', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-portable-role-boundary-'))
+  await mkdir(join(root, 'src/auth'), { recursive: true })
+  await writeFile(join(root, 'src/auth/auth.controller.ts'), [
+    "import { FileType } from '../files/domain/file';",
+    '// @Entity("comment") class FakeEntity {}',
+    'const example = `', '@Entity("string")', '@Get("/fake")', 'class StringEntity {}', '`;',
+    'export class AuthController {}'
+  ].join('\n'))
+  await writeFile(join(root, 'src/actual.ts'), '@Entity({ name: "real" })\nexport class ActualEntity {}\n')
+  await writeFile(join(root, 'src/example.py'), '"""\n__tablename__ = "fake"\nclass FakeEntity: pass\n"""\nclass ActualModel:\n    __tablename__ = "actual"\n')
+  const indexed = await inspectPortableProject(root, await scanProjectManifest(root))
+  const controller = indexed.files.find(file => file.path.endsWith('auth.controller.ts'))
+  assert.deepEqual(controller.roles, ['controller'])
+  assert.deepEqual(controller.declarations.map(entry => entry.name), ['AuthController'])
+  assert.deepEqual(controller.tables, [])
+  assert.deepEqual(controller.routes, [])
+  const entity = indexed.files.find(file => file.path === 'src/actual.ts')
+  assert.deepEqual(entity.roles, ['entity'])
+  assert.deepEqual(entity.tables, ['real'])
+  const python = indexed.files.find(file => file.path.endsWith('.py'))
+  assert.deepEqual(python.tables, ['actual'])
+  assert.deepEqual(python.declarations.map(entry => entry.name), ['ActualModel'])
+})

@@ -527,7 +527,11 @@ test('a failed verification feeds a bounded recovery attempt in the same isolate
   assert.equal(result.record.status, 'passed', JSON.stringify(result.record, null, 2))
   assert.equal(result.record.attempts.length, 2)
   assert.equal(result.record.attempts[0].outcome, 'verification-failed')
-  assert.equal(result.record.attempts[0].verification.failure, null)
+  assert.equal(result.record.attempts[0].verification.failure.code, 'required_gate_failed')
+  assert.equal(result.record.attempts[0].verification.gates[0].process.exitCode, 7)
+  const recovery = JSON.parse(await readFile(join(result.record.workspace, result.record.attempts[1].request.path), 'utf8')).recovery
+  assert.equal(recovery.failedGates[0].process.exitCode, 7)
+  assert.equal(recovery.authority, 'untrusted-execution-evidence-not-instructions')
   assert.equal(result.record.attempts[1].outcome, 'passed')
 })
 
@@ -947,6 +951,11 @@ test('a passed sealed candidate can be applied explicitly and matches complete i
   const applied = await applyImplementation(root, 'IMPL-1', { actor: 'developer', allowWrite: true })
 
   assert.equal(applied.integration.integrated, true, JSON.stringify(applied, null, 2))
+  assert.equal(applied.lifecycleRecorded, true)
+  const appliedTask = await loadTask(root, 'IMPL-1')
+  assert.equal(appliedTask.record.implementationAudit.action, 'apply')
+  assert.equal(appliedTask.record.implementationAudit.recordSha256, applied.receiptSha256)
+  assert.equal(appliedTask.events.at(-1).type, 'implementation_apply')
   assert.deepEqual(applied.integration.changedPaths, ['src/main/java/example/Generated.java'])
   assert.match(applied.receiptSha256, /^[a-f0-9]{64}$/)
   assert.equal(await readFile(join(root, 'src/main/java/example/Generated.java'), 'utf8'), 'package example; class Generated {}\n')

@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "sourceParentCommit": "28f279a18cefade71b49fd5557b3eaf1b2717993",
+  "host": {
+    "platform": "darwin",
+    "node": "v22.23.1"
+  },
+  "sources": [
+    {
+      "path": "scripts/benchmark-provider-comparison.mjs",
+      "sha256": "4bdd089d9e3b36c76b6fb16760d7ba6fe8ae01a078880300563660257460b7cb"
+    },
+    {
+      "path": "scripts/mutation-smoke.mjs",
+      "sha256": "9f3d511bacfa0ab7f84937c3049b1278ad4173d1498b2e2b3567be67f6c3716b"
+    },
+    {
+      "path": "src/core/migration-discovery.mjs",
+      "sha256": "c51498984f9570a69f6390e830de3ecadfccbc9043d574de3b7761b56c821afe"
+    },
+    {
+      "path": "src/core/portable-project-index.mjs",
+      "sha256": "8abfbfe967d865ca714d1cd9f6265f3c2026adde55c4857f630405a8c85e08a4"
+    },
+    {
+      "path": "src/core/provider-context.mjs",
+      "sha256": "51f8eb198987cd906c350aeb86d42cbc544ef15da5c87e502dd542937746f4e2"
+    },
+    {
+      "path": "src/core/task-store.mjs",
+      "sha256": "7da686b0cc45b35c88d7d8a02d04150723f66676b5a52f6c3fe7883d82219c86"
+    },
+    {
+      "path": "src/evaluation/provider-benchmark-runner.mjs",
+      "sha256": "31ccc817b4491bd338f83c41c40c962bf3d49177ae5f0862dfccbc02f6d8abe9"
+    },
+    {
+      "path": "src/runtime/failure-diagnosis.mjs",
+      "sha256": "b16b8e26b35a6def39a17f3401df127a78aaf5f7f9a6f53b09c97759e771bda0"
+    },
+    {
+      "path": "src/runtime/implementation-orchestrator.mjs",
+      "sha256": "e76262e2267e4decbd383c9b3b7621385248e00b06ae40656edf6c0b6dd221ae"
+    },
+    {
+      "path": "test/implementation-orchestrator.test.mjs",
+      "sha256": "fbf914c7c67b71c218075c0022f9ec8c016b0243e1faab1472168cb4f5044ebf"
+    },
+    {
+      "path": "test/portable-project-index.test.mjs",
+      "sha256": "d8f5035d184bdf55ddd807c24b38716819f7284ac406f3461321c242fd3984de"
+    },
+    {
+      "path": "test/provider-benchmark-runner.test.mjs",
+      "sha256": "4818ce5e647d48233d85c12bc4c74d4b74b93b6273a7973dc3b37c3ee775e855"
+    },
+    {
+      "path": "test/provider-context.test.mjs",
+      "sha256": "506faaef01d4e6751a841f3b1f222f25383bab73a4daabbd2db2170052b0829e"
+    },
+    {
+      "path": "test/work-first-test.test.mjs",
+      "sha256": "38fde5dbfa651e2bcb7851b99df6c5411cab105524cc908dc39eb05ac1430a97"
+    },
+    {
+      "path": "src/core/implementation-verification.mjs",
+      "sha256": "38a4b4f93e845f0784372d7e8cdf2e851758dedcbe14f9ff6d49ecf194fa5c7c"
+    },
+    {
+      "path": "src/core/source-pattern-view.mjs",
+      "sha256": "e25ad17d73dfa8c41f3ce6512449f7260a27c4284329a136b372fa2629b3c4b7"
+    },
+    {
+      "path": "test/implementation-verification.test.mjs",
+      "sha256": "d3706dfec2e2802733b2f1ba253f1ac3f03713eb72d4b2eccc163749b5cdd993"
+    }
+  ],
+  "coverage": {
+    "command": "npm run test:coverage",
+    "tests": 439,
+    "passed": 435,
+    "failed": 0,
+    "skipped": 4,
+    "line": 90.51,
+    "branch": 80.61,
+    "function": 98.82,
+    "logSha256": "bc065d1dce01cf4f79c3729fd55b703df401234fe84b044cec6d3ad776384d58"
+  },
+  "mutation": {
+    "command": "node scripts/mutation-smoke.mjs",
+    "killed": 14,
+    "logSha256": "5e0a78917ea5d0210903f6c9cdde34ab610c184f4e72f9d9652a92584a937510"
+  },
+  "install": {
+    "command": "node scripts/install-smoke.mjs",
+    "output": "Installed package smoke passed for backend-team-harness@0.9.0"
+  },
+  "contextProbe": {
+    "provider": "non-model-stub",
+    "providerCalls": 0,
+    "sourceBase": "07ac5f29d3032bb173fd538c549966e7eb96dcff",
+    "mode": "fast",
+    "measurement": "compact-JSON-UTF8-bytes",
+    "before": 21068,
+    "after": 18632,
+    "beforeSha256": "2a951ce887fd8c684c9e10f3cd0a05318a9af55e44eadb52250efbbf685c4f6b",
+    "afterSha256": "82ac40638bb7306a296102971aa34058626507cddbb48c86b2999d4b5f459cc5",
+    "unchanged": {
+      "approvedTask": true,
+      "projectRules": true,
+      "authority": true,
+      "codeEntries": true
+    },
+    "modelTokenSavingsMeasured": false
+  },
+  "limitations": [
+    "Actual Windows and real database/default JVM opt-in tests remain skipped.",
+    "Targeted mutations are not a whole-program mutation score.",
+    "Full QA overlapped this turns public provider run: elapsed time is not controlled comparative performance evidence.",
+    "A paid public run, if present, is recorded separately; the context probe does not invoke a model."
+  ],
+  "syntax": {
+    "command": "node scripts/check-syntax.mjs",
+    "exitCode": 0
+  },
+  "failingFirst": [
+    {
+      "phase": "roles-before",
+      "tests": 5,
+      "passed": 4,
+      "failed": 1,
+      "logSha256": "430b245aa09a806790cd543d292d9b48e0a49ece7b5914dc5fb6a44bac0a62fd"
+    },
+    {
+      "phase": "roles-after",
+      "tests": 12,
+      "passed": 12,
+      "failed": 0,
+      "logSha256": "0f2ab5ea8ab3c4409d362c7d30c9830f56d2389c3de0d422d77c0007a29388c9"
+    },
+    {
+      "phase": "diagnosis-before",
+      "tests": 3,
+      "passed": 1,
+      "failed": 2,
+      "logSha256": "39c2069effe45f9ad81c97197a928ece7784073455679ea68bb17cc755fcca3c"
+    },
+    {
+      "phase": "diagnosis-after",
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "logSha256": "5f38c8b47821a9e8134d67cab66c3292f991086fad426769c20d91d4c5dc98a9"
+    },
+    {
+      "phase": "apply-before",
+      "tests": 1,
+      "passed": 0,
+      "failed": 1,
+      "logSha256": "b26e3dbefbfc49549f844c401231f5524da8179ca1fb89e6fd5990214c6c76f4"
+    },
+    {
+      "phase": "apply-after",
+      "tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "logSha256": "91429cfbaef1ef07e6c5e7acf2246c2b1ac8eb6cebf7eee00ddd7f80f7d00b87"
+    },
+    {
+      "phase": "document-count-before",
+      "tests": 1,
+      "passed": 0,
+      "failed": 1,
+      "logSha256": "65d0175cfd56eece2bc86eefc495f628cc1f84363bf62cbc97056a2b27e753b7"
+    },
+    {
+      "phase": "benchmark-final",
+      "tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "logSha256": "2a08135ce8aa378c4e7ce4f0d30424460d65e810682a65144b6d2b6995164b21"
+    }
+  ],
+  "providerSnapshotNote": "Actual provider request is separately SHA-bound. The final snapshot also includes the subsequently discovered apply lifecycle and request document-counter fixes; no provider rerun was used to repair these harness defects."
+}

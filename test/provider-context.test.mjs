@@ -73,3 +73,20 @@ test('provider example budgets expand with mode without weakening authority or i
   assert.deepEqual(selectProviderContext(unavailable, null, 'fast'), { codeContext: unavailable, projectConventions: null })
   assert.throws(() => selectProviderContext(null, null, 'unknown'), /Unknown provider context mode/)
 })
+
+test('package neighborhoods are bounded by mode and selected by ranked code while full rules and layer observations survive', () => {
+  const input = fixture()
+  input.codeContext.entries = [{ path: 'src/main/java/example/files/FileService.java' }, { path: 'src/main/java/example/users/UserService.java' }]
+  input.projectConventions.discovered.layers[0].packages = ['example.unrelated', 'example.other', 'example.third', 'example.users', 'example.files']
+  const before = structuredClone(input)
+  const fast = selectProviderContext(input.codeContext, input.projectConventions, 'fast')
+  const layer = fast.projectConventions.discovered.layers[0]
+  assert.deepEqual(layer.packages, ['example.files', 'example.users'])
+  assert.equal(layer.omittedProviderPackageCount, 3)
+  assert.equal(fast.projectConventions.providerProjection.omittedPackages, 3)
+  assert.equal(layer.count, input.projectConventions.discovered.layers[0].count)
+  assert.deepEqual(layer.naming, input.projectConventions.discovered.layers[0].naming)
+  assert.deepEqual(fast.projectConventions.projectRules, input.projectConventions.projectRules)
+  assert.deepEqual(input, before)
+  assert.equal(selectProviderContext(input.codeContext, input.projectConventions, 'deep').projectConventions.discovered.layers[0].packages.length, 5)
+})

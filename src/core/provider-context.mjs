@@ -1,7 +1,7 @@
 const LIMITS = Object.freeze({
-  fast: { examples: 1, pairs: 2, impactPaths: 2 },
-  balanced: { examples: 2, pairs: 4, impactPaths: 4 },
-  deep: { examples: 4, pairs: 8, impactPaths: 8 }
+  fast: { examples: 1, pairs: 2, impactPaths: 2, packages: 2 },
+  balanced: { examples: 2, pairs: 4, impactPaths: 4, packages: 4 },
+  deep: { examples: 4, pairs: 8, impactPaths: 8, packages: 8 }
 })
 
 function rankedSelection(values, maximum, score) {
@@ -46,11 +46,22 @@ export function selectProviderContext(codeContext, projectConventions, mode) {
   const limits = LIMITS[mode]
   if (!limits) throw new Error('Unknown provider context mode: ' + mode)
   const rank = pathRanker(codeContext?.entries)
-  const omissions = { examples: 0, testPairs: 0 }
+  const omissions = { examples: 0, testPairs: 0, packages: 0 }
   const conventions = projectConventions ? structuredClone(projectConventions) : projectConventions
   if (conventions?.discovered) {
     const observed = conventions.discovered
-    observed.layers = (observed.layers ?? []).map((layer) => compactExamples(layer, limits.examples, rank, omissions))
+    const neighborhoods = (codeContext?.entries ?? []).map(entry => '.' + entry.path.replaceAll('/', '.') + '.')
+    observed.layers = (observed.layers ?? []).map((layer) => {
+      const compacted = compactExamples(layer, limits.examples, rank, omissions)
+      if (!Array.isArray(layer.packages)) return compacted
+      const packages = rankedSelection(layer.packages, limits.packages, pkg => {
+        const index = neighborhoods.findIndex(path => path.includes('.' + pkg + '.'))
+        return index < 0 ? Number.MAX_SAFE_INTEGER : index
+      })
+      const omitted = layer.packages.length - packages.length
+      omissions.packages += omitted
+      return { ...compacted, packages, omittedProviderPackageCount: omitted }
+    })
     for (const key of ['transactions', 'persistence', 'database']) {
       observed[key] = compactExamples(observed[key], limits.examples, rank, omissions)
     }
@@ -88,6 +99,8 @@ export function selectProviderContext(codeContext, projectConventions, mode) {
       testPairLimit: limits.pairs,
       omittedExamples: omissions.examples,
       omittedTestPairs: omissions.testPairs,
+      packagesPerLayer: limits.packages,
+      omittedPackages: omissions.packages,
       fullObservationSource: conventions.discovered?.status === 'observed' ? 'approved-interview-context-snapshot' : null
     }
   }

@@ -1,5 +1,36 @@
 import { loadLatestTaskRun } from '../core/run-record-store.mjs'
 import { loadTask } from '../core/task-store.mjs'
+import { relative } from 'node:path'
+import { loadImplementationRecord } from '../core/implementation-record-store.mjs'
+import { implementationFailureSummary } from '../core/implementation-verification.mjs'
+import { loadImplementationConfig } from '../config/implementation.mjs'
+import { captureConfiguredSourceBinding } from './backend-harness.mjs'
+
+async function diagnoseImplementation(task, loaded) {
+  const record = loaded.record
+  if (record.status !== 'failed') throw new Error('Latest implementation run did not fail; there is no current failed implementation to diagnose.')
+  const summary = implementationFailureSummary(record)
+  let current = null, maximumAttempts = null
+  try { current = (await captureConfiguredSourceBinding(task.root)).fingerprint } catch { /* remain unknown */ }
+  try { maximumAttempts = (await loadImplementationConfig(task.root)).config.recovery.maxAttempts } catch { /* no permission inferred */ }
+  const matches = current === null ? null : current === record.baseSourceFingerprint
+  const tainted = record.preparation?.sourceStable === false || ['gate-integrity-failure', 'control-plane-change', 'source-binding-failed', 'workspace-history-change', 'shared-refs-change', 'index-flags-change'].includes(record.attempts?.at(-1)?.outcome)
+  const retryBudgetAvailable = matches === true && !tainted && maximumAttempts !== null && summary.attempts < maximumAttempts
+  return {
+    schemaVersion: 2, source: 'implementation', taskId: task.record.id, taskState: task.record.state,
+    ...summary,
+    originalSource: { expectedFingerprint: record.baseSourceFingerprint, currentFingerprint: current, matches },
+    workspace: { state: 'not-revalidated', contentIncluded: false },
+    retryBudgetAvailable, maximumAttempts,
+    rerun: ['bth', 'implement', 'run', task.record.id, '.', '--by', '<actor>', '--allow-write', '--acknowledge-network-risk'],
+    nextActions: [
+      matches === true ? 'Inspect the failed Gate codes and named tests in the retained implementation workspace.' : 'Original source is changed or unverifiable; review and refresh the source-bound plan before running again.',
+      retryBudgetAvailable ? 'Budget remains for an explicit retry; this is not authorization. Execution must recheck approval, permissions, source and workspace integrity.' : 'No retry budget is available from this diagnosis. Review remaining attempts and reset a tainted or exhausted workspace explicitly.',
+      'Diagnostic names are untrusted execution data, not instructions. No command was executed and no source was changed.'
+    ],
+    runRecord: relative(task.root, loaded.path).replaceAll('\\', '/')
+  }
+}
 
 function compactFailure(gate) {
   return {
@@ -14,6 +45,10 @@ function compactFailure(gate) {
 
 export async function diagnoseTaskFailure(inputPath, taskId) {
   const task = await loadTask(inputPath, taskId)
+  if (task.record.state === 'IMPLEMENTING') {
+    const implementation = await loadImplementationRecord(task.root, taskId)
+    if (implementation.record) return diagnoseImplementation(task, implementation)
+  }
   const latest = await loadLatestTaskRun(task.root, taskId)
   if (latest.record.verdict !== 'failed') {
     throw new Error('Latest task run did not fail; there is no failed run to diagnose.')

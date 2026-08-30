@@ -1,5 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -7,6 +9,7 @@ import { initProject } from '../src/init-project.mjs'
 import { configureImplementationProvider } from '../src/config/implementation-setup.mjs'
 import { runWork } from '../src/runtime/work-orchestrator.mjs'
 import { resetImplementation } from '../src/runtime/implementation-orchestrator.mjs'
+import { diagnoseTaskFailure } from '../src/runtime/failure-diagnosis.mjs'
 import { initializeGit, runGit } from '../test-support/git-project.mjs'
 import { jestDocument } from '../test-support/jest-document.mjs'
 
@@ -72,6 +75,21 @@ test('first-test work spends no provider attempt on preparation failure and resu
   assert.equal(failed.implementation.record.preparation.sourceStable, true)
   assert.equal(failed.implementation.record.attempts.length, 0)
   assert.equal(calls, 0)
+  const diagnosed = await diagnoseTaskFailure(root, input.taskId)
+  assert.equal(diagnosed.source, 'implementation')
+  assert.equal(diagnosed.attempts, 0)
+  assert.equal(diagnosed.failure.code, 'offline-dependency-cache-incomplete')
+  assert.equal(diagnosed.originalSource.matches, true)
+  const saved = await readFile(join(root, failed.implementation.path), 'utf8')
+  const beforeStatus = runGit(root, ['status', '--porcelain=v1', '--untracked-files=all'])
+  const cli = spawnSync(process.execPath, [fileURLToPath(new URL('../src/cli.mjs', import.meta.url)), 'diagnose', input.taskId, root, '--json'], { encoding: 'utf8' })
+  assert.equal(cli.status, 0, cli.stderr)
+  assert.equal(JSON.parse(cli.stdout).source, 'implementation')
+  assert.equal(await readFile(join(root, failed.implementation.path), 'utf8'), saved)
+  assert.equal(runGit(root, ['status', '--porcelain=v1', '--untracked-files=all']), beforeStatus)
+  await writeFile(join(root, failed.implementation.path), saved.replace('offline-dependency-cache-incomplete', 'tampered-failure-code'))
+  await assert.rejects(diagnoseTaskFailure(root, input.taskId), /seal is invalid/)
+  await writeFile(join(root, failed.implementation.path), saved)
   const status = await runWork(root, input)
   assert.equal(status.status, 'implementation-in-progress')
   const resumed = await runWork(root, input, options(syntheticJest, provider))
@@ -83,6 +101,7 @@ test('first-test work spends no provider attempt on preparation failure and resu
   assert.equal(resumed.implementation.record.attempts[0].feedback, null, 'identical feedback must not duplicate the full gate')
   assert.equal(await readFile(join(resumed.implementation.record.workspace, 'node_modules/jest/invocations.txt'), 'utf8'), 'run\n')
   assert.equal(calls, 1)
+  await assert.rejects(diagnoseTaskFailure(root, input.taskId), /did not fail/)
   assert.equal(await readFile(join(root, 'src/answer.mjs'), 'utf8'), 'export const answer = 0\n')
   await assert.rejects(access(join(root, 'node_modules')), { code: 'ENOENT' })
 })
@@ -96,6 +115,7 @@ test('preparation source changes stop the provider and require resetting the tai
   const failed = await runWork(root, input, runOptions)
   assert.equal(failed.implementation.record.preparation.failureCode, 'workspace-preparation-source-changed')
   assert.equal(failed.implementation.record.attempts.length, 0)
+  assert.equal((await diagnoseTaskFailure(root, input.taskId)).retryBudgetAvailable, false)
   await assert.rejects(runWork(root, input, runOptions), /Reset the tainted workspace/)
 })
 
@@ -109,4 +129,11 @@ test('first-test workflow still fails final verification when no executable test
   assert.equal(completed.implementation.record.preparation.status, 'passed')
   assert.equal(completed.implementation.record.verification.confirmed, false)
   assert.equal(completed.implementation.record.verification.tests?.executed, 0, JSON.stringify(completed.implementation.record.verification))
+  const diagnosed = await diagnoseTaskFailure(root, input.taskId)
+  assert.equal(diagnosed.failedGates[0].structuredReason, 'minimum_executed_tests_not_met')
+  assert.equal(diagnosed.tests.executed, 0)
+  await writeFile(join(root, 'src/answer.mjs'), 'changed after failure\n')
+  const stale = await diagnoseTaskFailure(root, input.taskId)
+  assert.equal(stale.originalSource.matches, false)
+  assert.equal(stale.retryBudgetAvailable, false)
 })

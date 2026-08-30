@@ -438,7 +438,7 @@ export async function advanceTask(inputPath, taskId, to, input = {}, options = {
 }
 
 export async function recordImplementationLifecycle(inputPath, taskId, action, input = {}, options = {}) {
-  if (!['reset', 'cleanup'].includes(action)) throw new Error('Unknown implementation lifecycle action.')
+  if (!['reset', 'cleanup', 'apply'].includes(action)) throw new Error('Unknown implementation lifecycle action.')
   const actor = normalizeTaskText(input.actor, 'actor', 128)
   const artifact = normalizeTaskText(input.artifact, 'implementation artifact', 1024)
   const recordSha256 = normalizeTaskText(input.recordSha256, 'implementation record digest', 128)

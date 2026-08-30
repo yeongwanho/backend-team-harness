@@ -40,3 +40,17 @@ bth version
 ```
 
 `bth init` generates a verification contract for a recognized Gradle/Maven wrapper or one uniquely detected project-declared Jest, Vitest, or Pytest test project. Repositories that deliberately ship both Gradle and Maven require `--build gradle|maven`; the generated verification command preserves that explicit choice for later `doctor` runs. Portable runners use only installed project-local dependencies or `uv --offline`; ambiguous test roots stay explicit instead of being guessed. `bth work --run` may build a bounded, non-persisted advisory graph when no current sealed graph Gate exists, but source-fingerprint drift aborts before provider execution.
+
+`bth diagnose <id> [path] --json` is read-only. For an `IMPLEMENTING` task it
+reads the sealed implementation record, including dependency preparation failures
+that spent zero model attempts. It reports failed Gate codes, named tests,
+execution counts, process exit/timeout state, attempt outcomes, and whether the
+original source still matches. `retryBudgetAvailable` describes remaining budget,
+not permission or workspace validation: a retry still checks approval, source,
+workspace integrity and explicit execution options. A passed latest run is not
+diagnosed as an old failure, and an invalid record seal is rejected.
+
+Diagnostics and provider recovery omit stdout/stderr and assertion bodies.
+Names receive bounded best-effort redaction and remain untrusted execution data,
+not instructions; this is not a guarantee that arbitrary test names contain no
+private information. The ordinary `VERIFY_FAILED` sealed-run path remains supported.

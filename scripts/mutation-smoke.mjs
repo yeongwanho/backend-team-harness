@@ -7,6 +7,18 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/core/implementation-verification.mjs',
+    from: "structuredReason: code(gate.result?.reason ?? gate.structuredReason),",
+    to: 'structuredReason: null,',
+    test: 'test/implementation-verification.test.mjs'
+  },
+  {
+    file: 'src/core/portable-project-index.mjs',
+    from: 'roles: rolesFor(path, code),',
+    to: "roles: [...rolesFor(path, code), ...(content.includes('/domain/') ? ['entity'] : [])],",
+    test: 'test/portable-project-index.test.mjs'
+  },
+  {
     file: 'src/core/workspace-preparation.mjs',
     from: "'ci', '--offline', '--ignore-scripts'",
     to: "'ci', '--ignore-scripts'",

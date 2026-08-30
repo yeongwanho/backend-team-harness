@@ -25,6 +25,7 @@ import { loadBudgetedCodeContext } from '../core/code-context.mjs'
 import { inspectBoundSourceCodeContext } from '../adapters/bounded-code-context.mjs'
 import { buildProjectConventions, projectRuleReadiness } from '../core/project-conventions.mjs'
 import { selectProviderContext } from '../core/provider-context.mjs'
+import { compactImplementationVerification as compactVerification, implementationRecoveryInput as recoveryInput } from '../core/implementation-verification.mjs'
 import { selectTaskRetrievalQuery } from '../core/retrieval-query.mjs'
 import { assertNoSymlinkSegments, assertRelativeChild, resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { captureConfiguredSourceBinding, checkProject } from './backend-harness.mjs'
@@ -110,28 +111,6 @@ const NON_RETRYABLE_PROVIDER_FAILURES = new Set([
 
 function providerFailureIsNonRetryable(adapterRun) {
   return NON_RETRYABLE_PROVIDER_FAILURES.has(adapterRun.metadata?.failure?.code)
-}
-
-function compactVerification(result) {
-  return {
-    confirmed: result.confirmed,
-    sourceFingerprint: result.sourceBinding?.fingerprint ?? null,
-    runPath: result.run?.path ?? null,
-    failure: result.failure ?? null,
-    tests: result.result?.tests ?? null,
-    gates: (result.result?.gates ?? []).map((gate) => ({
-      id: gate.id, required: gate.required, outcome: gate.outcome, reason: gate.reason ?? null,
-      failedTests: (gate.result?.failedTests ?? []).slice(0, 32)
-    }))
-  }
-}
-
-function recoveryInput(verification) {
-  if (!verification) return null
-  return {
-    failure: verification.failure,
-    failedGates: verification.gates.filter((gate) => gate.outcome !== 'passed').slice(0, 16)
-  }
 }
 
 function adapterFailureVerification(result, sourceFingerprint, providerFailure = null) {
@@ -956,7 +935,7 @@ async function runUnlocked(root, taskId, options) {
     updatedAt: new Date().toISOString(),
     nextAction: status === 'passed'
       ? 'Review the isolated diff, then run bth implement apply ' + taskId + ' <project> --by <actor> --allow-write and bth verify on the integrated source.'
-      : 'Inspect the isolated workspace and failure evidence before another bounded implementation run.'
+      : 'Run bth diagnose ' + taskId + ' <project> --json to inspect the recorded failure before another bounded implementation run.'
   })
   return { root, path: relative(root, prior.path).replaceAll('\\', '/'), record }
 }
