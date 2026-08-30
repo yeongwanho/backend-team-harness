@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { readFileSync } from 'node:fs'
 import { initProject } from './init-project.mjs'
 import { doctorProject } from './doctor.mjs'
 import {
@@ -25,7 +26,7 @@ import {
 import { exportApprovedPlan } from './runtime/plan-export.mjs'
 import { diagnoseTaskFailure } from './runtime/failure-diagnosis.mjs'
 
-const VERSION = '0.7.0'
+const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version
 
 function printHelp() {
   console.log([
@@ -427,11 +428,15 @@ async function runTask(args) {
     const [id, state, path = '.'] = parsed.positionals
     const targetState = state.toUpperCase()
     const result = await withProjectVerificationLock(path, undefined, async () => {
-      const currentSourceFingerprint = ['PLAN_APPROVED', 'DONE'].includes(targetState)
-        ? (await captureConfiguredSourceBinding(path)).fingerprint
-        : undefined
+      const currentSource = ['PLAN_APPROVED', 'DONE'].includes(targetState)
+        ? await captureConfiguredSourceBinding(path)
+        : null
+      const currentSourceFingerprint = currentSource?.fingerprint
+      const compatibleSourceFingerprints = currentSource?.legacyFingerprint
+        ? [currentSource.legacyFingerprint]
+        : []
       const transitionOptions = targetState === 'DONE'
-        ? { currentSourceFingerprint }
+        ? { currentSourceFingerprint, compatibleSourceFingerprints }
         : {}
       const currentPlanArtifactSha256 = targetState === 'PLAN_APPROVED'
         ? (await loadTask(path, id)).record.planArtifactSha256
@@ -447,6 +452,7 @@ async function runTask(args) {
         reason: parsed.options.get('--reason'),
         approved: parsed.flags.has('--approve'),
         currentSourceFingerprint,
+        compatibleSourceFingerprints,
         currentPlanArtifactSha256
       }, transitionOptions)
     })

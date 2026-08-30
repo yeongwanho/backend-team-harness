@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { initProject } from '../src/init-project.mjs'
 import { acquireProjectVerificationLock } from '../src/core/project-lock.mjs'
+import { currentHostIdentity } from '../src/core/lock-recovery.mjs'
 
 test('only one verification can own a project build directory at a time', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-project-lock-'))
@@ -85,4 +86,42 @@ test('a malformed crash remnant is recoverable after the bounded grace period', 
   })
 
   await release()
+})
+
+test('a recycled live PID does not keep a stale project lock forever', { skip: process.platform === 'win32' }, async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-project-recycled-pid-'))
+  await initProject(root, { allowUnversioned: true })
+  const lockPath = join(root, '.backend-harness/local/locks/project-verification.lock')
+  await mkdir(join(root, '.backend-harness/local/locks'), { recursive: true })
+  await writeFile(lockPath, JSON.stringify({
+    schemaVersion: 2,
+    pid: process.pid,
+    hostIdentity: await currentHostIdentity(),
+    processIdentity: 'not-the-current-process-instance',
+    nonce: 'crashed-owner',
+    acquiredAt: '2000-01-01T00:00:00.000Z'
+  }) + '\n', 'utf8')
+
+  const release = await acquireProjectVerificationLock(root, { timeoutMs: 200, retryMs: 2 })
+  await release()
+})
+
+test('a foreign-host lock is never reclaimed from local PID evidence', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-project-foreign-host-'))
+  await initProject(root, { allowUnversioned: true })
+  const lockPath = join(root, '.backend-harness/local/locks/project-verification.lock')
+  await mkdir(join(root, '.backend-harness/local/locks'), { recursive: true })
+  await writeFile(lockPath, JSON.stringify({
+    schemaVersion: 2,
+    pid: process.pid,
+    hostIdentity: 'foreign-host-instance',
+    processIdentity: 'not-the-local-process',
+    nonce: 'foreign-owner',
+    acquiredAt: '2000-01-01T00:00:00.000Z'
+  }) + '\n', 'utf8')
+
+  await assert.rejects(
+    acquireProjectVerificationLock(root, { timeoutMs: 40, retryMs: 5 }),
+    (error) => error.code === 'project_verification_locked'
+  )
 })

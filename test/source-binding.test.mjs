@@ -1,10 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdir, mkdtemp, symlink, writeFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+import { mkdir, mkdtemp, open, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { captureSourceBinding } from '../src/core/source-binding.mjs'
-import { initializeGit } from '../test-support/git-project.mjs'
+import { canonicalJson } from '../src/core/canonical-json.mjs'
+import { initializeGit, runGit } from '../test-support/git-project.mjs'
 
 test('source binding is stable for harness runtime files and changes with source content', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-source-binding-'))
@@ -12,6 +14,21 @@ test('source binding is stable for harness runtime files and changes with source
   await writeFile(source, 'version one\n', 'utf8')
   initializeGit(root)
   const original = await captureSourceBinding(root)
+
+  assert.match(original.legacyFingerprint, /^[a-f0-9]{64}$/)
+  assert.notEqual(original.legacyFingerprint, original.fingerprint)
+  const expectedLegacy = createHash('sha256').update(canonicalJson({
+    schemaVersion: 1,
+    headCommit: original.headCommit,
+    projectPath: original.projectPath,
+    clean: original.clean,
+    changedEntryCount: original.changedEntryCount,
+    statusSha256: original.statusSha256,
+    trackedDiffSha256: original.trackedDiffSha256,
+    untracked: original.untracked,
+    explicitInputs: original.explicitInputs
+  })).digest('hex')
+  assert.equal(original.legacyFingerprint, expectedLegacy)
 
   await mkdir(join(root, '.backend-harness/tasks/T-1'), { recursive: true })
   await writeFile(join(root, '.backend-harness/tasks/T-1/task.json'), '{}\n', 'utf8')
@@ -48,6 +65,33 @@ test('source binding supports a backend project inside a larger Git worktree', a
 
   assert.equal(first.projectPath, 'services/orders')
   assert.equal(second.fingerprint, first.fingerprint)
+
+  runGit(repository, ['add', '-f', 'services/orders/.backend-harness/tasks/T-1/task.json'])
+  runGit(repository, ['commit', '-qm', 'share task metadata'])
+  const sharedTaskCommitted = await captureSourceBinding(service)
+  assert.notEqual(sharedTaskCommitted.headCommit, first.headCommit)
+  assert.equal(sharedTaskCommitted.fingerprint, first.fingerprint)
+})
+
+test('a sibling service commit does not invalidate an unchanged nested backend', async () => {
+  const repository = await mkdtemp(join(tmpdir(), 'bth-source-monorepo-sibling-'))
+  const service = join(repository, 'services/orders')
+  const sibling = join(repository, 'services/payments')
+  await mkdir(service, { recursive: true })
+  await mkdir(sibling, { recursive: true })
+  await writeFile(join(service, 'service.txt'), 'orders\n', 'utf8')
+  await writeFile(join(sibling, 'service.txt'), 'payments-v1\n', 'utf8')
+  initializeGit(repository)
+
+  const first = await captureSourceBinding(service)
+  await writeFile(join(sibling, 'service.txt'), 'payments-v2\n', 'utf8')
+  runGit(repository, ['add', 'services/payments/service.txt'])
+  runGit(repository, ['commit', '-qm', 'change sibling only'])
+  const second = await captureSourceBinding(service)
+
+  assert.notEqual(second.headCommit, first.headCommit)
+  assert.equal(second.projectHeadManifestSha256, first.projectHeadManifestSha256)
+  assert.equal(second.fingerprint, first.fingerprint)
 })
 
 test('declared ignored build inputs are source-bound by content hash', async () => {
@@ -79,20 +123,14 @@ test('declared inputs cannot escape content binding through a symlink', { skip: 
   )
 })
 
-test('an allowed command symlink is bound without following an intermediate link outside', { skip: process.platform === 'win32' }, async () => {
-  const root = await mkdtemp(join(tmpdir(), 'bth-source-command-link-'))
-  const outside = await mkdtemp(join(tmpdir(), 'bth-source-command-outside-'))
-  await mkdir(join(outside, 'bin'))
-  await writeFile(join(outside, 'bin/verify'), 'outside command\n', 'utf8')
-  await symlink(outside, join(root, 'linked-tools'))
+test('oversized untracked inputs fail closed instead of hashing without a bound', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-source-oversized-'))
   await writeFile(join(root, 'service.txt'), 'service\n', 'utf8')
   initializeGit(root)
+  const target = join(root, 'large.dump')
+  const handle = await open(target, 'w')
+  await handle.truncate(32 * 1024 * 1024 + 1)
+  await handle.close()
 
-  const binding = await captureSourceBinding(root, {
-    explicitPaths: ['linked-tools/bin/verify'],
-    allowSymlinkPaths: ['linked-tools/bin/verify']
-  })
-
-  assert.equal(binding.explicitInputs[0].kind, 'symlink')
-  assert.match(binding.explicitInputs[0].contentSha256, /^[a-f0-9]{64}$/)
+  await assert.rejects(captureSourceBinding(root), /exceeds the 32 MiB source-binding limit/)
 })

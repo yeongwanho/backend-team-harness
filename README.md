@@ -98,6 +98,8 @@ node src/cli.mjs check examples/spring-service --allow-network
 - 하나 이상의 required JUnit Gate가 반드시 있어야 합니다.
 - `minimumTests`는 전체가 아니라 실제 실행된 테스트 수의 하한입니다.
 
+역사적인 경로명인 `.backend-harness/quality-gates/*.yaml`은 **사람이 계획·리뷰 때 확인할 체크리스트**입니다. `required: true`는 계획에서 반드시 다뤄야 한다는 뜻이지 자동 실행됐다는 뜻이 아닙니다. PASS를 차단하거나 만드는 실행 권한은 오직 `verification.json`에 선언된 Gate에 있습니다.
+
 자동 생성되는 JVM 기본값은 기존 캐시만 쓰는 `--offline` 모드입니다. 새 PC에서 의존성을 받아야 한다면 팀이 설정에서 `--offline`을 제거하고 `network: true`를 선언한 뒤, 해당 실행에만 `--allow-network`를 줍니다.
 
 ### 실패를 더 빨리 보여 주는 선택적 순서 최적화
@@ -184,6 +186,8 @@ node src/cli.mjs pack install codegraph-advisory /path/to/project
 | `codegraph-advisory` | 명시적 import만 연결한 Java/Kotlin 탐색 그래프 | 참고 전용, PASS 영향 없음 |
 
 설치는 기존 Gate id나 Pack 폴더를 덮어쓰지 않으며, 변경 전 `verification.json`을 로컬 backup에 보관합니다. DB·architecture·contract Pack은 프로젝트의 실제 task/profile/test를 팀이 구현해야 하며, 준비되지 않으면 fail-closed합니다. DB Pack은 Testcontainers 이미지나 의존성을 받을 수 있어 `network: true`로 설치되며 실행할 때 `--allow-network`가 필요합니다.
+
+0.7에서 0.8로 올릴 때 기존 Pack Gate가 기본 test와 같은 report 폴더를 쓰고 있다면 먼저 Gate별 전용 폴더로 옮겨야 합니다. Gradle은 `build/test-results/<gate>/`, Maven은 `target/bth-reports/<gate>/` 형태를 권장합니다. 0.8은 겹치는 glob과 프로젝트 루트 report를 거절하며, 실행 전 정리할 기존 report도 Git에 추적되지 않고 `.gitignore`에 포함된 파일만 허용합니다. `architecture` Pack의 두 Gradle snippet은 `*ArchitectureTest`를 기본 `test`에서 제외해 중복 실행도 막습니다.
 
 `bth doctor`의 `healthy`는 계약 파일·실행 파일·설정이 **구조적으로 실행 준비가 됐다**는 뜻입니다. 테스트 성공을 뜻하지 않습니다. 완료 근거는 반드시 `bth check` 또는 승인된 작업의 `bth verify` 결과로 만듭니다.
 
@@ -324,7 +328,9 @@ CONTEXT_MISSING → CONTEXT_READY → PLAN_PROPOSED → PLAN_APPROVED
 └── local/optimization/gate-history.json # aggregate only, Git ignored
 ```
 
-기록에는 command argv, 프로세스 상태, 출력 byte/hash, fresh report 통계, 실행 파일 hash, Node/JDK/Wrapper 정보, 선언 profile/dialect, source fingerprint가 들어갑니다. stdout/stderr 원문은 공유 기록에서 제외합니다. 프로젝트·home·temp 절대경로와 일반적인 token/secret/credential 형태는 저장 전에 redaction합니다. JSON hash는 key 순서와 무관한 canonical serialization을 사용합니다.
+기록에는 command argv, 프로세스 상태, 출력 byte/hash, 새로 생성된 report 통계, 실행 파일 hash, Node/JDK/Wrapper 정보, 선언 profile/dialect, source fingerprint가 들어갑니다. Gate 실행 전에는 그 Gate 전용 폴더의 이전 structured report를 제거하므로, 오래된 XML을 `touch`해서 새 증거처럼 만들 수 없습니다. 이 정리는 Git에 추적되거나 ignore되지 않은 파일을 만나면 삭제하지 않고 실패합니다. stdout/stderr 원문은 공유 기록에서 제외합니다. 프로젝트·home·temp 절대경로와 일반적인 token/secret/credential 형태는 저장 전에 redaction합니다. JSON hash는 key 순서와 무관한 canonical serialization을 사용합니다.
+
+상세 `tasks/<id>/evidence/`는 로컬에만 남습니다. 팀 인수인계에는 redaction·seal된 `tasks/<id>/runs/latest.json`을 커밋할 수 있습니다. 다른 clone에서 이미 `VERIFIED`인 task를 `DONE`으로 옮길 때만 이 요약을 대체 근거로 사용하며, task/evidence id, `EXECUTED` PASS, record seal, 안정된 pre/post source fingerprint, 1개 이상의 실행 test, 모든 required Gate 통과를 확인합니다. `VERIFYING -> VERIFIED`는 로컬 상세 evidence가 필요합니다. 이 seal은 실수·손상을 잡는 협업용 무결성이지 신뢰된 CI의 전자서명이 아닙니다. 저장소와 실행 기록을 모두 통제하는 악의적인 작성자까지 증명하려면 별도의 신뢰된 CI 서명/attestation이 필요합니다.
 
 이 도구는 악의적인 저장소를 격리하는 OS sandbox가 아닙니다. 프로젝트가 소유한 실행 파일은 신뢰 경계 안에 있으므로 실행 전 검토해야 합니다.
 

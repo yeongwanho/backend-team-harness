@@ -1,54 +1,15 @@
-import { readdir, readFile, stat } from 'node:fs/promises'
+import { spawn } from 'node:child_process'
+import { readdir, readFile, stat, unlink } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { relative, resolve, sep } from 'node:path'
 import { XMLParser, XMLValidator } from 'fast-xml-parser'
 import { assertNoSymlinkSegments, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
-
-function escapeRegex(value) {
-  return value.replace(/[|\\{}()[\]^$+?.]/g, '\\$&')
-}
-
-function globRegex(pattern) {
-  let expression = '^'
-  for (let index = 0; index < pattern.length; index += 1) {
-    const char = pattern[index]
-    if (char === '*' && pattern[index + 1] === '*') {
-      index += 1
-      if (pattern[index + 1] === '/') {
-        index += 1
-        expression += '(?:.*/)?'
-      } else {
-        expression += '.*'
-      }
-    } else if (char === '*') {
-      expression += '[^/]*'
-    } else if (char === '?') {
-      expression += '[^/]'
-    } else {
-      expression += escapeRegex(char)
-    }
-  }
-  return new RegExp(expression + '$')
-}
-
-function fixedGlobBase(pattern) {
-  const segments = pattern.split('/')
-  const fixed = []
-  for (const segment of segments) {
-    if (/[*?]/.test(segment)) {
-      break
-    }
-    fixed.push(segment)
-  }
-  if (fixed.length === segments.length) {
-    fixed.pop()
-  }
-  return fixed.join('/') || '.'
-}
+import { buildSafeEnvironment } from './process-runner.mjs'
+import { reportGlobBase, reportGlobRegex } from './report-glob.mjs'
 
 async function filesForPattern(root, pattern) {
-  const matcher = globRegex(pattern)
-  const base = await resolveSafeProjectPath(root, fixedGlobBase(pattern))
+  const matcher = reportGlobRegex(pattern)
+  const base = await resolveSafeProjectPath(root, reportGlobBase(pattern))
   const baseStat = await statPath(base)
   if (!baseStat?.isDirectory() || baseStat.isSymbolicLink()) {
     return []
@@ -107,6 +68,67 @@ export async function snapshotReportFiles(root, patterns) {
     })
   }
   return snapshot
+}
+
+async function gitPathQuery(root, args, projectPaths, allowedExitCodes = [0], useStdin = false) {
+  const found = []
+  for (let offset = 0; offset < projectPaths.length; offset += 128) {
+    const chunk = projectPaths.slice(offset, offset + 128)
+    const matches = await new Promise((resolvePromise, reject) => {
+      const child = spawn('git', ['-C', root, ...args, ...(useStdin ? [] : ['--', ...chunk])], {
+        env: buildSafeEnvironment(),
+        shell: false,
+        stdio: [useStdin ? 'pipe' : 'ignore', 'pipe', 'pipe']
+      })
+      const stdout = []
+      const stderr = []
+      let bytes = 0
+      child.stdout.on('data', (data) => {
+        bytes += data.length
+        if (bytes > 16 * 1024 * 1024) {
+          child.kill('SIGKILL')
+        } else {
+          stdout.push(data)
+        }
+      })
+      child.stderr.on('data', (data) => stderr.push(data))
+      if (useStdin) {
+        child.stdin.end(chunk.join('\0') + '\0')
+      }
+      child.once('error', reject)
+      child.once('close', (code) => {
+        if (!allowedExitCodes.includes(code) || bytes > 16 * 1024 * 1024) {
+          reject(new Error('Cannot prove structured reports are disposable Git output: ' + (Buffer.concat(stderr).toString('utf8').trim() || 'git path query failed')))
+          return
+        }
+        resolvePromise(Buffer.concat(stdout).toString('utf8').split('\0').filter(Boolean))
+      })
+    })
+    found.push(...matches)
+  }
+  return found
+}
+
+export async function clearReportFiles(root, patterns) {
+  const paths = await findReportFiles(root, patterns)
+  const projectPaths = paths.map((path) => relative(root, path).split(sep).join('/'))
+  const tracked = await gitPathQuery(root, ['ls-files', '-z'], projectPaths)
+  if (tracked.length > 0) {
+    throw new Error('Refusing to delete a tracked project file declared as structured report: ' + tracked.sort()[0])
+  }
+  const ignored = new Set(await gitPathQuery(root, ['check-ignore', '--no-index', '--stdin', '-z'], projectPaths, [0, 1], true))
+  const notIgnored = projectPaths.find((path) => !ignored.has(path))
+  if (notIgnored) {
+    throw new Error('Refusing to delete a non-ignored project file declared as structured report: ' + notIgnored)
+  }
+
+  const removed = []
+  for (const [index, path] of paths.entries()) {
+    await assertNoSymlinkSegments(root, path)
+    await unlink(path)
+    removed.push(projectPaths[index])
+  }
+  return removed
 }
 
 export function parseJUnitXml(text, source = '<inline>') {

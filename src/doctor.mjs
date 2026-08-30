@@ -233,8 +233,8 @@ export async function doctorProject(inputPath = '.') {
     'quality-gate-schema',
     qualityGates.diagnostics.length === 0 && qualityGates.gates.length > 0 ? 'pass' : 'fail',
     qualityGates.diagnostics.length === 0 && qualityGates.gates.length > 0
-      ? 'Quality-gate definitions were parsed and validated.'
-      : 'Quality-gate definitions are missing or invalid.',
+      ? 'Human review-checklist definitions were parsed and validated; executable authority remains in verification.json.'
+      : 'Human review-checklist definitions are missing or invalid.',
     qualityGates
   ))
 

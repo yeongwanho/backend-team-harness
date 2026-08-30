@@ -7,7 +7,7 @@ The installed Gate declares network use. Testcontainers, Compose, wrappers, and 
 Before running it, make the generated command real:
 
 - Gradle: define `integrationTest` and emit JUnit under `build/test-results/integrationTest/`.
-- Maven: define the `db-integration` profile and run Failsafe during `verify`.
+- Maven: define the `db-integration` profile, honor `failsafe.reportsDirectory`, and run Failsafe during `verify`; BTH directs its XML to `target/bth-reports/db-integration/`.
 - Use the same database dialect and relevant major version as production, normally through Testcontainers or the project's existing Compose lifecycle.
 - Apply every migration from an empty database and test upgrade paths that matter.
 - Prove containers/processes are removed after success, failure, and timeout.

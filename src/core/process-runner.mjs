@@ -3,15 +3,30 @@ import { createHash } from 'node:crypto'
 
 const SAFE_ENVIRONMENT_KEYS = [
   'HOME',
+  'DOCKER_CERT_PATH',
+  'DOCKER_CONTEXT',
+  'DOCKER_HOST',
+  'DOCKER_TLS_VERIFY',
+  'GRADLE_USER_HOME',
   'JAVA_HOME',
   'LANG',
   'LC_ALL',
   'M2_HOME',
+  'HTTP_PROXY',
+  'HTTPS_PROXY',
+  'NO_PROXY',
   'PATH',
   'SystemRoot',
+  'TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE',
+  'TESTCONTAINERS_HOST_OVERRIDE',
+  'TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX',
   'TMPDIR',
   'TEMP',
-  'TMP'
+  'TMP',
+  'XDG_RUNTIME_DIR',
+  'http_proxy',
+  'https_proxy',
+  'no_proxy'
 ]
 
 export function buildSafeEnvironment(source = process.env) {
@@ -24,7 +39,16 @@ export function buildSafeEnvironment(source = process.env) {
   return result
 }
 
-export function runProcess({ program, args, cwd, timeoutMs = 10 * 60 * 1000, env }) {
+export function runProcess({
+  program,
+  args,
+  cwd,
+  timeoutMs = 10 * 60 * 1000,
+  stdioDrainTimeoutMs = 250,
+  stdioTerminateGraceMs = 250,
+  stdioKillWaitMs = 250,
+  env
+}) {
   return new Promise((resolvePromise, reject) => {
     const startedAt = new Date()
     const startedMonotonic = Date.now()
@@ -35,8 +59,13 @@ export function runProcess({ program, args, cwd, timeoutMs = 10 * 60 * 1000, env
     let stdoutTail = Buffer.alloc(0)
     let stderrTail = Buffer.alloc(0)
     let timedOut = false
+    let stdioDrainTimedOut = false
     let settled = false
     let forceKillTimeout = null
+    let stdioDrainTimeout = null
+    let observedExitCode = null
+    let observedSignal = null
+    let drainCleanupPending = false
 
     const child = spawn(program, args, {
       cwd,
@@ -61,16 +90,44 @@ export function runProcess({ program, args, cwd, timeoutMs = 10 * 60 * 1000, env
       child.kill(signal)
     }
 
-    child.stdout.on('data', (chunk) => {
+    const processGroupIsAlive = () => {
+      if (process.platform === 'win32' || !child.pid) {
+        return false
+      }
+      try {
+        process.kill(-child.pid, 0)
+        return true
+      } catch (error) {
+        return error?.code === 'EPERM'
+      }
+    }
+
+    const waitForProcessGroupExit = async (maximumMs) => {
+      const deadline = Date.now() + maximumMs
+      while (processGroupIsAlive() && Date.now() < deadline) {
+        await new Promise((resolveWait) => setTimeout(resolveWait, Math.min(25, Math.max(1, deadline - Date.now()))))
+      }
+      return !processGroupIsAlive()
+    }
+
+    const onStdout = (chunk) => {
+      if (settled) {
+        return
+      }
       stdoutHash.update(chunk)
       stdoutBytes += chunk.length
       stdoutTail = Buffer.concat([stdoutTail, chunk]).subarray(-8192)
-    })
-    child.stderr.on('data', (chunk) => {
+    }
+    const onStderr = (chunk) => {
+      if (settled) {
+        return
+      }
       stderrHash.update(chunk)
       stderrBytes += chunk.length
       stderrTail = Buffer.concat([stderrTail, chunk]).subarray(-8192)
-    })
+    }
+    child.stdout.on('data', onStdout)
+    child.stderr.on('data', onStderr)
 
     const timeout = setTimeout(() => {
       timedOut = true
@@ -78,17 +135,10 @@ export function runProcess({ program, args, cwd, timeoutMs = 10 * 60 * 1000, env
       forceKillTimeout = setTimeout(() => killProcessTree('SIGKILL'), 2000)
     }, timeoutMs)
 
-    child.once('error', (error) => {
+    const finish = (exitCode, signal) => {
       clearTimeout(timeout)
       clearTimeout(forceKillTimeout)
-      if (!settled) {
-        settled = true
-        reject(error)
-      }
-    })
-    child.once('close', (exitCode, signal) => {
-      clearTimeout(timeout)
-      clearTimeout(forceKillTimeout)
+      clearTimeout(stdioDrainTimeout)
       if (settled) {
         return
       }
@@ -98,12 +148,63 @@ export function runProcess({ program, args, cwd, timeoutMs = 10 * 60 * 1000, env
         exitCode,
         signal,
         timedOut,
+        stdioDrainTimedOut,
         startedAt: startedAt.toISOString(),
         finishedAt: finishedAt.toISOString(),
         durationMs: Date.now() - startedMonotonic,
         stdout: { sha256: stdoutHash.digest('hex'), bytes: stdoutBytes, tail: stdoutTail.toString('utf8') },
         stderr: { sha256: stderrHash.digest('hex'), bytes: stderrBytes, tail: stderrTail.toString('utf8') }
       })
+    }
+
+    child.once('error', (error) => {
+      clearTimeout(timeout)
+      clearTimeout(forceKillTimeout)
+      clearTimeout(stdioDrainTimeout)
+      if (!settled) {
+        settled = true
+        reject(error)
+      }
+    })
+    child.once('exit', (exitCode, signal) => {
+      observedExitCode = exitCode
+      observedSignal = signal
+      clearTimeout(timeout)
+      stdioDrainTimeout = setTimeout(() => {
+        stdioDrainTimedOut = true
+        drainCleanupPending = true
+        void (async () => {
+          try {
+            killProcessTree('SIGTERM')
+            const terminated = await waitForProcessGroupExit(stdioTerminateGraceMs)
+            if (!terminated) {
+              killProcessTree('SIGKILL')
+              await waitForProcessGroupExit(stdioKillWaitMs)
+            }
+          } finally {
+            child.stdout.off('data', onStdout)
+            child.stderr.off('data', onStderr)
+            try {
+              child.stdout.destroy()
+            } catch {
+              // The Gate is already failed as a drain timeout; completion must still settle.
+            }
+            try {
+              child.stderr.destroy()
+            } catch {
+              // The Gate is already failed as a drain timeout; completion must still settle.
+            }
+            drainCleanupPending = false
+            finish(observedExitCode, observedSignal)
+          }
+        })().catch(() => {})
+      }, stdioDrainTimeoutMs)
+    })
+    child.once('close', (exitCode, signal) => {
+      if (drainCleanupPending) {
+        return
+      }
+      finish(exitCode ?? observedExitCode, signal ?? observedSignal)
     })
   })
 }

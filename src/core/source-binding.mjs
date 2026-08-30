@@ -11,6 +11,13 @@ const RUNTIME_EXCLUDES = [
   ':(exclude).backend-harness/local/**',
   ':(exclude).backend-harness/generated/**'
 ]
+const RUNTIME_PREFIXES = [
+  '.backend-harness/tasks/',
+  '.backend-harness/local/',
+  '.backend-harness/generated/'
+]
+const MAX_BOUND_FILE_BYTES = 32 * 1024 * 1024
+const MAX_BOUND_TOTAL_BYTES = 256 * 1024 * 1024
 
 function sha256(value) {
   return createHash('sha256').update(value).digest('hex')
@@ -62,7 +69,29 @@ function ensureInside(root, target) {
   throw new Error('Git reported a path outside its worktree.')
 }
 
-async function hashFileEntry(gitRoot, path) {
+function filteredHeadManifest(output) {
+  const entries = output.toString('utf8').split('\0').filter(Boolean).filter((entry) => {
+    const separator = entry.indexOf('\t')
+    if (separator < 0) {
+      throw new Error('Git returned an invalid HEAD manifest entry.')
+    }
+    const projectRelativePath = entry.slice(separator + 1)
+    return !RUNTIME_PREFIXES.some((prefix) => projectRelativePath.startsWith(prefix))
+  })
+  return Buffer.from(entries.join('\0') + (entries.length ? '\0' : ''))
+}
+
+function reserveBoundBytes(budget, bytes, path) {
+  if (bytes > MAX_BOUND_FILE_BYTES) {
+    throw new Error('Source input exceeds the 32 MiB source-binding limit: ' + path)
+  }
+  budget.bytes += bytes
+  if (budget.bytes > MAX_BOUND_TOTAL_BYTES) {
+    throw new Error('Source inputs exceed the 256 MiB aggregate source-binding limit.')
+  }
+}
+
+async function hashFileEntry(gitRoot, path, budget) {
   const target = resolve(gitRoot, path)
   ensureInside(gitRoot, target)
   const stat = await lstat(target)
@@ -70,12 +99,31 @@ async function hashFileEntry(gitRoot, path) {
   let kind
   if (stat.isSymbolicLink()) {
     kind = 'symlink'
-    contentHash.update(await readlink(target))
+    const link = await readlink(target)
+    reserveBoundBytes(budget, Buffer.byteLength(link), path)
+    contentHash.update(link)
   } else if (stat.isFile()) {
     kind = 'file'
+    reserveBoundBytes(budget, stat.size, path)
     await new Promise((resolvePromise, reject) => {
       const stream = createReadStream(target)
-      stream.on('data', (chunk) => contentHash.update(chunk))
+      let readBytes = 0
+      let reservedBytes = stat.size
+      stream.on('data', (chunk) => {
+        try {
+          readBytes += chunk.length
+          if (readBytes > MAX_BOUND_FILE_BYTES) {
+            throw new Error('Source input exceeds the 32 MiB source-binding limit while being read: ' + path)
+          }
+          if (readBytes > reservedBytes) {
+            reserveBoundBytes(budget, readBytes - reservedBytes, path)
+            reservedBytes = readBytes
+          }
+          contentHash.update(chunk)
+        } catch (error) {
+          stream.destroy(error)
+        }
+      })
       stream.once('end', resolvePromise)
       stream.once('error', reject)
     })
@@ -89,7 +137,7 @@ async function hashFileEntry(gitRoot, path) {
   }
 }
 
-async function hashDeclaredInput(gitRoot, projectRoot, path, options = {}) {
+async function hashDeclaredInput(gitRoot, projectRoot, path, budget, options = {}) {
   const target = resolve(projectRoot, path)
   ensureInside(projectRoot, target)
   const projectRelative = relative(projectRoot, target).split(sep).join('/')
@@ -101,14 +149,16 @@ async function hashDeclaredInput(gitRoot, projectRoot, path, options = {}) {
       if (options.allowSymlink !== true) {
         throw new Error('Declared verification input cannot use a symbolic link: ' + path)
       }
+      const link = await readlink(current)
+      reserveBoundBytes(budget, Buffer.byteLength(link), path)
       return {
         pathSha256: sha256(relative(gitRoot, target).split(sep).join('/')),
         kind: 'symlink',
-        contentSha256: sha256(await readlink(current))
+        contentSha256: sha256(link)
       }
     }
   }
-  return hashFileEntry(gitRoot, relative(gitRoot, target))
+  return hashFileEntry(gitRoot, relative(gitRoot, target), budget)
 }
 
 export async function captureSourceBinding(inputPath, options = {}) {
@@ -122,11 +172,13 @@ export async function captureSourceBinding(inputPath, options = {}) {
   ensureInside(gitRoot, resolvedInput)
   const projectPath = relative(gitRoot, resolvedInput).split(sep).join('/') || '.'
   const pathspec = ['--', '.', ...RUNTIME_EXCLUDES]
-  const [status, trackedDiff, untrackedOutput] = await Promise.all([
+  const [rawHeadManifest, status, trackedDiff, untrackedOutput] = await Promise.all([
+    runGit(inputPath, ['ls-tree', '-r', '-z', 'HEAD', '--', '.']),
     runGit(inputPath, ['status', '--porcelain=v1', '-z', '--untracked-files=all', ...pathspec]),
     runGit(inputPath, ['diff', '--binary', '--full-index', '--no-ext-diff', 'HEAD', ...pathspec]),
     runGit(inputPath, ['ls-files', '--others', '--exclude-standard', '--full-name', '-z', ...pathspec])
   ])
+  const headManifest = filteredHeadManifest(rawHeadManifest)
 
   const untrackedPaths = untrackedOutput
     .toString('utf8')
@@ -134,8 +186,9 @@ export async function captureSourceBinding(inputPath, options = {}) {
     .filter(Boolean)
     .sort()
   const untracked = []
+  const boundBytes = { bytes: 0 }
   for (const path of untrackedPaths) {
-    untracked.push(await hashFileEntry(gitRoot, path))
+    untracked.push(await hashFileEntry(gitRoot, path, boundBytes))
   }
 
   const explicitInputs = []
@@ -143,7 +196,7 @@ export async function captureSourceBinding(inputPath, options = {}) {
   const allowSymlinkPaths = new Set(options.allowSymlinkPaths ?? [])
   for (const path of explicitPaths) {
     try {
-      explicitInputs.push(await hashDeclaredInput(gitRoot, resolvedInput, path, {
+      explicitInputs.push(await hashDeclaredInput(gitRoot, resolvedInput, path, boundBytes, {
         allowSymlink: allowSymlinkPaths.has(path)
       }))
     } catch (error) {
@@ -154,9 +207,7 @@ export async function captureSourceBinding(inputPath, options = {}) {
     }
   }
 
-  const input = {
-    schemaVersion: 1,
-    headCommit: headCommit.toLowerCase(),
+  const sharedIdentity = {
     projectPath,
     clean: status.length === 0,
     changedEntryCount: status.toString('utf8').split('\0').filter(Boolean).length,
@@ -165,8 +216,25 @@ export async function captureSourceBinding(inputPath, options = {}) {
     untracked,
     explicitInputs
   }
-  return {
-    ...input,
-    fingerprint: sha256(canonicalJson(input))
+  const identity = {
+    schemaVersion: 2,
+    projectHeadManifestSha256: sha256(headManifest),
+    ...sharedIdentity
   }
+  const legacyIdentity = {
+    schemaVersion: 1,
+    headCommit: headCommit.toLowerCase(),
+    ...sharedIdentity
+  }
+  return {
+    ...identity,
+    headCommit: headCommit.toLowerCase(),
+    legacyFingerprint: sha256(canonicalJson(legacyIdentity)),
+    fingerprint: sha256(canonicalJson(identity))
+  }
+}
+
+export function sourceBindingMatchesFingerprint(current, recordedFingerprint) {
+  return typeof recordedFingerprint === 'string' &&
+    (current?.fingerprint === recordedFingerprint || current?.legacyFingerprint === recordedFingerprint)
 }

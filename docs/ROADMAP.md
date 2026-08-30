@@ -68,15 +68,51 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] `p/c` ordering for the declared independent fail-fast model
 - [x] bounded, symlink-safe, aggregate-only local history with corrupt-state fallback
 - [x] complete schedule provenance in sealed run records
-- [x] deterministic benchmark that preserves Gate identity and proves a scoped `3.61x` expected-feedback improvement
+- [x] deterministic analytical fixture that preserves Gate identity and calculates a scoped `3.61x` expected-feedback improvement under the declared model
 - [x] deterministic global PageRank in the advisory Java/Kotlin import graph
 - [x] source/run/digest-bound Personalized PageRank context for approved plan export
 - [x] hard context budget, provenance, limitations, and explained unavailable fallback
 - [ ] measure real failure-feedback latency and Gate correlation on two independently maintained backends
 - [ ] benchmark code localization with gold regions using Recall@budget and downstream completion
 
+## 0.8 — Independent hardening and portable team evidence
+
+- [x] direct-process exit handling with bounded stdio drain and leaked-descendant cleanup
+- [x] distinct failed-Gate evidence when a descendant keeps inherited stdio open
+- [x] nested-backend source binding based on the project `HEAD` manifest rather than sibling commits
+- [x] per-file and aggregate bounds for untracked and declared source inputs
+- [x] unique JUnit report ownership across combined architecture, contract, and database Packs
+- [x] configuration rejection for exact report-pattern ownership collisions
+- [x] conservative rejection of overlapping wildcard report trees
+- [x] pre-Gate removal of owned structured reports so timestamp-only reuse cannot mint evidence
+- [x] dedicated report-directory requirement plus tracked/non-ignored deletion refusal
+- [x] portable DONE transition from a committed, sealed run summary when local detail is absent
+- [x] portable summary restricted to `VERIFIED -> DONE` with stable source, positive executed tests, and all required Gates
+- [x] exact 0.7 fingerprint compatibility for unchanged approved/verified tasks
+- [x] tamper-evident baseline updates with normal command-symlink policy parity
+- [x] PID-reuse-aware stale lock recovery where the host exposes process-start identity
+- [x] conservative foreign-host lock ownership
+- [x] bounded history eviction for obsolete Gate signatures
+- [x] explicit PageRank tolerance and convergence telemetry
+- [x] narrow Docker/Testcontainers routing environment without credential passthrough
+- [x] ambient Testcontainers reuse and Ryuk-disable flags excluded from child processes
+- [x] bounded, waited `SIGTERM`/`SIGKILL` cleanup for leaked descendant stdio
+- [x] queued-output-safe hash finalization and settle-guaranteed drain cleanup
+- [x] underscore-delimited environment credential redaction
+- [x] unambiguous separation between human review checklists and executable Gates
+- [x] human review checklists rendered in exported plan Markdown
+- [x] copyable Gradle architecture-task snippets
+- [x] default Gradle test exclusion for separately executed architecture tests
+- [x] approved-plan export serialized with verification/report generation
+- [x] Unicode-aware, human-value-only plan localization terms
+- [x] package/CLI version synchronization from one package manifest
+
 ## Later, only with measured demand
 
+- [ ] optional trusted-CI signature/attestation policy for organizations that need hostile-author assurance
+- [ ] Windows CI proof for wrapper execution and descendant-process cleanup
+- [ ] explicit lock inspection/unlock workflow with the same ownership safeguards
+- [ ] starter recipes for non-JVM backends, driven by measured team demand
 - [ ] runtime coverage-to-test observation index
 - [ ] runtime SQL/table observation index
 - [ ] richer compiler/bytecode graph sidecar with per-edge provenance

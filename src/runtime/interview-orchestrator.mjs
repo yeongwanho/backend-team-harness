@@ -104,11 +104,11 @@ function makeArtifacts(interview, contextSnapshot) {
   const requiredGates = contextSnapshot.verification.gates
     .filter((gate) => gate.required)
     .map((gate) => gate.id)
-  const requiredPolicyGates = (contextSnapshot.policyGates ?? [])
+  const requiredReviewChecklists = (contextSnapshot.policyGates ?? [])
     .filter((gate) => gate.required)
     .map((gate) => ({ name: gate.name, checks: [...gate.checks] }))
   const plan = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     taskId: interview.taskId,
     sourceFingerprint: interview.sourceFingerprint,
     objective: interview.requirement,
@@ -118,7 +118,7 @@ function makeArtifacts(interview, contextSnapshot) {
     requestedVerification: answerById(interview, 'verification'),
     constraintsAndExclusions: answerById(interview, 'constraints'),
     declaredRequiredGates: requiredGates,
-    declaredRequiredPolicyGates: requiredPolicyGates,
+    declaredRequiredReviewChecklists: requiredReviewChecklists,
     steps: executionSteps(interview, contextSnapshot, requiredGates),
     provenance: {
       requirementSha256: interview.requirementSha256,
@@ -133,6 +133,11 @@ function planMarkdown(artifacts, contextSnapshot) {
   const gates = artifacts.plan.declaredRequiredGates.length
     ? artifacts.plan.declaredRequiredGates.map((id) => '- `' + id + '`').join('\n')
     : '- _No required Gate was detected._'
+  const reviewChecklists = artifacts.plan.declaredRequiredReviewChecklists.length
+    ? artifacts.plan.declaredRequiredReviewChecklists
+      .map((checklist) => '- **' + checklist.name + '** — ' + checklist.checks.join(', '))
+      .join('\n')
+    : '- _No required human review checklist was detected._'
   const facts = contextSnapshot.facts
     .map((entry) => '- [' + entry.status.toUpperCase() + '] `' + entry.id + '` — ' + entry.summary)
     .join('\n')
@@ -175,6 +180,10 @@ function planMarkdown(artifacts, contextSnapshot) {
     '## Required project Gates',
     '',
     gates,
+    '',
+    '## Required human review checklists (not executable)',
+    '',
+    reviewChecklists,
     '',
     '## Execution steps',
     '',

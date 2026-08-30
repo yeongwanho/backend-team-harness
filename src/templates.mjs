@@ -149,6 +149,7 @@ export const sharedTemplates = [
   {
     path: '.backend-harness/quality-gates/api-contract.yaml',
     content: lines(
+      '# Human review checklist only; executable Gates live in verification.json.',
       'name: api-contract',
       'required: true',
       'checks:',
@@ -160,6 +161,7 @@ export const sharedTemplates = [
   {
     path: '.backend-harness/quality-gates/database.yaml',
     content: lines(
+      '# Human review checklist only; executable Gates live in verification.json.',
       'name: database',
       'required: true',
       'checks:',
@@ -171,6 +173,7 @@ export const sharedTemplates = [
   {
     path: '.backend-harness/quality-gates/test.yaml',
     content: lines(
+      '# Human review checklist only; executable Gates live in verification.json.',
       'name: test',
       'required: true',
       'checks:',
@@ -182,6 +185,7 @@ export const sharedTemplates = [
   {
     path: '.backend-harness/quality-gates/security.yaml',
     content: lines(
+      '# Human review checklist only; executable Gates live in verification.json.',
       'name: security',
       'required: true',
       'checks:',

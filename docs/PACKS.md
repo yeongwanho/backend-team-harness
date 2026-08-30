@@ -27,9 +27,9 @@ This Pack deliberately installs a failing recipe until the project defines its l
 
 The generated Gate declares `network: true` because dependency resolution and Testcontainers/Compose image pulls may need network access. Run it with `--allow-network` only after reviewing the project-owned lifecycle. The flag records approval; it does not enforce an OS network boundary.
 
-Gradle expects an `integrationTest` task. Maven expects a `db-integration` profile executed by Failsafe. Adapt the generated Gate rather than building another lifecycle inside BTH.
+Gradle expects an `integrationTest` task. Maven expects a `db-integration` profile executed by Failsafe and honors the generated dedicated report directory. Adapt the generated Gate rather than building another lifecycle inside BTH.
 
-The maintained reference implementation currently targets MySQL 8.4 LTS with a pinned `mysql:8.4.11` Testcontainers image. It proves Flyway migration, MySQL-specific column behavior, JDBC reads/writes, and teardown across successful, failed, abruptly terminated, and timed-out test processes. The Core remains database-neutral; a project running another database must replace the project-owned lifecycle and declare its real dialect.
+The maintained reference implementation currently targets MySQL 8.4 LTS with a pinned `mysql:8.4.11` Testcontainers image. Its real-container test exercises Flyway migration, MySQL-specific column behavior, JDBC reads/writes, and teardown across successful, failed, abruptly terminated, and timed-out test processes. The Core remains database-neutral; a project running another database must replace the project-owned lifecycle and declare its real dialect.
 
 Required project proof:
 
@@ -44,9 +44,13 @@ Atlas or another migration linter can be added as a required `findings` Gate. It
 
 ## Architecture — `architecture`
 
-Add a project-owned `*ArchitectureTest` using ArchUnit, Spring Modulith, or ordinary executable checks. Prefer a few stable rules with explicit exceptions over a huge generated diagram.
+Add a project-owned `architectureTest` Gradle task, or Maven `*ArchitectureTest` tests, using ArchUnit, Spring Modulith, or ordinary executable checks. The installed Pack includes copyable Kotlin-DSL and Groovy-DSL Gradle task snippets; adapt the class filter to the project's naming. The snippets exclude `*ArchitectureTest` from the default `test` task so the rule is not executed twice. Every executable Pack owns a unique JUnit directory. BTH rejects exact collisions and conservatively rejects wildcard patterns rooted in the same or nested report tree because freshness ownership would be ambiguous. Prefer a few stable rules with explicit exceptions over a huge generated diagram.
 
 Useful rules include module direction, forbidden adapter/domain access, transaction boundaries, and public API boundaries.
+
+## 0.7 to 0.8 report migration
+
+Older installed architecture, contract, or DB Gates may share `build/test-results/test/` or `target/failsafe-reports/` with another Gate. 0.8 refuses to start until every Gate owns a separate report directory. Move Gradle reports to `build/test-results/<gate>/` and Maven reports to `target/bth-reports/<gate>/`, using the current Pack command arguments as examples. Report patterns must include a dedicated directory; project-root patterns such as `**/*.xml` are invalid. Existing report files must also be Git-ignored and untracked before BTH will remove them for a fresh run.
 
 ## Contracts — `contract`
 
@@ -64,7 +68,7 @@ The generated graph also includes a deterministic global directed PageRank for b
 2. require that run and the current project have the same source fingerprint;
 3. seed nodes whose path or qualified type name matches bounded requirement terms;
 4. propagate only over exact stored imports, with reverse traversal at half weight;
-5. blend lexical prior and graph score, then include only complete entries that fit the requested budget.
+5. blend lexical prior and graph score, record residual/tolerance and whether the bounded iteration converged, then include only complete entries that fit the requested budget.
 
 No match falls back to global graph importance rather than inventing semantic relevance. A missing, stale, tampered, oversized, symlinked, or contract-invalid graph produces an explained `unavailable` result and never blocks plan export.
 

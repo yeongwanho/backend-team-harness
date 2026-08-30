@@ -78,7 +78,7 @@ export async function loadQualityGates(inputPath) {
   const gatesDir = await resolveSafeProjectPath(root, '.backend-harness/quality-gates')
   const directoryStat = await statPath(gatesDir)
   if (!directoryStat?.isDirectory() || directoryStat.isSymbolicLink()) {
-    return { gates: [], diagnostics: ['Quality-gate directory is missing or is not a real directory.'] }
+    return { gates: [], diagnostics: ['Review-checklist directory is missing or is not a real directory.'] }
   }
 
   const entries = await readdir(gatesDir, { withFileTypes: true })
@@ -87,7 +87,7 @@ export async function loadQualityGates(inputPath) {
     .sort((left, right) => left.name.localeCompare(right.name))
 
   if (gateFiles.length === 0) {
-    return { gates: [], diagnostics: ['No quality-gate YAML files were found.'] }
+    return { gates: [], diagnostics: ['No review-checklist YAML files were found.'] }
   }
 
   const gates = []

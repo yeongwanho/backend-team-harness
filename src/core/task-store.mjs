@@ -17,7 +17,7 @@ import {
 } from '../fs-safety.mjs'
 import { assertTaskId, createTaskRecord, normalizeTaskText, transitionTaskRecord } from './task-state.mjs'
 import { canonicalJson } from './canonical-json.mjs'
-import { processIsAlive, withLockRecoveryGuard } from './lock-recovery.mjs'
+import { createLockOwnerRecord, lockOwnerIsDead, withLockRecoveryGuard } from './lock-recovery.mjs'
 
 async function harnessPaths(inputPath, taskId) {
   const root = await resolveReadableRoot(inputPath)
@@ -134,7 +134,7 @@ async function recoverStaleLock(lockPath, staleMs) {
     }
     const acquiredAt = Date.parse(metadata?.acquiredAt ?? '')
     const ageMs = Date.now() - (Number.isFinite(acquiredAt) ? acquiredAt : stat.mtimeMs)
-    const deadOwner = Number.isInteger(metadata?.pid) && metadata.pid > 0 && !processIsAlive(metadata.pid)
+    const deadOwner = await lockOwnerIsDead(metadata)
     const malformedAndStale = !Number.isInteger(metadata?.pid) && ageMs >= Math.min(staleMs, 5000)
     if (deadOwner || malformedAndStale) {
       let current = null
@@ -160,12 +160,13 @@ async function acquireLock(lockPath, options = {}) {
   const staleMs = options.staleMs ?? 30_000
   const started = Date.now()
   const nonce = randomUUID()
+  const ownerRecord = await createLockOwnerRecord(nonce)
 
   while (true) {
     try {
       const handle = await open(lockPath, 'wx', 0o600)
       try {
-        await handle.writeFile(JSON.stringify({ pid: process.pid, nonce, acquiredAt: new Date().toISOString() }) + '\n')
+        await handle.writeFile(JSON.stringify(ownerRecord) + '\n')
         await handle.sync()
       } catch (error) {
         await handle.close().catch(() => {})
@@ -235,7 +236,7 @@ function parseEvents(text, taskId) {
   })
 }
 
-async function loadConfirmedEvidence(taskDir, taskId, evidenceId) {
+async function loadConfirmedEvidence(taskDir, taskId, evidenceId, options = {}) {
   if (typeof evidenceId !== 'string' || !/^verify-[A-Za-z0-9_-]+$/.test(evidenceId)) {
     throw new Error('A safe evidence id is required for verified completion.')
   }
@@ -246,7 +247,43 @@ async function loadConfirmedEvidence(taskDir, taskId, evidenceId) {
     record = JSON.parse(await readFile(path, 'utf8'))
   } catch (error) {
     if (error?.code === 'ENOENT') {
-      throw new Error('Confirmed evidence record does not exist: ' + evidenceId)
+      if (options.allowPortableRun !== true) {
+        throw new Error('Confirmed evidence record does not exist: ' + evidenceId)
+      }
+      const runPath = resolve(taskDir, 'runs/latest.json')
+      await assertNoSymlinkSegments(taskDir, runPath)
+      const metadata = await statPath(runPath)
+      if (!metadata?.isFile() || metadata.isSymbolicLink() || metadata.size > 16 * 1024 * 1024) {
+        throw new Error('Confirmed evidence record does not exist: ' + evidenceId)
+      }
+      const run = JSON.parse(await readFile(runPath, 'utf8'))
+      const { recordSha256, ...unsignedRun } = run
+      const expectedRunHash = createHash('sha256').update(canonicalJson(unsignedRun)).digest('hex')
+      if (
+        recordSha256 !== expectedRunHash ||
+        run.taskId !== taskId ||
+        run.localEvidenceId !== evidenceId ||
+        run.evidenceTier !== 'EXECUTED' ||
+        run.verdict !== 'passed' ||
+        typeof run.source?.fingerprint !== 'string' ||
+        run.sourceStable !== true ||
+        run.postSourceFingerprint !== run.source.fingerprint ||
+        !Number.isSafeInteger(run.tests?.executed) ||
+        run.tests.executed < 1 ||
+        !Array.isArray(run.gates) ||
+        !run.gates.some((gate) => gate.required === true) ||
+        run.gates.some((gate) => gate.required === true && gate.outcome !== 'passed')
+      ) {
+        throw new Error('Portable run evidence is missing, altered, or not confirmed: ' + evidenceId)
+      }
+      return {
+        id: evidenceId,
+        taskId,
+        confirmed: true,
+        outcome: 'confirmed',
+        sourceBinding: run.source,
+        portableRunRecordSha256: recordSha256
+      }
     }
     throw error
   }
@@ -330,12 +367,18 @@ export async function advanceTask(inputPath, taskId, to, input = {}, options = {
       transitionInput = { ...input, evidence: { id: evidence.id, confirmed: true } }
     }
     if (loaded.record.state === 'VERIFIED' && to === 'DONE' && loaded.record.lastEvidenceId) {
-      const evidence = await loadConfirmedEvidence(paths.taskDir, paths.id, loaded.record.lastEvidenceId)
+      const evidence = await loadConfirmedEvidence(paths.taskDir, paths.id, loaded.record.lastEvidenceId, {
+        allowPortableRun: true
+      })
       if (evidence.sourceBinding?.fingerprint) {
         if (!options.currentSourceFingerprint) {
           throw new Error('Current Git source binding is required before completing a verified task.')
         }
-        if (options.currentSourceFingerprint !== evidence.sourceBinding.fingerprint) {
+        const currentFingerprints = new Set([
+          options.currentSourceFingerprint,
+          ...(options.compatibleSourceFingerprints ?? [])
+        ].filter(Boolean))
+        if (!currentFingerprints.has(evidence.sourceBinding.fingerprint)) {
           throw new Error('Source changed after verification. Run `bth verify` again before completing the task.')
         }
       }

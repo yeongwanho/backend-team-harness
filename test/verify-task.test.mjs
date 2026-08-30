@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { chmod, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+import { chmod, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { initProject } from '../src/init-project.mjs'
@@ -8,6 +9,7 @@ import { advanceTask, createTask, loadTask } from '../src/core/task-store.mjs'
 import { captureConfiguredSourceBinding, verifyTask } from '../src/runtime/backend-harness.mjs'
 import { verifyTask as verifyCoreTask } from '../src/core/verify-task.mjs'
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
+import { canonicalJson } from '../src/core/canonical-json.mjs'
 
 async function approvedProject(prefix, exitCode) {
   const root = await mkdtemp(join(tmpdir(), prefix))
@@ -196,4 +198,107 @@ test('DONE is blocked when source changes after a successful verification', asyn
     advanceTask(root, 'VERIFY-1', 'DONE', { actor: 'developer' }, { currentSourceFingerprint: current.fingerprint }),
     /Source changed after verification/
   )
+})
+
+test('a committed sealed run summary can complete a task on a clone without local detailed evidence', async () => {
+  const root = await approvedProject('bth-verify-portable-run-', 0)
+  const verified = await verifyTask(root, 'VERIFY-1')
+  await rm(join(root, verified.evidence.path))
+  const current = await captureConfiguredSourceBinding(root)
+
+  const done = await advanceTask(
+    root,
+    'VERIFY-1',
+    'DONE',
+    { actor: 'developer' },
+    { currentSourceFingerprint: current.fingerprint }
+  )
+
+  assert.equal(done.applied, true)
+  assert.equal(done.record.state, 'DONE')
+  assert.equal(done.record.lastEvidenceId, verified.evidence.record.id)
+})
+
+test('a portable run summary cannot replace local evidence for VERIFYING to VERIFIED', async () => {
+  const root = await approvedProject('bth-verify-portable-not-verification-', 0)
+  await advanceTask(root, 'VERIFY-1', 'VERIFYING', { actor: 'bth.verify' })
+  const evidenceId = 'verify-portable-planted'
+  const sourceFingerprint = 'a'.repeat(64)
+  const unsigned = {
+    schemaVersion: 2,
+    taskId: 'VERIFY-1',
+    localEvidenceId: evidenceId,
+    evidenceTier: 'EXECUTED',
+    verdict: 'passed',
+    source: { fingerprint: sourceFingerprint },
+    sourceStable: true,
+    postSourceFingerprint: sourceFingerprint,
+    tests: { executed: 1 },
+    gates: [{ id: 'tests', required: true, outcome: 'passed' }]
+  }
+  const record = {
+    ...unsigned,
+    recordSha256: createHash('sha256').update(canonicalJson(unsigned)).digest('hex')
+  }
+  const runs = join(root, '.backend-harness/tasks/VERIFY-1/runs')
+  await mkdir(runs, { recursive: true })
+  await writeFile(join(runs, 'latest.json'), JSON.stringify(record, null, 2) + '\n', 'utf8')
+
+  await assert.rejects(
+    advanceTask(root, 'VERIFY-1', 'VERIFIED', {
+      actor: 'bth.verify',
+      evidence: { id: evidenceId, confirmed: true }
+    }),
+    /Confirmed evidence record does not exist/
+  )
+})
+
+test('portable DONE rejects a resealed summary with zero executed tests', async () => {
+  const root = await approvedProject('bth-verify-portable-zero-tests-', 0)
+  const verified = await verifyTask(root, 'VERIFY-1')
+  await rm(join(root, verified.evidence.path))
+  const runPath = join(root, verified.run.path)
+  const run = JSON.parse(await readFile(runPath, 'utf8'))
+  delete run.recordSha256
+  run.tests.executed = 0
+  run.recordSha256 = createHash('sha256').update(canonicalJson(run)).digest('hex')
+  await writeFile(runPath, JSON.stringify(run, null, 2) + '\n', 'utf8')
+  const current = await captureConfiguredSourceBinding(root)
+
+  await assert.rejects(
+    advanceTask(root, 'VERIFY-1', 'DONE', { actor: 'developer' }, { currentSourceFingerprint: current.fingerprint }),
+    /Portable run evidence is missing, altered, or not confirmed/
+  )
+})
+
+test('DONE accepts a sealed 0.7 evidence fingerprint for unchanged source after upgrade', async () => {
+  const root = await approvedProject('bth-verify-v07-fingerprint-', 0)
+  const verified = await verifyTask(root, 'VERIFY-1')
+  const current = await captureConfiguredSourceBinding(root)
+  const evidencePath = join(root, verified.evidence.path)
+  const evidence = JSON.parse(await readFile(evidencePath, 'utf8'))
+  delete evidence.recordSha256
+  evidence.sourceBinding = {
+    ...evidence.sourceBinding,
+    schemaVersion: 1,
+    fingerprint: current.legacyFingerprint
+  }
+  delete evidence.sourceBinding.projectHeadManifestSha256
+  delete evidence.sourceBinding.legacyFingerprint
+  evidence.recordSha256 = createHash('sha256').update(canonicalJson(evidence)).digest('hex')
+  await writeFile(evidencePath, JSON.stringify(evidence, null, 2) + '\n', 'utf8')
+
+  const done = await advanceTask(
+    root,
+    'VERIFY-1',
+    'DONE',
+    { actor: 'developer' },
+    {
+      currentSourceFingerprint: current.fingerprint,
+      compatibleSourceFingerprints: [current.legacyFingerprint]
+    }
+  )
+
+  assert.equal(done.applied, true)
+  assert.equal(done.record.state, 'DONE')
 })

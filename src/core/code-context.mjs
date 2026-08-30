@@ -97,8 +97,8 @@ function lexicalTerms(value) {
   const expanded = String(value)
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .toLowerCase()
-  const parts = expanded.match(/[a-z0-9_$]{2,}/g) ?? []
-  const compact = String(value).toLowerCase().match(/[a-z0-9_$]{4,}/g) ?? []
+  const parts = expanded.match(/[\p{L}\p{N}_$]{2,}/gu) ?? []
+  const compact = String(value).toLowerCase().match(/[\p{L}\p{N}_$]{4,}/gu) ?? []
   return [...new Set([...parts, ...compact])].slice(0, 64)
 }
 
@@ -129,7 +129,7 @@ function personalization(nodes, query) {
 
 function pageRank(nodes, edges, teleport) {
   if (nodes.length === 0) {
-    return { scores: [], iterations: 0, residual: 0 }
+    return { scores: [], iterations: 0, residual: 0, converged: true }
   }
   const indexes = new Map(nodes.map((node, index) => [node.id, index]))
   const adjacency = nodes.map(() => new Map())
@@ -175,7 +175,7 @@ function pageRank(nodes, edges, teleport) {
       break
     }
   }
-  return { scores, iterations, residual }
+  return { scores, iterations, residual, converged: residual < TOLERANCE }
 }
 
 function withEntryCost(candidate) {
@@ -241,7 +241,9 @@ export function rankCodeContext(document, query, options = {}) {
       lexicalPriorBlend: seed.mode === 'query-personalized' ? 0.6 : 0,
       maxIterations: MAX_ITERATIONS,
       iterations: ranked.iterations,
-      residual: ranked.residual
+      residual: ranked.residual,
+      tolerance: TOLERANCE,
+      converged: ranked.converged
     },
     query: {
       mode: seed.mode,

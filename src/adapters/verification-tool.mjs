@@ -1,5 +1,5 @@
 import { loadVerificationConfig, resolveGateExecutable } from '../config/verification.mjs'
-import { collectJUnitResults, snapshotReportFiles } from '../core/junit.mjs'
+import { clearReportFiles, collectJUnitResults, snapshotReportFiles } from '../core/junit.mjs'
 import { runProcess } from '../core/process-runner.mjs'
 import { captureToolchain } from '../core/toolchain.mjs'
 import { collectFindingsResults } from '../core/findings.mjs'
@@ -8,7 +8,7 @@ import { buildGateSchedule } from '../core/gate-scheduler.mjs'
 import { loadGateHistory, recordGateObservations } from '../core/gate-history-store.mjs'
 
 function processPassed(result) {
-  return result.exitCode === 0 && result.signal === null && result.timedOut === false
+  return result.exitCode === 0 && result.signal === null && result.timedOut === false && result.stdioDrainTimedOut !== true
 }
 
 function emptyTestSummary() {
@@ -33,6 +33,9 @@ export function createVerificationTool(options = {}) {
     network: false,
     mutatesSource: false,
     async execute(_invocation, context) {
+      if (typeof sourceBinder !== 'function' || typeof context.sourceBinding?.fingerprint !== 'string') {
+        throw new Error('Verification requires pre-run and post-run Git source binding.')
+      }
       const loaded = await loadVerificationConfig(context.root)
       const networkGate = loaded.config.gates.find((gate) => gate.network)
       if (networkGate && context.approval?.network !== true) {
@@ -61,9 +64,11 @@ export function createVerificationTool(options = {}) {
         }
 
         const executable = await resolveGateExecutable(context.root, gate.command)
-        const reportSnapshot = gate.result.type !== 'exit-code'
-          ? await snapshotReportFiles(context.root, gate.result.reports)
-          : null
+        let reportSnapshot = null
+        if (gate.result.type !== 'exit-code') {
+          await clearReportFiles(context.root, gate.result.reports)
+          reportSnapshot = await snapshotReportFiles(context.root, gate.result.reports)
+        }
         const processResult = await processRunner({
           program: executable.path,
           args: gate.command.slice(1),
@@ -74,7 +79,8 @@ export function createVerificationTool(options = {}) {
         let structuredResult = null
         let reason = processPassed(processResult) ? null :
           processResult.timedOut ? 'process_timed_out' :
-            processResult.signal ? 'process_signalled' : 'process_failed'
+            processResult.stdioDrainTimedOut ? 'process_stdio_drain_timed_out' :
+              processResult.signal ? 'process_signalled' : 'process_failed'
         if (gate.result.type === 'junit') {
           try {
             structuredResult = await collectJUnitResults(
@@ -146,10 +152,11 @@ export function createVerificationTool(options = {}) {
         }
       }
 
-      const postSourceBinding = sourceBinder ? await sourceBinder() : null
-      const sourceStable = !postSourceBinding ||
-        !context.sourceBinding ||
-        postSourceBinding.fingerprint === context.sourceBinding.fingerprint
+      const postSourceBinding = await sourceBinder()
+      if (typeof postSourceBinding?.fingerprint !== 'string') {
+        throw new Error('Post-run Git source binding is missing.')
+      }
+      const sourceStable = postSourceBinding.fingerprint === context.sourceBinding.fingerprint
       const requiredGates = gateResults.filter((gate) => gate.required)
       const gatesPassed = requiredGates.length > 0 && requiredGates.every((gate) => gate.outcome === 'passed') && tests.executed > 0
       const passed = gatesPassed && sourceStable

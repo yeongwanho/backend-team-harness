@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { mkdir, open, readFile, unlink } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { assertNoSymlinkSegments, resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
-import { processIsAlive, withLockRecoveryGuard } from './lock-recovery.mjs'
+import { createLockOwnerRecord, lockOwnerIsDead, withLockRecoveryGuard } from './lock-recovery.mjs'
 
 async function readLock(lockPath) {
   try {
@@ -24,7 +24,7 @@ async function recoverStaleLock(lockPath, staleMs) {
     const record = await readLock(lockPath)
     const acquiredAt = Date.parse(record?.acquiredAt ?? '')
     const ageMs = Date.now() - (Number.isFinite(acquiredAt) ? acquiredAt : metadata.mtimeMs)
-    const deadOwner = Number.isInteger(record?.pid) && record.pid > 0 && !processIsAlive(record.pid)
+    const deadOwner = await lockOwnerIsDead(record)
     const malformedAndStale = !Number.isInteger(record?.pid) && ageMs >= Math.min(staleMs, 5000)
     if (deadOwner || malformedAndStale) {
       const current = await readLock(lockPath)
@@ -48,17 +48,13 @@ export async function acquireProjectVerificationLock(inputPath, options = {}) {
   const retryMs = options.retryMs ?? 25
   const startedAt = Date.now()
   const nonce = randomUUID()
+  const ownerRecord = await createLockOwnerRecord(nonce)
 
   while (true) {
     try {
       const handle = await open(lockPath, 'wx', 0o600)
       try {
-        await handle.writeFile(JSON.stringify({
-          schemaVersion: 1,
-          pid: process.pid,
-          nonce,
-          acquiredAt: new Date().toISOString()
-        }) + '\n')
+        await handle.writeFile(JSON.stringify(ownerRecord) + '\n')
         await handle.sync()
       } catch (error) {
         await handle.close().catch(() => {})

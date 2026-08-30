@@ -5,6 +5,10 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
+import { acquireProjectVerificationLock } from '../src/core/project-lock.mjs'
+import { advanceTask, createTask, updateTaskPlan } from '../src/core/task-store.mjs'
+import { captureConfiguredSourceBinding } from '../src/runtime/backend-harness.mjs'
+import { exportApprovedPlan } from '../src/runtime/plan-export.mjs'
 
 const cli = resolve('src/cli.mjs')
 
@@ -114,6 +118,17 @@ test('CLI diagnose returns failed gates, failed tests, and the sealed rerun comm
   await writeGradleFixture(root, { exitCode: 7, failures: 1 })
   initializeGit(root)
   assert.equal(runCli(['init', root]).status, 0)
+  const verificationPath = join(root, '.backend-harness/verification.json')
+  const verification = JSON.parse(await readFile(verificationPath, 'utf8'))
+  verification.gates.push({
+    ...verification.gates[0],
+    id: 'after-tests',
+    result: {
+      ...verification.gates[0].result,
+      reports: ['build/test-results/after-tests/**/*.xml']
+    }
+  })
+  await writeFile(verificationPath, JSON.stringify(verification, null, 2) + '\n', 'utf8')
   for (const command of [
     ['task', 'create', 'FAIL-1', root, '--context', 'Known failure'],
     ['task', 'advance', 'FAIL-1', 'CONTEXT_READY', root, '--by', 'developer'],
@@ -132,6 +147,49 @@ test('CLI diagnose returns failed gates, failed tests, and the sealed rerun comm
   assert.equal(result.taskState, 'VERIFY_FAILED')
   assert.deepEqual(result.rerun, ['bth', 'verify', 'FAIL-1', '.'])
   assert.equal(result.failedGates[0].id, 'tests')
+  assert.equal(result.failedGates[1].id, 'after-tests')
+  assert.equal(result.failedGates[1].outcome, 'skipped')
+  assert.equal(result.failedGates[1].reason, 'required_gate_failed')
   assert.equal(result.failedTests[0].name, 'works-1')
   assert.equal(result.authority, 'ADVISORY')
+})
+
+test('approved plan export accepts the compatible 0.7 source fingerprint', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-plan-v07-compat-'))
+  await writeGradleFixture(root)
+  initializeGit(root)
+  assert.equal(runCli(['init', root]).status, 0)
+  const source = await captureConfiguredSourceBinding(root)
+  assert.match(source.legacyFingerprint, /^[a-f0-9]{64}$/)
+  await createTask(root, { id: 'V07-PLAN', context: 'Keep the same source.' })
+  await advanceTask(root, 'V07-PLAN', 'CONTEXT_READY', { actor: 'developer' })
+  await updateTaskPlan(root, 'V07-PLAN', 'Run the approved change.', {
+    actor: 'developer',
+    sourceFingerprint: source.legacyFingerprint
+  })
+  await advanceTask(root, 'V07-PLAN', 'PLAN_PROPOSED', { actor: 'developer' })
+  await advanceTask(root, 'V07-PLAN', 'PLAN_APPROVED', {
+    actor: 'reviewer',
+    approved: true,
+    currentSourceFingerprint: source.legacyFingerprint
+  })
+
+  const exported = await exportApprovedPlan(root, 'V07-PLAN')
+
+  assert.equal(exported.taskState, 'PLAN_APPROVED')
+})
+
+test('approved plan export shares the project verification lock', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-plan-export-lock-'))
+  await finalizedInterview(root, 'LOCKED-EXPORT')
+  assert.equal(runCli(['task', 'advance', 'LOCKED-EXPORT', 'PLAN_APPROVED', root, '--by', 'reviewer', '--approve']).status, 0)
+  const release = await acquireProjectVerificationLock(root)
+  try {
+    await assert.rejects(
+      exportApprovedPlan(root, 'LOCKED-EXPORT', { projectLock: { timeoutMs: 40, retryMs: 5 } }),
+      (error) => error.code === 'project_verification_locked'
+    )
+  } finally {
+    await release()
+  }
 })

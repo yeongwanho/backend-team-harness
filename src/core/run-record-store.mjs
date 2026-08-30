@@ -20,6 +20,7 @@ function compactGate(gate) {
       exitCode: gate.process.exitCode,
       signal: gate.process.signal,
       timedOut: gate.process.timedOut,
+      stdioDrainTimedOut: gate.process.stdioDrainTimedOut ?? false,
       durationMs: gate.process.durationMs,
       stdout: { sha256: gate.process.stdout.sha256, bytes: gate.process.stdout.bytes },
       stderr: { sha256: gate.process.stderr.sha256, bytes: gate.process.stderr.bytes }

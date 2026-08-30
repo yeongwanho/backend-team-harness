@@ -55,12 +55,17 @@ test('native interview materializes a source-bound PLAN_PROPOSED task', async ()
   assert.equal(finalized.record.status, 'FINALIZED')
   assert.equal(finalized.task.state, 'PLAN_PROPOSED')
   assert.match(finalized.artifacts.plan.sourceFingerprint, /^[a-f0-9]{64}$/)
+  assert.equal(finalized.artifacts.plan.schemaVersion, 2)
   assert.deepEqual(finalized.artifacts.plan.declaredRequiredGates, ['tests'])
+  assert.ok(finalized.artifacts.plan.declaredRequiredReviewChecklists.length > 0)
+  assert.equal('declaredRequiredPolicyGates' in finalized.artifacts.plan, false)
 
   const task = await loadTask(root, 'USER-17')
   assert.equal(task.record.planSourceFingerprint, finalized.artifacts.plan.sourceFingerprint)
   assert.match(task.record.plan, /Execution plan — USER-17/)
   assert.match(task.record.plan, /Human approval is still required/)
+  assert.match(task.record.plan, /Required human review checklists \(not executable\)/)
+  assert.match(task.record.plan, /api-contract/)
   const plan = JSON.parse(await readFile(
     join(root, '.backend-harness/tasks/USER-17/interview/plan.json'),
     'utf8'

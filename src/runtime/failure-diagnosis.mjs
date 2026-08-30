@@ -19,7 +19,7 @@ export async function diagnoseTaskFailure(inputPath, taskId) {
     throw new Error('Latest task run did not fail; there is no failed run to diagnose.')
   }
   const failedGates = latest.record.gates
-    .filter((gate) => gate.outcome === 'failed' || gate.outcome === 'blocked')
+    .filter((gate) => gate.outcome === 'failed' || gate.outcome === 'blocked' || gate.outcome === 'skipped')
     .map(compactFailure)
   const failedTests = latest.record.gates.flatMap((gate) => (gate.result?.failedTests ?? []).map((test) => ({
     gateId: gate.id,

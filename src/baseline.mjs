@@ -1,10 +1,11 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { loadVerificationConfig, parseVerificationConfig, verificationInputPaths } from './config/verification.mjs'
 import { captureSourceBinding } from './core/source-binding.mjs'
 import { resolveReadableRoot, resolveSafeProjectPath, statPath } from './fs-safety.mjs'
 import { withProjectVerificationLock } from './core/project-lock.mjs'
+import { canonicalJson } from './core/canonical-json.mjs'
 
 async function atomicReplace(target, content) {
   const temporary = resolve(dirname(target), '.bth-' + randomUUID() + '.tmp')
@@ -21,15 +22,23 @@ async function updateTestBaselineUnlocked(inputPath) {
   const root = await resolveReadableRoot(inputPath)
   const latestPath = await resolveSafeProjectPath(root, '.backend-harness/local/runs/latest.json')
   const latestStat = await statPath(latestPath)
-  if (!latestStat?.isFile() || latestStat.isSymbolicLink()) {
+  if (!latestStat?.isFile() || latestStat.isSymbolicLink() || latestStat.size > 16 * 1024 * 1024) {
     throw new Error('A local run is required. Run `bth check <path>` first.')
   }
   const run = JSON.parse(await readFile(latestPath, 'utf8'))
+  const { recordSha256, ...unsignedRun } = run
+  const expectedRunSha256 = createHash('sha256').update(canonicalJson(unsignedRun)).digest('hex')
+  if (recordSha256 !== expectedRunSha256) {
+    throw new Error('Latest run seal does not match its content.')
+  }
   if (run.evidenceTier !== 'EXECUTED' || run.verdict !== 'passed') {
     throw new Error('Only a passed EXECUTED run can raise the test baseline.')
   }
   const loaded = await loadVerificationConfig(root, { allowInferred: false })
-  const current = await captureSourceBinding(root, { explicitPaths: verificationInputPaths(loaded.config) })
+  const current = await captureSourceBinding(root, {
+    explicitPaths: verificationInputPaths(loaded.config),
+    allowSymlinkPaths: loaded.config.gates.map((gate) => gate.command[0])
+  })
   if (current.fingerprint !== run.source?.fingerprint) {
     throw new Error('Source changed after the latest run. Run `bth check` again before updating the baseline.')
   }

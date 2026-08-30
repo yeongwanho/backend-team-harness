@@ -143,3 +143,45 @@ test('findings can block while observations must remain optional', () => {
     ]
   })), /required must be false/)
 })
+
+test('two gates cannot claim the same report pattern', () => {
+  assert.throws(() => parseVerificationConfig(JSON.stringify({
+    schemaVersion: 1,
+    gates: [
+      { id: 'unit', required: true, command: ['./verify-unit'], result: { type: 'junit', reports: ['reports/TEST-*.xml'] } },
+      { id: 'architecture', required: true, command: ['./verify-architecture'], result: { type: 'junit', reports: ['reports/TEST-*.xml'] } }
+    ]
+  })), /report pattern .* is owned by both unit and architecture/)
+})
+
+test('two gates cannot claim potentially overlapping wildcard report trees', () => {
+  assert.throws(() => parseVerificationConfig(JSON.stringify({
+    schemaVersion: 1,
+    gates: [
+      { id: 'unit', required: true, command: ['./verify-unit'], result: { type: 'junit', reports: ['build/test-results/**/*.xml'] } },
+      { id: 'integration', required: true, command: ['./verify-integration'], result: { type: 'junit', reports: ['build/test-results/integrationTest/**/*.xml'] } }
+    ]
+  })), /report patterns .* may overlap/)
+
+  const disjoint = parseVerificationConfig(JSON.stringify({
+    schemaVersion: 1,
+    gates: [
+      { id: 'unit', required: true, command: ['./verify-unit'], result: { type: 'junit', reports: ['reports/unit/**/*.xml'] } },
+      { id: 'integration', required: true, command: ['./verify-integration'], result: { type: 'junit', reports: ['reports/integration/**/*.xml'] } },
+      { id: 'security', required: false, command: ['./scan'], result: { type: 'observation', reports: ['reports/security.json'] } }
+    ]
+  }))
+  assert.equal(disjoint.gates.length, 3)
+})
+
+test('structured reports must have a dedicated directory instead of a project-root glob', () => {
+  for (const report of ['**/*.xml', '*.xml', 'root-report.xml']) {
+    assert.throws(() => parseVerificationConfig(JSON.stringify({
+      schemaVersion: 1,
+      gates: [{
+        id: 'tests', required: true, command: ['./verify'],
+        result: { type: 'junit', reports: [report], minimumTests: 1 }
+      }]
+    })), /dedicated project-relative directory/)
+  }
+})

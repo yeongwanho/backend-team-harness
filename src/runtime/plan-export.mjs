@@ -4,12 +4,29 @@ import { loadInterview } from '../core/interview-store.mjs'
 import { loadTask } from '../core/task-store.mjs'
 import { captureConfiguredSourceBinding } from './backend-harness.mjs'
 import { loadBudgetedCodeContext } from '../core/code-context.mjs'
+import { sourceBindingMatchesFingerprint } from '../core/source-binding.mjs'
+import { withProjectVerificationLock } from '../core/project-lock.mjs'
 
 function sha256(value) {
   return createHash('sha256').update(canonicalJson(value)).digest('hex')
 }
 
-export async function exportApprovedPlan(inputPath, taskId, options = {}) {
+function planQuery(plan) {
+  const values = []
+  const visit = (value) => {
+    if (typeof value === 'string') {
+      values.push(value)
+    } else if (Array.isArray(value)) {
+      value.forEach(visit)
+    } else if (value && typeof value === 'object') {
+      Object.values(value).forEach(visit)
+    }
+  }
+  visit(plan)
+  return values.join('\n').slice(0, 64 * 1024)
+}
+
+async function exportApprovedPlanUnlocked(inputPath, taskId, options = {}) {
   const loaded = await loadTask(inputPath, taskId)
   const task = loaded.record
   if (!task.approvalReceipt || !['PLAN_APPROVED', 'IMPLEMENTING', 'VERIFYING', 'VERIFY_FAILED', 'VERIFIED', 'DONE'].includes(task.state)) {
@@ -23,7 +40,7 @@ export async function exportApprovedPlan(inputPath, taskId, options = {}) {
   }
   const currentSource = await captureConfiguredSourceBinding(loaded.root)
   const sourceMatchesApproval = !task.approvalReceipt.sourceFingerprint ||
-    currentSource.fingerprint === task.approvalReceipt.sourceFingerprint
+    sourceBindingMatchesFingerprint(currentSource, task.approvalReceipt.sourceFingerprint)
   if (task.state === 'PLAN_APPROVED' && !sourceMatchesApproval) {
     throw new Error('Source changed since plan approval. Rebind and approve a fresh plan before export.')
   }
@@ -50,7 +67,7 @@ export async function exportApprovedPlan(inputPath, taskId, options = {}) {
     planDigest = sha256(plan)
   }
 
-  const codeContext = await loadBudgetedCodeContext(loaded.root, canonicalJson(plan), {
+  const codeContext = await loadBudgetedCodeContext(loaded.root, planQuery(plan), {
     budgetCharacters: options.contextBudget ?? 4000,
     sourceFingerprint: currentSource.fingerprint
   })
@@ -77,4 +94,10 @@ export async function exportApprovedPlan(inputPath, taskId, options = {}) {
       note: 'This export is a read-only plan contract. A provider adapter must enforce its own tool permissions, and only BTH verification may confirm completion.'
     }
   }
+}
+
+export function exportApprovedPlan(inputPath, taskId, options = {}) {
+  return withProjectVerificationLock(inputPath, options.projectLock, () =>
+    exportApprovedPlanUnlocked(inputPath, taskId, options)
+  )
 }

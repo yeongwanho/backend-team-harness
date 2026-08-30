@@ -85,7 +85,7 @@ function observedHint(question, contextSnapshot) {
       observations.push('필수 실행 Gate: ' + gates.join('; ') + '.')
     }
     if (policies.length) {
-      observations.push('필수 정책 Gate: ' + policies.join('; ') + '.')
+      observations.push('필수 사람 검토 체크리스트(자동 실행 아님): ' + policies.join('; ') + '.')
     }
   }
   if (question.id === 'scope' || question.id === 'constraints') {

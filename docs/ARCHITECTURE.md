@@ -53,6 +53,8 @@ flowchart LR
 
 The interview is native BTH behavior, not a runtime bridge to another harness or an LLM. Its question catalogue and transitions are versioned in `interview-state.mjs`. It records only explicit human decisions and deterministic repository observations; it does not claim semantic code impact that no tool or person established.
 
+The legacy-named `quality-gates/*.yaml` files are human review checklists. They are parsed into planning context but are not executable and have no verdict authority. Machine-enforced Gates exist only in `verification.json`.
+
 Interview persistence is under the owning task. `events.jsonl` is append-only and hash-chained, project-context snapshots are stored by digest, the four JSON artifacts are SHA-256 bound, and path/symlink/size limits match the existing task safety model. `unknown` and `conflict` answers remain the current question and fail closed. Project observations specialize the question hints but never create a human answer. `revise` changes one explicit decision; `rebind` preserves decisions while recording a fresh source and immutable context snapshot.
 
 Finalization is crash-recoverable across the interview and task stores: finalized artifacts are authoritative and a retry may finish materializing the unchanged task plan. The resulting task enters `PLAN_PROPOSED`, never `PLAN_APPROVED`. Approval checks the planned source fingerprint and canonical `plan.json` digest, then records context/plan/artifact hashes plus actor and time. Any later context or plan update clears that receipt. The provider-neutral export is read-only and explicitly carries neither write authority nor verdict authority.
@@ -61,7 +63,7 @@ Finalization is crash-recoverable across the interview and task stores: finalize
 
 ### Generic Core
 
-- `source-binding.mjs`: commit, diff, untracked, and explicit-input fingerprints
+- `source-binding.mjs`: project-scoped HEAD manifest, diff, untracked, and explicit-input fingerprints
 - `project-lock.mjs`: cross-process build/report ownership
 - `process-runner.mjs`: allowlisted environment, no shell, timeout/process-group cleanup
 - `junit.mjs`: bounded discovery, freshness, strict XML parsing, executed-count semantics
@@ -122,19 +124,23 @@ PASS = required gates all passed
 
 ## Source and tool binding
 
-Normal Git state does not include ignored inputs. The config therefore supports explicit `inputs`. Their path and content are hashed without writing their raw value into a run record.
+Normal Git state does not include ignored inputs. The config therefore supports explicit `inputs`. Their path and content are hashed without writing their raw value into a run record. One bound file is limited to 32 MiB and all untracked/declared bound files together are limited to 256 MiB. The stream counts bytes while reading as well as checking initial file size, so a concurrently growing dump still fails closed.
+
+For a backend nested in a monorepo, identity hashes the tracked HEAD manifest under that backend rather than the repository-wide commit id. A sibling-only commit therefore remains provenance metadata but does not invalidate an unchanged service. Committed task/local/generated harness records remain excluded from that manifest. The current binding also calculates the exact 0.7 fingerprint as compatibility metadata, allowing an unchanged already-approved/verified task to cross the 0.8 upgrade boundary without weakening new 0.8 identities.
 
 Each run also binds the Gate executable content. Wrapper property files provide Gradle/Maven versions when present. A Java version probe is metadata only and cannot create PASS.
 
 ## Concurrency
 
-All `check` and `verify` runs acquire `.backend-harness/local/locks/project-verification.lock` before binding source or touching reports. Public CLI task mutations, Pack installation, and baseline updates use the same lock, so task approval or completion cannot race an active verification. The lock records PID, nonce, and time; a lock or recovery guard owned by a dead process is recoverable immediately. The nonce prevents one owner from releasing another owner's replacement lock.
+All `check` and `verify` runs acquire `.backend-harness/local/locks/project-verification.lock` before binding source or touching reports. Public CLI task mutations, Pack installation, baseline updates, and approved-plan export use the same lock, so task approval/completion or graph reads cannot race an active verification. The lock records a stable host identity, PID, boot/process-start identity when the host exposes one, nonce, and time. A dead local process, recycled local PID, or same-host reboot remnant is recoverable immediately; a lock created on another host is never reclaimed from local PID evidence. Hosts without a start identity conservatively retain PID-only behavior. The nonce prevents one owner from releasing another owner's replacement lock.
 
 Task state updates also retain narrower nonce-owned per-task locks for event-log serialization. Malformed crash remnants use a bounded five-second grace period, and task text/event history has explicit size/count limits so replay cannot grow without bound.
 
 ## Network and writes
 
-Gate executables are trusted project code. A Gate declaring `network: true` is denied unless the caller explicitly supplies `--allow-network`. This is an approval latch, not an operating-system network sandbox. Credential variables remain absent from the child environment.
+Gate executables are trusted project code. A Gate declaring `network: true` is denied unless the caller explicitly supplies `--allow-network`. This is an approval latch, not an operating-system network sandbox. Credential variables remain absent from the child environment. A narrow set of routing/cache variables needed by local Docker/Testcontainers is preserved: Docker host/context/TLS paths, Testcontainers host/socket/image-prefix routing, rootless `XDG_RUNTIME_DIR`, standard proxy/no-proxy variables, and the Gradle/Maven/JDK paths. Registry authentication, cloud/database credentials, `DOCKER_AUTH_CONFIG`, `TESTCONTAINERS_RYUK_DISABLED`, and `TESTCONTAINERS_REUSE_ENABLE` are not passed.
+
+The runner distinguishes a command deadline from leaked descendant stdio. After the direct process exits it allows a bounded drain; if a descendant still owns the pipes, BTH sends `SIGTERM`, waits a bounded grace period, escalates to `SIGKILL`, waits again, detaches stream listeners, and then finalizes output hashes. Cleanup is in a settle-guaranteeing `finally` path and the Gate fails as `process_stdio_drain_timed_out` instead of poisoning timeout history.
 
 BTH does not currently provide a source-writing tool. Pack installation, baseline update, init, and task persistence are explicit CLI mutations with collision checks/backups.
 
@@ -158,4 +164,4 @@ A richer future sidecar must remain rebuildable and advisory. Compiler/bytecode/
 
 ## Known boundary
 
-The system detects accidental staleness and cooperative record tampering. It does not provide remote attestation, signed builders, OS isolation, or protection from a malicious project executable. Re-execution of a bound record is the final trust mechanism.
+The system detects accidental staleness and cooperative record tampering. It does not provide remote attestation, signed builders, OS isolation, or protection from a malicious project executable. Process-group cleanup and wrapper execution are exercised on POSIX; Windows descendant cleanup and `.cmd`/`.bat` wrapper behavior still require Windows CI proof. Re-execution of a bound record is the final trust mechanism.

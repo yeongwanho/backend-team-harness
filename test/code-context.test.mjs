@@ -43,6 +43,8 @@ test('query-aware PageRank keeps the lexical entry point and exact graph neighbo
 
   assert.equal(result.status, 'available')
   assert.equal(result.algorithm.id, 'bounded-personalized-pagerank')
+  assert.equal(typeof result.algorithm.converged, 'boolean')
+  assert.equal(result.algorithm.converged, result.algorithm.residual < result.algorithm.tolerance)
   assert.ok(result.query.seededNodeCount >= 1)
   assert.equal(result.entries[0].path, 'src/main/java/orders/OrdersController.java')
   assert.ok(result.entries.some((entry) => entry.path.endsWith('OrdersService.java')))
@@ -59,6 +61,22 @@ test('no lexical match uses a deterministic global fallback instead of inventing
   assert.equal(first.query.mode, 'global-fallback')
   assert.deepEqual(first.entries, second.entries)
   assert.equal(first.query.matchedTokens.length, 0)
+})
+
+test('PageRank convergence telemetry distinguishes an exact fixed point from an iteration cap', () => {
+  const fixedPoint = graphDocument()
+  fixedPoint.graph.nodes = fixedPoint.graph.nodes.slice(0, 2)
+  fixedPoint.graph.edges = [
+    { from: 'controller', to: 'service', kind: 'imports', provenance: 'static-import-resolved' },
+    { from: 'service', to: 'controller', kind: 'imports', provenance: 'static-import-resolved' }
+  ]
+  const converged = rankCodeContext(fixedPoint, '한국어만', { budgetCharacters: 700 })
+  const capped = rankCodeContext(graphDocument(), '한국어만', { budgetCharacters: 700 })
+
+  assert.equal(converged.algorithm.converged, true)
+  assert.ok(converged.algorithm.iterations < converged.algorithm.maxIterations)
+  assert.equal(capped.algorithm.converged, false)
+  assert.equal(capped.algorithm.iterations, capped.algorithm.maxIterations)
 })
 
 test('budget is a hard bound and reports omitted nodes', () => {

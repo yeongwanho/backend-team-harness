@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { initProject } from '../src/init-project.mjs'
 import { installPack } from '../src/packs/install.mjs'
+import { getPack } from '../src/packs/catalog.mjs'
 import { checkProject } from '../src/runtime/backend-harness.mjs'
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
 
@@ -72,8 +73,22 @@ test('DB, architecture, and contract Packs add project-owned executed gates', as
     assert.equal(installed.pack.evidenceTier, 'EXECUTED')
     assert.equal(config.gates.at(-1).id, installed.gate.id)
     assert.equal(config.gates.at(-1).result.type, 'junit')
+    assert.ok(config.gates.at(-1).result.reports.every((report) => !config.gates[0].result.reports.includes(report)))
     assert.match(await readFile(join(root, installed.path, 'README.md'), 'utf8'), /JUnit|integration|contract/i)
+    if (id === 'architecture') {
+      const kotlinSnippet = await readFile(join(root, installed.path, 'gradle-kotlin-dsl.snippet.gradle.kts'), 'utf8')
+      const groovySnippet = await readFile(join(root, installed.path, 'gradle-groovy-dsl.snippet.gradle'), 'utf8')
+      assert.match(kotlinSnippet, /tasks\.register<Test>\("architectureTest"\)/)
+      assert.match(groovySnippet, /tasks\.register\('architectureTest', Test\)/)
+      assert.match(kotlinSnippet, /excludeTestsMatching\("\*ArchitectureTest"\)/)
+      assert.match(groovySnippet, /excludeTestsMatching '\*ArchitectureTest'/)
+    }
   }
+})
+
+test('Pack lookup never exposes inherited Object prototype properties', () => {
+  assert.equal(getPack('toString'), null)
+  assert.equal(getPack('__proto__'), null)
 })
 
 test('concurrent Pack installs preserve both verification gates', async () => {
@@ -86,6 +101,8 @@ test('concurrent Pack installs preserve both verification gates', async () => {
 
   const config = JSON.parse(await readFile(join(root, '.backend-harness/verification.json'), 'utf8'))
   assert.deepEqual(config.gates.map((gate) => gate.id).sort(), ['architecture', 'contract', 'tests'])
+  const reports = config.gates.flatMap((gate) => gate.result.reports ?? [])
+  assert.equal(new Set(reports).size, reports.length)
 })
 
 test('the Gitleaks converter discards raw secret-bearing fields', async () => {

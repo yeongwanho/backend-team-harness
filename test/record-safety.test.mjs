@@ -27,3 +27,16 @@ test('shareable records redact project paths and common credential forms', () =>
   assert.equal(result.value.token, '<redacted-github-token>')
   assert.equal(result.redactionsApplied, 4)
 })
+
+test('shareable records redact underscore-delimited environment credential names', () => {
+  const result = redactForShare({
+    database: 'DB_PASSWORD=hunter2',
+    mysql: 'MYSQL_ROOT_PASSWORD=root-secret',
+    api: 'MY_API_KEY=api-secret'
+  })
+
+  assert.equal(result.value.database, 'DB_PASSWORD=<redacted>')
+  assert.equal(result.value.mysql, 'MYSQL_ROOT_PASSWORD=<redacted>')
+  assert.equal(result.value.api, 'MY_API_KEY=<redacted>')
+  assert.equal(result.redactionsApplied, 3)
+})

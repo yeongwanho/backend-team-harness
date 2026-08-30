@@ -35,3 +35,17 @@ test('a passed run can only raise, never lower, the executed-test baseline', asy
   assert.equal(reduced.result.gates[0].reason, 'minimum_executed_tests_not_met')
   await assert.rejects(updateTestBaseline(root), /Only a passed EXECUTED run/)
 })
+
+test('baseline update refuses a tampered latest run even when its verdict still says passed', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-baseline-tampered-'))
+  await writeGradleFixture(root, { tests: 3 })
+  initializeGit(root)
+  await initProject(root)
+  await checkProject(root)
+  const latestPath = join(root, '.backend-harness/local/runs/latest.json')
+  const run = JSON.parse(await readFile(latestPath, 'utf8'))
+  run.gates[0].result.executed = 999
+  await writeFile(latestPath, JSON.stringify(run, null, 2) + '\n', 'utf8')
+
+  await assert.rejects(updateTestBaseline(root), /seal does not match/)
+})

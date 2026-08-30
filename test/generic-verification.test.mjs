@@ -1,12 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { chmod, mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { initProject } from '../src/init-project.mjs'
 import { advanceTask, createTask } from '../src/core/task-store.mjs'
 import { checkProject, verifyTask } from '../src/runtime/backend-harness.mjs'
-import { initializeGit } from '../test-support/git-project.mjs'
+import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
 import { loadGateHistory, recordGateObservations } from '../src/core/gate-history-store.mjs'
 
 test('a non-Java backend can verify through a project-owned command without a new core adapter', async () => {
@@ -176,4 +176,106 @@ test('adaptive verification reorders only opted-in gates and still executes ever
   assert.equal(result.result.scheduling.applied, true)
   assert.equal(result.run.record.scheduling.applied, true)
   assert.equal(new Set(executed).size, gates.length)
+})
+
+test('leaked descendant stdio is a distinct failed Gate even when the direct process exited zero', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-stdio-leak-gate-'))
+  await writeGradleFixture(root)
+  initializeGit(root)
+  await initProject(root)
+  const processRunner = async () => {
+    await mkdir(join(root, 'build/test-results/test'), { recursive: true })
+    await writeFile(
+      join(root, 'build/test-results/test/TEST-fixture.xml'),
+      '<testsuite tests="1"><testcase name="ran"/></testsuite>\n',
+      'utf8'
+    )
+    return {
+      exitCode: 0,
+      signal: null,
+      timedOut: false,
+      stdioDrainTimedOut: true,
+      startedAt: '2026-08-30T00:00:00.000Z',
+      finishedAt: '2026-08-30T00:00:00.050Z',
+      durationMs: 50,
+      stdout: { sha256: '0'.repeat(64), bytes: 0, tail: '' },
+      stderr: { sha256: '0'.repeat(64), bytes: 0, tail: '' }
+    }
+  }
+
+  const result = await checkProject(root, { processRunner })
+
+  assert.equal(result.confirmed, false)
+  assert.equal(result.result.gates[0].reason, 'process_stdio_drain_timed_out')
+  assert.equal(result.run.record.gates[0].process.stdioDrainTimedOut, true)
+})
+
+test('touching an old JUnit report cannot manufacture fresh executed evidence', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-touch-old-report-'))
+  await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
+  await writeFile(join(root, '.gitignore'), 'reports/\n', 'utf8')
+  await mkdir(join(root, 'reports'))
+  await writeFile(join(root, 'reports/junit.xml'), '<testsuite tests="1"><testcase name="old"/></testsuite>\n', 'utf8')
+  await writeFile(join(root, 'touch-report'), '#!/bin/sh\ntouch reports/junit.xml\n', 'utf8')
+  await chmod(join(root, 'touch-report'), 0o755)
+  initializeGit(root)
+  await initProject(root)
+  await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify({
+    schemaVersion: 1,
+    gates: [{
+      id: 'tests', required: true, command: ['./touch-report'],
+      result: { type: 'junit', reports: ['reports/junit.xml'], minimumTests: 1 }
+    }]
+  }, null, 2) + '\n', 'utf8')
+
+  const result = await checkProject(root)
+
+  assert.equal(result.confirmed, false)
+  assert.equal(result.result.gates[0].reason, 'junit_parse_failed')
+})
+
+test('report cleanup refuses to delete a tracked source file', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-tracked-report-'))
+  await writeGradleFixture(root)
+  await mkdir(join(root, 'docs'))
+  const trackedXml = join(root, 'docs/source.xml')
+  await writeFile(trackedXml, '<source>keep me</source>\n', 'utf8')
+  initializeGit(root)
+  await initProject(root)
+  await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify({
+    schemaVersion: 1,
+    gates: [{
+      id: 'tests', required: true, command: ['./gradlew', 'test'],
+      result: { type: 'junit', reports: ['docs/**/*.xml'], minimumTests: 1 }
+    }]
+  }, null, 2) + '\n', 'utf8')
+
+  const result = await checkProject(root)
+
+  assert.equal(result.confirmed, false)
+  assert.match(result.failure.message, /tracked project file/)
+  assert.equal(await readFile(trackedXml, 'utf8'), '<source>keep me</source>\n')
+})
+
+test('report cleanup refuses to delete an untracked source file that is not ignored', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-untracked-report-'))
+  await writeGradleFixture(root)
+  initializeGit(root)
+  await initProject(root)
+  await mkdir(join(root, 'notes'))
+  const untrackedXml = join(root, 'notes/draft.xml')
+  await writeFile(untrackedXml, '<draft>keep me</draft>\n', 'utf8')
+  await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify({
+    schemaVersion: 1,
+    gates: [{
+      id: 'tests', required: true, command: ['./gradlew', 'test'],
+      result: { type: 'junit', reports: ['notes/**/*.xml'], minimumTests: 1 }
+    }]
+  }, null, 2) + '\n', 'utf8')
+
+  const result = await checkProject(root)
+
+  assert.equal(result.confirmed, false)
+  assert.match(result.failure.message, /non-ignored project file/)
+  assert.equal(await readFile(untrackedXml, 'utf8'), '<draft>keep me</draft>\n')
 })

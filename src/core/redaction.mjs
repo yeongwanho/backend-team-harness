@@ -5,7 +5,7 @@ const SECRET_PATTERNS = [
   [/\bgh[pousr]_[A-Za-z0-9_]{20,}\b/g, '<redacted-github-token>'],
   [/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g, '<redacted-jwt>'],
   [/(-----BEGIN [A-Z ]*PRIVATE KEY-----)[\s\S]*?(-----END [A-Z ]*PRIVATE KEY-----)/g, '$1\n<redacted>\n$2'],
-  [/\b(password|passwd|secret|token|api[_-]?key|authorization)\s*([=:])\s*([^\s,;&]+)/gi, '$1$2<redacted>'],
+  [/(^|[^A-Za-z0-9])(password|passwd|secret|token|api[_-]?key|authorization)\s*([=:])\s*([^\s,;&]+)/gi, '$1$2$3<redacted>'],
   [/\b([a-z][a-z0-9+.-]*:\/\/)[^/@\s]+@/gi, '$1<redacted>@']
 ]
 

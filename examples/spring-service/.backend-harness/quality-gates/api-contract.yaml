@@ -1,3 +1,4 @@
+# Human review checklist only; executable Gates live in verification.json.
 name: api-contract
 required: true
 checks:

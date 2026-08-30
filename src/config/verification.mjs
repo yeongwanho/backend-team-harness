@@ -2,6 +2,7 @@ import { constants } from 'node:fs'
 import { access, readFile } from 'node:fs/promises'
 import { isAbsolute, posix, relative } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
+import { reportGlobBase, reportPatternsMayOverlap } from '../core/report-glob.mjs'
 
 const GATE_ID = /^[a-z][a-z0-9-]{0,63}$/
 const CONFIG_KEYS = new Set(['schemaVersion', 'context', 'scheduling', 'gates'])
@@ -26,7 +27,7 @@ function assertOnlyKeys(value, allowed, label) {
 }
 
 function normalizeProjectRelativePath(value, label) {
-  if (typeof value !== 'string' || !value.trim() || value.includes('\0')) {
+  if (typeof value !== 'string' || !value.trim() || value.includes('\0') || value.length > 4096) {
     throw new Error(label + ' must be a non-empty project-relative path.')
   }
   const normalized = value.replaceAll('\\', '/')
@@ -212,6 +213,23 @@ export function parseVerificationConfig(text, source = '<inline>') {
       result: validateResult(gate.result, label + '.result')
     }
   })
+
+  const reportOwners = []
+  for (const gate of gates) {
+    for (const report of gate.result.reports ?? []) {
+      if (reportGlobBase(report) === '.') {
+        throw new Error(source + ': report pattern ' + report + ' must use a dedicated project-relative directory.')
+      }
+      const previous = reportOwners.find((entry) => entry.gateId !== gate.id && reportPatternsMayOverlap(entry.report, report))
+      if (previous) {
+        if (previous.report === report) {
+          throw new Error(source + ': report pattern ' + report + ' is owned by both ' + previous.gateId + ' and ' + gate.id + '.')
+        }
+        throw new Error(source + ': report patterns ' + previous.report + ' (' + previous.gateId + ') and ' + report + ' (' + gate.id + ') may overlap; use gate-owned report directories.')
+      }
+      reportOwners.push({ report, gateId: gate.id })
+    }
+  }
 
   if (!gates.some((gate) => gate.required && gate.result.type === 'junit')) {
     throw new Error(source + ': at least one required junit gate is necessary to prevent untested success.')

@@ -155,6 +155,7 @@ export async function recordGateObservations(inputPath, loaded, observations, op
     throw new Error('Gate observations must contain at most 32 entries.')
   }
   const entries = new Map((loaded?.entries ?? []).map((entry) => [entry.signature, { ...entry }]))
+  const observedSignatures = new Set()
   for (const [index, observation] of observations.entries()) {
     if (!observation?.gate || !['passed', 'failed'].includes(observation.outcome)) {
       throw new Error('observations[' + index + '] is invalid.')
@@ -163,6 +164,7 @@ export async function recordGateObservations(inputPath, loaded, observations, op
       throw new Error('observations[' + index + '].durationMs must be a non-negative integer.')
     }
     const signature = gateSignature(observation.gate)
+    observedSignatures.add(signature)
     const previous = entries.get(signature) ?? {
       signature,
       gateId: observation.gate.id,
@@ -188,12 +190,25 @@ export async function recordGateObservations(inputPath, loaded, observations, op
       lastObservedAt: at.toISOString()
     })
   }
+  let evicted = 0
   if (entries.size > MAX_GATES) {
-    return {
-      ...loaded,
-      root,
-      diagnostic: 'history gate capacity reached; observation was not recorded.',
-      updated: false
+    const candidates = [...entries.values()]
+      .filter((entry) => !observedSignatures.has(entry.signature))
+      .sort((left, right) => {
+        return Date.parse(left.lastObservedAt) - Date.parse(right.lastObservedAt) ||
+          left.signature.localeCompare(right.signature)
+      })
+    while (entries.size > MAX_GATES && candidates.length > 0) {
+      entries.delete(candidates.shift().signature)
+      evicted += 1
+    }
+    if (entries.size > MAX_GATES) {
+      return {
+        ...loaded,
+        root,
+        diagnostic: 'history gate capacity reached; observation was not recorded.',
+        updated: false
+      }
     }
   }
   const normalized = [...entries.values()].sort((left, right) => left.signature.localeCompare(right.signature))
@@ -209,7 +224,9 @@ export async function recordGateObservations(inputPath, loaded, observations, op
     root,
     path: relative(root, target),
     status: 'available',
-    diagnostic: null,
+    diagnostic: evicted > 0
+      ? 'evicted ' + evicted + ' stale signature' + (evicted === 1 ? '' : 's') + ' to preserve bounded history.'
+      : null,
     entries: normalized,
     updatedAt: at.toISOString(),
     updated: observations.length > 0

@@ -92,3 +92,34 @@ test('a symlinked history file cannot be read or replaced', async () => {
   assert.equal(updated.updated, false)
   assert.deepEqual(JSON.parse(await readFile(external, 'utf8')), { schemaVersion: 1, gates: [] })
 })
+
+test('history evicts the least recently observed obsolete signature instead of freezing at capacity', async () => {
+  const root = await project('bth-gate-history-capacity-')
+  const entries = Array.from({ length: 512 }, (_value, index) => {
+    const observedGate = gate('g' + index)
+    return {
+      signature: gateSignature(observedGate),
+      gateId: observedGate.id,
+      samples: 1,
+      failures: 0,
+      totalDurationMs: 10,
+      lastObservedAt: new Date(Date.UTC(2025, 0, 1, 0, 0, index)).toISOString()
+    }
+  })
+  const newest = gate('new-gate')
+
+  const recorded = await recordGateObservations(root, {
+    root,
+    status: 'available',
+    entries,
+    updated: false
+  }, [{ gate: newest, outcome: 'failed', durationMs: 5 }], {
+    at: new Date('2026-08-30T03:00:00.000Z')
+  })
+
+  assert.equal(recorded.updated, true)
+  assert.equal(recorded.entries.length, 512)
+  assert.ok(recorded.entries.some((entry) => entry.signature === gateSignature(newest)))
+  assert.ok(!recorded.entries.some((entry) => entry.signature === entries[0].signature))
+  assert.match(recorded.diagnostic, /evicted 1 stale signature/)
+})

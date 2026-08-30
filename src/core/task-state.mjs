@@ -113,7 +113,8 @@ export function transitionTaskRecord(record, to, input = {}) {
   if (
     to === 'PLAN_APPROVED' &&
     record.planSourceFingerprint &&
-    input.currentSourceFingerprint !== record.planSourceFingerprint
+    input.currentSourceFingerprint !== record.planSourceFingerprint &&
+    !(input.compatibleSourceFingerprints ?? []).includes(record.planSourceFingerprint)
   ) {
     return rejected(record, to, 'approved_plan_source_stale')
   }
