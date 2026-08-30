@@ -6,6 +6,7 @@ import { taskDirectory } from './task-store.mjs'
 import { canonicalJson } from './canonical-json.mjs'
 import { evidenceTierFor } from './evidence-tier.mjs'
 import { redactForShare } from './redaction.mjs'
+import { compactExecutionDiagnostics } from './execution-diagnostics.mjs'
 
 function compactGate(gate) {
   return {
@@ -16,6 +17,7 @@ function compactGate(gate) {
     reason: gate.reason ?? null,
     evidenceTier: gate.evidenceTier ?? null,
     command: gate.command ?? null,
+    executionDiagnostics: compactExecutionDiagnostics(gate.executionDiagnostics),
     process: gate.process ? {
       exitCode: gate.process.exitCode,
       signal: gate.process.signal,

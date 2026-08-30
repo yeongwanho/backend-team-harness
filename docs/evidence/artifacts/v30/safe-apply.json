@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "kind": "owned-public-project-safe-apply-replay",
+  "actualProviderCalls": 0,
+  "driverSha256": "e3262f0acc3a32dbfa97119476fc47238b4c2c0803f97bafd3068e8c5cb66123",
+  "rawArtifactSha256": "757176b1e423c46fa923889c4b15998e375a7823b6456521cb92c93dda575923",
+  "replayArtifactSha256": "cf6d07598ea954b7a565bf5e5682518b8a3d894c567a4d106bc56393248590b7",
+  "preparation": {
+    "kind": "npm-ci-offline",
+    "projectPath": ".",
+    "status": "passed",
+    "dependencyEntries": 1835,
+    "legacyIntegrityEntries": 73,
+    "inputs": [
+      {
+        "path": "package.json",
+        "sha256": "4f5f95dea14b22852c154b4a0ede48121a60764679686ab2d408c8076c87b330"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "09fafc16722735684091855791499c0aaa143dc19ced48237da40da04c5a7a71"
+      }
+    ],
+    "command": [
+      "npm",
+      "--prefix",
+      "<isolated-project>",
+      "--global=false",
+      "--workspaces=false",
+      "ci",
+      "--offline",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund"
+    ],
+    "failureCode": null,
+    "process": {
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "stdioDrainTimedOut": false,
+      "durationMs": 7293,
+      "stdout": {
+        "sha256": "2553b7ff51d390965010292c65d0aaf4dbe4f093700385e01d8c8fbb6c48be4d",
+        "bytes": 27
+      },
+      "stderr": {
+        "sha256": "0c7b2e87f9fe5fb6a4c923e1b4a8a85b12e47b9bb89a3454f9e7f78e0f13d40c",
+        "bytes": 800
+      }
+    },
+    "lifecycleScripts": false,
+    "onlineFallback": false,
+    "egressIsolation": "not-enforced"
+  },
+  "integrated": true,
+  "lifecycleRecorded": false,
+  "receiptSha256": "9f0822a0b5c034b3bbc86de22f04d3bc50faba0e33ab3d0d586d83c4bfe7b19c",
+  "appliedFiles": [
+    "src/users/users.service.ts",
+    "src/users/users.service.spec.ts"
+  ],
+  "implementedSourceHashes": {
+    "src/users/users.service.ts": "21a27a93433c9941b3ef2bfc0549f7e31f88ededf83948574405cfe6f50b4b14",
+    "src/users/users.service.spec.ts": "9f13781a1d589c947b37e3d4a1ee37092034ab1e5a3ec46bff8f03e1fae24c0c"
+  },
+  "beforeSourceFingerprint": "d6a806c77a7ac55c3de80500057c42ac48a99e0809cf106a9f9270ca090bca78",
+  "afterSourceFingerprint": "cc281bbefe4c45ca76ae6ae9d2160729869d654866bfcab04e5ad529ddb237e2",
+  "confirmed": true,
+  "taskState": "VERIFIED",
+  "tests": {
+    "tests": 3,
+    "executed": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "gates": [
+    {
+      "id": "tests",
+      "outcome": "passed",
+      "tests": {
+        "type": "junit",
+        "evidenceTier": "EXECUTED",
+        "tests": 3,
+        "executed": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "minimumTests": 1,
+        "reportFiles": [
+          ".backend-harness/local/reports/tests/junit.xml"
+        ],
+        "staleReportCount": 0,
+        "failedTests": [],
+        "error": null
+      },
+      "process": {
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "stdioDrainTimedOut": false,
+        "durationMs": 2788,
+        "stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "stderr": {
+          "sha256": "8071a6fd8920a6e86cdb33baa0844f7ea106bf839aaaf6c88bc9eb358164e5a5",
+          "bytes": 458
+        }
+      }
+    }
+  ],
+  "scope": "Only the new owned public temporary project was changed; no company repositories, failed candidates or model calls."
+}

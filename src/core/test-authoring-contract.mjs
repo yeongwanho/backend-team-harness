@@ -73,6 +73,10 @@ export async function inspectTestAuthoringContract(root, verificationConfig) {
       gateId: expected.gates[0].id, framework: 'jest', projectPath: detection.projectPath,
       source: { path: manifest, sha256: hash(text), selector: 'jest' },
       verificationSha256: hash(canonicalJson(verificationConfig)), runnerSources, declaredDiscovery,
+      ...(detection.moduleSearchPath === undefined ? {} : { moduleResolution: {
+        kind: 'additional-jest-module-path', relativeTo: 'projectPath', path: detection.moduleSearchPath,
+        source: (detection.projectPath === '.' ? '' : detection.projectPath + '/') + 'tsconfig.json'
+      } }),
       guidance: 'Author focused tests inside this gate’s declared discovery scope, relative to projectPath. An adjacent test may belong to a different suite such as test:e2e; that script is not selected by this gate. Unlisted settings are not inferred defaults. Do not weaken or change the gate to make tests count; unknown configuration requires inspection. Only actual final test execution proves coverage.'
     }
   } catch {

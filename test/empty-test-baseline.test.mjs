@@ -11,13 +11,15 @@ const empty = { confirmed: false, result: { tests: { tests: 0, executed: 0, fail
 const execution = (text = '[]') => ({ exitCode: 0, signal: null, timedOut: false, stdioDrainTimedOut: false, durationMs: 1,
   stdout: { tail: text, bytes: Buffer.byteLength(text), sha256: 'a'.repeat(64) }, stderr: { tail: '', bytes: 0, sha256: 'b'.repeat(64) } })
 
-async function fixture(t) {
+async function fixture(t, moduleSearch = false) {
   const root = await mkdtemp(join(tmpdir(), 'bth-empty-baseline-'))
   t.after(() => rm(root, { recursive: true, force: true }))
   await mkdir(join(root, 'src'))
   await writeFile(join(root, 'src/answer.js'), 'module.exports = 42\n')
   await writeFile(join(root, '.gitignore'), 'node_modules/\n')
-  await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'first-test', devDependencies: { jest: '29.7.0' }, scripts: { test: 'jest' } }))
+  await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'first-test', devDependencies: { jest: '29.7.0' }, scripts: { test: 'jest' },
+    ...(moduleSearch ? { jest: { rootDir: 'src', transform: { '^.+\\.ts$': 'ts-jest' } } } : {}) }))
+  if (moduleSearch) await writeFile(join(root, 'tsconfig.json'), '{"compilerOptions":{"baseUrl":"src"}}')
   await writeFile(join(root, 'package-lock.json'), '{"lockfileVersion":3,"packages":{"":{}}}')
   initializeGit(root, { forcePaths: ['.gitignore'] })
   await initProject(root)
@@ -43,6 +45,18 @@ test('empty baseline is permission to try the first tests, not a passing verdict
   for (const changed of [{ sourceStable: false }, { discoveredFiles: 1 }, { requiredFinalMinimumTests: 0 }, { status: 'unconfirmed' }]) {
     assert.equal(canAttemptBaseline({ emptyTestBaseline: { ...result, ...changed } }), false)
   }
+})
+
+test('empty enumeration uses the same declared module path as the generated final gate', async t => {
+  const root = await fixture(t, true)
+  let called = false
+  const result = await inspectEmptyTestBaseline(root, empty, { processRunner: async input => {
+    called = true
+    assert.ok(input.args.includes('--modulePaths=' + join(input.cwd, 'src')))
+    return execution()
+  } })
+  assert.equal(called, true)
+  assert.equal(result.status, 'no-tests-discovered')
 })
 
 test('existing failed or skipped tests and missing structured evidence never open the first-test path', async t => {

@@ -140,3 +140,66 @@ test('first-test workflow still fails final verification when no executable test
   assert.equal(stale.originalSource.matches, false)
   assert.equal(stale.retryBudgetAvailable, false)
 })
+
+async function compilerFixtureJest(input) {
+  await mkdir(join(input.cwd, 'node_modules/jest/bin'), { recursive: true })
+  await writeFile(join(input.cwd, 'node_modules/jest/package.json'), '{"type":"module"}')
+  await writeFile(join(input.cwd, 'node_modules/jest/bin/jest.js'), [
+    "import { writeFileSync, readFileSync } from 'node:fs'",
+    "const test = readFileSync('src/answer.spec.mjs', 'utf8')",
+    "if (test.includes('compiler-failure-fixture')) { console.error('src/answer.spec.mjs:4:2 - error TS2353: token=private-compiler-value'); process.exit(1) }",
+    "const output = process.argv.find(value => value.startsWith('--outputFile=')).slice(13)",
+    'writeFileSync(output, JSON.stringify(' + JSON.stringify(jestDocument()) + '))'
+  ].join('\n'))
+  return result()
+}
+
+test('a real child failure persists compiler hints without logs, and normal recovery sees them on attempt two', async t => {
+  const root = await fixture(t)
+  await configureImplementationProvider(root, 'codex', { force: true, maxAttempts: 2, allowedPrefixes: ['src/'] })
+  initializeGit(root, { forcePaths: ['.gitignore', '.backend-harness/.gitignore'] })
+  let calls = 0
+  const completed = await runWork(root, input, options(compilerFixtureJest, async (_adapter, invocation) => {
+    calls++
+    const request = JSON.parse(await readFile(join(invocation.cwd, invocation.requestPath), 'utf8'))
+    if (calls === 1) assert.equal(request.recovery, null)
+    else {
+      assert.equal(request.recovery.failedGates[0].executionDiagnostics.entries[0].code, 'TS2353')
+      assert.equal(request.recovery.failedGates[0].executionDiagnostics.entries[0].path, 'src/answer.spec.mjs')
+      assert.equal(request.recovery.failedGates[0].executionDiagnostics.entries[0].line, 4)
+      assert.doesNotMatch(JSON.stringify(request.recovery), /private-compiler-value|console\.error/)
+      const latest = JSON.parse(await readFile(join(invocation.cwd, '.backend-harness/local/runs/latest.json'), 'utf8'))
+      assert.equal(latest.verdict, 'failed')
+      assert.equal(latest.gates[0].executionDiagnostics.entries[0].code, 'TS2353')
+      assert.doesNotMatch(JSON.stringify(latest), /private-compiler-value|console\.error/)
+    }
+    await writeFile(join(invocation.cwd, 'src/answer.mjs'), 'export const answer = 42\n')
+    await writeFile(join(invocation.cwd, 'src/answer.spec.mjs'), calls === 1 ? '// compiler-failure-fixture\n' : '// fixed synthetic structured-result fixture\n')
+    return { process: result(), metadata: { kind: 'provider', provider: 'codex', usage: {} } }
+  }))
+  assert.equal(calls, 2)
+  assert.equal(completed.status, 'implementation-passed')
+  assert.equal(completed.implementation.record.attempts[0].verification.confirmed, false)
+  assert.equal(completed.implementation.record.attempts[0].verification.tests.executed, 0)
+  assert.equal(completed.implementation.record.attempts[1].verification.confirmed, true)
+  assert.equal(completed.implementation.record.verification.tests.executed, 1)
+  assert.equal(await readFile(join(root, 'src/answer.mjs'), 'utf8'), 'export const answer = 0\n')
+})
+
+test('read-only diagnosis of an exhausted compiler failure retains hints and rejects record tampering', async t => {
+  const root = await fixture(t)
+  const completed = await runWork(root, input, options(compilerFixtureJest, async (_adapter, invocation) => {
+    await writeFile(join(invocation.cwd, 'src/answer.mjs'), 'export const answer = 42\n')
+    await writeFile(join(invocation.cwd, 'src/answer.spec.mjs'), '// compiler-failure-fixture\n')
+    return { process: result(), metadata: { kind: 'provider', provider: 'codex', usage: {} } }
+  }))
+  assert.equal(completed.status, 'implementation-failed')
+  const diagnosed = await diagnoseTaskFailure(root, input.taskId)
+  assert.equal(diagnosed.retryBudgetAvailable, false)
+  assert.equal(diagnosed.failedGates[0].executionDiagnostics.entries[0].code, 'TS2353')
+  const path = join(root, completed.implementation.path)
+  const saved = await readFile(path, 'utf8')
+  await writeFile(path, saved.replaceAll('TS2353', 'TS9999'))
+  await assert.rejects(diagnoseTaskFailure(root, input.taskId), /seal is invalid/)
+  await writeFile(path, saved)
+})

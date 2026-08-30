@@ -1,6 +1,7 @@
 import { loadVerificationConfig, resolveGateExecutable } from '../config/verification.mjs'
 import { clearReportFiles, collectJUnitResults, snapshotReportFiles } from '../core/junit.mjs'
 import { runProcess } from '../core/process-runner.mjs'
+import { extractExecutionDiagnostics } from '../core/execution-diagnostics.mjs'
 import { captureToolchain } from '../core/toolchain.mjs'
 import { collectFindingsResults } from '../core/findings.mjs'
 import { ToolPermissionError } from '../policy/tool-gate.mjs'
@@ -170,6 +171,7 @@ export function createVerificationTool(options = {}) {
             reason,
             evidenceTier: gate.result.type === 'junit' || gate.result.type === 'exit-code' ? 'EXECUTED' : 'REPORTED',
             process: processResult,
+            executionDiagnostics: passed ? null : await extractExecutionDiagnostics(processResult, context.root),
             result: structuredResult
           }
         }

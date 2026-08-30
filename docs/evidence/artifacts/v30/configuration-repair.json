@@ -1,0 +1,365 @@
+{
+  "schemaVersion": 1,
+  "kind": "deterministic-configuration-repair-not-provider-score",
+  "taskId": "nest-06-user-email-conflict",
+  "sourceCommit": "80366d118633df6cd4334e525fcc644d593b9134",
+  "sourceHashes": {
+    "src/core/jest-module-resolution.mjs": "09f9900d82f079eb01805ae9c9d6dc03073eba460c6259f6a7ba08530a4aa7a8",
+    "src/core/portable-test-discovery.mjs": "d5c95336a0ecd6b8493c15299b7b275ada43886479ade1e6d91dbce4ae643ece",
+    "src/evaluation/empty-test-baseline.mjs": "828fdef6c9046ab84a2a6738c4c824075132240347b874ba5c58cff60d4a957d",
+    "src/core/test-authoring-contract.mjs": "55ca8e49c578c70db1ec3c60663a795f663f476853a9b9bfd6b8720de53c139d"
+  },
+  "driverSha256": "d6963c124479f8e17da002f4a0962be738fc7431d88e056cc485f7c8acd199de",
+  "priorArtifactSha256": "3765efdeb5a73963746a3c4623bd5b97775974271adac9b77f453a6aa5f62c81",
+  "rawArtifactSha256": "cf6d07598ea954b7a565bf5e5682518b8a3d894c567a4d106bc56393248590b7",
+  "actualProviderCalls": 0,
+  "replayedAttempts": 1,
+  "originalFailedCandidateUntouched": true,
+  "replayHashes": {
+    "src/users/users.service.ts": "21a27a93433c9941b3ef2bfc0549f7e31f88ededf83948574405cfe6f50b4b14",
+    "src/users/users.service.spec.ts": "9f13781a1d589c947b37e3d4a1ee37092034ab1e5a3ec46bff8f03e1fae24c0c"
+  },
+  "testAuthoring": {
+    "status": "observed",
+    "authority": "source-bound-test-authoring-guidance",
+    "gateId": "tests",
+    "framework": "jest",
+    "projectPath": ".",
+    "source": {
+      "path": "package.json",
+      "sha256": "4f5f95dea14b22852c154b4a0ede48121a60764679686ab2d408c8076c87b330",
+      "selector": "jest"
+    },
+    "verificationSha256": "a36aa312f04c7f57629d1171096f6e91f5c94819a80eab303e5ecb9341d203dd",
+    "runnerSources": [
+      {
+        "path": ".backend-harness/bin/verify-portable.mjs",
+        "sha256": "bc6179419dc579824ae466ef1a579a96cee48b7527ca344f7c347b79895896f4"
+      },
+      {
+        "path": ".backend-harness/bin/verify-portable",
+        "sha256": "db4a7f5b0906638f52f0c8767c2d0d74e56a1ecb365d16bbf5014d001a88d357"
+      },
+      {
+        "path": ".backend-harness/bin/verify-portable.cmd",
+        "sha256": "a437553789aa5c5b5a630404746e8fac26cdc4ef9584ed4d6f086a65b7470352"
+      }
+    ],
+    "declaredDiscovery": {
+      "rootDir": "src",
+      "testRegex": ".*\\.spec\\.ts$",
+      "moduleFileExtensions": [
+        "js",
+        "json",
+        "ts"
+      ]
+    },
+    "moduleResolution": {
+      "kind": "additional-jest-module-path",
+      "relativeTo": "projectPath",
+      "path": ".",
+      "source": "tsconfig.json"
+    },
+    "guidance": "Author focused tests inside this gate’s declared discovery scope, relative to projectPath. An adjacent test may belong to a different suite such as test:e2e; that script is not selected by this gate. Unlisted settings are not inferred defaults. Do not weaken or change the gate to make tests count; unknown configuration requires inspection. Only actual final test execution proves coverage."
+  },
+  "verification": {
+    "confirmed": true,
+    "sourceFingerprint": "1a7a99c739df38434ecb6be1a6c8eaabf1f26aa9610e706883b51c96b2971d27",
+    "tests": {
+      "tests": 3,
+      "executed": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "gates": [
+      {
+        "id": "tests",
+        "outcome": "passed",
+        "reason": null,
+        "tests": {
+          "tests": 3,
+          "executed": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "executionDiagnostics": null
+      }
+    ]
+  },
+  "preparation": {
+    "kind": "npm-ci-offline",
+    "projectPath": ".",
+    "status": "passed",
+    "dependencyEntries": 1835,
+    "legacyIntegrityEntries": 73,
+    "inputs": [
+      {
+        "path": "package.json",
+        "sha256": "4f5f95dea14b22852c154b4a0ede48121a60764679686ab2d408c8076c87b330"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "09fafc16722735684091855791499c0aaa143dc19ced48237da40da04c5a7a71"
+      }
+    ],
+    "command": [
+      "npm",
+      "--prefix",
+      "<isolated-project>",
+      "--global=false",
+      "--workspaces=false",
+      "ci",
+      "--offline",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund"
+    ],
+    "failureCode": null,
+    "process": {
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "stdioDrainTimedOut": false,
+      "durationMs": 34466,
+      "stdout": {
+        "sha256": "b5101e91a321d4123453e4bd3ec525273eba98d58479dc3a05dc67b55e892bb2",
+        "bytes": 28
+      },
+      "stderr": {
+        "sha256": "0c7b2e87f9fe5fb6a4c923e1b4a8a85b12e47b9bb89a3454f9e7f78e0f13d40c",
+        "bytes": 800
+      }
+    },
+    "lifecycleScripts": false,
+    "onlineFallback": false,
+    "egressIsolation": "not-enforced",
+    "sourceStable": true
+  },
+  "ruleViolations": [],
+  "acceptance": {
+    "schemaVersion": 1,
+    "kind": "fixture-tests",
+    "controlsConfirmed": true,
+    "candidatePassed": true,
+    "candidateSourceSha256": "896aa3cf32ebc4536adfc819282a2eb6389a0367c31673843223ec7094b90f17",
+    "candidateUntouched": true,
+    "reason": null,
+    "oracleSha256": "95746f3a455f48ccb541a2184bd02b612e6438da9c597b422470c055b5778619",
+    "testFiles": [
+      {
+        "path": "test/bth/users-email.spec.ts",
+        "sha256": "b586bce481ee96baacd37ffb6dc98eb7deb4a999668cd06c4bbb8965b59c7799"
+      },
+      {
+        "path": "test/bth/jest.config.cjs",
+        "sha256": "c385deb0342efa1a15acaf1f1b4d6256d4d29bebe6c0de20b476f258d196cfcb"
+      },
+      {
+        "path": "test/bth/run.cjs",
+        "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+      },
+      {
+        "path": "test/bth/verify-jest.mjs",
+        "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+      }
+    ],
+    "controls": {
+      "base": {
+        "sourceStable": true,
+        "process": {
+          "exitCode": 1,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 14647,
+          "stdout": {
+            "sha256": "bd20d239d9d951b261ed178f79b5af2eb929bac508f55ff161dab531c917f897",
+            "bytes": 28
+          },
+          "stderr": {
+            "sha256": "7e9d0396dc53c50ad0b34c34f07ce27f0ecea236a9c8211ff024f8fe16bc0e11",
+            "bytes": 3329
+          }
+        },
+        "reports": [
+          {
+            "path": "coverage/bth-junit.xml",
+            "sha256": "4f4f6703630d007e6887d83468d426c199250002de9d3586abc4b57defbeb66b",
+            "bytes": 1112
+          }
+        ],
+        "cases": [
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "unused email reaches persistence and does not mutate caller payload",
+            "outcome": "failed"
+          },
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "the same account may retain its existing email",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "another account email is rejected without any persistence update",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "an update without email does not perform an email uniqueness lookup",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "email lookup failure propagates and prevents a write",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "persistence failure is not replaced by an email conflict",
+            "outcome": "failed"
+          },
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "a missing update result remains null rather than a fabricated account",
+            "outcome": "failed"
+          }
+        ],
+        "passed": false,
+        "regressionReproduced": true
+      },
+      "target": {
+        "sourceStable": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 9632,
+          "stdout": {
+            "sha256": "2553b7ff51d390965010292c65d0aaf4dbe4f093700385e01d8c8fbb6c48be4d",
+            "bytes": 27
+          },
+          "stderr": {
+            "sha256": "905f5d64b4b4c4a3105e8d6fcbdd2b5b31cea2c3b00dc141551e03c6fe4bf776",
+            "bytes": 1530
+          }
+        },
+        "reports": [
+          {
+            "path": "coverage/bth-junit.xml",
+            "sha256": "e4b9f3db83b71e795ad008b9d66b4b8827fe6fb4309bf61513a112a2b95eb779",
+            "bytes": 1031
+          }
+        ],
+        "cases": [
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "unused email reaches persistence and does not mutate caller payload",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "the same account may retain its existing email",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "another account email is rejected without any persistence update",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "an update without email does not perform an email uniqueness lookup",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "email lookup failure propagates and prevents a write",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "persistence failure is not replaced by an email conflict",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/users-email.spec.ts",
+            "name": "a missing update result remains null rather than a fabricated account",
+            "outcome": "passed"
+          }
+        ],
+        "passed": true,
+        "regressionReproduced": false
+      }
+    },
+    "candidate": {
+      "sourceStable": true,
+      "process": {
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "stdioDrainTimedOut": false,
+        "durationMs": 11935,
+        "stdout": {
+          "sha256": "5fcd6a6a19731282fcf8d7b603dfc00fa63e8f505f649e2547a9593985901080",
+          "bytes": 27
+        },
+        "stderr": {
+          "sha256": "a5407987219a1b20f7024fcdd2ca50a6f066d4b05761dd098cf106af873cae65",
+          "bytes": 1544
+        }
+      },
+      "reports": [
+        {
+          "path": "coverage/bth-junit.xml",
+          "sha256": "e4b9f3db83b71e795ad008b9d66b4b8827fe6fb4309bf61513a112a2b95eb779",
+          "bytes": 1031
+        }
+      ],
+      "cases": [
+        {
+          "className": "test/bth/users-email.spec.ts",
+          "name": "unused email reaches persistence and does not mutate caller payload",
+          "outcome": "passed"
+        },
+        {
+          "className": "test/bth/users-email.spec.ts",
+          "name": "the same account may retain its existing email",
+          "outcome": "passed"
+        },
+        {
+          "className": "test/bth/users-email.spec.ts",
+          "name": "another account email is rejected without any persistence update",
+          "outcome": "passed"
+        },
+        {
+          "className": "test/bth/users-email.spec.ts",
+          "name": "an update without email does not perform an email uniqueness lookup",
+          "outcome": "passed"
+        },
+        {
+          "className": "test/bth/users-email.spec.ts",
+          "name": "email lookup failure propagates and prevents a write",
+          "outcome": "passed"
+        },
+        {
+          "className": "test/bth/users-email.spec.ts",
+          "name": "persistence failure is not replaced by an email conflict",
+          "outcome": "passed"
+        },
+        {
+          "className": "test/bth/users-email.spec.ts",
+          "name": "a missing update result remains null rather than a fabricated account",
+          "outcome": "passed"
+        }
+      ],
+      "passed": true,
+      "regressionReproduced": false
+    },
+    "elapsedMs": 38438
+  },
+  "scoring": "Excluded from success@1 and paired provider performance: source was replayed, not newly generated."
+}

@@ -8,6 +8,7 @@ import { loadVerificationConfig, parseVerificationConfig } from '../config/verif
 import { loadImplementationConfig } from '../config/implementation.mjs'
 import { captureConfiguredSourceBinding } from '../runtime/backend-harness.mjs'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
+import { jestModuleSearchArgs } from '../core/jest-module-resolution.mjs'
 
 export function canAttemptBaseline(preflight) {
   return preflight?.confirmed === true || (preflight?.emptyTestBaseline?.status === 'no-tests-discovered' &&
@@ -40,7 +41,7 @@ export async function inspectEmptyTestBaseline(root, checked, options = {}) {
     if (!(await statPath(entry))?.isFile()) return unconfirmed
     const before = await captureConfiguredSourceBinding(root)
     const execution = await (options.processRunner ?? runProcess)({
-      program: process.execPath, args: [entry, ...detection.testArgs, '--runInBand', '--listTests', '--json', '--no-cache'],
+      program: process.execPath, args: [entry, ...detection.testArgs, ...jestModuleSearchArgs(detection, resolve(root, detection.projectPath)), '--runInBand', '--listTests', '--json', '--no-cache'],
       cwd: resolve(root, detection.projectPath), timeoutMs: 30000, tailBytes: 65536, env: buildSafeEnvironment()
     })
     const after = await captureConfiguredSourceBinding(root)

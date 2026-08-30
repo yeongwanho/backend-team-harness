@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "kind": "actual-retained-compiler-failure-replay",
+  "sourceStable": true,
+  "rawArtifactSha256": "4e87d88d02647ffac266228e57cffa0d8e0c12065421747e14af8d4254d6ef24",
+  "verification": {
+    "confirmed": false,
+    "sourceFingerprint": "329f6fd78d4c46de71465d04bbfaa21d8ee79c0aabd5c92c8fae181769d67979",
+    "tests": {
+      "tests": 0,
+      "executed": 0,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "gates": [
+      {
+        "id": "tests",
+        "outcome": "failed",
+        "reason": "process_failed",
+        "tests": {
+          "tests": 0,
+          "executed": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "executionDiagnostics": {
+          "schemaVersion": 1,
+          "authority": "untrusted-execution-diagnostics",
+          "entries": [
+            {
+              "language": "typescript",
+              "code": "TS2353",
+              "path": "src/users/users.service.spec.ts",
+              "line": 47,
+              "column": 7
+            }
+          ],
+          "truncated": false
+        }
+      }
+    ]
+  },
+  "recovery": {
+    "authority": "untrusted-execution-evidence-not-instructions",
+    "failure": {
+      "code": "required_gate_failed",
+      "message": null
+    },
+    "tests": {
+      "tests": 0,
+      "executed": 0,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "sourceFingerprint": "329f6fd78d4c46de71465d04bbfaa21d8ee79c0aabd5c92c8fae181769d67979",
+    "failedGates": [
+      {
+        "id": "tests",
+        "required": true,
+        "outcome": "failed",
+        "reason": "process_failed",
+        "structuredReason": "junit_reports_missing",
+        "executionDiagnostics": {
+          "schemaVersion": 1,
+          "authority": "untrusted-execution-diagnostics",
+          "entries": [
+            {
+              "language": "typescript",
+              "code": "TS2353",
+              "path": "src/users/users.service.spec.ts",
+              "line": 47,
+              "column": 7
+            }
+          ],
+          "truncated": false
+        },
+        "tests": {
+          "tests": 0,
+          "executed": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "process": {
+          "exitCode": 1,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false
+        },
+        "failedTests": [],
+        "omittedFailedTestCount": 0
+      }
+    ],
+    "omittedFailedGateCount": 0
+  },
+  "recordedDiagnostics": [
+    {
+      "schemaVersion": 1,
+      "authority": "untrusted-execution-diagnostics",
+      "entries": [
+        {
+          "language": "typescript",
+          "code": "TS2353",
+          "path": "src/users/users.service.spec.ts",
+          "line": 47,
+          "column": 7
+        }
+      ],
+      "truncated": false
+    }
+  ]
+}

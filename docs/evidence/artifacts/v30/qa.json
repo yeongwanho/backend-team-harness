@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "sourceHashes": {
+    "src/core/execution-diagnostics.mjs": "001890e7b480153df6f358196aab8aacf32129f0e6d70b69d0b04ef56257b14b",
+    "src/core/jest-module-resolution.mjs": "09f9900d82f079eb01805ae9c9d6dc03073eba460c6259f6a7ba08530a4aa7a8",
+    "src/adapters/verification-tool.mjs": "14ee3cdf3cd87764db4923a2bee9faee20cfda7efe564e63181a4e3e2406e4c7",
+    "src/core/run-record-store.mjs": "264071d693e9356b4b80768e9064992b88eeaf850536d8d647572e74a1d52e52",
+    "src/core/implementation-verification.mjs": "cc7b22836fadaf991931afc504a0bc8c30af587f5010e9e92d2b577838fa2e93",
+    "src/runtime/failure-diagnosis.mjs": "15633078ba5f1a27bb5a75999a20425dc862c4486d16dcc8573f01d464e1ca37",
+    "src/core/portable-test-discovery.mjs": "d5c95336a0ecd6b8493c15299b7b275ada43886479ade1e6d91dbce4ae643ece",
+    "src/core/test-authoring-contract.mjs": "55ca8e49c578c70db1ec3c60663a795f663f476853a9b9bfd6b8720de53c139d",
+    "src/evaluation/empty-test-baseline.mjs": "828fdef6c9046ab84a2a6738c4c824075132240347b874ba5c58cff60d4a957d",
+    "scripts/benchmark-provider-comparison.mjs": "24a6f08847771cf34d96fc6bb3fde73f3aa71c799546b2082147a4ff974a2732",
+    "scripts/mutation-smoke.mjs": "a9c5ee5ea3511cd2bc06c5b7acccead2c07724a5c3332c07d2bb7efd64862e7c",
+    "test/execution-diagnostics.test.mjs": "bcccde6a04071d9ff0af4655282557d090a07537068c0af4f6c8d469920130bb",
+    "test/jest-module-resolution.test.mjs": "e667ec2a80a8aa02d5b56582e90440eab1533e50978144a4509bbaebf0e5c55b",
+    "test/implementation-verification.test.mjs": "9412e89a651b7108a062744cd5faccbf6de0e545d375ffe915b84cf00c2a8d1d",
+    "test/work-first-test.test.mjs": "fe554215375e8978c4b9982d66cfba556a38245a44d14db0dce1f26498195963",
+    "test/empty-test-baseline.test.mjs": "60348cb55455a6381e7d78ef4f4891d305cb9d6c7b0e1d70201349b3801bc810"
+  },
+  "protocolVersion": "diagnostics-resolution-v30",
+  "syntax": {
+    "command": "node scripts/check-syntax.mjs",
+    "exitCode": 0
+  },
+  "coverage": {
+    "command": "npm run test:coverage",
+    "exitCode": 0,
+    "tests": 477,
+    "passed": 473,
+    "failed": 0,
+    "skipped": 4,
+    "percentages": {
+      "statements": 90.68,
+      "branches": 81.35,
+      "functions": 98.85,
+      "lines": 90.68
+    }
+  },
+  "mutation": {
+    "command": "node scripts/mutation-smoke.mjs",
+    "exitCode": 0,
+    "killed": 22,
+    "scope": "22 hand-selected mutants; not whole-codebase mutation coverage",
+    "earlierRun": "Inconclusive after three killed mutants: missing hint caused TypeError. Added a direct assertion before dereference; full rerun killed all 22."
+  },
+  "install": {
+    "command": "node scripts/install-smoke.mjs",
+    "exitCode": 0,
+    "version": "0.9.0"
+  },
+  "docs": {
+    "command": "node --test test/docs-contract.test.mjs",
+    "exitCode": 0,
+    "passed": 1
+  },
+  "skipped": [
+    "Real MySQL DB E2E",
+    "Real Maven/Gradle JVM E2E",
+    "Real Windows provider shim",
+    "Real Windows descendant termination"
+  ],
+  "failingFirst": {
+    "compilerDiagnostics": "new module absent: exit 1",
+    "jestModuleResolution": "3 expected failures before implementation, 5 passing decline cases"
+  },
+  "scope": "macOS Node 22.23.1. No company source, live DB, global CLI auth changes, external AI review or new model call during configuration replay.",
+  "logs": [
+    {
+      "name": "bth-v30-diagnostics-red.log",
+      "sha256": "fcc86ac631121abac62e39e028928baaa4a76b22e4812fc67840e96cbe730735"
+    },
+    {
+      "name": "bth-v30-resolution-red.log",
+      "sha256": "12fb19ad65c8c5cbcb40d2b0ebf4ddcb049470dd21045038614dc2baa4778851"
+    },
+    {
+      "name": "bth-v30-resolution-green2.log",
+      "sha256": "11912ca7e8b9a73315769f9fefd3d56e3af79264b2dc10c8b380e329f7738d73"
+    },
+    {
+      "name": "bth-v30-projection-final.log",
+      "sha256": "b0d44b118536ef780b7e312311cff05e221d36efee908d4daf926ce4424ef740"
+    },
+    {
+      "name": "bth-v30-coverage.log",
+      "sha256": "7483522b0dc2d00bb5c8018e706cdd1c83e1521311812f27de4f7d6d28cfcb84"
+    },
+    {
+      "name": "bth-v30-coverage-final.log",
+      "sha256": "0d5e4a718c101f268e8468f4c4fad2ddaa74d64ea32e9bf6a7a006c22f0df58c"
+    },
+    {
+      "name": "bth-v30-mutation.log",
+      "sha256": "20f9328e75e5d5f96e13cf0f89f7f8f66c38ac55becc090626ec33968bab890a"
+    },
+    {
+      "name": "bth-v30-mutation-final.log",
+      "sha256": "cb9a14bdc3ed317535a2392cd196461605b7dd75dc08a9487db13af057245845"
+    },
+    {
+      "name": "bth-v30-install-final.log",
+      "sha256": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989"
+    },
+    {
+      "name": "bth-v30-syntax-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "bth-v30-docs.log",
+      "sha256": "e8e6d1e9c569228065d3974083fc7e89cdf7d7836cd45a6fd875fb0cdefe8ece"
+    }
+  ]
+}

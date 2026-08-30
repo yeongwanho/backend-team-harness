@@ -7,6 +7,30 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/core/jest-module-resolution.mjs',
+    from: 'overrides.some(key => key in jest)',
+    to: 'false',
+    test: 'test/jest-module-resolution.test.mjs'
+  },
+  {
+    file: 'src/evaluation/empty-test-baseline.mjs',
+    from: '...jestModuleSearchArgs(detection, resolve(root, detection.projectPath)),',
+    to: '',
+    test: 'test/empty-test-baseline.test.mjs'
+  },
+  {
+    file: 'src/core/execution-diagnostics.mjs',
+    from: 'if (checked.get(accepted.path)) entries.push(accepted)',
+    to: 'entries.push(accepted)',
+    test: 'test/execution-diagnostics.test.mjs'
+  },
+  {
+    file: 'src/core/implementation-verification.mjs',
+    from: 'executionDiagnostics: compactExecutionDiagnostics(gate.executionDiagnostics),',
+    to: 'executionDiagnostics: null,',
+    test: 'test/implementation-verification.test.mjs'
+  },
+  {
     file: 'src/core/test-authoring-contract.mjs',
     from: 'if (text !== template.content)',
     to: 'if (false)',

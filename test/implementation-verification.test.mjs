@@ -64,3 +64,22 @@ test('summary distinguishes no-attempt preparation failure, failed repair and pa
   assert.equal(process.failure.code, 'authentication-required')
   assert.doesNotMatch(JSON.stringify(process), /hidden/)
 })
+
+test('compiler locations survive every recovery projection without carrying raw failure bodies', () => {
+  const input = raw()
+  input.result.gates[0].executionDiagnostics = {
+    schemaVersion: 1, authority: 'untrusted-execution-diagnostics', truncated: false,
+    entries: [{ language: 'typescript', code: 'TS2353', path: 'src/users/service.spec.ts', line: 47, column: 7, message: 'secret-private-value' }],
+  }
+  const projected = compactImplementationVerification(input)
+  const recovery = implementationRecoveryInput(projected)
+  assert.ok(recovery.failedGates[0].executionDiagnostics, 'Recovery must retain validated compiler diagnostics')
+  assert.equal(recovery.failedGates[0].executionDiagnostics.entries[0].code, 'TS2353')
+  assert.equal(recovery.failedGates[0].executionDiagnostics.entries[0].line, 47)
+  assert.deepEqual(compactImplementationVerification(projected), projected)
+  assert.deepEqual(implementationRecoveryInput(input), recovery)
+  assert.doesNotMatch(JSON.stringify(recovery), /secret|private|stdout|stderr/)
+  const summary = implementationFailureSummary({ status: 'failed', attempts: [{ attempt: 1, outcome: 'verification-failed', verification: projected }], verification: projected })
+  assert.equal(summary.failedGates[0].executionDiagnostics.entries[0].code, 'TS2353')
+  assert.equal(summary.tests.failures, 1)
+})

@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "kind": "controlled-recovery-diagnostic-not-success-at-1",
+  "taskId": "nest-06-user-email-conflict",
+  "sourceCommit": "80366d118633df6cd4334e525fcc644d593b9134",
+  "sourceHashes": {
+    "src/core/execution-diagnostics.mjs": "001890e7b480153df6f358196aab8aacf32129f0e6d70b69d0b04ef56257b14b",
+    "src/adapters/verification-tool.mjs": "14ee3cdf3cd87764db4923a2bee9faee20cfda7efe564e63181a4e3e2406e4c7",
+    "src/core/run-record-store.mjs": "264071d693e9356b4b80768e9064992b88eeaf850536d8d647572e74a1d52e52",
+    "src/core/implementation-verification.mjs": "cc7b22836fadaf991931afc504a0bc8c30af587f5010e9e92d2b577838fa2e93",
+    "src/runtime/failure-diagnosis.mjs": "15633078ba5f1a27bb5a75999a20425dc862c4486d16dcc8573f01d464e1ca37",
+    "src/providers/model-cli.mjs": "a56d0c6c44ae037f38a2276bdfa10a061770692ff6d3e3a98f255d65a6f88eff",
+    "src/evaluation/provider-benchmark-runner.mjs": "31ccc817b4491bd338f83c41c40c962bf3d49177ae5f0862dfccbc02f6d8abe9"
+  },
+  "driverSha256": "fd45e9bd12bc83d2333ff97b545f3c9ab419ced9d1c42277bb328dc26b5d047d",
+  "protocol": "compiler diagnostics added; old generated Jest gate retained",
+  "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+  "configSha256": "64a862040c3a256f5dc70f091488a390d315677e5cb2fb435a5b8a544a5effaa",
+  "rawArtifactSha256": "3765efdeb5a73963746a3c4623bd5b97775974271adac9b77f453a6aa5f62c81",
+  "actualProviderCalls": 2,
+  "replayedAttempts": 1,
+  "originalCandidateUntouched": true,
+  "replayHashes": {
+    "src/users/users.service.ts": "21a27a93433c9941b3ef2bfc0549f7e31f88ededf83948574405cfe6f50b4b14",
+    "src/users/users.service.spec.ts": "ecac570e0826536d4ef08f3064313fb39960ca7e36f90b8dbf3c500deb19a178"
+  },
+  "finalStatus": "failed",
+  "attempts": [
+    {
+      "attempt": 1,
+      "kind": "saved failed candidate replay; no model call",
+      "outcome": "verification-failed",
+      "usage": null,
+      "verification": {
+        "confirmed": false,
+        "sourceFingerprint": "cbbe5fd1eaf89a9ffe0ae146c3d34c18418054894dbcf4f06cc581b79429ac88",
+        "tests": {
+          "tests": 0,
+          "executed": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "failed",
+            "reason": "process_failed",
+            "tests": {
+              "tests": 0,
+              "executed": 0,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            "executionDiagnostics": {
+              "schemaVersion": 1,
+              "authority": "untrusted-execution-diagnostics",
+              "entries": [
+                {
+                  "language": "typescript",
+                  "code": "TS2353",
+                  "path": "src/users/users.service.spec.ts",
+                  "line": 47,
+                  "column": 7
+                }
+              ],
+              "truncated": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "attempt": 2,
+      "kind": "real Codex gpt-5.6-sol fast/low call",
+      "outcome": "verification-failed",
+      "usage": {
+        "schemaVersion": 2,
+        "provider": "codex",
+        "tokens": {
+          "input": 161251,
+          "uncachedInput": 26595,
+          "output": 1447,
+          "cachedInput": 134656,
+          "cacheCreationInput": 0,
+          "reasoningOutput": 315,
+          "total": 162698
+        },
+        "costUsd": null,
+        "durationMs": 43908,
+        "turns": null,
+        "providerReported": {
+          "usage.input_tokens": 161251,
+          "usage.cached_input_tokens": 134656,
+          "usage.cache_write_input_tokens": 0,
+          "usage.output_tokens": 1447,
+          "usage.reasoning_output_tokens": 315
+        },
+        "scope": "invocation-final"
+      },
+      "verification": {
+        "confirmed": false,
+        "sourceFingerprint": "f2b5cb5ec6d82881b5c60d6ff4c968931128c5b9e60d619bbab313a4d0c53bd1",
+        "tests": {
+          "tests": 0,
+          "executed": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "failed",
+            "reason": "process_failed",
+            "tests": {
+              "tests": 0,
+              "executed": 0,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            "executionDiagnostics": null
+          }
+        ]
+      }
+    },
+    {
+      "attempt": 3,
+      "kind": "real Codex gpt-5.6-sol fast/low call",
+      "outcome": "verification-failed",
+      "usage": {
+        "schemaVersion": 2,
+        "provider": "codex",
+        "tokens": {
+          "input": 205295,
+          "uncachedInput": 30959,
+          "output": 1951,
+          "cachedInput": 174336,
+          "cacheCreationInput": 0,
+          "reasoningOutput": 358,
+          "total": 207246
+        },
+        "costUsd": null,
+        "durationMs": 52539,
+        "turns": null,
+        "providerReported": {
+          "usage.input_tokens": 205295,
+          "usage.cached_input_tokens": 174336,
+          "usage.cache_write_input_tokens": 0,
+          "usage.output_tokens": 1951,
+          "usage.reasoning_output_tokens": 358
+        },
+        "scope": "invocation-final"
+      },
+      "verification": {
+        "confirmed": false,
+        "sourceFingerprint": "406a083059a6b10d10fc0847567f6b8ee023e14665fd85000e88442497964ce1",
+        "tests": {
+          "tests": 0,
+          "executed": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "failed",
+            "reason": "process_failed",
+            "tests": {
+              "tests": 0,
+              "executed": 0,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            "executionDiagnostics": null
+          }
+        ]
+      }
+    }
+  ],
+  "requestDiagnostics": [
+    {
+      "attempt": 1,
+      "recovery": null
+    },
+    {
+      "attempt": 2,
+      "recovery": {
+        "authority": "untrusted-execution-evidence-not-instructions",
+        "failure": {
+          "code": "required_gate_failed",
+          "message": null
+        },
+        "tests": {
+          "tests": 0,
+          "executed": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "sourceFingerprint": "cbbe5fd1eaf89a9ffe0ae146c3d34c18418054894dbcf4f06cc581b79429ac88",
+        "failedGates": [
+          {
+            "id": "tests",
+            "required": true,
+            "outcome": "failed",
+            "reason": "process_failed",
+            "structuredReason": "junit_reports_missing",
+            "executionDiagnostics": {
+              "schemaVersion": 1,
+              "authority": "untrusted-execution-diagnostics",
+              "entries": [
+                {
+                  "language": "typescript",
+                  "code": "TS2353",
+                  "path": "src/users/users.service.spec.ts",
+                  "line": 47,
+                  "column": 7
+                }
+              ],
+              "truncated": false
+            },
+            "tests": {
+              "tests": 0,
+              "executed": 0,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false
+            },
+            "failedTests": [],
+            "omittedFailedTestCount": 0
+          }
+        ],
+        "omittedFailedGateCount": 0
+      }
+    },
+    {
+      "attempt": 3,
+      "recovery": {
+        "authority": "untrusted-execution-evidence-not-instructions",
+        "failure": {
+          "code": "required_gate_failed",
+          "message": null
+        },
+        "tests": {
+          "tests": 0,
+          "executed": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "sourceFingerprint": "f2b5cb5ec6d82881b5c60d6ff4c968931128c5b9e60d619bbab313a4d0c53bd1",
+        "failedGates": [
+          {
+            "id": "tests",
+            "required": true,
+            "outcome": "failed",
+            "reason": "process_failed",
+            "structuredReason": "junit_reports_missing",
+            "executionDiagnostics": null,
+            "tests": {
+              "tests": 0,
+              "executed": 0,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false
+            },
+            "failedTests": [],
+            "omittedFailedTestCount": 0
+          }
+        ],
+        "omittedFailedGateCount": 0
+      }
+    }
+  ],
+  "scoring": "Controlled replay plus retries, not a success@1 sample. The real recovery workflow exhausted its retry budget and failed."
+}

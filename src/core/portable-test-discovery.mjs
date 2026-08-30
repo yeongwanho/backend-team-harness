@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { posix } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { jestJsonToJUnit } from './jest-report.mjs'
+import { inspectJestModuleSearch } from './jest-module-resolution.mjs'
 
 const MAX_BUILD_BYTES = 1024 * 1024
 const MAX_CANDIDATES = 32
@@ -65,6 +66,8 @@ async function nodeCandidates(root, manifest) {
     if (!framework) continue
     const projectPath = parent(path)
     const buildInputs = [path]
+    const moduleSearch = framework === 'jest' ? await inspectJestModuleSearch(root, projectPath, document, jestArgs) : null
+    if (moduleSearch) buildInputs.push(moduleSearch.source)
     for (const lock of ['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock', 'bun.lockb']) {
       const candidate = under(projectPath, lock)
       if (manifest.files.includes(candidate)) buildInputs.push(candidate)
@@ -74,6 +77,7 @@ async function nodeCandidates(root, manifest) {
       framework,
       projectPath,
       buildInputs,
+      ...(moduleSearch ? { moduleSearchPath: moduleSearch.path } : {}),
       testArgs: framework === 'jest' ? jestArgs : vitestArgs
     })
   }
@@ -128,6 +132,8 @@ function portableRunnerSource(detection) {
   const projectPath = JSON.stringify(detection.projectPath)
   const framework = JSON.stringify(detection.framework)
   const testArgs = JSON.stringify(detection.testArgs ?? [])
+  const moduleSearchArgument = detection.moduleSearchPath === undefined ? ''
+    : "'--modulePaths=' + resolve(project, " + JSON.stringify(detection.moduleSearchPath) + '), '
   return `#!/usr/bin/env node
 import { spawn } from 'node:child_process'
 import { access, lstat, mkdir, open, rm, writeFile } from 'node:fs/promises'
@@ -172,7 +178,7 @@ if (framework === 'jest') {
   const entry = resolve(project, 'node_modules/jest/bin/jest.js')
   if (!await exists(entry)) throw new Error('Local Jest is missing; install the pinned project dependencies before verification.')
   await rm(raw, { force: true })
-  result = await run(process.execPath, [entry, ...testArgs, '--runInBand', '--json', '--outputFile=' + raw])
+  result = await run(process.execPath, [entry, ...testArgs, ${moduleSearchArgument}'--runInBand', '--json', '--outputFile=' + raw])
   await ensureReportDirectory()
   const metadata = await lstat(raw)
   if (!metadata.isFile() || metadata.isSymbolicLink()) throw new Error('Jest JSON must be a regular file.')

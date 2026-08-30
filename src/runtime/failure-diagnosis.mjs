@@ -3,6 +3,7 @@ import { loadTask } from '../core/task-store.mjs'
 import { relative } from 'node:path'
 import { loadImplementationRecord } from '../core/implementation-record-store.mjs'
 import { implementationFailureSummary } from '../core/implementation-verification.mjs'
+import { compactExecutionDiagnostics } from '../core/execution-diagnostics.mjs'
 import { loadImplementationConfig } from '../config/implementation.mjs'
 import { captureConfiguredSourceBinding } from './backend-harness.mjs'
 
@@ -39,7 +40,8 @@ function compactFailure(gate) {
     outcome: gate.outcome,
     reason: gate.reason ?? gate.result?.error ?? null,
     exitCode: gate.process?.exitCode ?? null,
-    resultType: gate.result?.type ?? null
+    resultType: gate.result?.type ?? null,
+    executionDiagnostics: compactExecutionDiagnostics(gate.executionDiagnostics)
   }
 }
 

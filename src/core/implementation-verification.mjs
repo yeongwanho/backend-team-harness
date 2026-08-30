@@ -1,4 +1,5 @@
 import { redactString } from './redaction.mjs'
+import { compactExecutionDiagnostics } from './execution-diagnostics.mjs'
 
 const count = value => Number.isSafeInteger(value) && value >= 0 ? value : null
 const code = value => typeof value === 'string' && /^[a-z][a-z0-9_-]{0,95}$/i.test(value) ? value : null
@@ -33,6 +34,7 @@ export function compactImplementationVerification(result) {
         id: text(gate.id, 128), required: gate.required === true,
         outcome: code(gate.outcome), reason: code(gate.reason),
         structuredReason: code(gate.result?.reason ?? gate.structuredReason),
+        executionDiagnostics: compactExecutionDiagnostics(gate.executionDiagnostics),
         tests: verificationTestCounts(gate.result ?? gate.tests),
         process: process ? {
           exitCode: Number.isInteger(process.exitCode) ? process.exitCode : null,
