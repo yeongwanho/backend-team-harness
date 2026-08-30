@@ -17,12 +17,12 @@ The useful comparison is therefore “which runtime technique has an equivalent?
 | Pre-tool guard | OpenCode `tool.execute.before` guard tier | `src/policy/tool-gate.mjs` | Deny-before-execute implemented |
 | Deterministic QA evidence | OMO `.omo/evidence/` QA rule | source/input binding + fresh JUnit/Findings + canonical run/evidence history | Result contract implemented; hashes are not called signatures |
 | Planning handoff | harness-specific task/prompt adapters | canonical human-approved plan digest + provider-neutral read-only JSON export | Port implemented |
-| Isolated implementation | adapter-specific tool execution | project-owned adapter contract + detached worktree + explicit write/network latch | Small provider-neutral port; no model embedded |
+| Isolated implementation | adapter-specific tool execution | Codex/Claude CLI or project-owned adapter + detached worktree + explicit write/network latch | Small provider port; model verdict remains excluded |
 | Failure continuation | task/continuation components | sealed failure diagnosis + bounded same-worktree repair request + full re-verification | Independently implemented; never promotes its own verdict |
 | Config validation | `packages/omo-config-core` | strict verification, project-rule, and implementation contracts | Executable verification and review checklists are separate |
 | Lifecycle hook system | OpenCode hook composition / Senpi components | none | Not implemented |
 | Memory engine | `packages/memory-core` | none | Not implemented; Markdown context is not called memory |
-| Model routing/providers | `packages/model-core`, harness adapters | none | Not implemented |
+| Model routing/providers | `packages/model-core`, harness adapters | allowlisted Codex/Claude CLI adapters + deterministic risk profiles | Narrow implementation-only subset; not a general model router |
 | Multi-agent/team runtime | team/delegate/task packages | none | Intentionally out of scope |
 | Component composition | adapter/component composition | installable project Packs over one result contract | Small independent equivalent; no OMO code reused |
 
@@ -30,7 +30,7 @@ The useful comparison is therefore “which runtime technique has an equivalent?
 
 OMO is an agent runtime: the agent is a primary worker and the harness coordinates tools, hooks, memory, tasks, and multiple host environments.
 
-Backend Team Harness is a backend engineering workflow with a small optional implementation port: the project chooses the coding adapter, while BTH binds its approved plan, isolates writes, enforces a path/diff budget, runs deterministic project verification, separates executed from reported evidence, and records rerunnable results. It still is not a general agent OS.
+Backend Team Harness is a backend engineering workflow with a small optional implementation port: the project chooses Codex, Claude, or a project-owned command adapter, while BTH binds its approved plan, limits context, isolates writes, enforces a path/diff budget, runs deterministic project verification, separates executed from reported evidence, and records rerunnable results. It still is not a general agent OS.
 
 That difference is intentional. Porting OMO's full hook count, team mode, memory engine, or model router would add complexity without proving the backend collaboration problem.
 

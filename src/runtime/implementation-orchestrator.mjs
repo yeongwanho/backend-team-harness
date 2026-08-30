@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 import { createHash, randomUUID } from 'node:crypto'
-import { chmod, copyFile, lstat, mkdir, realpath, rename, rm, unlink, writeFile } from 'node:fs/promises'
+import { chmod, copyFile, lstat, mkdir, readFile, realpath, rename, rm, unlink, writeFile } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, relative, resolve } from 'node:path'
 import { loadImplementationConfig, resolveImplementationExecutable } from '../config/implementation.mjs'
@@ -18,8 +18,15 @@ import { withProjectVerificationLock } from '../core/project-lock.mjs'
 import { captureSourceBinding } from '../core/source-binding.mjs'
 import { advanceTask, loadTask, recordImplementationLifecycle } from '../core/task-store.mjs'
 import { assertTaskId } from '../core/task-state.mjs'
+import { loadInterview } from '../core/interview-store.mjs'
+import { loadBudgetedCodeContext } from '../core/code-context.mjs'
 import { assertNoSymlinkSegments, assertRelativeChild, resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { captureConfiguredSourceBinding, checkProject } from './backend-harness.mjs'
+import {
+  probeImplementationProvider,
+  runImplementationProvider,
+  selectImplementationProfile
+} from '../providers/model-cli.mjs'
 
 const MAX_GIT_OUTPUT = 8 * 1024 * 1024
 
@@ -50,13 +57,28 @@ function runGit(root, args) {
 
 async function atomicJson(path, value) {
   const temporary = resolve(dirname(path), '.bth-' + randomUUID() + '.tmp')
-  await writeFile(temporary, JSON.stringify(value, null, 2) + '\n', { encoding: 'utf8', flag: 'wx', mode: 0o600 })
+  const content = JSON.stringify(value, null, 2) + '\n'
+  await writeFile(temporary, content, { encoding: 'utf8', flag: 'wx', mode: 0o600 })
   try {
     await rename(temporary, path)
   } catch (error) {
     await unlink(temporary).catch(() => {})
     throw error
   }
+  return {
+    bytes: Buffer.byteLength(content),
+    sha256: createHash('sha256').update(content).digest('hex')
+  }
+}
+
+async function requestIntegrity(path, expected) {
+  const metadata = await statPath(path)
+  if (!metadata?.isFile() || metadata.isSymbolicLink() || metadata.size !== expected.bytes || metadata.size > 1024 * 1024) {
+    return { unchanged: false, bytes: metadata?.size ?? null, sha256: null }
+  }
+  const content = await readFile(path)
+  const sha256 = createHash('sha256').update(content).digest('hex')
+  return { unchanged: sha256 === expected.sha256, bytes: content.length, sha256 }
 }
 
 function compactProcess(result) {
@@ -71,6 +93,17 @@ function compactProcess(result) {
 
 function processPassed(result) {
   return result.exitCode === 0 && result.signal === null && result.timedOut === false && result.stdioDrainTimedOut !== true
+}
+
+const NON_RETRYABLE_PROVIDER_FAILURES = new Set([
+  'not-authenticated',
+  'budget-exhausted',
+  'rate-limited',
+  'cli-incompatible'
+])
+
+function providerFailureIsNonRetryable(adapterRun) {
+  return NON_RETRYABLE_PROVIDER_FAILURES.has(adapterRun.metadata?.failure?.code)
 }
 
 function compactVerification(result) {
@@ -95,7 +128,7 @@ function recoveryInput(verification) {
   }
 }
 
-function adapterFailureVerification(result, sourceFingerprint) {
+function adapterFailureVerification(result, sourceFingerprint, providerFailure = null) {
   const reason = result.timedOut
     ? 'timed out'
     : result.stdioDrainTimedOut
@@ -109,7 +142,8 @@ function adapterFailureVerification(result, sourceFingerprint) {
     runPath: null,
     failure: {
       code: 'implementation_adapter_failed',
-      message: 'The project-owned implementation adapter ' + reason + '.'
+      message: providerFailure?.message ?? ('The configured implementation adapter ' + reason + '.'),
+      providerFailure
     },
     tests: null,
     gates: []
@@ -170,10 +204,30 @@ function protectedControlPlaneChanges(paths, implementationConfig, verificationC
   const protectedPaths = new Set([
     '.backend-harness/implementation.json',
     '.backend-harness/project-rules.json',
-    implementationConfig.adapter.command[0].replace(/^\.\//, ''),
     ...verificationInputPaths(verificationConfig).map((path) => path.replace(/^\.\//, ''))
   ])
-  return paths.filter((path) => protectedPaths.has(path))
+  if (implementationConfig.adapter.kind === 'command') {
+    protectedPaths.add(implementationConfig.adapter.command[0].replace(/^\.\//, ''))
+  }
+  return paths.filter((path) => path === '.backend-harness' || path.startsWith('.backend-harness/') || protectedPaths.has(path))
+}
+
+function planQuery(task) {
+  return [task.title, task.context, task.plan].filter((value) => typeof value === 'string').join('\n').slice(0, 64 * 1024)
+}
+
+function providerTaskPayload(task) {
+  const payload = { id: task.id, title: task.title, context: task.context, approvedPlan: task.plan }
+  const characters = Object.values(payload).reduce((total, value) => total + (typeof value === 'string' ? value.length : 0), 0)
+  return { payload, characters }
+}
+
+async function structuredImplementationClaims(root, task) {
+  if (!task.planArtifactSha256) return {}
+  const interview = await loadInterview(root, task.id)
+  const claims = {}
+  for (const answer of interview.record.answers ?? []) Object.assign(claims, answer.claims ?? {})
+  return claims
 }
 
 async function workspaceHead(worktree) {
@@ -328,8 +382,29 @@ async function runUnlocked(root, taskId, options) {
   if (!loadedConfig.config.adapter) throw new Error('Implementation adapter is disabled. Configure .backend-harness/implementation.json first.')
   if (loadedConfig.config.adapter.network && options.allowNetwork !== true) throw new Error('Implementation adapter declares network access; pass --allow-network explicitly.')
   if (options.allowWrite !== true) throw new Error('Implementation changes require explicit --allow-write approval.')
+  const providerProbe = loadedConfig.config.adapter.kind === 'provider'
+    ? await (options.providerProbe ?? probeImplementationProvider)(loadedConfig.config.adapter.provider, { cwd: root })
+    : null
+  if (providerProbe && providerProbe.available !== true) {
+    throw new Error('Implementation provider is unavailable: ' + loadedConfig.config.adapter.provider)
+  }
 
   const sourceBinding = await captureConfiguredSourceBinding(root)
+  const providerTask = loadedConfig.config.adapter.kind === 'provider' ? providerTaskPayload(loadedTask.record) : null
+  const profile = loadedConfig.config.adapter.kind === 'provider'
+    ? selectImplementationProfile({
+        mode: loadedConfig.config.adapter.mode,
+        contextBudgetCharacters: loadedConfig.config.adapter.contextBudgetCharacters,
+        taskCharacters: providerTask.characters,
+        claims: await structuredImplementationClaims(root, loadedTask.record)
+      })
+    : null
+  const codeContext = profile
+    ? await loadBudgetedCodeContext(root, planQuery(loadedTask.record), {
+        budgetCharacters: profile.contextBudgetCharacters,
+        sourceFingerprint: sourceBinding.fingerprint
+      })
+    : null
   const baseRefsSha256 = await sharedRefsSha256(root)
   const acceptedFingerprints = new Set([sourceBinding.fingerprint, sourceBinding.legacyFingerprint].filter(Boolean))
   if (!sourceBinding.clean) throw new Error('Implementation requires a clean source-bound worktree. Commit or stash source changes first.')
@@ -370,6 +445,12 @@ async function runUnlocked(root, taskId, options) {
       schemaVersion: 2,
       taskId,
       adapter: loadedConfig.config.adapter.id,
+      adapterKind: loadedConfig.config.adapter.kind,
+      provider: providerProbe ? {
+        id: loadedConfig.config.adapter.provider,
+        version: providerProbe.version,
+        profile
+      } : null,
       status: 'running',
       baseSourceFingerprint: sourceBinding.fingerprint,
       baseHeadCommit: sourceBinding.headCommit,
@@ -409,7 +490,9 @@ async function runUnlocked(root, taskId, options) {
     throw new Error('Implementation workspace contains assume-unchanged or skip-worktree index flags: ' + preexistingIndexFlags.slice(0, 16).map((entry) => entry.path).join(', '))
   }
 
-  const adapter = await resolveImplementationExecutable(workspace.path, loadedConfig.config.adapter.command)
+  const adapter = loadedConfig.config.adapter.kind === 'command'
+    ? await resolveImplementationExecutable(workspace.path, loadedConfig.config.adapter.command)
+    : null
   const verificationConfig = (await loadVerificationConfig(workspace.path)).config
   const requestDir = await resolveSafeProjectPath(workspace.path, '.backend-harness/local/implementation')
   await mkdir(requestDir, { recursive: true, mode: 0o700 })
@@ -419,22 +502,60 @@ async function runUnlocked(root, taskId, options) {
   let status = 'failed'
   let certifiedImplementedFiles = []
   for (let attempt = attempts.length + 1; attempt <= loadedConfig.config.recovery.maxAttempts; attempt += 1) {
-    const request = {
-      schemaVersion: 1,
-      task: { id: taskId, title: loadedTask.record.title, context: loadedTask.record.context, approvedPlan: loadedTask.record.plan },
-      authority: { workspaceOnly: true, deployment: false, productionDatabase: false, networkApproved: options.allowNetwork === true },
-      attempt,
-      recovery: recoveryInput(verification)
+    const task = providerTask?.payload ?? {
+      id: taskId,
+      title: loadedTask.record.title,
+      context: loadedTask.record.context,
+      approvedPlan: loadedTask.record.plan
     }
-    await atomicJson(requestPath, request)
+    const request = loadedConfig.config.schemaVersion === 1
+      ? {
+          schemaVersion: 1,
+          task,
+          authority: { workspaceOnly: true, deployment: false, productionDatabase: false, networkApproved: options.allowNetwork === true },
+          attempt,
+          recovery: recoveryInput(verification)
+        }
+      : {
+          schemaVersion: 2,
+          task,
+          implementation: {
+            adapterKind: loadedConfig.config.adapter.kind,
+            provider: loadedConfig.config.adapter.kind === 'provider' ? loadedConfig.config.adapter.provider : null,
+            profile,
+            allowedPrefixes: loadedConfig.config.writePolicy.allowedPrefixes,
+            maxChangedFiles: loadedConfig.config.writePolicy.maxChangedFiles,
+            maxDiffBytes: loadedConfig.config.writePolicy.maxDiffBytes
+          },
+          codeContext,
+          authority: { workspaceOnly: true, deployment: false, productionDatabase: false, networkApproved: options.allowNetwork === true },
+          attempt,
+          recovery: recoveryInput(verification)
+        }
+    const requestBefore = await atomicJson(requestPath, request)
     const beforeCapture = await captureImplementationBinding(workspace.path, verificationConfig)
-    const processResult = await runProcess({
-      program: adapter.path,
-      args: [...loadedConfig.config.adapter.command.slice(1), '--request', './' + relative(workspace.path, requestPath).replaceAll('\\', '/')],
-      cwd: workspace.path,
-      timeoutMs: loadedConfig.config.adapter.timeoutMs,
-      env: { ...buildSafeEnvironment(), BTH_IMPLEMENTATION_REQUEST: requestPath, BTH_IMPLEMENTATION_ATTEMPT: String(attempt) }
-    })
+    const requestRelative = './' + relative(workspace.path, requestPath).replaceAll('\\', '/')
+    const processEnvironment = { ...buildSafeEnvironment(), BTH_IMPLEMENTATION_REQUEST: requestPath, BTH_IMPLEMENTATION_ATTEMPT: String(attempt) }
+    const adapterRun = loadedConfig.config.adapter.kind === 'provider'
+      ? await (options.providerRunner ?? runImplementationProvider)(loadedConfig.config.adapter, {
+          requestPath: requestRelative,
+          cwd: workspace.path,
+          profile,
+          env: processEnvironment
+        }, { version: providerProbe?.version })
+      : {
+          process: await runProcess({
+            program: adapter.path,
+            args: [...loadedConfig.config.adapter.command.slice(1), '--request', requestRelative],
+            cwd: workspace.path,
+            timeoutMs: loadedConfig.config.adapter.timeoutMs,
+            env: processEnvironment
+          }),
+          metadata: { kind: 'command', id: loadedConfig.config.adapter.id }
+        }
+    const processResult = adapterRun.process
+    const requestAfter = await requestIntegrity(requestPath, requestBefore)
+    const requestChanged = requestAfter.unchanged !== true
     const afterCapture = await captureImplementationBinding(workspace.path, verificationConfig)
     const after = afterCapture.binding
     const headAfter = await workspaceHead(workspace.path)
@@ -450,20 +571,22 @@ async function runUnlocked(root, taskId, options) {
     const writePolicy = processPassed(processResult)
       ? await evaluateWritePolicy(workspace.path, sourceBinding.headCommit, changedPaths, loadedConfig.config.writePolicy)
       : null
-    const adapterPassed = processPassed(processResult) && !afterCapture.error && !historyChanged && !sharedRefsChanged && indexFlagChanges.length === 0 && !declaredInputsChanged && changed && protectedChanges.length === 0 && writePolicy.passed
-    const policyFailure = Boolean(afterCapture.error) || historyChanged || sharedRefsChanged || indexFlagChanges.length > 0 || declaredInputsChanged || protectedChanges.length > 0 || (writePolicy && !writePolicy.passed)
+    const adapterPassed = processPassed(processResult) && !requestChanged && !afterCapture.error && !historyChanged && !sharedRefsChanged && indexFlagChanges.length === 0 && !declaredInputsChanged && changed && protectedChanges.length === 0 && writePolicy.passed
+    const policyFailure = requestChanged || Boolean(afterCapture.error) || historyChanged || sharedRefsChanged || indexFlagChanges.length > 0 || declaredInputsChanged || protectedChanges.length > 0 || (writePolicy && !writePolicy.passed)
     let candidateFiles = []
     let attemptVerification
     let gateIntegrityFailure = false
     if (!processPassed(processResult)) {
-      attemptVerification = adapterFailureVerification(processResult, after?.fingerprint ?? null)
+      attemptVerification = adapterFailureVerification(processResult, after?.fingerprint ?? null, adapterRun.metadata.failure)
     } else if (policyFailure) {
       attemptVerification = {
           confirmed: false,
           sourceFingerprint: after?.fingerprint ?? null,
           runPath: null,
           failure: {
-            code: afterCapture.error
+            code: requestChanged
+              ? 'implementation_request_changed'
+              : afterCapture.error
               ? 'implementation_source_binding_failed'
               : historyChanged
                 ? 'implementation_workspace_history_changed'
@@ -476,7 +599,9 @@ async function runUnlocked(root, taskId, options) {
                   : protectedChanges.length > 0
                     ? 'protected_control_plane_changed'
                     : 'write_policy_violated',
-            message: afterCapture.error
+            message: requestChanged
+              ? 'Implementation adapter changed or removed its sealed request document.'
+              : afterCapture.error
               ? 'Implementation source binding failed after the adapter ran: ' + afterCapture.error
               : historyChanged
                 ? 'Implementation adapter changed the isolated workspace Git history; commits are reserved for the normal team Git workflow.'
@@ -535,6 +660,14 @@ async function runUnlocked(root, taskId, options) {
     if (attemptVerification) verification = attemptVerification
     attempts.push({
       attempt,
+      invocation: adapterRun.metadata,
+      request: {
+        path: requestRelative,
+        bytes: requestBefore.bytes,
+        sha256: requestBefore.sha256,
+        unchanged: requestAfter.unchanged,
+        observedSha256: requestAfter.sha256
+      },
       adapter: compactProcess(processResult),
       changed,
       writePolicy,
@@ -543,7 +676,9 @@ async function runUnlocked(root, taskId, options) {
       outcome: !processPassed(processResult)
         ? 'adapter-failed'
         : policyFailure
-          ? afterCapture.error
+          ? requestChanged
+            ? 'control-plane-change'
+            : afterCapture.error
             ? 'source-binding-failed'
             : historyChanged
             ? 'workspace-history-change'
@@ -561,7 +696,7 @@ async function runUnlocked(root, taskId, options) {
               : 'verification-failed',
       verification: attemptVerification
     })
-    if (gateIntegrityFailure) break
+    if (gateIntegrityFailure || providerFailureIsNonRetryable(adapterRun)) break
     if (attemptVerification?.confirmed) {
       status = 'passed'
       certifiedImplementedFiles = candidateFiles
@@ -602,6 +737,12 @@ async function runUnlocked(root, taskId, options) {
     schemaVersion: 2,
     taskId,
     adapter: loadedConfig.config.adapter.id,
+    adapterKind: loadedConfig.config.adapter.kind,
+    provider: providerProbe ? {
+      id: loadedConfig.config.adapter.provider,
+      version: providerProbe.version,
+      profile
+    } : null,
     status,
     baseSourceFingerprint: sourceBinding.fingerprint,
     baseHeadCommit: sourceBinding.headCommit,

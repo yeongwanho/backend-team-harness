@@ -29,6 +29,8 @@ import { exportApprovedPlan } from './runtime/plan-export.mjs'
 import { diagnoseTaskFailure } from './runtime/failure-diagnosis.mjs'
 import { inspectProjectIntelligence, warmProjectIntelligenceCache } from './adapters/project-intelligence.mjs'
 import { cleanupImplementation, implementationStatus, resetImplementation, runImplementation } from './runtime/implementation-orchestrator.mjs'
+import { configureImplementationProvider } from './config/implementation-setup.mjs'
+import { probeImplementationProvider, PROVIDER_IDS } from './providers/model-cli.mjs'
 
 const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version
 
@@ -59,6 +61,8 @@ function printHelp() {
     '  bth interview rebind <id> [path] --by <actor> [--json]',
     '  bth interview status <id> [path] [--json]',
     '  bth interview finalize <id> [path] --by <actor> [--json]',
+    '  bth implement configure <codex|claude> [path] [--mode <auto|fast|balanced|deep>] [--allowed-prefixes <json>] [--force] [--json]',
+    '  bth implement providers [path] [--json]',
     '  bth implement run <id> [path] --by <actor> --allow-write [--allow-network] [--json]',
     '  bth implement status <id> [path] [--json]',
     '  bth implement reset <id> [path] --by <actor> --discard-workspace [--json]',
@@ -302,6 +306,23 @@ function parseJsonObjectOption(value, optionName) {
   }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new Error(optionName + ' must be a JSON object.')
+  }
+  return parsed
+}
+
+function parseJsonArrayOption(value, optionName) {
+  if (value === undefined) return undefined
+  let parsed
+  try { parsed = JSON.parse(value) } catch { throw new Error(optionName + ' must be valid JSON.') }
+  if (!Array.isArray(parsed)) throw new Error(optionName + ' must be a JSON array.')
+  return parsed
+}
+
+function parseNumericOption(value, optionName, kind = 'integer') {
+  if (value === undefined) return undefined
+  const parsed = kind === 'number' ? Number(value) : Number.parseInt(value, 10)
+  if (!Number.isFinite(parsed) || (kind === 'integer' && (!Number.isSafeInteger(parsed) || String(parsed) !== value))) {
+    throw new Error(optionName + ' must be a valid ' + kind + '.')
   }
   return parsed
 }
@@ -636,6 +657,54 @@ async function runDiagnose(args) {
 
 async function runImplement(args) {
   const [subcommand, ...rest] = args
+  if (subcommand === 'configure') {
+    const parsed = parseArguments(rest, {
+      booleans: ['--json', '--force'],
+      values: ['--model', '--mode', '--context-budget', '--max-budget-usd', '--allowed-prefixes', '--max-changed-files', '--max-diff-bytes', '--max-attempts', '--timeout-ms']
+    })
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth implement configure <codex|claude> [path] ...')
+    const [provider, path = '.'] = parsed.positionals
+    if (!PROVIDER_IDS.includes(provider)) throw new Error('Implementation provider must be codex or claude.')
+    const result = await configureImplementationProvider(path, provider, {
+      force: parsed.flags.has('--force'),
+      model: parsed.options.get('--model'),
+      mode: parsed.options.get('--mode'),
+      contextBudgetCharacters: parseNumericOption(parsed.options.get('--context-budget'), '--context-budget'),
+      maxBudgetUsd: parseNumericOption(parsed.options.get('--max-budget-usd'), '--max-budget-usd', 'number'),
+      allowedPrefixes: parseJsonArrayOption(parsed.options.get('--allowed-prefixes'), '--allowed-prefixes'),
+      maxChangedFiles: parseNumericOption(parsed.options.get('--max-changed-files'), '--max-changed-files'),
+      maxDiffBytes: parseNumericOption(parsed.options.get('--max-diff-bytes'), '--max-diff-bytes'),
+      maxAttempts: parseNumericOption(parsed.options.get('--max-attempts'), '--max-attempts'),
+      timeoutMs: parseNumericOption(parsed.options.get('--timeout-ms'), '--timeout-ms')
+    })
+    printResult(result, parsed.flags.has('--json'), () => {
+      console.log('Configured ' + provider + ' implementation provider at ' + result.path + '.')
+      console.log('Mode: ' + result.config.adapter.mode + '; allowed prefixes: ' + result.config.writePolicy.allowedPrefixes.join(', '))
+      if (result.backup) console.log('Previous config backup: ' + result.backup)
+      console.log('Next: bth implement providers ' + JSON.stringify(result.root))
+    })
+    return
+  }
+  if (subcommand === 'providers') {
+    const parsed = parseArguments(rest, { booleans: ['--json'] })
+    assertPositionalCount(parsed.positionals, 0, 1, 'bth implement providers [path] [--json]')
+    const cwd = parsed.positionals[0] ?? '.'
+    const providers = []
+    for (const provider of PROVIDER_IDS) {
+      try {
+        providers.push(await probeImplementationProvider(provider, { cwd }))
+      } catch (error) {
+        providers.push({ provider, available: false, version: null, diagnostic: error instanceof Error ? error.message : String(error) })
+      }
+    }
+    printResult({ providers }, parsed.flags.has('--json'), () => {
+      for (const provider of providers) {
+        console.log('[' + (provider.available ? 'AVAILABLE' : 'UNAVAILABLE') + '] ' + provider.provider + (provider.version ? ' — ' + provider.version : ''))
+        if (provider.diagnostic) console.log('  ' + provider.diagnostic)
+      }
+    })
+    return
+  }
   if (subcommand === 'status') {
     const parsed = parseArguments(rest, { booleans: ['--json'] })
     assertPositionalCount(parsed.positionals, 1, 2, 'bth implement status <id> [path] [--json]')

@@ -1,6 +1,6 @@
 # Backend Team Harness contribution guide
 
-This repository is an evidence-driven backend engineering workflow harness. Model-provider adapters are future work, not a current runtime capability. Keep the core free of company-specific policies, credentials, internal URLs, tickets, and source code.
+This repository is an evidence-driven backend engineering workflow harness. Codex CLI and Claude Code are optional implementation providers; they never receive verdict authority, and the legacy project-owned command adapter remains supported. Keep the core free of company-specific policies, credentials, internal URLs, tickets, and source code.
 
 ## Working rules
 

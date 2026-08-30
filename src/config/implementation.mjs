@@ -4,9 +4,12 @@ import { isAbsolute, posix, relative } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 
 const CONFIG_KEYS = new Set(['schemaVersion', 'adapter', 'writePolicy', 'recovery'])
-const ADAPTER_KEYS = new Set(['id', 'command', 'network', 'timeoutMs'])
+const COMMAND_ADAPTER_KEYS = new Set(['kind', 'id', 'command', 'network', 'timeoutMs'])
+const PROVIDER_ADAPTER_KEYS = new Set(['kind', 'provider', 'network', 'timeoutMs', 'model', 'mode', 'contextBudgetCharacters', 'maxBudgetUsd'])
 const RECOVERY_KEYS = new Set(['maxAttempts'])
 const WRITE_POLICY_KEYS = new Set(['allowedPrefixes', 'maxChangedFiles', 'maxDiffBytes'])
+const PROVIDERS = new Set(['codex', 'claude'])
+const MODES = new Set(['auto', 'fast', 'balanced', 'deep'])
 
 function plainObject(value, label) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(label + ' must be an object.')
@@ -30,26 +33,53 @@ export function parseImplementationConfig(text, source = '<inline>') {
   try { parsed = JSON.parse(text) } catch (error) { throw new Error(source + ': invalid JSON: ' + error.message) }
   plainObject(parsed, source)
   onlyKeys(parsed, CONFIG_KEYS, source)
-  if (parsed.schemaVersion !== 1) throw new Error(source + ': schemaVersion must be 1.')
-  if (parsed.adapter === null) return { schemaVersion: 1, adapter: null, recovery: { maxAttempts: 2 } }
+  if (parsed.schemaVersion !== 1 && parsed.schemaVersion !== 2) throw new Error(source + ': schemaVersion must be 1 or 2.')
+  if (parsed.adapter === null) return { schemaVersion: parsed.schemaVersion, adapter: null, recovery: { maxAttempts: 2 } }
   plainObject(parsed.adapter, source + ': adapter')
-  onlyKeys(parsed.adapter, ADAPTER_KEYS, source + ': adapter')
-  if (typeof parsed.adapter.id !== 'string' || !/^[a-z][a-z0-9-]{0,63}$/.test(parsed.adapter.id)) {
-    throw new Error(source + ': adapter.id is invalid.')
-  }
-  if (!Array.isArray(parsed.adapter.command) || parsed.adapter.command.length < 1 || parsed.adapter.command.length > 64) {
-    throw new Error(source + ': adapter.command must contain 1-64 argv entries.')
-  }
-  const command = parsed.adapter.command.map((entry, index) => {
-    if (typeof entry !== 'string' || !entry || entry.length > 4096 || entry.includes('\0')) {
-      throw new Error(source + ': adapter.command[' + index + '] is invalid.')
-    }
-    return index === 0 ? './' + safePath(entry, source + ': adapter.command[0]') : entry
-  })
-  if (parsed.adapter.network !== true && parsed.adapter.network !== false) throw new Error(source + ': adapter.network must be boolean.')
+  const kind = parsed.schemaVersion === 1 ? 'command' : parsed.adapter.kind
+  if (kind !== 'command' && kind !== 'provider') throw new Error(source + ': adapter.kind must be command or provider.')
+  onlyKeys(parsed.adapter, kind === 'command' ? COMMAND_ADAPTER_KEYS : PROVIDER_ADAPTER_KEYS, source + ': adapter')
   const timeoutMs = parsed.adapter.timeoutMs ?? 30 * 60 * 1000
   if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 60 * 60 * 1000) {
     throw new Error(source + ': adapter.timeoutMs must be between 1000 and 3600000.')
+  }
+  let adapter
+  if (kind === 'command') {
+    if (typeof parsed.adapter.id !== 'string' || !/^[a-z][a-z0-9-]{0,63}$/.test(parsed.adapter.id)) {
+      throw new Error(source + ': adapter.id is invalid.')
+    }
+    if (!Array.isArray(parsed.adapter.command) || parsed.adapter.command.length < 1 || parsed.adapter.command.length > 64) {
+      throw new Error(source + ': adapter.command must contain 1-64 argv entries.')
+    }
+    const command = parsed.adapter.command.map((entry, index) => {
+      if (typeof entry !== 'string' || !entry || entry.length > 4096 || entry.includes('\0')) {
+        throw new Error(source + ': adapter.command[' + index + '] is invalid.')
+      }
+      return index === 0 ? './' + safePath(entry, source + ': adapter.command[0]') : entry
+    })
+    if (parsed.adapter.network !== true && parsed.adapter.network !== false) throw new Error(source + ': adapter.network must be boolean.')
+    adapter = { kind: 'command', id: parsed.adapter.id, command, network: parsed.adapter.network, timeoutMs }
+  } else {
+    if (!PROVIDERS.has(parsed.adapter.provider)) throw new Error(source + ': adapter.provider must be codex or claude.')
+    if (parsed.adapter.network !== true) throw new Error(source + ': provider adapters must declare network: true.')
+    const model = parsed.adapter.model ?? null
+    if (model !== null && (typeof model !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/.test(model))) {
+      throw new Error(source + ': adapter.model is invalid.')
+    }
+    const mode = parsed.adapter.mode ?? 'auto'
+    if (!MODES.has(mode)) throw new Error(source + ': adapter.mode must be auto, fast, balanced, or deep.')
+    const contextBudgetCharacters = parsed.adapter.contextBudgetCharacters ?? null
+    if (contextBudgetCharacters !== null && (!Number.isSafeInteger(contextBudgetCharacters) || contextBudgetCharacters < 64 || contextBudgetCharacters > 32_768)) {
+      throw new Error(source + ': adapter.contextBudgetCharacters must be between 64 and 32768.')
+    }
+    const maxBudgetUsd = parsed.adapter.maxBudgetUsd ?? null
+    if (maxBudgetUsd !== null && (parsed.adapter.provider !== 'claude' || typeof maxBudgetUsd !== 'number' || !Number.isFinite(maxBudgetUsd) || maxBudgetUsd < 0.01 || maxBudgetUsd > 100)) {
+      throw new Error(source + ': adapter.maxBudgetUsd is supported only for Claude and must be between 0.01 and 100.')
+    }
+    adapter = {
+      kind: 'provider', id: parsed.adapter.provider, provider: parsed.adapter.provider, network: true,
+      timeoutMs, model, mode, contextBudgetCharacters, maxBudgetUsd
+    }
   }
   const recovery = parsed.recovery ?? {}
   plainObject(recovery, source + ': recovery')
@@ -77,8 +107,8 @@ export function parseImplementationConfig(text, source = '<inline>') {
     throw new Error(source + ': writePolicy.maxDiffBytes must be between 1 and 8388608.')
   }
   return {
-    schemaVersion: 1,
-    adapter: { id: parsed.adapter.id, command, network: parsed.adapter.network, timeoutMs },
+    schemaVersion: parsed.schemaVersion,
+    adapter,
     writePolicy: { allowedPrefixes, maxChangedFiles, maxDiffBytes },
     recovery: { maxAttempts }
   }

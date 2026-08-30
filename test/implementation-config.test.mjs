@@ -62,3 +62,44 @@ test('implementation executable resolver accepts only a project-owned regular ex
   await symlink(join(root, 'tools/real'), join(root, 'tools/link'))
   await assert.rejects(resolveImplementationExecutable(root, ['./tools/link']), /symbolic link/)
 })
+
+test('schema v2 accepts bounded Codex and Claude providers without accepting arbitrary executables', () => {
+  const codex = parseImplementationConfig(JSON.stringify({
+    schemaVersion: 2,
+    adapter: {
+      kind: 'provider', provider: 'codex', network: true, mode: 'auto',
+      contextBudgetCharacters: 6000, model: null
+    },
+    writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 20, maxDiffBytes: 1048576 },
+    recovery: { maxAttempts: 2 }
+  }))
+  assert.equal(codex.adapter.kind, 'provider')
+  assert.equal(codex.adapter.provider, 'codex')
+  assert.equal(codex.adapter.contextBudgetCharacters, 6000)
+
+  const providerConfig = (provider) => ({
+    schemaVersion: 2,
+    adapter: {
+      kind: 'provider', provider, network: true, mode: 'auto',
+      contextBudgetCharacters: 6000, model: null
+    },
+    writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 20, maxDiffBytes: 1048576 },
+    recovery: { maxAttempts: 2 }
+  })
+  const claude = providerConfig('claude')
+  Object.assign(claude.adapter, { mode: 'fast', contextBudgetCharacters: null, model: 'sonnet', maxBudgetUsd: 2.5 })
+  const parsedClaude = parseImplementationConfig(JSON.stringify(claude))
+  assert.equal(parsedClaude.adapter.maxBudgetUsd, 2.5)
+
+  const arbitrary = providerConfig('codex')
+  arbitrary.adapter.provider = 'arbitrary-shell'
+  assert.throws(() => parseImplementationConfig(JSON.stringify(arbitrary)), /codex or claude/)
+
+  const offline = providerConfig('codex')
+  offline.adapter.network = false
+  assert.throws(() => parseImplementationConfig(JSON.stringify(offline)), /must declare network/)
+
+  const codexBudget = providerConfig('codex')
+  codexBudget.adapter.maxBudgetUsd = 1
+  assert.throws(() => parseImplementationConfig(JSON.stringify(codexBudget)), /only for Claude/)
+})

@@ -146,6 +146,20 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] synthetic impact Recall@5/Recall@20 regression gate through the production ranking API
 - [ ] two-developer adoption run with a real handoff and measured merge-conflict rate
 
+## 1.1 — Built-in implementation providers (unreleased)
+
+- [x] explicit Codex CLI and Claude Code provider configuration with legacy command-adapter compatibility
+- [x] PATH resolution, version probe, filtered environment, `shell: false`, and no dangerous sandbox-bypass flags
+- [x] deterministic fast/balanced/deep context and effort profiles with conservative auto fallback
+- [x] source-bound bounded code context, approved plan, write policy, authority limits, and compact recovery request
+- [x] detached-worktree implementation followed by the unchanged complete verification Gate contract
+- [x] bounded numeric token/cost telemetry recorded as advisory evidence only
+- [x] mock-provider end-to-end edit, write-policy, recovery, and verification tests
+- [x] one Codex and one Claude full-path implementation smoke on separate synthetic Java repositories, including real edit and Gate execution
+- [ ] measured real-provider implementation on two unrelated backend tasks
+- [ ] compare tokens, time, valid edit rate, and repair rate against direct Codex/Claude execution
+- [ ] lightweight non-writing question/inspection router; implementation profiles do not yet turn BTH into a chat harness
+
 ## Later, only with measured demand
 
 - [ ] optional trusted-CI signature/attestation policy for organizations that need hostile-author assurance

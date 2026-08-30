@@ -2,7 +2,10 @@ import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 
 const SAFE_ENVIRONMENT_KEYS = [
+  'APPDATA',
   'HOME',
+  'CODEX_HOME',
+  'CLAUDE_CONFIG_DIR',
   'DOCKER_CERT_PATH',
   'DOCKER_CONTEXT',
   'DOCKER_HOST',
@@ -11,6 +14,8 @@ const SAFE_ENVIRONMENT_KEYS = [
   'JAVA_HOME',
   'LANG',
   'LC_ALL',
+  'LOCALAPPDATA',
+  'LOGNAME',
   'M2_HOME',
   'ComSpec',
   'COMSPEC',
@@ -26,9 +31,14 @@ const SAFE_ENVIRONMENT_KEYS = [
   'TMPDIR',
   'TEMP',
   'TMP',
+  'USER',
   'USERPROFILE',
   'WINDIR',
+  'XDG_CACHE_HOME',
+  'XDG_CONFIG_HOME',
+  'XDG_DATA_HOME',
   'XDG_RUNTIME_DIR',
+  'XDG_STATE_HOME',
   'http_proxy',
   'https_proxy',
   'no_proxy'
@@ -89,11 +99,15 @@ export function runProcess({
   args,
   cwd,
   timeoutMs = 10 * 60 * 1000,
+  tailBytes = 8192,
   stdioDrainTimeoutMs = 250,
   stdioTerminateGraceMs = 250,
   stdioKillWaitMs = 250,
   env
 }) {
+  if (!Number.isSafeInteger(tailBytes) || tailBytes < 1024 || tailBytes > 1024 * 1024) {
+    throw new Error('Process tailBytes must be between 1024 and 1048576.')
+  }
   return new Promise((resolvePromise, reject) => {
     const startedAt = new Date()
     const startedMonotonic = Date.now()
@@ -182,7 +196,7 @@ export function runProcess({
       }
       stdoutHash.update(chunk)
       stdoutBytes += chunk.length
-      stdoutTail = Buffer.concat([stdoutTail, chunk]).subarray(-8192)
+      stdoutTail = Buffer.concat([stdoutTail, chunk]).subarray(-tailBytes)
     }
     const onStderr = (chunk) => {
       if (settled) {
@@ -190,7 +204,7 @@ export function runProcess({
       }
       stderrHash.update(chunk)
       stderrBytes += chunk.length
-      stderrTail = Buffer.concat([stderrTail, chunk]).subarray(-8192)
+      stderrTail = Buffer.concat([stderrTail, chunk]).subarray(-tailBytes)
     }
     child.stdout.on('data', onStdout)
     child.stderr.on('data', onStderr)

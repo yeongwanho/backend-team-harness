@@ -9,6 +9,13 @@ test('child-process environment excludes unrelated credentials', () => {
   const environment = buildSafeEnvironment({
     PATH: '/usr/bin',
     HOME: '/tmp/example-home',
+    USER: 'example-user',
+    LOGNAME: 'example-user',
+    CODEX_HOME: '/tmp/codex-home',
+    CLAUDE_CONFIG_DIR: '/tmp/claude-config',
+    APPDATA: 'C:\\Users\\example\\AppData\\Roaming',
+    LOCALAPPDATA: 'C:\\Users\\example\\AppData\\Local',
+    XDG_CONFIG_HOME: '/tmp/xdg-config',
     MAVEN_OPTS: '-javaagent:/tmp/untrusted.jar',
     AWS_SECRET_ACCESS_KEY: 'must-not-pass',
     DATABASE_URL: 'must-not-pass'
@@ -16,6 +23,13 @@ test('child-process environment excludes unrelated credentials', () => {
 
   assert.equal(environment.PATH, '/usr/bin')
   assert.equal(environment.HOME, '/tmp/example-home')
+  assert.equal(environment.USER, 'example-user')
+  assert.equal(environment.LOGNAME, 'example-user')
+  assert.equal(environment.CODEX_HOME, '/tmp/codex-home')
+  assert.equal(environment.CLAUDE_CONFIG_DIR, '/tmp/claude-config')
+  assert.equal(environment.APPDATA, 'C:\\Users\\example\\AppData\\Roaming')
+  assert.equal(environment.LOCALAPPDATA, 'C:\\Users\\example\\AppData\\Local')
+  assert.equal(environment.XDG_CONFIG_HOME, '/tmp/xdg-config')
   assert.equal(environment.CI, 'true')
   assert.equal(environment.BTH_NODE, process.execPath)
   assert.equal(environment.AWS_SECRET_ACCESS_KEY, undefined)

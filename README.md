@@ -363,8 +363,11 @@ node src/cli.mjs task handoff USER-17 /path/to/project \
   --from developer --to teammate --reason "결제 adapter 구현을 teammate가 담당"
 # 어떤 코딩 에이전트에도 넘길 수 있는 읽기 전용 JSON 계약
 node src/cli.mjs task export-plan USER-17 /path/to/project --json
-# 사람 또는 외부 코딩 에이전트가 승인된 plan.md 범위만 구현하거나,
-# 아래의 선택적 격리 구현 포트를 사용
+# 설치된 CLI 확인 후 Codex 또는 Claude를 한 번 명시적으로 연결
+node src/cli.mjs implement providers /path/to/project
+node src/cli.mjs implement configure codex /path/to/project \
+  --mode auto --allowed-prefixes '["src/","pom.xml"]'
+# 승인된 plan.md 범위만 격리 worktree에서 구현
 node src/cli.mjs implement run USER-17 /path/to/project \
   --by developer --allow-write --allow-network
 node src/cli.mjs implement status USER-17 /path/to/project
@@ -382,18 +385,22 @@ node src/cli.mjs diagnose USER-17 /path/to/project
 
 Task의 context·plan·implementation authoring에는 한 명의 active writer가 있습니다. 처음 actor가 lease를 잡고, 다른 개발자는 `task handoff` 이벤트가 hash chain에 기록된 뒤에만 작성할 수 있습니다. 계획 승인과 실행 검증은 별도 서명 역할이므로 writer 소유권을 빼앗지 않습니다. 서로 다른 Git clone에서 같은 `events.jsonl`을 갈라 썼다면 BTH가 자동 병합하지 않습니다. task/interview 아래 unmerged index entry가 하나라도 있으면 replay 전에 중단하고, 팀이 Git 충돌과 전체 hash chain을 검토하도록 요구합니다.
 
-BTH Core는 모델을 내장하지 않습니다. 대신 프로젝트가 신뢰하는 CLI를 선택적 구현 어댑터로 연결할 수 있습니다. 그래서 Codex·Claude Code·사내 도구·사람 중 무엇을 쓰더라도 계획·승인·검증 판정은 모델의 주장과 분리됩니다.
+BTH Core는 모델을 PASS 판정기로 사용하지 않습니다. 대신 설치된 Codex CLI와 Claude Code를 내장 provider adapter로 실행하거나, 기존처럼 프로젝트가 소유하는 명령 wrapper를 연결할 수 있습니다. 어느 경로든 계획·승인·검증 판정은 모델의 주장과 분리됩니다.
 
-구현 포트를 사용하려면 팀이 `.backend-harness/implementation.json`을 명시적으로 설정합니다. `adapter.command[0]`은 프로젝트에 포함된 검토 가능한 wrapper여야 하며, BTH는 각 요청 끝에 `--request <local-json>`을 추가합니다.
+`implement configure`는 비활성 템플릿만 기본적으로 바꾸고, 이미 설정된 adapter는 `--force` 없이는 교체하지 않습니다. 교체 전 파일은 `.backend-harness/local/backups/`에 보관됩니다. provider는 `shell: false`로 실행되고 위험한 sandbox-bypass flag를 사용하지 않으며, 매 실행에 `--allow-write --allow-network`가 다시 필요합니다.
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "adapter": {
-    "id": "team-coding-agent",
-    "command": ["./tools/implement-with-agent"],
+    "kind": "provider",
+    "provider": "codex",
     "network": true,
-    "timeoutMs": 1800000
+    "timeoutMs": 1800000,
+    "model": null,
+    "mode": "auto",
+    "contextBudgetCharacters": null,
+    "maxBudgetUsd": null
   },
   "writePolicy": {
     "allowedPrefixes": ["src/", "build.gradle.kts"],
@@ -404,6 +411,14 @@ BTH Core는 모델을 내장하지 않습니다. 대신 프로젝트가 신뢰�
 }
 ```
 
+`auto`는 구조화된 interview claims가 DB·migration·공개 API 변경을 명시하면 `deep`(12,000자/high effort), 단일 모듈이며 DB·공개 API 변경이 없다고 모두 명시하면 `fast`(2,000자/low effort), 그 밖에는 `balanced`(6,000자/medium effort)를 선택합니다. 승인된 task 본문은 fast/balanced/deep별 8,000/24,000/64,000자로 별도 제한하며, 자동 모드의 큰 작업은 deep으로 올리고 64,000자를 넘으면 작업을 나누도록 실패합니다. 모르는 작업을 가볍다고 추측하지 않습니다. 명시적 `--mode fast|balanced|deep` 설정과 64~32,768자의 code-context override도 기록됩니다.
+
+provider request에는 승인된 계획, 허용 경로·diff budget, source-bound codegraph의 제한된 상위 문맥, 직전 실패 요약만 들어갑니다. 요청 파일 자체도 실행 전후 SHA-256으로 봉인됩니다. provider는 관련 경로부터 읽고 넓은 테스트는 실행하지 않도록 지시받으며, 수정 뒤 BTH가 기존 `verification.json`의 모든 필수 Gate를 실행합니다. provider가 보고한 token/cost 숫자는 관찰값으로만 남고 PASS 권한은 없습니다. 코드 변경이 전혀 없으면 `no-source-change`로 실패하며 전체 Gate를 성공한 척 실행하지 않습니다. 내장 provider는 이미 로그인된 로컬 CLI 세션을 사용하며 API-key 환경변수는 의도적으로 전달하지 않습니다.
+
+`fast`가 제한하는 것은 BTH가 추가하는 task·code context와 provider effort입니다. 각 CLI가 자체적으로 붙이는 system prompt, tool schema, cache traffic까지 작아진다는 뜻은 아닙니다. 2026-08-30의 작은 합성 Java 구현 smoke에서 BTH request는 각각 약 1.6 KiB였지만 Codex는 총 input 97,449(그중 cached 82,688), Claude는 input 6 + cache creation 13,849 + cache read 80,424와 약 $0.076을 보고했습니다. 이 값은 한 환경의 관찰값이지 일반 성능 보장이 아닙니다. Claude는 `--max-budget-usd`를 전달할 수 있지만 현재 사용한 Codex CLI에는 같은 달러 상한이 없어 effort·timeout·attempt 한도로만 제한합니다. 따라서 내장 provider는 승인된 구현용이며, 짧은 질문을 항상 저비용으로 답하는 chat router는 아직 아닙니다.
+
+프로젝트 고유 CLI를 유지하려면 schema v1 command adapter도 계속 지원합니다. 이 경우 기존 request schema v1을 그대로 유지하고, `adapter.command[0]`은 프로젝트 안의 검토 가능한 wrapper여야 하며 BTH가 `--request <local-json>`을 추가합니다.
+
 실행 조건과 경계:
 
 - source-bound 계획이 사람에게 승인됐고 원본 소스가 clean이어야 합니다.
@@ -413,6 +428,7 @@ BTH Core는 모델을 내장하지 않습니다. 대신 프로젝트가 신뢰�
 - 허용 prefix·파일 수·diff bytes를 넘긴 변경, `verification.json`, 구현 wrapper, Gate 실행 파일 변경은 실패로 분류됩니다.
 - 어댑터가 격리 `HEAD`를 commit/reset으로 움직이거나 공유 branch/tag ref, assume-unchanged, skip-worktree를 바꿔도 해당 시도는 실패합니다. 소스 diff는 immutable base commit과 비교합니다.
 - 실패 Gate와 테스트 요약만 다음 bounded repair 요청에 들어갑니다. 최대 5회를 넘길 수 없습니다. 단, Gate가 후보 파일·전체 변경 경로·공유 ref·숨김 index flag를 바꾸면 작업공간 신뢰가 깨진 것으로 보아 자동 repair를 중단하고 reset을 요구합니다.
+- 로그인 실패, 비용 한도 초과, rate limit, 설치된 CLI와 argv의 비호환처럼 같은 입력을 즉시 반복해도 해결되지 않는 provider 오류는 한 번만 기록하고 중단합니다. 일반 provider 실패와 실제 Gate 실패만 남은 recovery budget 안에서 재시도합니다.
 - 실패 횟수를 소진했거나 오래된 구현 기록을 폐기할 때는 `implement reset --by ... --discard-workspace`가 worktree를 제거하고 원본 sealed record와 별도 sealed reset receipt를 보관합니다.
 - 통합 후 task가 `VERIFIED` 또는 `DONE`이면 `implement cleanup --by ... --discard-workspace`가 격리 worktree를 제거하되 passed record와 이전 seal 연결은 유지합니다.
 - 격리 검증이 통과해도 자동 merge·commit·배포·운영 DB 접근·`VERIFIED` 전환은 하지 않습니다. 사람이 diff를 반영해야 하며, isolated task의 `bth verify`는 상태가 `VERIFY_FAILED`여도 격리 결과의 전체 Git 변경 경로·일반 파일 내용·삭제·실행 비트·선언 입력이 실제 소스와 정확히 일치할 때만 시작합니다. 인증 목록 밖의 추가 변경과 symlink 구현은 거절됩니다.

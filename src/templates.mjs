@@ -109,7 +109,7 @@ export const sharedTemplates = [
   {
     path: '.backend-harness/implementation.json',
     content: JSON.stringify({
-      schemaVersion: 1,
+      schemaVersion: 2,
       adapter: null,
       recovery: { maxAttempts: 2 }
     }, null, 2) + '\n'

@@ -60,12 +60,12 @@ async function approvedImplementationProject(options = {}) {
     )
   }
   await initProject(root)
-  await writeFile(join(root, '.backend-harness/implementation.json'), JSON.stringify({
-    schemaVersion: 1,
-    adapter: { id: 'fixture', command: options.adapterCommand ?? ['./tools/implement'], network: false, timeoutMs: 30_000 },
-    writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 64 * 1024 },
-    recovery: { maxAttempts: 2 }
-  }, null, 2) + '\n', 'utf8')
+  await writeFile(join(root, '.backend-harness/implementation.json'), JSON.stringify(options.providerConfig ?? {
+      schemaVersion: 1,
+      adapter: { id: 'fixture', command: options.adapterCommand ?? ['./tools/implement'], network: false, timeoutMs: 30_000 },
+      writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 64 * 1024 },
+      recovery: { maxAttempts: 2 }
+    }, null, 2) + '\n', 'utf8')
   await writeFile(join(root, 'tools-implement.tmp'), options.adapterScript ?? '#!/bin/sh\nset -eu\nmkdir -p src/main/java/example\nprintf "package example; class Generated {}\\n" > src/main/java/example/Generated.java\n', 'utf8')
   await mkdir(join(root, 'tools'), { recursive: true })
   await rename(join(root, 'tools-implement.tmp'), join(root, 'tools/implement'))
@@ -99,6 +99,9 @@ test('approved implementation runs in a detached worktree, verifies changes, and
   assert.equal(result.record.verification.tests.executed, 1)
   assert.ok(result.record.changedFiles.paths.includes('src/main/java/example/Generated.java'))
   assert.deepEqual(result.record.implementedFiles.map((entry) => entry.path), ['src/main/java/example/Generated.java'])
+  const legacyRequest = JSON.parse(await readFile(join(result.record.workspace, '.backend-harness/local/implementation/request-IMPL-1.json'), 'utf8'))
+  assert.equal(legacyRequest.schemaVersion, 1)
+  assert.equal(Object.hasOwn(legacyRequest, 'implementation'), false)
   await assert.rejects(access(join(root, 'src/main/java/example/Generated.java')), /ENOENT/)
   await access(join(result.record.workspace, 'src/main/java/example/Generated.java'))
   assert.equal((await loadTask(root, 'IMPL-1')).record.state, 'IMPLEMENTING')
@@ -115,6 +118,194 @@ test('approved implementation runs in a detached worktree, verifies changes, and
   assert.equal(humanCli.status, 0, humanCli.stderr)
   assert.match(humanCli.stdout, /Original bound source unchanged: true/)
   assert.doesNotMatch(humanCli.stdout, /undefined/)
+})
+
+test('built-in provider receives a bounded approved request and produces a fully verified isolated change', async () => {
+  const root = await approvedImplementationProject({
+    providerConfig: {
+      schemaVersion: 2,
+      adapter: {
+        kind: 'provider', provider: 'codex', network: true, timeoutMs: 30_000,
+        model: null, mode: 'auto', contextBudgetCharacters: null, maxBudgetUsd: null
+      },
+      writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 64 * 1024 },
+      recovery: { maxAttempts: 2 }
+    }
+  })
+  let capturedRequest
+  const providerRunner = async (_adapter, input) => {
+    capturedRequest = JSON.parse(await readFile(join(input.cwd, input.requestPath), 'utf8'))
+    await mkdir(join(input.cwd, 'src/main/java/example'), { recursive: true })
+    await writeFile(join(input.cwd, 'src/main/java/example/Generated.java'), 'package example; class Generated {}\n', 'utf8')
+    return {
+      process: {
+        exitCode: 0, signal: null, timedOut: false, stdioDrainTimedOut: false,
+        startedAt: '2026-08-30T00:00:00.000Z', finishedAt: '2026-08-30T00:00:01.000Z', durationMs: 1000,
+        stdout: { sha256: 'a'.repeat(64), bytes: 100, tail: '{"usage":{"input_tokens":100}}' },
+        stderr: { sha256: 'b'.repeat(64), bytes: 0, tail: '' }
+      },
+      metadata: { kind: 'provider', provider: 'codex', version: 'fixture', profile: input.profile, usage: { 'usage.input_tokens': 100 } }
+    }
+  }
+  const result = await runImplementation(root, 'IMPL-1', {
+    actor: 'developer', allowWrite: true, allowNetwork: true,
+    providerProbe: async () => ({ available: true, version: 'codex-fixture 1.0' }),
+    providerRunner
+  })
+  assert.equal(result.record.status, 'passed', JSON.stringify(result.record, null, 2))
+  assert.equal(result.record.adapterKind, 'provider')
+  assert.equal(result.record.provider.id, 'codex')
+  assert.equal(result.record.provider.profile.selected, 'balanced')
+  assert.equal(capturedRequest.schemaVersion, 2)
+  assert.equal(capturedRequest.implementation.profile.contextBudgetCharacters, 6000)
+  assert.deepEqual(capturedRequest.implementation.allowedPrefixes, ['src/'])
+  assert.equal(capturedRequest.authority.deployment, false)
+  assert.equal(capturedRequest.codeContext.budget.limitCharacters, 6000)
+  assert.equal(result.record.attempts[0].invocation.usage['usage.input_tokens'], 100)
+  assert.equal(result.record.attempts[0].request.unchanged, true)
+  assert.match(result.record.attempts[0].request.sha256, /^[a-f0-9]{64}$/)
+})
+
+test('an unavailable built-in provider fails before creating implementation state or changing the task', async () => {
+  const root = await approvedImplementationProject({
+    providerConfig: {
+      schemaVersion: 2,
+      adapter: {
+        kind: 'provider', provider: 'codex', network: true, timeoutMs: 30_000,
+        model: null, mode: 'auto', contextBudgetCharacters: null, maxBudgetUsd: null
+      },
+      writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 64 * 1024 },
+      recovery: { maxAttempts: 2 }
+    }
+  })
+
+  await assert.rejects(
+    runImplementation(root, 'IMPL-1', {
+      actor: 'developer', allowWrite: true, allowNetwork: true,
+      providerProbe: async () => ({ available: false, version: null })
+    }),
+    /provider is unavailable/
+  )
+
+  assert.equal((await loadTask(root, 'IMPL-1')).record.state, 'PLAN_APPROVED')
+  await assert.rejects(implementationStatus(root, 'IMPL-1'), /No implementation run exists/)
+})
+
+test('a non-retryable built-in provider failure stops after one attempt', async () => {
+  const root = await approvedImplementationProject({
+    providerConfig: {
+      schemaVersion: 2,
+      adapter: {
+        kind: 'provider', provider: 'codex', network: true, timeoutMs: 30_000,
+        model: null, mode: 'fast', contextBudgetCharacters: 256, maxBudgetUsd: null
+      },
+      writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 64 * 1024 },
+      recovery: { maxAttempts: 2 }
+    }
+  })
+  let calls = 0
+  const providerRunner = async (_adapter, input) => {
+    calls += 1
+    return {
+      process: {
+        exitCode: 1, signal: null, timedOut: false, stdioDrainTimedOut: false,
+        startedAt: '2026-08-30T00:00:00.000Z', finishedAt: '2026-08-30T00:00:01.000Z', durationMs: 1000,
+        stdout: { sha256: 'a'.repeat(64), bytes: 0, tail: '' },
+        stderr: { sha256: 'b'.repeat(64), bytes: 0, tail: '' }
+      },
+      metadata: {
+        kind: 'provider', provider: 'codex', version: 'fixture', profile: input.profile, usage: {},
+        failure: { code: 'not-authenticated', message: 'The local provider CLI is not authenticated in the filtered execution environment.' }
+      }
+    }
+  }
+
+  const result = await runImplementation(root, 'IMPL-1', {
+    actor: 'developer', allowWrite: true, allowNetwork: true,
+    providerProbe: async () => ({ available: true, version: 'codex-fixture 1.0' }),
+    providerRunner
+  })
+
+  assert.equal(result.record.status, 'failed')
+  assert.equal(calls, 1)
+  assert.equal(result.record.attempts.length, 1)
+  assert.equal(result.record.attempts[0].outcome, 'adapter-failed')
+  assert.equal(result.record.verification.failure.providerFailure.code, 'not-authenticated')
+})
+
+test('a built-in provider cannot edit harness control files even when its prefix policy permits them', async () => {
+  const root = await approvedImplementationProject({
+    providerConfig: {
+      schemaVersion: 2,
+      adapter: {
+        kind: 'provider', provider: 'claude', network: true, timeoutMs: 30_000,
+        model: null, mode: 'fast', contextBudgetCharacters: 256, maxBudgetUsd: 1
+      },
+      writePolicy: { allowedPrefixes: ['.backend-harness/'], maxChangedFiles: 4, maxDiffBytes: 64 * 1024 },
+      recovery: { maxAttempts: 1 }
+    }
+  })
+  const providerRunner = async (_adapter, input) => {
+    await writeFile(join(input.cwd, '.backend-harness/provider-owned.txt'), 'must be rejected\n', 'utf8')
+    return {
+      process: {
+        exitCode: 0, signal: null, timedOut: false, stdioDrainTimedOut: false,
+        startedAt: '2026-08-30T00:00:00.000Z', finishedAt: '2026-08-30T00:00:01.000Z', durationMs: 1000,
+        stdout: { sha256: 'a'.repeat(64), bytes: 0, tail: '' },
+        stderr: { sha256: 'b'.repeat(64), bytes: 0, tail: '' }
+      },
+      metadata: { kind: 'provider', provider: 'claude', version: 'fixture', profile: input.profile, usage: {} }
+    }
+  }
+
+  const result = await runImplementation(root, 'IMPL-1', {
+    actor: 'developer', allowWrite: true, allowNetwork: true,
+    providerProbe: async () => ({ available: true, version: 'claude-fixture 1.0' }),
+    providerRunner
+  })
+
+  assert.equal(result.record.status, 'failed')
+  assert.equal(result.record.attempts[0].outcome, 'control-plane-change')
+  assert.equal(result.record.attempts[0].verification.failure.code, 'protected_control_plane_changed')
+})
+
+test('a built-in provider cannot alter its ignored sealed request evidence', async () => {
+  const root = await approvedImplementationProject({
+    providerConfig: {
+      schemaVersion: 2,
+      adapter: {
+        kind: 'provider', provider: 'codex', network: true, timeoutMs: 30_000,
+        model: null, mode: 'fast', contextBudgetCharacters: 256, maxBudgetUsd: null
+      },
+      writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 64 * 1024 },
+      recovery: { maxAttempts: 1 }
+    }
+  })
+  const providerRunner = async (_adapter, input) => {
+    await writeFile(join(input.cwd, input.requestPath), '{}\n', 'utf8')
+    await mkdir(join(input.cwd, 'src/main/java/example'), { recursive: true })
+    await writeFile(join(input.cwd, 'src/main/java/example/Generated.java'), 'package example; class Generated {}\n', 'utf8')
+    return {
+      process: {
+        exitCode: 0, signal: null, timedOut: false, stdioDrainTimedOut: false,
+        startedAt: '2026-08-30T00:00:00.000Z', finishedAt: '2026-08-30T00:00:01.000Z', durationMs: 1000,
+        stdout: { sha256: 'a'.repeat(64), bytes: 0, tail: '' },
+        stderr: { sha256: 'b'.repeat(64), bytes: 0, tail: '' }
+      },
+      metadata: { kind: 'provider', provider: 'codex', version: 'fixture', profile: input.profile, usage: {} }
+    }
+  }
+
+  const result = await runImplementation(root, 'IMPL-1', {
+    actor: 'developer', allowWrite: true, allowNetwork: true,
+    providerProbe: async () => ({ available: true, version: 'codex-fixture 1.0' }),
+    providerRunner
+  })
+
+  assert.equal(result.record.status, 'failed')
+  assert.equal(result.record.attempts[0].outcome, 'control-plane-change')
+  assert.equal(result.record.attempts[0].verification.failure.code, 'implementation_request_changed')
+  assert.equal(result.record.attempts[0].request.unchanged, false)
 })
 
 test('implementation refuses source writes without a fresh explicit write approval', async () => {
