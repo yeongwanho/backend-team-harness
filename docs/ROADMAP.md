@@ -129,7 +129,7 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] per-user ownership-checked worktree root, running-record crash recovery, hidden-index/ref rejection, and task-audited destructive reset
 - [x] exact dependency-constrained sequential Gate scheduling up to 18 Gates with honest heuristic fallback labels
 - [x] no automatic commit, merge, deployment, production access, or task VERIFIED transition
-- [ ] incremental source index cache measured on a large real backend
+- [x] incremental source index cache measured on a large real backend (explicit warm, read-only reuse, source-fingerprint invalidation, 1/1551-file reparse evidence)
 - [ ] versioned gold impact fixture with Recall@20 >= 0.85
 - [ ] independently maintained second backend validation
 - [ ] path-scoped isolated implementation for a harness rooted below a monorepo Git top-level

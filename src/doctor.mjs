@@ -1,19 +1,10 @@
 import { constants } from 'node:fs'
-import { access, readdir, readFile } from 'node:fs/promises'
-import { relative, resolve, sep } from 'node:path'
+import { access, readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import { loadQualityGates } from './config/quality-gates.mjs'
 import { loadVerificationConfig, resolveGateExecutable } from './config/verification.mjs'
+import { scanProjectManifest } from './core/project-manifest.mjs'
 import { resolveReadableRoot, statPath } from './fs-safety.mjs'
-
-const SKIPPED_DIRECTORIES = new Set([
-  '.git',
-  '.gradle',
-  '.backend-harness',
-  'build',
-  'node_modules',
-  'out',
-  'target'
-])
 
 async function regularFile(root, path) {
   const stat = await statPath(resolve(root, path))
@@ -35,50 +26,22 @@ async function executableFile(root, path) {
   }
 }
 
-async function findFiles(root, predicate, options = {}) {
-  const matches = []
-  const maxDepth = options.maxDepth ?? 12
-  const maxEntries = options.maxEntries ?? 10_000
-  let visited = 0
-
-  async function visit(directory, depth) {
-    if (depth > maxDepth || visited >= maxEntries) {
-      return
-    }
-    let entries
-    try {
-      entries = await readdir(directory, { withFileTypes: true })
-    } catch {
-      return
-    }
-
-    for (const entry of entries) {
-      visited += 1
-      if (visited > maxEntries) {
-        return
-      }
-      if (entry.isSymbolicLink()) {
-        continue
-      }
-      const path = resolve(directory, entry.name)
-      const pathFromRoot = relative(root, path)
-      if (entry.isFile() && predicate(pathFromRoot, entry.name)) {
-        matches.push(pathFromRoot)
-      } else if (entry.isDirectory() && !SKIPPED_DIRECTORIES.has(entry.name)) {
-        await visit(path, depth + 1)
-      }
-    }
+function matchingFiles(manifest, predicate, options = {}) {
+  const maxParentDepth = options.maxParentDepth ?? Infinity
+  return {
+    matches: manifest.files.filter((path) => {
+      const parts = path.split('/')
+      return parts.length - 1 <= maxParentDepth && predicate(path, parts.at(-1))
+    }),
+    truncated: manifest.truncated
   }
-
-  await visit(root, 0)
-  return { matches, truncated: visited >= maxEntries }
 }
 
-async function inspectBuildFiles(root) {
-  const candidates = await findFiles(
-    root,
+async function inspectBuildFiles(root, manifest) {
+  const candidates = matchingFiles(
+    manifest,
     (_path, name) => ['build.gradle', 'build.gradle.kts', 'pom.xml'].includes(name),
-    { maxDepth: 4 }
+    { maxParentDepth: 4 }
   )
   const valid = []
   const invalid = []
@@ -93,16 +56,16 @@ async function inspectBuildFiles(root) {
   return { valid, invalid, truncated: candidates.truncated }
 }
 
-async function inspectFlyway(root) {
-  const found = await findFiles(
-    root,
-    (path, name) => path.split(sep).join('/').includes('/db/migration/') && name.endsWith('.sql')
+async function inspectFlyway(manifest) {
+  const found = matchingFiles(
+    manifest,
+    (path, name) => path.includes('/db/migration/') && name.endsWith('.sql')
   )
   const versioned = new Map()
   const invalid = []
   const duplicates = []
   for (const path of found.matches) {
-    const name = path.split(sep).at(-1)
+    const name = path.split('/').at(-1)
     const versionMatch = name.match(/^([VU])([0-9]+(?:[._][0-9]+)*)__[^/]+\.sql$/)
     const repeatable = /^R__[^/]+\.sql$/.test(name)
     if (!versionMatch && !repeatable) {
@@ -131,11 +94,15 @@ function check(id, status, message, details = undefined) {
   return details === undefined ? { id, status, message } : { id, status, message, details }
 }
 
-export async function doctorProject(inputPath = '.') {
+export async function doctorProject(inputPath = '.', options = {}) {
   const root = await resolveReadableRoot(inputPath)
+  const manifest = options.manifest ?? await scanProjectManifest(root)
+  if (manifest.root !== root) {
+    throw new Error('Project manifest belongs to a different root.')
+  }
   const checks = []
 
-  const builds = await inspectBuildFiles(root)
+  const builds = await inspectBuildFiles(root, manifest)
   const buildStatus = builds.valid.length > 0 ? 'pass' : builds.invalid.length > 0 ? 'fail' : 'warn'
   checks.push(check(
     'build-file',
@@ -164,9 +131,9 @@ export async function doctorProject(inputPath = '.') {
     { files: wrappers }
   ))
 
-  const productionSources = await findFiles(
-    root,
-    (path, name) => /src\/main\/(?:java|kotlin)\//.test(path.split(sep).join('/')) && /\.(?:java|kt)$/.test(name)
+  const productionSources = matchingFiles(
+    manifest,
+    (path, name) => /src\/main\/(?:java|kotlin)\//.test(path) && /\.(?:java|kt)$/.test(name)
   )
   checks.push(check(
     'main-source',
@@ -177,9 +144,9 @@ export async function doctorProject(inputPath = '.') {
     { count: productionSources.matches.length, truncated: productionSources.truncated }
   ))
 
-  const testSources = await findFiles(
-    root,
-    (path, name) => /src\/test\/(?:java|kotlin)\//.test(path.split(sep).join('/')) && /\.(?:java|kt)$/.test(name)
+  const testSources = matchingFiles(
+    manifest,
+    (path, name) => /src\/test\/(?:java|kotlin)\//.test(path) && /\.(?:java|kt)$/.test(name)
   )
   checks.push(check(
     'test-source',
@@ -190,7 +157,7 @@ export async function doctorProject(inputPath = '.') {
     { count: testSources.matches.length, truncated: testSources.truncated }
   ))
 
-  const flyway = await inspectFlyway(root)
+  const flyway = await inspectFlyway(manifest)
   const flywayInvalid = flyway.invalid.length > 0 || flyway.duplicates.length > 0
   checks.push(check(
     'flyway',

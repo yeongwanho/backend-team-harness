@@ -210,7 +210,13 @@ node src/cli.mjs pack install codegraph-advisory /path/to/project
 ```bash
 node src/cli.mjs intelligence inspect /path/to/project
 node src/cli.mjs intelligence inspect /path/to/project --json
+# 명시적으로 로컬 캐시를 만든 뒤, 같은 명령으로 읽기 전용 재사용
+node src/cli.mjs intelligence warm-cache /path/to/project
+# 캐시를 배제한 비교·진단
+node src/cli.mjs intelligence inspect /path/to/project --no-cache --json
 ```
+
+`inspect` 자체는 캐시를 쓰거나 갱신하지 않습니다. `warm-cache`만 `.backend-harness/local/cache/`에 원자적으로 기록하며 이 경로는 공유 Git 상태에서 제외됩니다. 캐시는 Git 소스 지문과 HEAD에 묶이고, 소스가 바뀌면 변경된 Java/Kotlin만 다시 파싱합니다. Git이 무시한 JVM 소스나 submodule 내부 소스가 색인 범위에 있으면 루트 지문만으로 내용을 증명할 수 없으므로 캐시를 사용하지 않습니다. 캐시가 없거나 오래됐거나 변조·손상·과대·symlink 상태이면 검사 실패를 숨기지 않고 새 색인으로 돌아갑니다. 결과의 `code.metrics.parsedFiles`, `reusedFiles`, `readBytes`로 실제 재사용량을 확인할 수 있습니다.
 
 `.backend-harness/project-rules.json`의 규칙은 `confirmed`, `unknown`, `conflict` 세 상태로 평가됩니다. 근거가 없거나 서로 충돌하면 성공으로 올리지 않습니다. `blocker` 규칙이 해결되지 않으면 인터뷰의 계획 확정도 막히며, 각 결과에는 규칙을 정한 문서 경로·section과 실제 fact 근거가 함께 남습니다. 출처는 프로젝트 안의 일반 Markdown 파일과 실제 존재하는 제목이어야 하므로, 가짜 절 이름이나 symlink 출처는 설정 단계에서 거절됩니다. 기본 템플릿은 실행된 JUnit Gate, 기존 Flyway migration 불변성, 필수 지식 문서, 명시적 DB dialect를 검사하지만 회사별 규칙은 팀이 이 파일과 연결된 정책 문서에서 소유해야 합니다.
 

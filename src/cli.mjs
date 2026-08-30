@@ -25,7 +25,7 @@ import {
 } from './runtime/interview-orchestrator.mjs'
 import { exportApprovedPlan } from './runtime/plan-export.mjs'
 import { diagnoseTaskFailure } from './runtime/failure-diagnosis.mjs'
-import { inspectProjectIntelligence } from './adapters/project-intelligence.mjs'
+import { inspectProjectIntelligence, warmProjectIntelligenceCache } from './adapters/project-intelligence.mjs'
 import { cleanupImplementation, implementationStatus, resetImplementation, runImplementation } from './runtime/implementation-orchestrator.mjs'
 
 const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version
@@ -37,7 +37,8 @@ function printHelp() {
     'Usage:',
     '  bth init [path] [--force] [--allow-unversioned]',
     '  bth doctor [path] [--json]',
-    '  bth intelligence inspect [path] [--json]',
+    '  bth intelligence inspect [path] [--no-cache] [--json]',
+    '  bth intelligence warm-cache [path] [--json]',
     '  bth check [path] [--allow-network] [--json]',
     '  bth pack list [--json]',
     '  bth pack install <id> [path] [--json]',
@@ -330,16 +331,36 @@ async function runDoctor(args) {
 
 async function runIntelligence(args) {
   const [subcommand, ...rest] = args
-  if (subcommand !== 'inspect') {
-    throw new Error('Usage: bth intelligence inspect [path] [--json]')
+  if (subcommand === 'warm-cache') {
+    const parsed = parseArguments(rest, { booleans: ['--json'] })
+    assertPositionalCount(parsed.positionals, 0, 1, 'bth intelligence warm-cache [path] [--json]')
+    const result = await warmProjectIntelligenceCache(parsed.positionals[0] ?? '.')
+    printResult(result, parsed.flags.has('--json'), () => {
+      if (result.written) {
+        console.log('Warmed JVM intelligence cache for ' + result.sourceFingerprint + '.')
+        console.log('Cache: ' + result.path + ' (' + result.metrics.files + ' files, ' + result.bytes + ' bytes)')
+      } else {
+        console.log('JVM intelligence cache was not written: ' + result.diagnostic)
+      }
+    })
+    if (!result.written) {
+      process.exitCode = 1
+    }
+    return
   }
-  const parsed = parseArguments(rest, { booleans: ['--json'] })
-  assertPositionalCount(parsed.positionals, 0, 1, 'bth intelligence inspect [path] [--json]')
-  const result = await inspectProjectIntelligence(parsed.positionals[0] ?? '.')
+  if (subcommand !== 'inspect') {
+    throw new Error('Usage: bth intelligence <inspect|warm-cache> ...')
+  }
+  const parsed = parseArguments(rest, { booleans: ['--json', '--no-cache'] })
+  assertPositionalCount(parsed.positionals, 0, 1, 'bth intelligence inspect [path] [--no-cache] [--json]')
+  const result = await inspectProjectIntelligence(parsed.positionals[0] ?? '.', {
+    useCache: !parsed.flags.has('--no-cache')
+  })
   printResult(result, parsed.flags.has('--json'), () => {
     const intelligence = result.intelligence
     console.log('Project intelligence: ' + intelligence.evaluation.status.toUpperCase())
     console.log('Source: ' + intelligence.sourceFingerprint)
+    console.log('JVM cache: ' + intelligence.code.cache.status.toUpperCase())
     console.log('Facts: ' + intelligence.facts.length + ', rules: ' + intelligence.rules.count)
     for (const rule of intelligence.evaluation.results) {
       console.log('[' + rule.status.toUpperCase() + '] ' + rule.id + ' — ' + rule.description)

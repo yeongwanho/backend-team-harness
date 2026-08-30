@@ -2,17 +2,24 @@ import { spawn } from 'node:child_process'
 import { relative, sep } from 'node:path'
 import { loadProjectRules } from '../config/project-rules.mjs'
 import { evaluateProjectRules } from '../core/constraint-engine.mjs'
+import { loadJvmIndexCache, writeJvmIndexCache } from '../core/jvm-index-cache.mjs'
 import { inspectJvmProject } from '../core/jvm-project-index.mjs'
 import { inspectKnowledgeDocuments } from '../core/knowledge-index.mjs'
 import { buildSafeEnvironment } from '../core/process-runner.mjs'
+import { PROJECT_MANIFEST, scanProjectManifest } from '../core/project-manifest.mjs'
+import { withProjectVerificationLock } from '../core/project-lock.mjs'
 import { resolveReadableRoot } from '../fs-safety.mjs'
-import { inspectProjectContext } from './project-context.mjs'
+import { captureProjectContextSourceBinding, inspectProjectContext } from './project-context.mjs'
 
 const MAX_GIT_STATUS_BYTES = 16 * 1024 * 1024
 const MAX_EXPOSED_CHANGED_PATHS = 2048
 
 function portable(path) {
   return path.split(sep).join('/')
+}
+
+function isJvmPath(path) {
+  return typeof path === 'string' && /\.(?:java|kt)$/.test(path)
 }
 
 function runGit(root, args) {
@@ -57,7 +64,16 @@ function changeKind(code) {
   return 'modified'
 }
 
-function parseGitStatus(text) {
+function projectRelativePath(path, projectPath) {
+  const portablePath = portable(path)
+  if (!projectPath || projectPath === '.') {
+    return portablePath
+  }
+  const prefix = portable(projectPath).replace(/\/$/, '') + '/'
+  return portablePath.startsWith(prefix) ? portablePath.slice(prefix.length) : portablePath
+}
+
+function parseGitStatus(text, projectPath = '.') {
   const records = text.split('\0').filter(Boolean)
   const changes = []
   for (let index = 0; index < records.length; index += 1) {
@@ -66,10 +82,10 @@ function parseGitStatus(text) {
       throw new Error('Git returned a malformed status entry.')
     }
     const code = record.slice(0, 2)
-    const path = portable(record.slice(3))
+    const path = projectRelativePath(record.slice(3), projectPath)
     const entry = { code, kind: changeKind(code), path }
     if (code.includes('R') || code.includes('C')) {
-      entry.previousPath = portable(records[index + 1] ?? '')
+      entry.previousPath = projectRelativePath(records[index + 1] ?? '', projectPath)
       index += 1
     }
     changes.push(entry)
@@ -77,13 +93,13 @@ function parseGitStatus(text) {
   return changes
 }
 
-async function inspectGitChanges(root) {
+async function inspectGitChanges(root, projectPath = '.') {
   const changes = parseGitStatus(await runGit(root, [
-    'status', '--porcelain=v1', '-z', '--untracked-files=all', '--', '.',
+    '-c', 'status.relativePaths=true', 'status', '--porcelain=v1', '-z', '--untracked-files=all', '--', '.',
     ':(exclude).backend-harness/tasks/**',
     ':(exclude).backend-harness/local/**',
     ':(exclude).backend-harness/generated/**'
-  ]))
+  ]), projectPath)
   const exposed = changes.slice(0, MAX_EXPOSED_CHANGED_PATHS)
   return {
     schemaVersion: 1,
@@ -92,6 +108,29 @@ async function inspectGitChanges(root) {
     changes: exposed,
     counts: Object.fromEntries(['added', 'modified', 'deleted', 'renamed', 'copied'].map((kind) => [kind, changes.filter((entry) => entry.kind === kind).length]))
   }
+}
+
+async function changedJvmPathsSince(root, cachedHeadCommit, currentHeadCommit, projectPath, gitChanges) {
+  if (!cachedHeadCommit || gitChanges.truncated) {
+    return null
+  }
+  const changed = new Set()
+  for (const entry of gitChanges.changes) {
+    if (isJvmPath(entry.path)) changed.add(entry.path)
+    if (isJvmPath(entry.previousPath)) changed.add(entry.previousPath)
+  }
+  if (cachedHeadCommit !== currentHeadCommit) {
+    let commitDiff
+    try {
+      commitDiff = await runGit(root, ['diff', '--name-only', '-z', '--relative', cachedHeadCommit, currentHeadCommit, '--'])
+    } catch {
+      return null
+    }
+    for (const path of commitDiff.split('\0').filter(Boolean).map((entry) => projectRelativePath(entry, projectPath))) {
+      if (isJvmPath(path)) changed.add(path)
+    }
+  }
+  return changed
 }
 
 function fact(id, status, value, summary, evidence) {
@@ -166,16 +205,68 @@ function factsFrom(context, knowledge, code, gitChanges) {
 
 export async function inspectProjectIntelligence(inputPath, options = {}) {
   const root = await resolveReadableRoot(inputPath)
-  const context = options.context ?? await inspectProjectContext(root, options)
-  const [knowledge, code, gitChanges, ruleContract] = await Promise.all([
+  const manifestOptions = {
+    maxDepth: Infinity,
+    maxEntries: 500_000,
+    onLimit: 'throw',
+    onReadError: 'throw',
+    ...(options.manifestOptions ?? {})
+  }
+  const context = options.context ?? await inspectProjectContext(root, { ...options, manifestOptions })
+  const manifest = options.manifest ?? context[PROJECT_MANIFEST] ?? await scanProjectManifest(root, manifestOptions)
+  const gitChangesPromise = inspectGitChanges(root, context.sourceBinding.projectPath)
+  let cache = { root, path: '.backend-harness/local/cache/jvm-index.json', status: 'disabled', diagnostic: null }
+  if (options.useCache !== false) {
+    cache = await loadJvmIndexCache(root, context.sourceBinding.fingerprint, manifest)
+  }
+  let codePromise
+  if (cache.status === 'hit') {
+    codePromise = Promise.resolve({
+      ...cache.index,
+      metrics: {
+        ...cache.index.metrics,
+        readBytes: 0,
+        parsedFiles: 0,
+        reusedFiles: cache.index.metrics.files
+      }
+    })
+  } else if (cache.status === 'stale') {
+    const changedPaths = await changedJvmPathsSince(
+      root,
+      cache.cachedHeadCommit,
+      context.sourceBinding.headCommit,
+      context.sourceBinding.projectPath,
+      await gitChangesPromise
+    )
+    if (changedPaths) {
+      codePromise = inspectJvmProject(root, {
+        ...(options.jvm ?? {}),
+        manifest,
+        cachedIndex: cache.index,
+        changedPaths
+      })
+      cache = {
+        ...cache,
+        status: 'incremental',
+        diagnostic: 'source changed; unchanged JVM files were reused from the previous source-bound cache.'
+      }
+    } else {
+      codePromise = inspectJvmProject(root, { ...(options.jvm ?? {}), manifest })
+    }
+  } else {
+    codePromise = inspectJvmProject(root, { ...(options.jvm ?? {}), manifest })
+  }
+  const [knowledge, indexedCode, gitChanges, ruleContract] = await Promise.all([
     inspectKnowledgeDocuments(root),
-    inspectJvmProject(root, options.jvm),
-    inspectGitChanges(root),
+    codePromise,
+    gitChangesPromise,
     loadProjectRules(root)
   ])
+  const { index: _cachedIndex, root: _cacheRoot, ...cacheMetadata } = cache
+  const code = { ...indexedCode, cache: cacheMetadata }
   const facts = factsFrom(context, knowledge, code, gitChanges)
   const evaluation = evaluateProjectRules(facts, ruleContract.rules)
-  return {
+  const result = {
     ...context,
     intelligence: {
       schemaVersion: 1,
@@ -199,4 +290,37 @@ export async function inspectProjectIntelligence(inputPath, options = {}) {
       gitChanges
     }
   }
+  Object.defineProperty(result, PROJECT_MANIFEST, { value: manifest })
+  return result
+}
+
+export function warmProjectIntelligenceCache(inputPath, options = {}) {
+  return withProjectVerificationLock(inputPath, options.projectLock, async () => {
+    const result = await inspectProjectIntelligence(inputPath, { ...options, useCache: false })
+    const currentSource = await captureProjectContextSourceBinding(result.root ?? inputPath)
+    if (currentSource.fingerprint !== result.intelligence.sourceFingerprint) {
+      throw new Error('Project source changed while the JVM index cache was being prepared. Retry warm-cache on a stable worktree.')
+    }
+    const originalManifest = result[PROJECT_MANIFEST]
+    const currentManifest = await scanProjectManifest(await resolveReadableRoot(inputPath), {
+      maxDepth: Infinity,
+      maxEntries: 500_000,
+      onLimit: 'throw',
+      onReadError: 'throw',
+      ...(options.manifestOptions ?? {})
+    })
+    if (originalManifest.skippedJvmSymlinks !== currentManifest.skippedJvmSymlinks ||
+        originalManifest.files.length !== currentManifest.files.length ||
+        originalManifest.files.some((path, index) => path !== currentManifest.files[index])) {
+      throw new Error('Project file manifest changed while the JVM index cache was being prepared. Retry warm-cache on a stable worktree.')
+    }
+    const { cache: _cacheMetadata, ...index } = result.intelligence.code
+    return writeJvmIndexCache(
+      inputPath,
+      result.sourceBinding,
+      index,
+      currentManifest,
+      { at: options.at }
+    )
+  })
 }

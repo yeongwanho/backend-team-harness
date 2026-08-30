@@ -26,6 +26,7 @@ test('CLI help exposes the actual task and verification commands', () => {
   assert.match(result.stdout, /bth baseline update/)
   assert.match(result.stdout, /bth interview start/)
   assert.match(result.stdout, /bth intelligence inspect/)
+  assert.match(result.stdout, /bth intelligence warm-cache/)
   assert.match(result.stdout, /bth implement run/)
 })
 
@@ -42,6 +43,13 @@ test('CLI exposes deterministic project intelligence and evaluated rules', async
   assert.equal(result.intelligence.evaluation.blocking, false)
   assert.ok(result.intelligence.facts.some((fact) => fact.id === 'verification.required-junit-gate.present'))
   assert.ok(result.intelligence.evaluation.results.some((rule) => rule.id === 'required-junit-evidence'))
+
+  const warmed = runCli(['intelligence', 'warm-cache', root, '--json'])
+  assert.equal(warmed.status, 0, warmed.stderr || warmed.stdout)
+  assert.equal(JSON.parse(warmed.stdout).written, true)
+  const cached = runCli(['intelligence', 'inspect', root, '--json'])
+  assert.equal(cached.status, 0, cached.stderr || cached.stdout)
+  assert.equal(JSON.parse(cached.stdout).intelligence.code.cache.status, 'hit')
 })
 
 test('CLI runs the native requirement interview through PLAN_PROPOSED', async () => {

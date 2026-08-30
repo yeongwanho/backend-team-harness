@@ -3,6 +3,8 @@ import { doctorProject } from '../doctor.mjs'
 import { loadVerificationConfig, verificationExecutablePaths, verificationInputPaths } from '../config/verification.mjs'
 import { loadQualityGates } from '../config/quality-gates.mjs'
 import { captureSourceBinding } from '../core/source-binding.mjs'
+import { PROJECT_MANIFEST, scanProjectManifest } from '../core/project-manifest.mjs'
+import { resolveReadableRoot } from '../fs-safety.mjs'
 
 function portable(path) {
   return path.split(sep).join('/')
@@ -26,14 +28,21 @@ function checkById(doctor, id) {
   return doctor.checks.find((entry) => entry.id === id)
 }
 
-export async function inspectProjectContext(inputPath, options = {}) {
-  const doctor = options.doctor ?? await doctorProject(inputPath)
-  const verification = options.verification ?? await loadVerificationConfig(inputPath, { allowInferred: false })
-  const policies = options.policies ?? await loadQualityGates(doctor.root)
-  const sourceBinding = options.sourceBinding ?? await captureSourceBinding(inputPath, {
-    explicitPaths: verificationInputPaths(verification.config),
-    allowSymlinkPaths: verificationExecutablePaths(verification.config)
+export async function captureProjectContextSourceBinding(inputPath, verification = undefined) {
+  const loaded = verification ?? await loadVerificationConfig(inputPath, { allowInferred: false })
+  return captureSourceBinding(inputPath, {
+    explicitPaths: verificationInputPaths(loaded.config),
+    allowSymlinkPaths: verificationExecutablePaths(loaded.config)
   })
+}
+
+export async function inspectProjectContext(inputPath, options = {}) {
+  const root = await resolveReadableRoot(inputPath)
+  const manifest = options.manifest ?? (options.doctor ? null : await scanProjectManifest(root, options.manifestOptions))
+  const doctor = options.doctor ?? await doctorProject(root, { manifest })
+  const verification = options.verification ?? await loadVerificationConfig(root, { allowInferred: false })
+  const policies = options.policies ?? await loadQualityGates(doctor.root)
+  const sourceBinding = options.sourceBinding ?? await captureProjectContextSourceBinding(root, verification)
   const build = checkById(doctor, 'build-file')
   const wrapper = checkById(doctor, 'build-wrapper')
   const main = checkById(doctor, 'main-source')
@@ -87,7 +96,7 @@ export async function inspectProjectContext(inputPath, options = {}) {
     })
   ]
 
-  return {
+  const result = {
     schemaVersion: 1,
     sourceBinding,
     structuralReadiness: doctor.healthy,
@@ -118,4 +127,8 @@ export async function inspectProjectContext(inputPath, options = {}) {
       verificationSource
     ]
   }
+  if (manifest) {
+    Object.defineProperty(result, PROJECT_MANIFEST, { value: manifest })
+  }
+  return result
 }

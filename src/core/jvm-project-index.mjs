@@ -1,8 +1,9 @@
 import { availableParallelism } from 'node:os'
-import { lstat, readdir, readFile, stat } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+import { lstat, readFile } from 'node:fs/promises'
 import { relative, resolve, sep } from 'node:path'
+import { manifestJvmPaths, scanProjectManifest } from './project-manifest.mjs'
 
-const SKIPPED_DIRECTORIES = new Set(['.git', '.gradle', '.backend-harness', 'build', 'node_modules', 'out', 'target'])
 const MAX_ENTRIES = 500_000
 const MAX_FILES = 100_000
 const MAX_FILE_BYTES = 2 * 1024 * 1024
@@ -12,42 +13,28 @@ function portable(path) {
   return path.split(sep).join('/')
 }
 
-async function discover(root) {
-  const files = []
-  let visitedEntries = 0
-  let skippedSymlinks = 0
-  async function visit(directory) {
-    const entries = await readdir(directory, { withFileTypes: true })
-    for (const entry of entries) {
-      visitedEntries += 1
-      if (visitedEntries > MAX_ENTRIES) {
-        throw new Error('JVM project index exceeded the ' + MAX_ENTRIES + '-entry safety limit.')
-      }
-      if (SKIPPED_DIRECTORIES.has(entry.name)) {
-        continue
-      }
-      const path = resolve(directory, entry.name)
-      if (entry.isSymbolicLink()) {
-        const sourceLink = /\.(?:java|kt)$/.test(entry.name)
-        let directoryLink = false
-        if (!sourceLink) {
-          try { directoryLink = (await stat(path)).isDirectory() } catch {}
-        }
-        if (sourceLink || directoryLink) skippedSymlinks += 1
-        continue
-      }
-      if (entry.isDirectory()) {
-        await visit(path)
-      } else if (entry.isFile() && /\.(?:java|kt)$/.test(entry.name)) {
-        if (files.length >= MAX_FILES) {
-          throw new Error('JVM project index exceeded the ' + MAX_FILES + '-file safety limit.')
-        }
-        files.push(path)
-      }
-    }
+async function discover(root, providedManifest) {
+  const manifest = providedManifest ?? await scanProjectManifest(root, {
+    maxDepth: Infinity,
+    maxEntries: MAX_ENTRIES,
+    onLimit: 'throw',
+    onReadError: 'throw'
+  })
+  if (manifest.root !== root) {
+    throw new Error('Project manifest belongs to a different root.')
   }
-  await visit(root)
-  return { files: files.sort(), visitedEntries, skippedSymlinks }
+  if (manifest.truncated || manifest.unreadableDirectories > 0) {
+    throw new Error('JVM project index requires a complete readable project manifest.')
+  }
+  const projectPaths = manifestJvmPaths(manifest)
+  if (projectPaths.length > MAX_FILES) {
+    throw new Error('JVM project index exceeded the ' + MAX_FILES + '-file safety limit.')
+  }
+  return {
+    files: projectPaths.map((path) => resolve(root, path)),
+    visitedEntries: manifest.visitedEntries,
+    skippedSymlinks: manifest.skippedJvmSymlinks
+  }
 }
 
 async function mapLimit(values, limit, mapper) {
@@ -67,7 +54,7 @@ async function mapLimit(values, limit, mapper) {
   return output
 }
 
-function parseSource(root, path, content) {
+function parseSource(root, path, content, contentSha256) {
   const projectPath = portable(relative(root, path))
   const packageName = content.match(/^\s*package\s+([A-Za-z_][\w.]*)\s*;?/m)?.[1] ?? ''
   const declarations = [...content.matchAll(/\b(?:(enum|data|sealed|annotation|value|fun)\s+)?(class|interface|enum|record|object)\s+([A-Za-z_$][\w$]*)/g)]
@@ -87,11 +74,11 @@ function parseSource(root, path, content) {
   const routes = [...content.matchAll(/@(Get|Post|Put|Delete|Patch|Request)Mapping\s*(?:\(\s*(?:value\s*=\s*|path\s*=\s*)?["']([^"']*)["'][^)]*\))?/g)]
     .map((match) => ({ method: match[1].toUpperCase(), path: match[2] ?? '' }))
   const tables = [...content.matchAll(/@Table\s*\(\s*(?:name\s*=\s*)?["']([^"']+)["']/g)].map((match) => match[1])
-  return { path: projectPath, language: path.endsWith('.kt') ? 'kotlin' : 'java', packageName, declarations, imports, annotations, roles: [...roles], routes, tables }
+  return { path: projectPath, contentSha256, language: path.endsWith('.kt') ? 'kotlin' : 'java', packageName, declarations, imports, annotations, roles: [...roles], routes, tables }
 }
 
 export async function inspectJvmProject(root, options = {}) {
-  const discovered = await discover(root)
+  const discovered = await discover(root, options.manifest)
   let declaredBytes = 0
   const metadata = []
   for (const path of discovered.files) {
@@ -100,18 +87,31 @@ export async function inspectJvmProject(root, options = {}) {
       continue
     }
     if (fileStat.size > MAX_FILE_BYTES) {
-      metadata.push({ path, oversized: true, bytes: fileStat.size })
+      metadata.push({ path, projectPath: portable(relative(root, path)), oversized: true, bytes: fileStat.size })
       continue
     }
     declaredBytes += fileStat.size
     if (declaredBytes > MAX_TOTAL_BYTES) {
       throw new Error('JVM project source exceeds the ' + MAX_TOTAL_BYTES + '-byte aggregate limit.')
     }
-    metadata.push({ path, oversized: false, bytes: fileStat.size })
+    metadata.push({ path, projectPath: portable(relative(root, path)), oversized: false, bytes: fileStat.size })
   }
   let readBytes = 0
+  let parsedFiles = 0
   const parallelism = options.parallelism ?? Math.min(8, Math.max(1, availableParallelism?.() ?? 4))
-  const parsed = await mapLimit(metadata.filter((entry) => !entry.oversized), parallelism, async (entry) => {
+  const cachedFiles = new Map((options.cachedIndex?.files ?? []).map((entry) => [entry.path, entry]))
+  const changedPaths = new Set(options.changedPaths ?? [])
+  const reusable = []
+  const readable = []
+  for (const entry of metadata.filter((candidate) => !candidate.oversized)) {
+    const cached = cachedFiles.get(entry.projectPath)
+    if (cached && !changedPaths.has(entry.projectPath)) {
+      reusable.push(cached)
+    } else {
+      readable.push(entry)
+    }
+  }
+  const readResults = await mapLimit(readable, parallelism, async (entry) => {
     const buffer = await readFile(entry.path)
     if (buffer.length > MAX_FILE_BYTES) {
       throw new Error('JVM source grew beyond the per-file limit while being read: ' + portable(relative(root, entry.path)))
@@ -120,8 +120,16 @@ export async function inspectJvmProject(root, options = {}) {
     if (readBytes > MAX_TOTAL_BYTES) {
       throw new Error('JVM project source exceeded the aggregate limit while being read.')
     }
-    return parseSource(root, entry.path, buffer.toString('utf8'))
+    const contentSha256 = createHash('sha256').update(buffer).digest('hex')
+    const cached = cachedFiles.get(entry.projectPath)
+    if (cached?.contentSha256 === contentSha256) {
+      return cached
+    }
+    parsedFiles += 1
+    return parseSource(root, entry.path, buffer.toString('utf8'), contentSha256)
   })
+  const parsedByPath = new Map([...reusable, ...readResults].map((entry) => [entry.path, entry]))
+  const parsed = metadata.filter((entry) => !entry.oversized).map((entry) => parsedByPath.get(entry.projectPath))
   const roles = [...new Set(parsed.flatMap((entry) => entry.roles))].sort()
   const tables = [...new Set(parsed.flatMap((entry) => entry.tables))].sort()
   const packages = [...new Set(parsed.map((entry) => entry.packageName).filter(Boolean))].sort()
@@ -133,7 +141,10 @@ export async function inspectJvmProject(root, options = {}) {
       skippedSymlinks: discovered.skippedSymlinks,
       files: parsed.length,
       oversizedFiles: metadata.filter((entry) => entry.oversized).length,
-      bytes: readBytes,
+      bytes: declaredBytes,
+      readBytes,
+      parsedFiles,
+      reusedFiles: parsed.length - parsedFiles,
       declarations: parsed.reduce((sum, entry) => sum + entry.declarations.length, 0),
       imports: parsed.reduce((sum, entry) => sum + entry.imports.length, 0),
       routes: parsed.reduce((sum, entry) => sum + entry.routes.length, 0),

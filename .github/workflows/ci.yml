@@ -36,6 +36,9 @@ jobs:
       - run: npm ci
       - run: npm run test:windows-contract
       - run: node src/cli.mjs doctor examples/spring-service --json
+      - run: node src/cli.mjs intelligence warm-cache examples/spring-service --json
+      - run: node src/cli.mjs intelligence warm-cache examples/spring-service --json
+      - run: node src/cli.mjs intelligence inspect examples/spring-service --json
       - run: node src/cli.mjs check examples/spring-service --allow-network --json
 
   jvm-e2e:
