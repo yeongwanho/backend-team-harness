@@ -162,6 +162,30 @@ test('skipped test cases do not satisfy the executed-test minimum', async () => 
   assert.equal(result.reason, 'minimum_executed_tests_not_met')
 })
 
+test('rendered HTML declarations inside inert JUnit logs do not hide testcase failures', () => {
+  const xml = [
+    '<?display <!DOCTYPE html>?>',
+    '<testsuite tests="1" failures="1">',
+    '<!-- log example: <!DOCTYPE html> -->',
+    '<testcase classname="Visit" name="minimumDate">',
+    '<failure message="wrong minimum"/>',
+    '<system-out><![CDATA[<!DOCTYPE html><html>Rendered response</html><!ENTITY inert "text">]]></system-out>',
+    '</testcase></testsuite>'
+  ].join('\n')
+  let result
+  assert.doesNotThrow(() => {
+    result = parseJUnitXml(xml, '<fixture>', { selectedCases: [{ className: 'Visit', name: 'minimumDate' }] })
+  })
+  assert.equal(result.failures, 1)
+  assert.equal(result.selectedTests[0].outcome, 'failed')
+  for (const xml of [
+    '<!-- inert <!DOCTYPE html> --><!DOCTYPE testsuite SYSTEM "https://example.invalid/external.dtd"><testsuite/>',
+    '<testsuite><system-out><![CDATA[inert]]></system-out><!ENTITY x SYSTEM "file:///must-not-read"></testsuite>',
+    '<testsuite><system-out><![CDATA[unterminated <!DOCTYPE html></system-out></testsuite>',
+    '<testsuite><!-- unterminated <!DOCTYPE html></testsuite>'
+  ]) assert.throws(() => parseJUnitXml(xml), /DTD and ENTITY|malformed JUnit XML/)
+})
+
 test('CDATA cannot hide a real failure after a literal testcase closing tag', () => {
   const result = parseJUnitXml([
     '<testsuite tests="1" failures="1">',

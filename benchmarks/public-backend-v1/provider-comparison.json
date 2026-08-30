@@ -8,7 +8,22 @@
       "allowedPrefixes": ["src/"],
       "setupCommand": ["./mvnw", "-q", "-DskipTests=false", "verify"],
       "tasks": [
-        { "id": "spring-01-pet-association", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } },
+        {
+          "id": "spring-01-pet-association",
+          "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" },
+          "acceptance": {
+            "kind": "target-tests",
+            "testPaths": ["src/test/java/org/springframework/samples/petclinic/owner/OwnerTests.java", "src/test/java/org/springframework/samples/petclinic/owner/PetValidatorTests.java"],
+            "command": ["./mvnw", "-q", "-o", "-Dtest=OwnerTests,PetValidatorTests", "test"],
+            "reports": ["target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.OwnerTests.xml", "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetValidatorTests.xml"],
+            "cases": [
+              { "className": "org.springframework.samples.petclinic.owner.OwnerTests", "name": "addPetAddsPersistedPet" },
+              { "className": "org.springframework.samples.petclinic.owner.OwnerTests", "name": "addPetDoesNotAddDuplicatePet" },
+              { "className": "org.springframework.samples.petclinic.owner.PetValidatorTests", "name": "validate" },
+              { "className": "org.springframework.samples.petclinic.owner.PetValidatorTests$ValidateHasErrors", "name": "validateWithLongPetName" }
+            ]
+          }
+        },
         {
           "id": "spring-02-owner-search-whitespace",
           "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "compatible" },
@@ -24,7 +39,24 @@
           }
         },
         { "id": "spring-03-unique-pet-name", "decisions": { "modules": ["root"], "databaseImpact": "schema", "apiImpact": "compatible" } },
-        { "id": "spring-04-future-visit", "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" } },
+        {
+          "id": "spring-04-future-visit",
+          "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" },
+          "acceptance": {
+            "kind": "fixture-tests",
+            "files": [{ "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitAcceptanceTests.java", "fixture": "fixtures/spring/VisitAcceptanceTests.java", "sha256": "05ab5e569fd6462a063bae452ba60678e70b466fe973506526e23fdf88924dcf" }],
+            "command": ["./mvnw", "-q", "-o", "-Dtest=VisitAcceptanceTests", "test"],
+            "reports": ["target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml"],
+            "cases": [
+              { "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests", "name": "rejectsTodayAndPastWithLocalizedDateError" },
+              { "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests", "name": "acceptsTomorrowAndLater" },
+              { "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests", "name": "defaultsNewVisitToTomorrow" },
+              { "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests", "name": "rendersTomorrowAsMinimumDate" },
+              { "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests", "name": "declaresLocalizedVisitDateMessages" },
+              { "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests", "name": "keepsDescriptionRequired" }
+            ]
+          }
+        },
         { "id": "spring-05-binder-id-protection", "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" } },
         { "id": "spring-06-pet-update", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } },
         { "id": "spring-07-mysql-user", "decisions": { "modules": ["root"], "databaseImpact": "schema", "apiImpact": "none" } }
@@ -33,7 +65,7 @@
     {
       "id": "nestjs-boilerplate",
       "buildSystem": null,
-      "allowedPrefixes": ["src/", "test/"],
+      "allowedPrefixes": ["src/", "test/", ".hygen/generate/"],
       "setupCommand": ["npm", "ci", "--ignore-scripts"],
       "tasks": [
         { "id": "nest-01-session-update-by-hash", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } },

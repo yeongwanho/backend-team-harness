@@ -311,7 +311,7 @@ BTH는 요구사항의 단어를 path/type과 대조하고, provenance별 가중
 
 합성 순위 회귀는 50개 node, 4개 요구사항, 20개 distractor가 있는 versioned fixture에서 같은 API로 측정하며 현재 Recall@5와 Recall@20은 모두 `1.0`입니다. 별도로 `npm run benchmark:public -- --allow-network`는 Spring Petclinic, NestJS Boilerplate, Full Stack FastAPI Template의 고정 commit 20개를 clone하고 각 실제 변경 파일을 gold로 검증합니다. production/test pair 동시 선택을 추가한 뒤의 공개 corpus 관찰값은 mean Recall@5 `0.4390`, Recall@20 `0.7200`, nDCG@20 `0.5042`, Recall@20=0 작업 `0개`입니다. 이전 관찰값은 각각 `0.3682`, `0.7075`, `0.4908`이었습니다. 이는 **변경 파일 위치 찾기**의 재현 가능한 관찰일 뿐 구현 성공률이나 회사 저장소 정확도 주장이 아닙니다. 원본 코드·artifact 본문은 evidence에 저장하지 않습니다.
 
-위 공개 corpus 수치는 과거 과제 문구로 측정한 기록입니다. `spring-04-future-visit`의 날짜 허용 방향이 정답 코드와 반대로 적힌 것을 발견해 수정했으며, 수정된 20개 과제의 집계는 재측정 전까지 확정하지 않습니다. 새 결과에는 corpus·요구사항·설정 hash를 기록하고 다른 입력이나 effort/model 결과를 섞어 재사용하지 않습니다. [수정 근거와 남은 검증](docs/evidence/corpus-correction-v20.md).
+위 공개 corpus 수치는 과거 과제 문구로 측정한 기록입니다. 날짜 허용 방향뿐 아니라 이메일 변경·CORS·인증 과제의 실제 요구사항도 원본 코드와 대조해 수정했습니다. 수정된 20개 과제의 정적 파일 탐색은 Recall@5 **0.3682**, Recall@20 **0.6190**, nDCG@20 **0.4467**이며, Swagger 과제는 실제 파일을 39번째로 놓쳤습니다. 아직 탐색 품질에 개선이 필요합니다. 요구사항 자체가 바뀌었으므로 이전 수치와의 차이를 알고리즘 개선/퇴보로 단정하지 않습니다. 새 결과는 corpus·요구사항·설정 hash로 구분합니다. [20개 과제의 대조 근거와 남은 검증](docs/evidence/corpus-behavior-audit-v21.md).
 
 실제 Codex/Claude 구현 비교는 별도 비용 승인 하에서 같은 20개 작업을 BTH lane과 direct lane으로 실행합니다. 수정 후 파일은 양쪽의 `outcomeLocalization`으로만 비교하고, 수정 전 영향 분석은 provider 이벤트에서 실제 pre-write 경로를 관찰했을 때만 `impactLocalization`으로 채웁니다. 실제 내용 읽기를 단순 파일 목록·검색 발견보다 앞에 순위화하며 미측정을 0점이나 수정 결과로 대체하지 않습니다. 작업 시간은 양쪽 모두 provider 실행과 사후 검증을 포함합니다. token은 total/input/cached/uncached/output/reasoning을 분리하고, provider가 evaluator 소유의 build/test 명령을 중복 실행하면 규칙 위반으로 기록합니다.
 
@@ -334,7 +334,7 @@ provider 비교는 공개 이력을 target commit 없이 단일 합성 base comm
 
 기존 테스트 통과는 `verificationSuccessAt1`이며, 요청한 기능의 성공과 다릅니다. `successAt1`은 수정 전 코드에서는 실패하고 정답 코드에서는 통과하는 독립 회귀 테스트로 해당 구현도 확인했을 때만 인정합니다. 그 검증이 없으면 `null`이며, 전체 성공률도 미측정 항목이 남은 동안 확정하지 않습니다. schema 2 이하의 과거 `successAt1`은 기존 테스트 통과 관찰값으로만 취급합니다.
 
-현재 기능별 회귀 검증이 준비된 과제는 `spring-02-owner-search-whitespace` 하나입니다. `--preflight`는 이 과제의 수정 전/정답 대조군도 확인하며, `--execute`는 별도 복사본에 고정된 테스트를 넣어 실제 구현 후보까지 검사합니다. 과제 검증이 없는 나머지는 유료 모델 실행을 거절합니다. 컴파일 실패·누락/중복/건너뛴 테스트를 정상적인 대조군으로 인정하지 않습니다. [구현 범위와 실제 검증 근거](docs/evidence/task-acceptance-v19.md).
+현재 기능별 회귀 검증이 준비된 과제는 **3/20개**입니다: 반려동물 연결, 소유자 이름 공백 처리, 방문일 검증. 수정 전에는 해당 동작이 실패하고 정답 코드에서는 통과하는 실제 대조 검증을 했습니다. 방문일은 평가 전용 테스트로 HTTP 동작·기본 날짜·화면의 최소 날짜·다국어 메시지까지 확인합니다. `--execute`는 별도 복사본에서 실제 구현 후보를 검사하며, 과제 검증이 없는 나머지는 유료 모델 실행을 거절합니다. **대조군 준비 완료는 AI의 구현 성공이 아닙니다.** 컴파일 실패·누락/중복/건너뛴 테스트도 성공으로 세지 않습니다. [추가 검증과 평가 오류 수정](docs/evidence/acceptance-expansion-v21.md).
 
 사용량은 완전한 마지막 실행 결과 이벤트에서만 수집합니다. Claude의 `input_tokens`는 캐시 읽기·생성 토큰을 포함하지 않으므로 총 입력은 세 값을 합하고 `cacheCreationInput`도 별도로 기록합니다. Codex의 입력에서는 보고된 캐시 입력을 빼서 미캐시 입력을 계산합니다. 누락된 값이나 마지막 응답 한 개의 사용량을 실행 전체의 합계로 추정하지 않습니다. 정의 근거: [Anthropic prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching).
 

@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
 import { chmod, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
@@ -72,6 +73,49 @@ test('control-only run has no candidate success, and missing oracle remains unme
   assert.equal((await evaluateTaskAcceptance({})).reason, 'task-oracle-not-defined')
   await assert.rejects(evaluateTaskAcceptance({ ...input, task: { baseSha: 'HEAD' } }), /full pinned/)
   await assert.rejects(evaluateTaskAcceptance({ ...input, timeoutMs: 0 }), /timeout/)
+})
+
+test('hash-pinned evaluator fixtures validate both controls without exposing tests to the candidate', async (t) => {
+  const { root, input } = await fixture()
+  const fixtureRoot = await mkdtemp(join(tmpdir(), 'bth-owned-regression-'))
+  t.after(() => rm(fixtureRoot, { recursive: true, force: true }))
+  const bytes = runGit(root, ['show', input.task.targetSha + ':test/oracle.mjs']) + '\n'
+  await writeFile(join(fixtureRoot, 'oracle.mjs'), bytes)
+  const owned = {
+    kind: 'fixture-tests',
+    files: [{ path: 'test/oracle.mjs', fixture: 'oracle.mjs', sha256: createHash('sha256').update(bytes).digest('hex') }],
+    command: acceptance.command, reports: acceptance.reports, cases: acceptance.cases
+  }
+  assert.deepEqual(parseTaskAcceptance(parseTaskAcceptance(owned)), owned, 'parsed config can be revalidated')
+  const result = await evaluateTaskAcceptance({ ...input, acceptance: owned, fixtureRoot, candidateRoot: root })
+  assert.equal(result.controlsConfirmed, true)
+  assert.equal(result.candidatePassed, false)
+  assert.equal(result.candidateUntouched, true)
+  assert.equal(await readFile(join(root, 'test/oracle.mjs'), 'utf8'), '// old test\n')
+
+  let invoked = false
+  const options = { processRunner: async () => { invoked = true; throw new Error('must not execute') } }
+  await assert.rejects(evaluateTaskAcceptance({ ...input, acceptance: owned }, options), /fixture root/i)
+  await writeFile(join(fixtureRoot, 'oracle.mjs'), '// changed fixture')
+  await assert.rejects(evaluateTaskAcceptance({ ...input, acceptance: owned, fixtureRoot }, options), /hash/i)
+  await writeFile(join(fixtureRoot, 'oracle.mjs'), 'x'.repeat(1024 * 1024 + 1))
+  await assert.rejects(evaluateTaskAcceptance({ ...input, acceptance: owned, fixtureRoot }, options), /bounded regular file/i)
+  if (process.platform !== 'win32') {
+    await rm(join(fixtureRoot, 'oracle.mjs'))
+    await symlink(join(root, 'test/oracle.mjs'), join(fixtureRoot, 'oracle.mjs'))
+    await assert.rejects(evaluateTaskAcceptance({ ...input, acceptance: owned, fixtureRoot }, options), /symbolic link|regular file/)
+  }
+  assert.equal(invoked, false)
+})
+
+test('evaluator fixture config refuses production overwrites, duplicate paths, traversal and unpinned files', () => {
+  const file = { path: 'test/regression.mjs', fixture: 'fixtures/regression.mjs', sha256: 'a'.repeat(64) }
+  const valid = { kind: 'fixture-tests', files: [file], command: acceptance.command, reports: acceptance.reports, cases: acceptance.cases }
+  for (const files of [[], [file, file], [{ ...file, path: 'src/main/App.java' }], [{ ...file, path: '.git/test/config' }], [{ ...file, path: 'node_modules/pkg/test/spec.mjs' }], [{ ...file, fixture: '../outside.mjs' }], [{ ...file, sha256: 'HEAD' }], [{ ...file, extra: true }]]) {
+    assert.throws(() => parseTaskAcceptance({ ...valid, files }))
+  }
+  assert.throws(() => parseTaskAcceptance({ ...valid, testPaths: ['test/unpinned.mjs'] }))
+  assert.throws(() => parseTaskAcceptance({ ...valid, reports: ['.backend-harness/state.xml'] }))
 })
 
 function resultProcess(exitCode = 0, timedOut = false) {

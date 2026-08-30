@@ -58,17 +58,29 @@ function decisions(value, label) {
 export function parseTaskAcceptance(value, label = 'acceptance') {
   if (value === undefined || value === null) return null
   plainObject(value, label)
-  exactKeys(value, new Set(['kind', 'testPaths', 'command', 'reports', 'cases']), label)
-  if (value.kind !== 'target-tests') throw new Error(label + '.kind must be target-tests.')
+  if (!['target-tests', 'fixture-tests'].includes(value.kind)) throw new Error(label + '.kind must be target-tests or fixture-tests.')
+  exactKeys(value, new Set(['kind', value.kind === 'target-tests' ? 'testPaths' : 'files', 'command', 'reports', 'cases']), label)
   const paths = (key) => {
     if (!Array.isArray(value[key]) || value[key].length < 1 || value[key].length > 32) throw new Error(label + '.' + key + ' must contain 1-32 paths.')
     const normalized = value[key].map((entry) => safePath(entry, label + '.' + key))
     if (new Set(normalized).size !== normalized.length || normalized.some((entry) => /[?*\[\]]/.test(entry))) throw new Error(label + '.' + key + ' must be unique exact paths.')
     return normalized
   }
-  const testPaths = paths('testPaths')
+  let files
+  if (value.kind === 'fixture-tests') {
+    if (!Array.isArray(value.files) || value.files.length < 1 || value.files.length > 32) throw new Error(label + '.files must contain 1-32 fixtures.')
+    files = value.files.map((entry) => {
+      plainObject(entry, label + '.files')
+      exactKeys(entry, new Set(['path', 'fixture', 'sha256']), label + '.files')
+      if (typeof entry.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(entry.sha256)) throw new Error(label + '.files requires a SHA-256 hash.')
+      return { path: safePath(entry.path, label + '.files.path'), fixture: safePath(entry.fixture, label + '.files.fixture'), sha256: entry.sha256 }
+    })
+  }
+  const testPaths = files ? files.map((entry) => entry.path) : paths('testPaths')
+  if (new Set(testPaths).size !== testPaths.length || testPaths.some((path) => /[?*\[\]]/.test(path))) throw new Error(label + '.files must have unique exact test paths.')
   if (testPaths.some((path) => !/(^|\/)(?:test|tests|__tests__)\/|\.(?:test|spec)\.[cm]?[jt]sx?$/.test(path))) throw new Error(label + '.testPaths may contain only test source paths.')
   const reports = paths('reports')
+  if ([...testPaths, ...reports].some((path) => path.split('/').some((part) => ['.git', '.backend-harness', 'node_modules', '.venv'].includes(part)))) throw new Error(label + ' cannot overwrite repository metadata, harness state, or dependencies.')
   if (reports.some((path) => !path.endsWith('.xml') || testPaths.includes(path))) throw new Error(label + '.reports must be separate XML report paths.')
   if (!Array.isArray(value.cases) || value.cases.length < 1 || value.cases.length > 256) throw new Error(label + '.cases must contain 1-256 named tests.')
   const cases = value.cases.map((entry) => {
@@ -78,7 +90,7 @@ export function parseTaskAcceptance(value, label = 'acceptance') {
     return { className: entry.className, name: entry.name }
   })
   if (new Set(cases.map((entry) => JSON.stringify(entry))).size !== cases.length) throw new Error(label + '.cases must be unique.')
-  return { kind: value.kind, testPaths, command: command(value.command, label + '.command'), reports, cases }
+  return { kind: value.kind, ...(files ? { files } : { testPaths }), command: command(value.command, label + '.command'), reports, cases }
 }
 
 export function parseProviderBenchmarkConfig(text, corpus, source = '<inline>') {

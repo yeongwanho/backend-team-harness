@@ -302,7 +302,7 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
       providerVersion: providerProbe.version,
       cleanupBthWorkspace: !options.keepWorkspace,
       acceptanceEvaluator: ({ candidateRoot }) => evaluateTaskAcceptance({
-        mirror, task, candidateRoot, timeoutMs: options.timeoutMs,
+        mirror, task, candidateRoot, timeoutMs: options.timeoutMs, fixtureRoot: dirname(resolve(options.config)),
         acceptance: repositoryConfig.tasks.find((entry) => entry.id === task.id).acceptance
       })
     })
@@ -357,7 +357,7 @@ async function executePreflight(caseEntry, corpus, config, options) {
     const preflight = setup.passed ? await preflightBaseVerification(project, repositoryConfig) : null
     const acceptance = repositoryConfig.tasks.find((entry) => entry.id === task.id).acceptance
     const acceptanceControls = preflight?.confirmed && acceptance
-      ? await evaluateTaskAcceptance({ mirror, task, acceptance, timeoutMs: options.timeoutMs })
+      ? await evaluateTaskAcceptance({ mirror, task, acceptance, timeoutMs: options.timeoutMs, fixtureRoot: dirname(resolve(options.config)) })
       : null
     const record = {
       schemaVersion: 1,

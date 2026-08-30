@@ -135,6 +135,30 @@ export async function clearReportFiles(root, patterns) {
   return removed
 }
 
+function containsXmlDeclaration(text) {
+  // Rendered HTML in MockMvc's CDATA is log text, not an XML DTD. Scan once,
+  // skipping inert sections; XMLValidator below still rejects unclosed sections.
+  const declaration = /<!\s*(?:DOCTYPE|ENTITY)\b/iy
+  let cursor = 0
+  while (cursor < text.length) {
+    const start = text.indexOf('<', cursor)
+    if (start === -1) return false
+    const endMarker = text.startsWith('<![CDATA[', start) ? ']]>'
+      : text.startsWith('<!--', start) ? '-->'
+        : text.startsWith('<?', start) ? '?>' : null
+    if (endMarker) {
+      const end = text.indexOf(endMarker, start + (endMarker === ']]>' ? 9 : endMarker === '-->' ? 4 : 2))
+      if (end === -1) return false
+      cursor = end + endMarker.length
+    } else {
+      declaration.lastIndex = start
+      if (declaration.test(text)) return true
+      cursor = start + 1
+    }
+  }
+  return false
+}
+
 export function parseJUnitXml(text, source = '<inline>', options = {}) {
   const selectedCases = options.selectedCases
   if (selectedCases !== undefined && (!Array.isArray(selectedCases) || selectedCases.length < 1 || selectedCases.length > 256 ||
@@ -145,7 +169,7 @@ export function parseJUnitXml(text, source = '<inline>', options = {}) {
   if (typeof text !== 'string' || Buffer.byteLength(text, 'utf8') > 16 * 1024 * 1024) {
     throw new Error(source + ': JUnit XML must be a string no larger than 16 MiB.')
   }
-  if (/<!\s*(?:DOCTYPE|ENTITY)\b/i.test(text)) {
+  if (containsXmlDeclaration(text)) {
     throw new Error(source + ': DTD and ENTITY declarations are not allowed in JUnit XML.')
   }
   const validation = XMLValidator.validate(text, { allowBooleanAttributes: false })

@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { parseEvaluationCorpus } from '../src/evaluation/corpus.mjs'
 import { parseProviderBenchmarkConfig } from '../src/evaluation/provider-benchmark-config.mjs'
@@ -30,4 +31,22 @@ test('provider comparison config rejects missing tasks, shell-shaped fields, and
   const unknown = structuredClone(valid)
   unknown.repositories[0].shell = true
   assert.throws(() => parseProviderBenchmarkConfig(JSON.stringify(unknown), corpus), /unknown key shell/)
+})
+
+test('checked-in evaluator fixtures match their pinned bytes and stay outside provider input', async () => {
+  const corpus = parseEvaluationCorpus(await readFile('benchmarks/public-backend-v1/corpus.json', 'utf8'))
+  const config = parseProviderBenchmarkConfig(await readFile('benchmarks/public-backend-v1/provider-comparison.json', 'utf8'), corpus)
+  let fixtures = 0
+  for (const repository of config.repositories) for (const task of repository.tasks) {
+    if (task.acceptance?.kind !== 'fixture-tests') continue
+    for (const file of task.acceptance.files) {
+      fixtures += 1
+      const bytes = await readFile('benchmarks/public-backend-v1/' + file.fixture)
+      assert.equal(createHash('sha256').update(bytes).digest('hex'), file.sha256, task.id)
+      assert.doesNotMatch(JSON.stringify(task.decisions), /AcceptanceTests|fixtures\/|sha256/)
+    }
+  }
+  assert.ok(fixtures > 0)
+  assert.ok(config.repositories.find((entry) => entry.id === 'nestjs-boilerplate').allowedPrefixes.includes('.hygen/generate/'))
+  assert.ok(config.repositories.every((entry) => !entry.allowedPrefixes.includes('.env')), 'environment secrets remain outside edit scope')
 })

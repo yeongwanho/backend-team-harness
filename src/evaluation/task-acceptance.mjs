@@ -71,6 +71,30 @@ function compactProcess(result) {
   }
 }
 
+async function loadTestFiles(input, oracle) {
+  const result = []
+  let totalBytes = 0
+  for (const entry of oracle.kind === 'fixture-tests' ? oracle.files : oracle.testPaths.map((path) => ({ path }))) {
+    let bytes
+    if (oracle.kind === 'fixture-tests') {
+      if (typeof input.fixtureRoot !== 'string' || !input.fixtureRoot) throw new Error('Evaluator fixture root is required.')
+      const path = await resolveSafeProjectPath(input.fixtureRoot, entry.fixture)
+      const metadata = await lstat(path)
+      if (!metadata.isFile() || metadata.isSymbolicLink() || metadata.size > 1024 * 1024) throw new Error('Oracle fixture must be a bounded regular file.')
+      bytes = await readFile(path)
+      if (digest(bytes) !== entry.sha256) throw new Error('Oracle fixture hash does not match its pinned configuration.')
+    } else {
+      const tree = (await git(input.mirror, ['ls-tree', input.task.targetSha, '--', entry.path])).trim()
+      if (!/^100(?:644|755) blob /.test(tree)) throw new Error('Oracle test path is not a pinned regular file: ' + entry.path)
+      bytes = await git(input.mirror, ['show', input.task.targetSha + ':' + entry.path], 'buffer')
+    }
+    totalBytes += bytes.length
+    if (bytes.length > 1024 * 1024 || totalBytes > 8 * 1024 * 1024) throw new Error('Oracle test sources exceed the bounded fixture budget.')
+    result.push({ path: entry.path, bytes })
+  }
+  return result
+}
+
 async function runOracle(root, oracle, testFiles, timeoutMs, processRunner) {
   for (const file of testFiles) {
     const path = await resolveSafeProjectPath(root, file.path)
@@ -122,12 +146,7 @@ export async function evaluateTaskAcceptance(input, options = {}) {
   const directory = await mkdtemp(join(tmpdir(), 'bth-acceptance-'))
   const startedAt = Date.now()
   try {
-    const testFiles = []
-    for (const path of oracle.testPaths) {
-      const tree = (await git(input.mirror, ['ls-tree', input.task.targetSha, '--', path])).trim()
-      if (!/^100(?:644|755) blob /.test(tree)) throw new Error('Oracle test path is not a pinned regular file: ' + path)
-      testFiles.push({ path, bytes: await git(input.mirror, ['show', input.task.targetSha + ':' + path], 'buffer') })
-    }
+    const testFiles = await loadTestFiles(input, oracle)
     const controls = {}
     for (const [name, ref] of [['base', input.task.baseSha], ['target', input.task.targetSha]]) {
       const root = join(directory, name)
