@@ -27,8 +27,13 @@ The launch design was also checked against the official Node.js child-process do
 - Existing POSIX implementation, verification, interview, evidence, and Pack behavior did not regress in the full suite.
 - The committed example provides a real Windows Gradle wrapper smoke test in hosted CI instead of relying only on mocked platform branches.
 
+## Hosted Windows evidence
+
+- GitHub Actions run: https://github.com/yeongwanho/backend-team-harness/actions/runs/33307835969
+- `windows-contract` completed successfully in 1m41s on `windows-latest`.
+- The job passed the 8 Windows contract tests, `bth doctor`, and a real `bth check` that launched `gradlew.bat` and ingested its JUnit report.
+
 ## Remaining boundary
 
 - Local macOS execution cannot prove Windows kernel process-tree semantics, ACL behavior, drive-letter casing, UNC paths, or long-path policy.
-- Hosted CI status must be green before wrapper execution is claimed as Windows-verified.
 - A native Windows leaked-descendant fixture is still required before `taskkill /T` cleanup is considered fully proven.
