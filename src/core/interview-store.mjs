@@ -7,8 +7,10 @@ import {
   answerInterviewRecord,
   createInterviewRecord,
   finalizeInterviewRecord,
+  interviewContradictions,
   interviewProgress,
   rebindInterviewRecord,
+  resolveInterviewContradictionRecord,
   reviseInterviewRecord
 } from './interview-state.mjs'
 import { taskDirectory } from './task-store.mjs'
@@ -247,6 +249,21 @@ export async function reviseInterviewAnswer(inputPath, taskId, input, options = 
   return { ...loaded, record, event, progress: interviewProgress(record, loaded.contextSnapshot) }
 }
 
+export async function recordInterviewContradictionResolution(inputPath, taskId, input, options = {}) {
+  const loaded = await loadInterview(inputPath, taskId)
+  const paths = await interviewPaths(loaded.root, taskId)
+  const record = resolveInterviewContradictionRecord(loaded.record, input, loaded.contextSnapshot, options)
+  const resolution = record.contradictionResolutions.find((entry) => entry.candidateId === input.candidateId)
+  const event = await persistTransition(paths, loaded.events.at(-1), 'contradiction_resolved', record, {
+    actor: input.actor,
+    candidateId: input.candidateId,
+    candidateSha256: resolution.candidateSha256,
+    contextSnapshotSha256: resolution.contextSnapshotSha256,
+    reason: input.reason
+  })
+  return { ...loaded, record, event, progress: interviewProgress(record, loaded.contextSnapshot) }
+}
+
 async function writeImmutableContext(paths, contextSnapshot, digest) {
   await mkdir(paths.contextSnapshotsDir, { recursive: true })
   await assertNoSymlinkSegments(paths.interviewDir, paths.contextSnapshotsDir)
@@ -303,7 +320,8 @@ export async function finalizeInterview(inputPath, taskId, input, options = {}) 
   const record = finalizeInterviewRecord(loaded.record, {
     actor: input.actor,
     currentSourceFingerprint: input.currentSourceFingerprint,
-    artifactDigests
+    artifactDigests,
+    contradictions: interviewContradictions(loaded.record, loaded.contextSnapshot)
   }, options)
 
   for (const [name, value] of Object.entries(input.artifacts)) {

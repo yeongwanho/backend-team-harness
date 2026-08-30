@@ -26,6 +26,8 @@ test('init creates the shared contract', async () => {
   const implementation = JSON.parse(await readFile(join(root, '.backend-harness/implementation.json'), 'utf8'))
   assert.equal(implementation.adapter, null)
   assert.equal(implementation.recovery.maxAttempts, 2)
+  const projectFacts = JSON.parse(await readFile(join(root, '.backend-harness/project-facts.json'), 'utf8'))
+  assert.deepEqual(projectFacts.providers, [])
 })
 
 test('init preserves an existing team document by default', async () => {

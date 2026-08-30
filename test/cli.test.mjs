@@ -20,11 +20,13 @@ test('CLI help exposes the actual task and verification commands', () => {
   const result = runCli(['--help'])
   assert.equal(result.status, 0)
   assert.match(result.stdout, /bth task create/)
+  assert.match(result.stdout, /bth task handoff/)
   assert.match(result.stdout, /bth verify/)
   assert.match(result.stdout, /bth check/)
   assert.match(result.stdout, /bth pack install/)
   assert.match(result.stdout, /bth baseline update/)
   assert.match(result.stdout, /bth interview start/)
+  assert.match(result.stdout, /bth interview resolve/)
   assert.match(result.stdout, /bth intelligence inspect/)
   assert.match(result.stdout, /bth intelligence warm-cache/)
   assert.match(result.stdout, /bth implement run/)
@@ -98,6 +100,52 @@ test('CLI runs the native requirement interview through PLAN_PROPOSED', async ()
   assert.match(staleApproval.stdout, /approved_plan_source_stale/)
 })
 
+test('CLI accepts structured claims and requires explicit contradiction resolution', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-cli-interview-contradiction-'))
+  await writeGradleFixture(root)
+  initializeGit(root)
+  assert.equal(runCli(['init', root]).status, 0)
+  assert.equal(runCli([
+    'interview', 'start', 'CLI-CONFLICT-1', root,
+    '--requirement', 'Add a migration.', '--by', 'developer'
+  ]).status, 0)
+
+  const answers = [
+    ['acceptance', 'The behavior is observable.', null],
+    ['scope', 'Only users.', '{"modules":["users"]}'],
+    ['data', 'Migration is requested without a DB change.', '{"changesDatabase":false,"requiresMigration":true}'],
+    ['verification', 'Run tests.', '{"requiredGates":["tests"]}'],
+    ['constraints', 'Compatibility remains.', '{"preservesCompatibility":true}']
+  ]
+  for (const [question, text, claims] of answers) {
+    const command = [
+      'interview', 'answer', 'CLI-CONFLICT-1', root,
+      '--question', question, '--text', text, '--by', 'developer'
+    ]
+    if (claims) command.push('--claims', claims)
+    const answered = runCli(command)
+    assert.equal(answered.status, 0, answered.stderr || answered.stdout)
+  }
+
+  const blocked = runCli(['interview', 'finalize', 'CLI-CONFLICT-1', root, '--by', 'developer'])
+  assert.equal(blocked.status, 1)
+  assert.match(blocked.stderr, /unresolved contradiction candidates/)
+
+  let status = JSON.parse(runCli(['interview', 'status', 'CLI-CONFLICT-1', root, '--json']).stdout)
+  for (const candidate of status.progress.contradictions.unresolved) {
+    const resolved = runCli([
+      'interview', 'resolve', 'CLI-CONFLICT-1', root,
+      '--candidate', candidate.id,
+      '--reason', 'Reviewer accepted this decision and bound it to the current source.',
+      '--by', 'reviewer'
+    ])
+    assert.equal(resolved.status, 0, resolved.stderr || resolved.stdout)
+  }
+  status = JSON.parse(runCli(['interview', 'status', 'CLI-CONFLICT-1', root, '--json']).stdout)
+  assert.equal(status.progress.contradictions.unresolved.length, 0)
+  assert.equal(runCli(['interview', 'finalize', 'CLI-CONFLICT-1', root, '--by', 'developer']).status, 0)
+})
+
 test('CLI check provides a one-command local verification loop', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-cli-check-'))
   await writeGradleFixture(root)
@@ -138,6 +186,37 @@ test('CLI task mutations share the verification lock', async () => {
 
   assert.equal(await completed, 0, stderr)
   await access(join(root, '.backend-harness/tasks/LOCKED-1/task.json'))
+})
+
+test('CLI task handoff transfers authoring without transferring reviewer authority', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-cli-task-handoff-'))
+  await writeGradleFixture(root)
+  initializeGit(root)
+  assert.equal(runCli(['init', root]).status, 0)
+  assert.equal(runCli([
+    'task', 'create', 'CLI-HANDOFF-1', root,
+    '--context', 'Known requirement', '--by', 'developer-a'
+  ]).status, 0)
+
+  const denied = runCli([
+    'task', 'plan', 'CLI-HANDOFF-1', root,
+    '--text', 'Developer B plan.', '--by', 'developer-b'
+  ])
+  assert.equal(denied.status, 1)
+  assert.match(denied.stderr, /explicit handoff/)
+
+  const handedOff = runCli([
+    'task', 'handoff', 'CLI-HANDOFF-1', root,
+    '--from', 'developer-a', '--to', 'developer-b',
+    '--reason', 'Developer B owns implementation.', '--json'
+  ])
+  assert.equal(handedOff.status, 0, handedOff.stderr || handedOff.stdout)
+  assert.equal(JSON.parse(handedOff.stdout).record.writerLease.actor, 'developer-b')
+
+  assert.equal(runCli([
+    'task', 'plan', 'CLI-HANDOFF-1', root,
+    '--text', 'Developer B plan.', '--by', 'developer-b'
+  ]).status, 0)
 })
 
 test('CLI refuses implicit force overwrite in the current directory', async () => {

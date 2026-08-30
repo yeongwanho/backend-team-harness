@@ -100,6 +100,13 @@ export const sharedTemplates = [
     content: JSON.stringify(defaultProjectRules, null, 2) + '\n'
   },
   {
+    path: '.backend-harness/project-facts.json',
+    content: JSON.stringify({
+      schemaVersion: 1,
+      providers: []
+    }, null, 2) + '\n'
+  },
+  {
     path: '.backend-harness/implementation.json',
     content: JSON.stringify({
       schemaVersion: 1,

@@ -73,7 +73,8 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] source/run/digest-bound Personalized PageRank context for approved plan export
 - [x] hard context budget, provenance, limitations, and explained unavailable fallback
 - [ ] measure real failure-feedback latency and Gate correlation on two independently maintained backends
-- [ ] benchmark code localization with gold regions using Recall@budget and downstream completion
+- [x] benchmark code localization on a versioned synthetic gold fixture using Recall@5 and Recall@20
+- [ ] benchmark real-project gold regions and downstream completion
 
 ## 0.8 — Independent hardening and portable team evidence
 
@@ -130,9 +131,20 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] exact dependency-constrained sequential Gate scheduling up to 18 Gates with honest heuristic fallback labels
 - [x] no automatic commit, merge, deployment, production access, or task VERIFIED transition
 - [x] incremental source index cache measured on a large real backend (explicit warm, read-only reuse, source-fingerprint invalidation, 1/1551-file reparse evidence)
-- [ ] versioned gold impact fixture with Recall@20 >= 0.85
+- [x] versioned synthetic gold impact fixture with Recall@20 >= 0.85 (current 1.0; not production proof)
 - [ ] independently maintained second backend validation
 - [ ] path-scoped isolated implementation for a harness rooted below a monorepo Git top-level
+
+## 1.0 — Team intelligence boundary (unreleased)
+
+- [x] bounded project-owned `project.*` facts with provider/version authority and exact Markdown provenance
+- [x] provider disagreement becomes conflict and project facts cannot replace built-in fact authority
+- [x] question-scoped structured claims and deterministic contradiction candidates
+- [x] digest-bound human contradiction resolution required before interview finalization
+- [x] single active task authoring writer with audited epoch handoff
+- [x] fail-closed detection of Git-unmerged task/interview ledgers before hash replay
+- [x] synthetic impact Recall@5/Recall@20 regression gate through the production ranking API
+- [ ] two-developer adoption run with a real handoff and measured merge-conflict rate
 
 ## Later, only with measured demand
 

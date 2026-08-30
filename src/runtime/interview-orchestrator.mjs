@@ -2,12 +2,14 @@ import { createHash } from 'node:crypto'
 import { inspectProjectIntelligence } from '../adapters/project-intelligence.mjs'
 import { canonicalJson } from '../core/canonical-json.mjs'
 import { evaluateProjectRules } from '../core/constraint-engine.mjs'
+import { interviewContradictions } from '../core/interview-state.mjs'
 import {
   createInterview,
   finalizeInterview,
   loadInterview,
   rebindInterviewContext,
   recordInterviewAnswer,
+  recordInterviewContradictionResolution,
   reviseInterviewAnswer
 } from '../core/interview-store.mjs'
 import { withProjectVerificationLock } from '../core/project-lock.mjs'
@@ -28,7 +30,15 @@ function answerById(record, id) {
   return record.answers.find((answer) => answer.questionId === id)?.text ?? ''
 }
 
+function claimsById(record, id) {
+  return record.answers.find((answer) => answer.questionId === id)?.claims ?? {}
+}
+
 function hasDeclaredDatabaseImpact(interview, contextSnapshot) {
+  const claims = claimsById(interview, 'data')
+  if (typeof claims.changesDatabase === 'boolean' || typeof claims.requiresMigration === 'boolean') {
+    return claims.changesDatabase === true || claims.requiresMigration === true
+  }
   const answer = answerById(interview, 'data').toLowerCase()
   const explicitlyNone = /^(no |none|없음|변경 없음|영향 없음)/.test(answer)
   const migrations = contextSnapshot.facts
@@ -76,6 +86,10 @@ function executionSteps(interview, contextSnapshot, requiredGates) {
 }
 
 function makeArtifacts(interview, contextSnapshot) {
+  const structuredDecisions = Object.fromEntries(interview.answers
+    .filter((answer) => Object.keys(answer.claims ?? {}).length > 0)
+    .map((answer) => [answer.questionId, answer.claims]))
+  const contradictions = interviewContradictions(interview, contextSnapshot)
   const requirement = {
     schemaVersion: 1,
     taskId: interview.taskId,
@@ -97,6 +111,7 @@ function makeArtifacts(interview, contextSnapshot) {
     allowedScope: answerById(interview, 'scope'),
     databaseAndData: answerById(interview, 'data'),
     constraintsAndExclusions: answerById(interview, 'constraints'),
+    structuredDecisions,
     provenance: {
       requirementSha256: interview.requirementSha256,
       contextSnapshotSha256: interview.contextSnapshotSha256
@@ -116,7 +131,7 @@ function makeArtifacts(interview, contextSnapshot) {
     results: []
   }
   const plan = {
-    schemaVersion: 3,
+    schemaVersion: 4,
     taskId: interview.taskId,
     sourceFingerprint: interview.sourceFingerprint,
     objective: interview.requirement,
@@ -125,6 +140,10 @@ function makeArtifacts(interview, contextSnapshot) {
     databaseAndData: answerById(interview, 'data'),
     requestedVerification: answerById(interview, 'verification'),
     constraintsAndExclusions: answerById(interview, 'constraints'),
+    structuredDecisions,
+    contradictionResolutions: contradictions.candidates
+      .filter((candidate) => candidate.resolved)
+      .map((candidate) => candidate.resolution),
     declaredRequiredGates: requiredGates,
     declaredRequiredReviewChecklists: requiredReviewChecklists,
     projectRuleEvaluation,
@@ -138,6 +157,11 @@ function makeArtifacts(interview, contextSnapshot) {
   return { requirement, context, impact, plan }
 }
 
+function planningFacts(contextSnapshot) {
+  const projectOwned = (contextSnapshot.intelligence?.facts ?? []).filter((entry) => entry.id.startsWith('project.'))
+  return [...new Map([...(contextSnapshot.facts ?? []), ...projectOwned].map((entry) => [entry.id, entry])).values()]
+}
+
 function planMarkdown(artifacts, contextSnapshot) {
   const gates = artifacts.plan.declaredRequiredGates.length
     ? artifacts.plan.declaredRequiredGates.map((id) => '- `' + id + '`').join('\n')
@@ -147,7 +171,7 @@ function planMarkdown(artifacts, contextSnapshot) {
       .map((checklist) => '- **' + checklist.name + '** — ' + checklist.checks.join(', '))
       .join('\n')
     : '- _No required human review checklist was detected._'
-  const facts = contextSnapshot.facts
+  const facts = planningFacts(contextSnapshot)
     .map((entry) => '- [' + entry.status.toUpperCase() + '] `' + entry.id + '` — ' + entry.summary)
     .join('\n')
   const steps = artifacts.plan.steps
@@ -158,6 +182,16 @@ function planMarkdown(artifacts, contextSnapshot) {
       .map((rule) => '- [' + rule.status.toUpperCase() + '] `' + rule.id + '` — ' + rule.description + ' (source: `' + rule.source.path + '`, ' + rule.source.section + ')')
       .join('\n')
     : '- _No machine-readable project rules were configured._'
+  const structuredDecisions = Object.keys(artifacts.plan.structuredDecisions).length
+    ? Object.entries(artifacts.plan.structuredDecisions)
+      .map(([question, claims]) => '- `' + question + '` — `' + JSON.stringify(claims) + '`')
+      .join('\n')
+    : '- _No structured claims were declared._'
+  const contradictionResolutions = artifacts.plan.contradictionResolutions.length
+    ? artifacts.plan.contradictionResolutions
+      .map((resolution) => '- `' + resolution.candidateId + '` — ' + resolution.reason + ' (resolved by ' + resolution.actor + ')')
+      .join('\n')
+    : '- _No contradiction candidate required an explicit resolution._'
   return [
     '# Execution plan — ' + artifacts.plan.taskId,
     '',
@@ -186,6 +220,14 @@ function planMarkdown(artifacts, contextSnapshot) {
     '## Constraints and exclusions',
     '',
     artifacts.plan.constraintsAndExclusions,
+    '',
+    '## Structured decisions',
+    '',
+    structuredDecisions,
+    '',
+    '## Resolved contradiction candidates',
+    '',
+    contradictionResolutions,
     '',
     '## Detected project facts',
     '',
@@ -218,7 +260,7 @@ function planMarkdown(artifacts, contextSnapshot) {
 }
 
 function taskContextText(artifacts, contextSnapshot) {
-  const conflicts = contextSnapshot.facts.filter((entry) => entry.status !== 'confirmed')
+  const conflicts = planningFacts(contextSnapshot).filter((entry) => entry.status !== 'confirmed')
   const ruleIssues = (contextSnapshot.intelligence?.evaluation?.results ?? [])
     .filter((entry) => entry.status !== 'confirmed')
   return [
@@ -246,10 +288,14 @@ function shellArgument(value) {
   return "'" + String(value).replaceAll("'", "'\\''") + "'"
 }
 
-function nextCommand(taskId, question, root) {
+function nextCommand(taskId, progress, root) {
   const target = root ? ' ' + shellArgument(root) : ''
-  return question
-    ? 'bth interview answer ' + taskId + target + ' --question ' + question.id + ' --text "<answer>" --by "<actor>"'
+  if (progress.currentQuestion) {
+    return 'bth interview answer ' + taskId + target + ' --question ' + progress.currentQuestion.id + ' --text "<answer>" --by "<actor>"'
+  }
+  const contradiction = progress.contradictions?.unresolved?.[0]
+  return contradiction
+    ? 'bth interview resolve ' + taskId + target + ' --candidate ' + contradiction.id + ' --reason "<human resolution>" --by "<actor>"'
     : 'bth interview finalize ' + taskId + target + ' --by "<actor>"'
 }
 
@@ -351,7 +397,8 @@ export async function startInterview(inputPath, input, options = {}) {
       await createTask(inputPath, {
         id: input.taskId,
         title: input.title,
-        context: input.requirement
+        context: input.requirement,
+        actor: input.actor
       }, options)
     }
     const created = await createInterview(inputPath, {
@@ -363,7 +410,7 @@ export async function startInterview(inputPath, input, options = {}) {
     }, options)
     return {
       ...created,
-      nextCommand: nextCommand(input.taskId, created.progress.currentQuestion, created.root)
+      nextCommand: nextCommand(input.taskId, created.progress, created.root)
     }
   })
 }
@@ -373,7 +420,7 @@ export async function answerInterview(inputPath, taskId, input, options = {}) {
     const answered = await recordInterviewAnswer(inputPath, taskId, input, options)
     return {
       ...answered,
-      nextCommand: nextCommand(taskId, answered.progress.currentQuestion, answered.root)
+      nextCommand: nextCommand(taskId, answered.progress, answered.root)
     }
   })
 }
@@ -383,7 +430,17 @@ export async function reviseInterview(inputPath, taskId, input, options = {}) {
     const revised = await reviseInterviewAnswer(inputPath, taskId, input, options)
     return {
       ...revised,
-      nextCommand: nextCommand(taskId, revised.progress.currentQuestion, revised.root)
+      nextCommand: nextCommand(taskId, revised.progress, revised.root)
+    }
+  })
+}
+
+export async function resolveInterviewContradiction(inputPath, taskId, input, options = {}) {
+  return withProjectVerificationLock(inputPath, options.projectLock, async () => {
+    const resolved = await recordInterviewContradictionResolution(inputPath, taskId, input, options)
+    return {
+      ...resolved,
+      nextCommand: nextCommand(taskId, resolved.progress, resolved.root)
     }
   })
 }
@@ -398,7 +455,7 @@ export async function rebindInterview(inputPath, taskId, input, options = {}) {
     }, options)
     return {
       ...rebound,
-      nextCommand: nextCommand(taskId, rebound.progress.currentQuestion, rebound.root)
+      nextCommand: nextCommand(taskId, rebound.progress, rebound.root)
     }
   })
 }
@@ -409,7 +466,7 @@ export async function interviewStatus(inputPath, taskId) {
     ...loaded,
     nextCommand: loaded.record.status === 'FINALIZED'
       ? 'bth task advance ' + taskId + ' PLAN_APPROVED ' + shellArgument(loaded.root) + ' --by "<reviewer>" --approve'
-      : nextCommand(taskId, loaded.progress.currentQuestion, loaded.root)
+      : nextCommand(taskId, loaded.progress, loaded.root)
   }
 }
 

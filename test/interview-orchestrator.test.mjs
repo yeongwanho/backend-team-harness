@@ -10,6 +10,7 @@ import {
   completeInterview,
   interviewStatus,
   rebindInterview,
+  resolveInterviewContradiction,
   reviseInterview,
   startInterview
 } from '../src/runtime/interview-orchestrator.mjs'
@@ -60,7 +61,7 @@ test('native interview materializes a source-bound PLAN_PROPOSED task', async ()
   assert.equal(finalized.record.status, 'FINALIZED')
   assert.equal(finalized.task.state, 'PLAN_PROPOSED')
   assert.match(finalized.artifacts.plan.sourceFingerprint, /^[a-f0-9]{64}$/)
-  assert.equal(finalized.artifacts.plan.schemaVersion, 3)
+  assert.equal(finalized.artifacts.plan.schemaVersion, 4)
   assert.deepEqual(finalized.artifacts.plan.declaredRequiredGates, ['tests'])
   assert.ok(finalized.artifacts.plan.declaredRequiredReviewChecklists.length > 0)
   assert.equal('declaredRequiredPolicyGates' in finalized.artifacts.plan, false)
@@ -158,6 +159,49 @@ test('unresolved answer blocks finalize and can be corrected in place', async ()
     actor: 'product-owner'
   })
   assert.equal(corrected.progress.currentQuestion.id, 'scope')
+})
+
+test('interview finalization blocks unresolved structured contradictions and records explicit resolution', async () => {
+  const root = await initializedProject('bth-interview-contradiction-')
+  await startInterview(root, {
+    taskId: 'CONTRADICTION-1',
+    requirement: 'Add a migration safely.',
+    actor: 'developer'
+  })
+  await answerInterview(root, 'CONTRADICTION-1', { questionId: 'acceptance', text: 'Behavior is observable.', actor: 'developer' })
+  await answerInterview(root, 'CONTRADICTION-1', {
+    questionId: 'scope', text: 'Users only.', claims: { modules: ['users'] }, actor: 'developer'
+  })
+  await answerInterview(root, 'CONTRADICTION-1', {
+    questionId: 'data', text: 'Migration without a data change.',
+    claims: { changesDatabase: false, requiresMigration: true }, actor: 'developer'
+  })
+  await answerInterview(root, 'CONTRADICTION-1', {
+    questionId: 'verification', text: 'Unit tests.', claims: { requiredGates: ['tests'] }, actor: 'developer'
+  })
+  await answerInterview(root, 'CONTRADICTION-1', {
+    questionId: 'constraints', text: 'No extra constraint.', claims: { preservesCompatibility: true }, actor: 'developer'
+  })
+
+  const ready = await interviewStatus(root, 'CONTRADICTION-1')
+  assert.equal(ready.record.status, 'READY')
+  assert.deepEqual(ready.progress.contradictions.unresolved.map((entry) => entry.id), [
+    'database-migration-without-database-change',
+    'migration-required-without-configured-mechanism'
+  ])
+  await assert.rejects(completeInterview(root, 'CONTRADICTION-1', { actor: 'developer' }), /unresolved contradiction candidates/)
+
+  for (const candidate of ready.progress.contradictions.unresolved) {
+    await resolveInterviewContradiction(root, 'CONTRADICTION-1', {
+      candidateId: candidate.id,
+      actor: 'reviewer',
+      reason: 'The implementation plan must add and verify the migration mechanism.'
+    })
+  }
+  const finalized = await completeInterview(root, 'CONTRADICTION-1', { actor: 'developer' })
+  assert.equal(finalized.task.state, 'PLAN_PROPOSED')
+  assert.equal(finalized.artifacts.plan.structuredDecisions.data.requiresMigration, true)
+  assert.equal(finalized.artifacts.plan.contradictionResolutions.length, 2)
 })
 
 test('duplicate interview start cannot overwrite an existing task', async () => {
@@ -267,6 +311,36 @@ test('project observations specialize DB and verification questions without answ
   assert.match(status.progress.currentQuestion.hint, /V1__users\.sql/)
   assert.equal(status.record.answers.some((answer) => answer.questionId === 'data'), false)
   assert.ok(status.contextSnapshot.policyGates.length > 0)
+})
+
+test('project-owned facts remain visible in the human execution plan', async () => {
+  const root = await initializedProject('bth-interview-project-facts-')
+  await writeFile(join(root, '.backend-harness/project-facts.json'), JSON.stringify({
+    schemaVersion: 1,
+    providers: [{
+      id: 'team-policy',
+      version: '2026-08-30',
+      authority: 'project-declared',
+      facts: [{
+        id: 'project.api.compatibility.required',
+        status: 'confirmed',
+        value: true,
+        summary: 'API compatibility review is mandatory.',
+        sources: [{ path: '.backend-harness/policies/api.md', section: 'Compatibility' }]
+      }]
+    }]
+  }, null, 2) + '\n', 'utf8')
+  initializeGit(root)
+  await startInterview(root, {
+    taskId: 'PROJECT-FACT-1',
+    requirement: 'Document a compatible internal behavior.',
+    actor: 'developer'
+  })
+  await answerAll(root, 'PROJECT-FACT-1')
+  const finalized = await completeInterview(root, 'PROJECT-FACT-1', { actor: 'developer' })
+
+  assert.match(finalized.task.plan, /project\.api\.compatibility\.required/)
+  assert.match(finalized.task.plan, /API compatibility review is mandatory/)
 })
 
 test('durable interview snapshots bound large code indexes while preserving aggregate facts', async () => {

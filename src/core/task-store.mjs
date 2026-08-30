@@ -8,6 +8,7 @@ import {
   writeFile
 } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
+import { spawnSync } from 'node:child_process'
 import { dirname, relative, resolve } from 'node:path'
 import {
   assertNoSymlinkSegments,
@@ -15,9 +16,17 @@ import {
   resolveSafeProjectPath,
   statPath
 } from '../fs-safety.mjs'
-import { assertTaskId, createTaskRecord, normalizeTaskText, transitionTaskRecord } from './task-state.mjs'
+import {
+  assertTaskId,
+  bindTaskWriter,
+  createTaskRecord,
+  handoffTaskWriterRecord,
+  normalizeTaskText,
+  transitionTaskRecord
+} from './task-state.mjs'
 import { canonicalJson } from './canonical-json.mjs'
 import { createLockOwnerRecord, lockOwnerIsDead, withLockRecoveryGuard } from './lock-recovery.mjs'
+import { buildSafeEnvironment } from './process-runner.mjs'
 
 async function harnessPaths(inputPath, taskId) {
   const root = await resolveReadableRoot(inputPath)
@@ -62,6 +71,7 @@ function taskMarkdown(record) {
     '- Canonical plan artifact: ' + (record.planArtifactSha256 ? '`' + record.planArtifactSha256 + '`' : '_manual plan_'),
     '- Approved: ' + (record.approvalReceipt ? record.approvalReceipt.at + ' by ' + record.approvalReceipt.actor : '_not approved_'),
     '- Implementation mode: ' + (record.implementationMode ? '`' + record.implementationMode + '`' : '_not started_'),
+    '- Active writer: ' + (record.writerLease?.actor ? '`' + record.writerLease.actor + '` (epoch ' + record.writerLease.epoch + ')' : '_claimed on first authoring mutation_'),
     '- Last implementation lifecycle: ' + (record.implementationAudit ? '`' + record.implementationAudit.action + '` at ' + record.implementationAudit.at + ' by ' + record.implementationAudit.actor : '_none_'),
     '',
     '## Context',
@@ -306,6 +316,18 @@ async function loadConfirmedEvidence(taskDir, taskId, evidenceId, options = {}) 
 }
 
 async function loadFromTaskDirectory(taskDir, taskId) {
+  const unmerged = spawnSync('git', ['-C', taskDir, 'ls-files', '-u', '--', '.'], {
+    encoding: 'utf8',
+    env: buildSafeEnvironment(),
+    windowsHide: true,
+    maxBuffer: 1024 * 1024
+  })
+  if (unmerged.status === 0 && unmerged.stdout.trim()) {
+    throw new Error(
+      'Shared task history has unresolved Git merge entries for ' + taskId +
+      '. Resolve the task/interview conflict and validate the complete hash chain before continuing.'
+    )
+  }
   await assertNoSymlinkSegments(dirname(taskDir), taskDir)
   const eventPath = resolve(taskDir, 'events.jsonl')
   await assertNoSymlinkSegments(taskDir, eventPath)
@@ -385,9 +407,15 @@ export async function advanceTask(inputPath, taskId, to, input = {}, options = {
         }
       }
     }
-    const transition = transitionTaskRecord(loaded.record, to, transitionInput)
+    let transition = transitionTaskRecord(loaded.record, to, transitionInput)
     if (!transition.applied) {
       return { root: paths.root, ...transition }
+    }
+    if (['CONTEXT_READY', 'PLAN_PROPOSED', 'IMPLEMENTING', 'DONE'].includes(to)) {
+      transition = {
+        ...transition,
+        record: bindTaskWriter(transition.record, input.actor, { at: transition.record.updatedAt })
+      }
     }
 
     const event = sealEvent({
@@ -423,12 +451,12 @@ export async function recordImplementationLifecycle(inputPath, taskId, action, i
     const loaded = await loadFromTaskDirectory(paths.taskDir, paths.id)
     const at = input.at ?? new Date().toISOString()
     const implementationAudit = { action, actor, at, artifact, recordSha256 }
-    const record = {
+    const record = bindTaskWriter({
       ...loaded.record,
       revision: loaded.record.revision + 1,
       updatedAt: at,
       implementationAudit
-    }
+    }, actor, { at })
     const event = sealEvent({
       schemaVersion: 1,
       seq: record.revision,
@@ -479,7 +507,7 @@ async function updateTaskField(inputPath, taskId, field, value, input = {}, opti
     const nextState = approvalInvalidated
       ? (field === 'context' || loaded.record.context ? 'CONTEXT_READY' : 'CONTEXT_MISSING')
       : loaded.record.state
-    const record = {
+    const record = bindTaskWriter({
       ...loaded.record,
       [field]: normalized,
       state: nextState,
@@ -494,7 +522,7 @@ async function updateTaskField(inputPath, taskId, field, value, input = {}, opti
         : null,
       approvalReceipt: approvalInvalidated ? null : (loaded.record.approvalReceipt ?? null),
       implementationMode: approvalInvalidated ? null : (loaded.record.implementationMode ?? null)
-    }
+    }, actor, { at })
     const event = sealEvent({
       schemaVersion: 1,
       seq: record.revision,
@@ -528,6 +556,36 @@ export function updateTaskContext(inputPath, taskId, context, input = {}, option
 
 export function updateTaskPlan(inputPath, taskId, plan, input = {}, options = {}) {
   return updateTaskField(inputPath, taskId, 'plan', plan, input, options)
+}
+
+export async function handoffTaskWriter(inputPath, taskId, input = {}, options = {}) {
+  const paths = await harnessPaths(inputPath, taskId)
+  const release = await acquireLock(paths.lockPath, options)
+  try {
+    const loaded = await loadFromTaskDirectory(paths.taskDir, paths.id)
+    const record = handoffTaskWriterRecord(loaded.record, input, options)
+    const event = sealEvent({
+      schemaVersion: 1,
+      seq: record.revision,
+      type: 'writer_handoff',
+      at: record.updatedAt,
+      audit: {
+        fromActor: input.fromActor,
+        toActor: input.toActor,
+        reason: record.writerLease.handoffReason,
+        writerEpoch: record.writerLease.epoch
+      },
+      record
+    }, loaded.events.at(-1).eventSha256)
+    const eventPath = resolve(paths.taskDir, 'events.jsonl')
+    await assertNoSymlinkSegments(paths.taskDir, eventPath)
+    await appendEvent(eventPath, event)
+    await atomicJsonWrite(resolve(paths.taskDir, 'task.json'), record)
+    await atomicTextWrite(resolve(paths.taskDir, 'task.md'), taskMarkdown(record))
+    return { root: paths.root, record, event }
+  } finally {
+    await release()
+  }
 }
 
 export async function taskDirectory(inputPath, taskId) {

@@ -7,9 +7,11 @@ import { initProject } from '../src/init-project.mjs'
 import {
   advanceTask,
   createTask,
+  handoffTaskWriter,
   loadTask,
   updateTaskPlan
 } from '../src/core/task-store.mjs'
+import { initializeGit, runGit } from '../test-support/git-project.mjs'
 
 async function initializedProject(prefix) {
   const root = await mkdtemp(join(tmpdir(), prefix))
@@ -74,6 +76,69 @@ test('concurrent identical advances apply exactly once', async () => {
   assert.equal(results.filter((result) => result.applied).length, 1)
   assert.equal(loaded.record.revision, 1)
   assert.equal(loaded.events.length, 2)
+})
+
+test('task authoring has one active writer and requires an explicit audited handoff', async () => {
+  const root = await initializedProject('bth-task-writer-handoff-')
+  await createTask(root, {
+    id: 'HANDOFF-1',
+    context: 'Known requirement',
+    actor: 'developer-a'
+  })
+
+  await assert.rejects(
+    updateTaskPlan(root, 'HANDOFF-1', 'Developer B plan.', { actor: 'developer-b' }),
+    /must receive an explicit handoff/
+  )
+  await assert.rejects(
+    handoffTaskWriter(root, 'HANDOFF-1', {
+      fromActor: 'developer-b',
+      toActor: 'developer-c',
+      reason: 'Wrong owner cannot transfer.'
+    }),
+    /current writer: developer-a/
+  )
+
+  const handedOff = await handoffTaskWriter(root, 'HANDOFF-1', {
+    fromActor: 'developer-a',
+    toActor: 'developer-b',
+    reason: 'Developer B owns the next implementation slice.'
+  })
+  assert.equal(handedOff.record.writerLease.actor, 'developer-b')
+  assert.equal(handedOff.record.writerLease.epoch, 1)
+  assert.equal(handedOff.event.type, 'writer_handoff')
+
+  const updated = await updateTaskPlan(root, 'HANDOFF-1', 'Developer B plan.', { actor: 'developer-b' })
+  assert.equal(updated.record.plan, 'Developer B plan.')
+  assert.equal(updated.record.writerLease.actor, 'developer-b')
+})
+
+test('task replay fails closed when Git reports an unresolved shared-ledger merge', async () => {
+  const root = await initializedProject('bth-task-git-conflict-')
+  initializeGit(root)
+  await createTask(root, {
+    id: 'GIT-CONFLICT-1',
+    context: 'Known requirement',
+    actor: 'developer-a'
+  })
+  runGit(root, ['add', '-f', '--', '.backend-harness/tasks/GIT-CONFLICT-1'])
+  runGit(root, ['commit', '-qm', 'add shared task ledger'])
+  const baseBranch = runGit(root, ['rev-parse', '--abbrev-ref', 'HEAD'])
+  runGit(root, ['checkout', '-qb', 'other-writer'])
+  await updateTaskPlan(root, 'GIT-CONFLICT-1', 'Plan from branch B.', { actor: 'developer-a' })
+  runGit(root, ['add', '-f', '--', '.backend-harness/tasks/GIT-CONFLICT-1'])
+  runGit(root, ['commit', '-qm', 'branch B task event'])
+
+  runGit(root, ['checkout', '-q', baseBranch])
+  await updateTaskPlan(root, 'GIT-CONFLICT-1', 'Plan from branch A.', { actor: 'developer-a' })
+  runGit(root, ['add', '-f', '--', '.backend-harness/tasks/GIT-CONFLICT-1'])
+  runGit(root, ['commit', '-qm', 'branch A task event'])
+  assert.throws(() => runGit(root, ['merge', '--no-edit', 'other-writer']), /CONFLICT|Automatic merge failed/)
+
+  await assert.rejects(
+    loadTask(root, 'GIT-CONFLICT-1'),
+    /Shared task history has unresolved Git merge entries/
+  )
 })
 
 test('changing an approved plan invalidates approval and verified evidence', async () => {

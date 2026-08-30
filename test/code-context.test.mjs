@@ -9,6 +9,7 @@ import { captureConfiguredSourceBinding } from '../src/runtime/backend-harness.m
 import { recordProjectRun } from '../src/core/run-record-store.mjs'
 import { loadBudgetedCodeContext, rankCodeContext } from '../src/core/code-context.mjs'
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
+import { IMPACT_GOLD_V1 } from './fixtures/impact-gold-v1.mjs'
 
 function graphDocument() {
   return {
@@ -130,6 +131,21 @@ test('semantic edges produce directional dependencies and dependents without cla
   assert.ok(result.impact.dependencies.paths.includes('src/main/java/orders/OrdersRepository.java'))
   assert.ok(result.impact.dependents.paths.includes('src/main/java/orders/OrdersController.java'))
   assert.ok(result.entries.find((entry) => entry.path.endsWith('OrdersService.java')).provenance.includes('source-pattern-resolved'))
+})
+
+test('synthetic impact gold v1 keeps mean Recall@20 and Recall@5 above the declared regression floors', () => {
+  const metrics = IMPACT_GOLD_V1.cases.map((fixture) => {
+    const result = rankCodeContext(IMPACT_GOLD_V1.graphDocument, fixture.query, { budgetCharacters: 100_000 })
+    const rankedPaths = result.entries.map((entry) => entry.path)
+    const relevant = new Set(fixture.expectedPaths)
+    const recallAt = (limit) => rankedPaths.slice(0, limit).filter((path) => relevant.has(path)).length / relevant.size
+    return { id: fixture.id, recallAt5: recallAt(5), recallAt20: recallAt(20) }
+  })
+  const mean = (key) => metrics.reduce((sum, entry) => sum + entry[key], 0) / metrics.length
+
+  assert.equal(IMPACT_GOLD_V1.fixtureKind, 'synthetic-gold')
+  assert.ok(mean('recallAt20') >= 0.95, JSON.stringify(metrics))
+  assert.ok(mean('recallAt5') >= 0.8, JSON.stringify(metrics))
 })
 
 test('SCC analysis stays iterative on a graph deeper than the JavaScript call stack', () => {

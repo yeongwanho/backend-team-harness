@@ -56,6 +56,7 @@ export function isTaskState(value) {
 
 export function createTaskRecord(input, options = {}) {
   const now = options.at ?? new Date().toISOString()
+  const writerActor = normalizeTaskText(input.actor, 'actor', 128)
   return {
     schemaVersion: 2,
     id: input.id,
@@ -70,7 +71,68 @@ export function createTaskRecord(input, options = {}) {
     planSourceFingerprint: null,
     planArtifactSha256: null,
     approvalReceipt: null,
-    implementationMode: null
+    implementationMode: null,
+    writerLease: writerActor
+      ? {
+          actor: writerActor,
+          epoch: 0,
+          acquiredAt: now,
+          previousActor: null,
+          handoffReason: 'task_created'
+        }
+      : null
+  }
+}
+
+export function bindTaskWriter(record, actor, options = {}) {
+  const normalizedActor = normalizeTaskText(actor, 'actor', 128)
+  if (!normalizedActor) throw new Error('Task writer ownership requires an actor.')
+  if (record.writerLease?.actor && record.writerLease.actor !== normalizedActor) {
+    throw new Error(
+      'Task writer lease belongs to ' + record.writerLease.actor +
+      '; ' + normalizedActor + ' must receive an explicit handoff before authoring changes.'
+    )
+  }
+  if (record.writerLease?.actor === normalizedActor) return record
+  const at = options.at ?? new Date().toISOString()
+  return {
+    ...record,
+    writerLease: {
+      actor: normalizedActor,
+      epoch: 0,
+      acquiredAt: at,
+      previousActor: null,
+      handoffReason: 'first_authoring_mutation'
+    }
+  }
+}
+
+export function handoffTaskWriterRecord(record, input, options = {}) {
+  const fromActor = normalizeTaskText(input.fromActor, 'actor', 128)
+  const toActor = normalizeTaskText(input.toActor, 'actor', 128)
+  const reason = normalizeTaskText(input.reason, 'reason', 2048)
+  if (!fromActor || !toActor || !reason) {
+    throw new Error('Task writer handoff requires from actor, to actor, and reason.')
+  }
+  if (!record.writerLease?.actor) {
+    throw new Error('Task has no active writer lease to hand off.')
+  }
+  if (record.writerLease.actor !== fromActor) {
+    throw new Error('Task writer handoff must be initiated by the current writer: ' + record.writerLease.actor)
+  }
+  if (fromActor === toActor) throw new Error('Task writer handoff requires a different destination actor.')
+  const at = options.at ?? new Date().toISOString()
+  return {
+    ...record,
+    revision: record.revision + 1,
+    updatedAt: at,
+    writerLease: {
+      actor: toActor,
+      epoch: (record.writerLease.epoch ?? 0) + 1,
+      acquiredAt: at,
+      previousActor: fromActor,
+      handoffReason: reason
+    }
   }
 }
 

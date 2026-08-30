@@ -101,6 +101,50 @@ test('project intelligence turns source, documents, Git changes, and Gates into 
   )
 })
 
+test('project-owned facts extend the rule vocabulary without replacing built-in authority', async () => {
+  const root = await fixture()
+  await writeFile(join(root, '.backend-harness/project-facts.json'), JSON.stringify({
+    schemaVersion: 1,
+    providers: [
+      {
+        id: 'team-policy',
+        version: '1',
+        authority: 'project-declared',
+        facts: [
+          {
+            id: 'project.api.compatibility.required',
+            status: 'confirmed',
+            value: true,
+            summary: 'Compatibility review is required.',
+            sources: [{ path: '.backend-harness/policies/api.md', section: 'Compatibility' }]
+          }
+        ]
+      }
+    ]
+  }, null, 2) + '\n', 'utf8')
+  await writeFile(join(root, '.backend-harness/project-rules.json'), JSON.stringify({
+    schemaVersion: 1,
+    rules: [
+      {
+        id: 'company-api-compatibility',
+        description: 'The team policy requires compatibility review.',
+        severity: 'blocker',
+        assert: { fact: 'project.api.compatibility.required', operator: 'equals', value: true },
+        source: { path: '.backend-harness/policies/api.md', section: 'Compatibility' }
+      }
+    ]
+  }, null, 2) + '\n', 'utf8')
+
+  const result = await inspectProjectIntelligence(root)
+  const custom = result.intelligence.facts.find((entry) => entry.id === 'project.api.compatibility.required')
+
+  assert.equal(custom.status, 'confirmed')
+  assert.equal(custom.authority.type, 'project-owned')
+  assert.deepEqual(custom.authority.providers, ['team-policy'])
+  assert.equal(result.intelligence.projectFacts.count, 1)
+  assert.equal(result.intelligence.evaluation.results[0].outcome, 'satisfied')
+})
+
 test('project intelligence reports an edited existing Flyway migration as a source-bound conflict', async () => {
   const root = await fixture()
   await writeFile(join(root, 'src/main/resources/db/migration/V1__create_users.sql'), 'create table users(id bigint primary key, name varchar(255));\n', 'utf8')

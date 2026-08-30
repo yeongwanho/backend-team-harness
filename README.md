@@ -10,6 +10,7 @@ AI가 코드를 작성해도 좋고 사람이 직접 작성해도 좋습니다. 
 개발자 또는 AI
       ↓
 .backend-harness/project-rules.json   Git·정책·코드·DB 사실의 3값 제약 검사
+.backend-harness/project-facts.json   회사·프로젝트가 소유하는 출처 결합 사실
       ↓
 요구사항 인터뷰 → 모순/unknown 해소 → source-bound 계획 → 사람 승인
       ↓
@@ -220,6 +221,29 @@ node src/cli.mjs intelligence inspect /path/to/project --no-cache --json
 
 `.backend-harness/project-rules.json`의 규칙은 `confirmed`, `unknown`, `conflict` 세 상태로 평가됩니다. 근거가 없거나 서로 충돌하면 성공으로 올리지 않습니다. `blocker` 규칙이 해결되지 않으면 인터뷰의 계획 확정도 막히며, 각 결과에는 규칙을 정한 문서 경로·section과 실제 fact 근거가 함께 남습니다. 출처는 프로젝트 안의 일반 Markdown 파일과 실제 존재하는 제목이어야 하므로, 가짜 절 이름이나 symlink 출처는 설정 단계에서 거절됩니다. 기본 템플릿은 실행된 JUnit Gate, 기존 Flyway migration 불변성, 필수 지식 문서, 명시적 DB dialect를 검사하지만 회사별 규칙은 팀이 이 파일과 연결된 정책 문서에서 소유해야 합니다.
 
+내장 fact에 없는 회사 규칙은 `.backend-harness/project-facts.json`에서 `project.*` 이름으로 선언합니다. 각 값은 프로젝트 안의 Markdown 문서와 실제 제목을 가리켜야 하며, BTH는 문서 SHA-256까지 남깁니다. 여러 provider가 같은 fact에 다른 값을 주면 `conflict`가 되고, 프로젝트 fact가 `git.*`, `database.*` 같은 내장 권한을 덮어쓰는 것은 거절됩니다. `project-declared` fact는 계획·질문·규칙 평가의 근거일 뿐 테스트 PASS 권한은 없습니다.
+
+```json
+{
+  "schemaVersion": 1,
+  "providers": [{
+    "id": "team-policy",
+    "version": "2026-08-30",
+    "authority": "project-declared",
+    "facts": [{
+      "id": "project.api.compatibility.required",
+      "status": "confirmed",
+      "value": true,
+      "summary": "공개 API 호환성 검토가 필수다.",
+      "sources": [{
+        "path": ".backend-harness/policies/api.md",
+        "section": "Compatibility"
+      }]
+    }]
+  }]
+}
+```
+
 ## DB는 어떻게 붙나
 
 BTH가 모든 프로젝트에 두 번째 DB lifecycle을 강요하지 않습니다.
@@ -261,6 +285,8 @@ node src/cli.mjs task export-plan USER-17 /path/to/project \
 
 BTH는 요구사항의 단어를 path/type과 대조하고, provenance별 가중치가 있는 edge 위에서 bounded Personalized PageRank를 계산합니다. 가장 강한 lexical seed에서 dependencies와 dependents를 방향별로 펼치고 순환 컴포넌트도 표시합니다. 결과에는 점수뿐 아니라 사용한 문자 수, 누락된 node 수, graph 생성값, edge provenance와 알려진 한계가 들어갑니다. 그래프가 없거나 오래됐거나 run record와 digest가 다르면 계획 export는 실패하지 않고 `codeContext.status: "unavailable"`과 이유를 돌려줍니다.
 
+순위 회귀는 50개 node, 4개 요구사항, 20개 distractor가 있는 versioned synthetic gold fixture에서 같은 API로 측정합니다. 현재 Recall@5와 Recall@20은 모두 `1.0`입니다. 이 수치는 알고리즘 변경으로 기본 탐색 품질이 무너지는 것을 잡는 합성 회귀 근거이며, 회사 코드나 다른 프레임워크에서의 정확도 주장이 아닙니다.
+
 ## 테스트 수 감소 방지
 
 성공한 최신 실행의 Gate별 실행 수를 하한으로 올릴 수 있습니다.
@@ -289,6 +315,18 @@ node src/cli.mjs interview answer USER-17 /path/to/project \
   --text "존재하면 200, 없으면 기존 오류 계약의 404를 반환한다" \
   --by developer
 
+# 자유문은 사람이 읽고, 선택적 claims는 Core가 결정적으로 모순을 검사합니다.
+node src/cli.mjs interview answer USER-17 /path/to/project \
+  --question data --text "migration은 필요하지만 DB 변경은 없다" \
+  --claims '{"changesDatabase":false,"requiresMigration":true}' \
+  --by developer
+
+# 모순 후보는 답을 고치거나, 현재 후보 SHA에 묶인 사람의 사유로 해소해야 합니다.
+node src/cli.mjs interview resolve USER-17 /path/to/project \
+  --candidate database-migration-without-database-change \
+  --reason "기존 테이블 변경이 아니라 신규 호환 view를 만드는 migration이다" \
+  --by reviewer
+
 # scope → data → verification → constraints도 같은 방식으로 답합니다.
 # 이미 답한 결정은 다른 답을 잃지 않고 고칠 수 있습니다.
 node src/cli.mjs interview revise USER-17 /path/to/project \
@@ -300,7 +338,7 @@ node src/cli.mjs interview rebind USER-17 /path/to/project --by developer
 node src/cli.mjs interview finalize USER-17 /path/to/project --by developer
 ```
 
-인터뷰 시작 시 BTH는 Git 지문, 빌드 정의, 소스·테스트 수, Flyway, DB dialect, 품질 정책, `verification.json` Gate를 읽기 전용으로 수집합니다. 파일별 JVM 색인은 `bth intelligence inspect`에서 볼 수 있고, 장기 보관 인터뷰 스냅샷에는 크기 폭증을 막기 위해 파일 목록 대신 집계·누락 수만 남깁니다. 질문은 완료 조건·변경 범위·DB 영향·검증·제약의 다섯 가지이며, 한 번에 현재 질문 하나만 답할 수 있습니다. 질문의 힌트는 감지한 MySQL/Flyway/Gate 사실을 보여 주지만 답을 대신 채우지는 않습니다. 확정되지 않은 답은 `--status unknown` 또는 `--status conflict`로 남길 수 있지만 해결 전에는 계획을 확정하지 못합니다.
+인터뷰 시작 시 BTH는 Git 지문, 빌드 정의, 소스·테스트 수, Flyway, DB dialect, 품질 정책, `verification.json` Gate를 읽기 전용으로 수집합니다. 파일별 JVM 색인은 `bth intelligence inspect`에서 볼 수 있고, 장기 보관 인터뷰 스냅샷에는 크기 폭증을 막기 위해 파일 목록 대신 집계·누락 수만 남깁니다. 질문은 완료 조건·변경 범위·DB 영향·검증·제약의 다섯 가지이며, 한 번에 현재 질문 하나만 답할 수 있습니다. 질문의 힌트는 감지한 MySQL/Flyway/Gate 사실을 보여 주지만 답을 대신 채우지는 않습니다. 확정되지 않은 답은 `--status unknown` 또는 `--status conflict`로 남길 수 있지만 해결 전에는 계획을 확정하지 못합니다. `--claims`를 사용하면 DB 변경/migration, 포함·제외 모듈, 필수 Gate, 공개 API 호환성처럼 명시된 조합만 Core가 검사합니다. 자연어 의미를 추측하지 않으며, 후보 해소는 후보 내용과 현재 context snapshot의 SHA-256, actor·사유·시간에 묶입니다. `rebind`로 context가 바뀌면 같은 문장으로 보이는 후보도 다시 검토해야 합니다.
 
 `finalize`는 다음 파일을 만듭니다.
 
@@ -320,6 +358,9 @@ node src/cli.mjs interview finalize USER-17 /path/to/project --by developer
 
 ```bash
 node src/cli.mjs task advance USER-17 PLAN_APPROVED /path/to/project --by reviewer --approve
+# 다음 개발자가 plan/context/implementation authoring을 이어받기 전 명시적 인수인계
+node src/cli.mjs task handoff USER-17 /path/to/project \
+  --from developer --to teammate --reason "결제 adapter 구현을 teammate가 담당"
 # 어떤 코딩 에이전트에도 넘길 수 있는 읽기 전용 JSON 계약
 node src/cli.mjs task export-plan USER-17 /path/to/project --json
 # 사람 또는 외부 코딩 에이전트가 승인된 plan.md 범위만 구현하거나,
@@ -338,6 +379,8 @@ node src/cli.mjs implement cleanup USER-17 /path/to/project \
 # 실패했다면 sealed run record에서 Gate·테스트·재실행 명령을 설명
 node src/cli.mjs diagnose USER-17 /path/to/project
 ```
+
+Task의 context·plan·implementation authoring에는 한 명의 active writer가 있습니다. 처음 actor가 lease를 잡고, 다른 개발자는 `task handoff` 이벤트가 hash chain에 기록된 뒤에만 작성할 수 있습니다. 계획 승인과 실행 검증은 별도 서명 역할이므로 writer 소유권을 빼앗지 않습니다. 서로 다른 Git clone에서 같은 `events.jsonl`을 갈라 썼다면 BTH가 자동 병합하지 않습니다. task/interview 아래 unmerged index entry가 하나라도 있으면 replay 전에 중단하고, 팀이 Git 충돌과 전체 hash chain을 검토하도록 요구합니다.
 
 BTH Core는 모델을 내장하지 않습니다. 대신 프로젝트가 신뢰하는 CLI를 선택적 구현 어댑터로 연결할 수 있습니다. 그래서 Codex·Claude Code·사내 도구·사람 중 무엇을 쓰더라도 계획·승인·검증 판정은 모델의 주장과 분리됩니다.
 

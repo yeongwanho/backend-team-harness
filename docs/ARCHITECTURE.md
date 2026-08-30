@@ -42,7 +42,8 @@ flowchart LR
   R[Initial requirement] --> C[Deterministic project context]
   C --> Q[One current decision question]
   Q -->|answered| Q
-  Q -->|all five resolved| B[Rebind current Git source]
+  Q -->|all five answered| D[Deterministic contradiction candidates]
+  D -->|revise or digest-bound human resolution| B[Rebind current Git source]
   B -->|same fingerprint| A[requirement/context/impact/plan artifacts]
   B -->|drift| X[Reject, then explicit rebind]
   A --> P[PLAN_PROPOSED]
@@ -53,13 +54,13 @@ flowchart LR
 
 The interview is native BTH behavior, not a runtime bridge to another harness or an LLM. Its question catalogue and transitions are versioned in `interview-state.mjs`. It records only explicit human decisions and deterministic repository observations; it does not claim semantic code impact that no tool or person established.
 
-Project intelligence adds a strict `.backend-harness/project-rules.json` contract. Every rule source must resolve to a regular project-contained Markdown file and an existing heading; invented or symlinked policy provenance fails configuration loading. Git, build, knowledge documents, verification Gates, Flyway state, and bounded JVM source patterns become provenance-carrying facts with `confirmed`, `unknown`, or `conflict` status. Rule evaluation is deterministic; an absent or conflicting fact cannot be promoted to confirmed. Blocker rules prevent interview finalization until the source is corrected and rebound.
+Project intelligence adds strict `.backend-harness/project-rules.json` and `.backend-harness/project-facts.json` contracts. Built-in facts come from bounded repository inspection. Company-specific facts must use `project.*`, cite a regular project-contained Markdown file and exact heading, and carry source SHA-256 plus provider/version authority. Project facts cannot replace built-in ids or create verdict authority. Agreeing providers merge; disagreement becomes `conflict`. Rule evaluation is deterministic; an absent or conflicting fact cannot be promoted to confirmed. Blocker rules prevent interview finalization until the source is corrected and rebound.
 
 Doctor and JVM inspection share one deterministic bounded project manifest instead of independently walking the same tree. `intelligence inspect` is still read only. The separate `intelligence warm-cache` command may atomically write one sealed local JVM index under `.backend-harness/local/cache/`; exact fingerprint hits read no source files, while source drift uses Git status plus cached/current HEAD diff to parse only changed JVM paths. Reuse is refused for ignored JVM sources, submodule-owned indexed sources, assume-unchanged/skip-worktree paths, unsafe cache paths, invalid seals, or oversized records. Cache data has no PASS or test-skipping authority.
 
 The legacy-named `quality-gates/*.yaml` files are human review checklists. They are parsed into planning context but are not executable and have no verdict authority. Machine-enforced Gates exist only in `verification.json`.
 
-Interview persistence is under the owning task. `events.jsonl` is append-only and hash-chained, project-context snapshots are stored by digest, the four JSON artifacts are SHA-256 bound, and path/symlink/size limits match the existing task safety model. `unknown` and `conflict` answers remain the current question and fail closed. Project observations specialize the question hints but never create a human answer. `revise` changes one explicit decision; `rebind` preserves decisions while recording a fresh source and immutable context snapshot.
+Interview persistence is under the owning task. `events.jsonl` is append-only and hash-chained, project-context snapshots are stored by digest, the four JSON artifacts are SHA-256 bound, and path/symlink/size limits match the existing task safety model. `unknown` and `conflict` answers remain the current question and fail closed. Project observations specialize the question hints but never create a human answer. Optional question-scoped claims are bounded booleans/identifiers; Core derives only enumerated contradiction candidates and never infers them from prose. A candidate must disappear after revision or receive an actor/reason/time resolution bound to both its digest and the current context-snapshot digest. `revise` changes one explicit decision; `rebind` preserves decisions while recording a fresh source and immutable context snapshot, but invalidates old candidate resolutions.
 
 Finalization is crash-recoverable across the interview and task stores: finalized artifacts are authoritative and a retry may finish materializing the unchanged task plan. The resulting task enters `PLAN_PROPOSED`, never `PLAN_APPROVED`. Approval checks the planned source fingerprint and canonical `plan.json` digest, then records context/plan/artifact hashes plus actor and time. Any later context or plan update clears that receipt. The provider-neutral export is read-only and explicitly carries neither write authority nor verdict authority.
 
@@ -142,6 +143,8 @@ All `check` and `verify` runs acquire `.backend-harness/local/locks/project-veri
 
 Task state updates also retain narrower nonce-owned per-task locks for event-log serialization. Malformed crash remnants use a bounded five-second grace period, and task text/event history has explicit size/count limits so replay cannot grow without bound.
 
+Local locks cannot serialize two independent clones. Shared task records therefore carry a single active `writerLease` for context, plan, implementation transitions, and implementation lifecycle changes. The first authoring actor claims epoch 0; `task handoff` changes the actor and increments the epoch in a hash-chained event. Human approval and deterministic verification remain separate signed roles and do not take this authoring lease. Before replay, BTH asks Git for unmerged entries below the task directory, including interview files. Any result fails closed with a conflict-resolution instruction; divergent hash chains are never auto-merged.
+
 ## Network and writes
 
 Gate executables are trusted project code. A Gate declaring `network: true` is denied unless the caller explicitly supplies `--allow-network`. This is an approval latch, not an operating-system network sandbox. Credential variables remain absent from the child environment. A narrow set of routing/cache variables needed by local Docker/Testcontainers is preserved: Docker host/context/TLS paths, Testcontainers host/socket/image-prefix routing, rootless `XDG_RUNTIME_DIR`, standard proxy/no-proxy variables, and the Gradle/Maven/JDK paths. Registry authentication, cloud/database credentials, `DOCKER_AUTH_CONFIG`, `TESTCONTAINERS_RYUK_DISABLED`, and `TESTCONTAINERS_REUSE_ENABLE` are not passed.
@@ -165,6 +168,8 @@ This prevents a universal Core lifecycle from conflicting with real service setu
 The bundled graph Pack is a structural source graph, not a compiler or runtime call graph. It records multiple Java/Kotlin declarations per file, exact unique imports and declared inheritance/implementation, conservative field/constructor injection and test-name relations, route/table/role metadata, per-edge provenance, coverage gaps, weighted PageRank, allowed uses, and forbidden uses.
 
 Approved plan export may derive bounded query-personalized context from that graph. It first requires a successful graph observation in the latest sealed project run, an unchanged source fingerprint, and matching report bytes/digest. Lexical path/type matches seed Personalized PageRank; propagation uses explicit provenance weights and half-weight reverse navigation. Strongest lexical seeds also drive bounded forward dependencies and reverse dependents. Iterative SCC analysis handles deep graphs without JavaScript recursion overflow. Selection has a hard character budget and remains `REPORTED/advisory`; heuristic injection/test edges never gain verdict authority.
+
+Ranking changes are regression-tested against `impact-gold-v1`, a 50-node synthetic Java backend fixture with four requirements and human-declared relevant paths. The current fixture produces mean Recall@5 = 1.0 and Recall@20 = 1.0 through the production ranking API. This proves deterministic regression behavior on the fixture only; real multi-project accuracy remains unmeasured.
 
 A richer future sidecar must remain rebuildable and advisory. Compiler/bytecode/runtime provenance should outrank heuristic edges, and no graph may silently choose fewer tests for a PASS run.
 

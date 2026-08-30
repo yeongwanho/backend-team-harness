@@ -5,8 +5,11 @@ import {
   assertInterviewFinalizable,
   createInterviewRecord,
   currentInterviewQuestion,
+  interviewContradictions,
   finalizeInterviewRecord,
-  INTERVIEW_QUESTIONS
+  INTERVIEW_QUESTIONS,
+  rebindInterviewRecord,
+  resolveInterviewContradictionRecord
 } from '../src/core/interview-state.mjs'
 
 function sourceBinding(fingerprint = 'a'.repeat(64)) {
@@ -113,4 +116,67 @@ test('interview inputs are bounded', () => {
     text: 'x'.repeat(64 * 1024 + 1),
     actor: 'developer'
   }), /safety limit/)
+})
+
+test('structured claims expose deterministic contradictions and require a bound human resolution', () => {
+  let record = created()
+  const answers = [
+    ['acceptance', 'Observable acceptance.', undefined],
+    ['scope', 'Users only.', { modules: ['users'], excludedModules: ['users'], changesPublicApi: true }],
+    ['data', 'Migration is required.', { changesDatabase: false, requiresMigration: true }],
+    ['verification', 'Contract tests are required.', { requiredGates: ['contract'] }],
+    ['constraints', 'Compatibility is not preserved.', { preservesCompatibility: false }]
+  ]
+  for (const [questionId, text, claims] of answers) {
+    record = answerInterviewRecord(record, { questionId, text, claims, actor: 'developer' })
+  }
+  const context = {
+    verification: { gates: [{ id: 'tests' }] },
+    intelligence: {
+      facts: [
+        { id: 'database.flyway.present', status: 'confirmed', value: false },
+        { id: 'project.api.compatibility.required', status: 'confirmed', value: true }
+      ]
+    }
+  }
+  let contradictions = interviewContradictions(record, context)
+  assert.deepEqual(contradictions.unresolved.map((entry) => entry.id), [
+    'database-migration-without-database-change',
+    'migration-required-without-configured-mechanism',
+    'public-api-compatibility-unresolved',
+    'required-verification-gate-not-configured',
+    'scope-includes-excluded-module'
+  ])
+  assert.throws(
+    () => assertInterviewFinalizable(record, sourceBinding().fingerprint, contradictions),
+    /unresolved contradiction candidates/
+  )
+
+  for (const candidate of contradictions.unresolved) {
+    record = resolveInterviewContradictionRecord(record, {
+      candidateId: candidate.id,
+      actor: 'reviewer',
+      reason: 'Accepted as an explicit plan action.'
+    }, context)
+  }
+  contradictions = interviewContradictions(record, context)
+  assert.equal(contradictions.unresolved.length, 0)
+  assert.doesNotThrow(() => assertInterviewFinalizable(record, sourceBinding().fingerprint, contradictions))
+
+  const reboundContext = { ...context, policyRevision: 2 }
+  const rebound = rebindInterviewRecord(record, {
+    actor: 'developer',
+    sourceBinding: sourceBinding('c'.repeat(64)),
+    contextSnapshot: reboundContext
+  })
+  assert.equal(interviewContradictions(rebound, reboundContext).unresolved.length, 5)
+})
+
+test('claims are question-scoped, bounded, and revised claims invalidate an old resolution digest', () => {
+  assert.throws(() => answerInterviewRecord(created(), {
+    questionId: 'acceptance',
+    text: 'Observable acceptance.',
+    claims: { changesDatabase: true },
+    actor: 'developer'
+  }), /does not support claim changesDatabase/)
 })

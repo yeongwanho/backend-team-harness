@@ -38,6 +38,16 @@ export const INTERVIEW_QUESTIONS = Object.freeze([
 ])
 
 const ANSWER_STATUSES = new Set(['answered', 'unknown', 'conflict'])
+const CLAIM_KEYS_BY_QUESTION = Object.freeze({
+  acceptance: new Set(),
+  scope: new Set(['changesPublicApi', 'modules', 'excludedModules']),
+  data: new Set(['changesDatabase', 'requiresMigration']),
+  verification: new Set(['requiredGates']),
+  constraints: new Set(['preservesCompatibility'])
+})
+const BOOLEAN_CLAIMS = new Set(['changesPublicApi', 'changesDatabase', 'requiresMigration', 'preservesCompatibility'])
+const ARRAY_CLAIMS = new Set(['modules', 'excludedModules', 'requiredGates'])
+const CLAIM_VALUE = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$/
 
 function digest(value) {
   return createHash('sha256').update(canonicalJson(value)).digest('hex')
@@ -45,6 +55,136 @@ function digest(value) {
 
 function answerMap(answers = []) {
   return new Map(answers.map((answer) => [answer.questionId, answer]))
+}
+
+function normalizeClaims(questionId, value, previous = {}) {
+  if (value === undefined) return previous
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype) {
+    throw new Error('Interview claims must be a JSON object.')
+  }
+  const allowed = CLAIM_KEYS_BY_QUESTION[questionId]
+  const result = {}
+  for (const [key, claim] of Object.entries(value)) {
+    if (!allowed?.has(key)) throw new Error('Interview question ' + questionId + ' does not support claim ' + key + '.')
+    if (BOOLEAN_CLAIMS.has(key)) {
+      if (typeof claim !== 'boolean') throw new Error('Interview claim ' + key + ' must be boolean.')
+      result[key] = claim
+      continue
+    }
+    if (!ARRAY_CLAIMS.has(key) || !Array.isArray(claim) || claim.length > 32 || claim.some((entry) => typeof entry !== 'string' || !CLAIM_VALUE.test(entry))) {
+      throw new Error('Interview claim ' + key + ' must contain at most 32 bounded identifiers.')
+    }
+    result[key] = [...new Set(claim)].sort()
+  }
+  return result
+}
+
+function contradiction(id, summary, questionIds, factIds = [], details = {}) {
+  const body = {
+    id,
+    summary,
+    questionIds: [...new Set(questionIds)].sort(),
+    factIds: [...new Set(factIds)].sort(),
+    details
+  }
+  return {
+    ...body,
+    candidateSha256: digest(body),
+    authority: 'advisory-human-resolution-required',
+    verdictAuthority: false
+  }
+}
+
+function factFrom(contextSnapshot, id) {
+  return contextSnapshot?.intelligence?.facts?.find((entry) => entry.id === id) ?? null
+}
+
+export function deriveInterviewContradictions(record, contextSnapshot = null) {
+  const answers = answerMap(record.answers)
+  const scope = answers.get('scope')?.claims ?? {}
+  const data = answers.get('data')?.claims ?? {}
+  const verification = answers.get('verification')?.claims ?? {}
+  const constraints = answers.get('constraints')?.claims ?? {}
+  const candidates = []
+
+  if (data.changesDatabase === false && data.requiresMigration === true) {
+    candidates.push(contradiction(
+      'database-migration-without-database-change',
+      'A migration is required while the same answer declares no database change.',
+      ['data'],
+      [],
+      { changesDatabase: false, requiresMigration: true }
+    ))
+  }
+
+  const overlappingModules = (scope.modules ?? []).filter((module) => (scope.excludedModules ?? []).includes(module))
+  if (overlappingModules.length > 0) {
+    candidates.push(contradiction(
+      'scope-includes-excluded-module',
+      'The approved scope both includes and excludes the same module.',
+      ['scope'],
+      [],
+      { modules: overlappingModules }
+    ))
+  }
+
+  const configuredGates = new Set((contextSnapshot?.verification?.gates ?? []).map((gate) => gate.id))
+  const missingGates = (verification.requiredGates ?? []).filter((gate) => !configuredGates.has(gate))
+  if (missingGates.length > 0) {
+    candidates.push(contradiction(
+      'required-verification-gate-not-configured',
+      'The interview requires verification Gates that are not configured in this source binding.',
+      ['verification'],
+      ['verification.gates'],
+      { gates: missingGates }
+    ))
+  }
+
+  const flyway = factFrom(contextSnapshot, 'database.flyway.present')
+  if (data.requiresMigration === true && !(flyway?.status === 'confirmed' && flyway.value === true)) {
+    candidates.push(contradiction(
+      'migration-required-without-configured-mechanism',
+      'The interview requires a migration but the project facts do not show a Flyway migration mechanism.',
+      ['data'],
+      ['database.flyway.present'],
+      { observedStatus: flyway?.status ?? 'missing', observedValue: flyway?.value ?? null }
+    ))
+  }
+
+  const compatibilityRequired = factFrom(contextSnapshot, 'project.api.compatibility.required')
+  if (
+    scope.changesPublicApi === true &&
+    compatibilityRequired?.status === 'confirmed' &&
+    compatibilityRequired.value === true &&
+    constraints.preservesCompatibility !== true
+  ) {
+    candidates.push(contradiction(
+      'public-api-compatibility-unresolved',
+      'The public API changes while project policy requires compatibility, but compatibility preservation is not confirmed.',
+      ['scope', 'constraints'],
+      ['project.api.compatibility.required'],
+      { preservesCompatibility: constraints.preservesCompatibility ?? null }
+    ))
+  }
+
+  return candidates.sort((left, right) => left.id.localeCompare(right.id))
+}
+
+export function interviewContradictions(record, contextSnapshot = null) {
+  const candidates = deriveInterviewContradictions(record, contextSnapshot)
+  const resolutions = record.contradictionResolutions ?? []
+  const withResolution = candidates.map((candidate) => {
+    const resolution = resolutions.find((entry) =>
+      entry.candidateId === candidate.id &&
+      entry.candidateSha256 === candidate.candidateSha256 &&
+      entry.contextSnapshotSha256 === record.contextSnapshotSha256
+    ) ?? null
+    return { ...candidate, resolved: Boolean(resolution), resolution }
+  })
+  return {
+    candidates: withResolution,
+    unresolved: withResolution.filter((candidate) => !candidate.resolved)
+  }
 }
 
 function deriveStatus(answers) {
@@ -140,6 +280,7 @@ export function createInterviewRecord(input, options = {}) {
     questionSetVersion: 1,
     status: 'COLLECTING',
     answers: [],
+    contradictionResolutions: [],
     revision: 0,
     createdBy: actor,
     createdAt: at,
@@ -181,6 +322,7 @@ export function answerInterviewRecord(record, input, options = {}) {
     questionId: question.id,
     status: answerStatus,
     text,
+    claims: normalizeClaims(question.id, input.claims, {}),
     actor,
     answeredAt: at
   }
@@ -224,12 +366,38 @@ export function reviseInterviewRecord(record, input, options = {}) {
   }
   const at = options.at ?? new Date().toISOString()
   const answers = record.answers.map((answer) => answer.questionId === question.id
-    ? { questionId: question.id, status: answerStatus, text, actor, answeredAt: at }
+    ? { questionId: question.id, status: answerStatus, text, claims: normalizeClaims(question.id, input.claims, answer.claims ?? {}), actor, answeredAt: at }
     : answer)
   return {
     ...record,
     answers,
     status: deriveStatus(answers),
+    revision: record.revision + 1,
+    updatedAt: at
+  }
+}
+
+export function resolveInterviewContradictionRecord(record, input, contextSnapshot, options = {}) {
+  if (!record || record.schemaVersion !== INTERVIEW_SCHEMA_VERSION) throw new Error('Interview record has an unsupported schema version.')
+  if (record.status === 'FINALIZED') throw new Error('A finalized interview cannot resolve contradictions.')
+  const actor = normalizeTaskText(input.actor, 'actor', 128)
+  const reason = normalizeTaskText(input.reason, 'contradiction resolution reason', 4096)
+  if (!actor || !reason) throw new Error('Contradiction resolution requires an actor and reason.')
+  const candidate = deriveInterviewContradictions(record, contextSnapshot).find((entry) => entry.id === input.candidateId)
+  if (!candidate) throw new Error('Active interview contradiction candidate not found: ' + input.candidateId)
+  const at = options.at ?? new Date().toISOString()
+  const contradictionResolutions = (record.contradictionResolutions ?? []).filter((entry) => entry.candidateId !== candidate.id)
+  contradictionResolutions.push({
+    candidateId: candidate.id,
+    candidateSha256: candidate.candidateSha256,
+    contextSnapshotSha256: record.contextSnapshotSha256,
+    actor,
+    reason,
+    resolvedAt: at
+  })
+  return {
+    ...record,
+    contradictionResolutions,
     revision: record.revision + 1,
     updatedAt: at
   }
@@ -265,7 +433,7 @@ export function rebindInterviewRecord(record, input, options = {}) {
   }
 }
 
-export function assertInterviewFinalizable(record, currentSourceFingerprint) {
+export function assertInterviewFinalizable(record, currentSourceFingerprint, contradictions = { unresolved: [] }) {
   if (record.status === 'FINALIZED') {
     throw new Error('Interview is already finalized.')
   }
@@ -283,10 +451,13 @@ export function assertInterviewFinalizable(record, currentSourceFingerprint) {
   if (record.sourceFingerprint !== currentSourceFingerprint) {
     throw new Error('Project source changed during the interview. Start a new interview against the current source.')
   }
+  if ((contradictions.unresolved ?? []).length > 0) {
+    throw new Error('Interview cannot finalize with unresolved contradiction candidates: ' + contradictions.unresolved.map((entry) => entry.id).join(', '))
+  }
 }
 
 export function finalizeInterviewRecord(record, input, options = {}) {
-  assertInterviewFinalizable(record, input.currentSourceFingerprint)
+  assertInterviewFinalizable(record, input.currentSourceFingerprint, input.contradictions)
   const actor = normalizeTaskText(input.actor, 'actor', 128)
   if (!actor) {
     throw new Error('Interview finalization requires an actor.')
@@ -318,6 +489,7 @@ export function interviewProgress(record, contextSnapshot = null) {
     answer: byQuestion.get(question.id) ?? null
   }))
   const current = currentInterviewQuestion(record)
+  const contradictions = interviewContradictions(record, contextSnapshot)
   return {
     status: record.status,
     answered: questions.filter((question) => question.answer?.status === 'answered').length,
@@ -325,6 +497,7 @@ export function interviewProgress(record, contextSnapshot = null) {
     currentQuestion: current
       ? { ...current, hint: observedHint(current, contextSnapshot) }
       : null,
-    questions
+    questions,
+    contradictions
   }
 }

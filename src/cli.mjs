@@ -6,6 +6,7 @@ import { doctorProject } from './doctor.mjs'
 import {
   advanceTask,
   createTask,
+  handoffTaskWriter,
   loadTask,
   updateTaskContext,
   updateTaskPlan
@@ -20,6 +21,7 @@ import {
   completeInterview,
   interviewStatus,
   rebindInterview,
+  resolveInterviewContradiction,
   reviseInterview,
   startInterview
 } from './runtime/interview-orchestrator.mjs'
@@ -43,15 +45,17 @@ function printHelp() {
     '  bth pack list [--json]',
     '  bth pack install <id> [path] [--json]',
     '  bth baseline update [path] [--json]',
-    '  bth task create <id> [path] [--title <text>] [--context <text>] [--json]',
+    '  bth task create <id> [path] [--title <text>] [--context <text>] [--by <actor>] [--json]',
     '  bth task context <id> [path] --text <text> --by <actor> [--json]',
     '  bth task plan <id> [path] --text <text> --by <actor> [--json]',
     '  bth task status <id> [path] [--json]',
+    '  bth task handoff <id> [path] --from <actor> --to <actor> --reason <text> [--json]',
     '  bth task export-plan <id> [path] [--context-budget <characters>] [--json]',
     '  bth task advance <id> <state> [path] --by <actor> [--approve] [--reason <text>] [--json]',
     '  bth interview start <id> [path] --requirement <text> --by <actor> [--title <text>] [--json]',
-    '  bth interview answer <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--json]',
-    '  bth interview revise <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--json]',
+    '  bth interview answer <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--claims <json>] [--json]',
+    '  bth interview revise <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--claims <json>] [--json]',
+    '  bth interview resolve <id> [path] --candidate <id> --reason <text> --by <actor> [--json]',
     '  bth interview rebind <id> [path] --by <actor> [--json]',
     '  bth interview status <id> [path] [--json]',
     '  bth interview finalize <id> [path] --by <actor> [--json]',
@@ -88,6 +92,13 @@ function printInterviewProgress(result) {
     console.log(progress.currentQuestion.prompt)
     console.log('Hint: ' + progress.currentQuestion.hint)
   }
+  if (progress.contradictions?.candidates?.length) {
+    console.log('')
+    console.log('Contradiction candidates:')
+    for (const candidate of progress.contradictions.candidates) {
+      console.log('- [' + (candidate.resolved ? 'RESOLVED' : 'UNRESOLVED') + '] ' + candidate.id + ' — ' + candidate.summary)
+    }
+  }
   console.log('')
   console.log('Next: ' + result.nextCommand)
 }
@@ -95,7 +106,7 @@ function printInterviewProgress(result) {
 async function runInterview(args) {
   const [subcommand, ...rest] = args
   if (!subcommand) {
-    throw new Error('Usage: bth interview <start|answer|revise|rebind|status|finalize> ...')
+    throw new Error('Usage: bth interview <start|answer|revise|resolve|rebind|status|finalize> ...')
   }
 
   if (subcommand === 'start') {
@@ -128,13 +139,13 @@ async function runInterview(args) {
   if (subcommand === 'answer') {
     const parsed = parseArguments(rest, {
       booleans: ['--json'],
-      values: ['--question', '--text', '--by', '--status']
+      values: ['--question', '--text', '--by', '--status', '--claims']
     })
     assertPositionalCount(
       parsed.positionals,
       1,
       2,
-      'bth interview answer <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--json]'
+      'bth interview answer <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--claims <json>] [--json]'
     )
     const questionId = parsed.options.get('--question')
     const text = parsed.options.get('--text')
@@ -147,7 +158,8 @@ async function runInterview(args) {
       questionId,
       text,
       actor,
-      status: parsed.options.get('--status')
+      status: parsed.options.get('--status'),
+      claims: parseJsonObjectOption(parsed.options.get('--claims'), '--claims')
     })
     printResult(result, parsed.flags.has('--json'), () => printInterviewProgress(result))
     return
@@ -156,13 +168,13 @@ async function runInterview(args) {
   if (subcommand === 'revise') {
     const parsed = parseArguments(rest, {
       booleans: ['--json'],
-      values: ['--question', '--text', '--by', '--status']
+      values: ['--question', '--text', '--by', '--status', '--claims']
     })
     assertPositionalCount(
       parsed.positionals,
       1,
       2,
-      'bth interview revise <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--json]'
+      'bth interview revise <id> [path] --question <id> --text <text> --by <actor> [--status <answered|unknown|conflict>] [--claims <json>] [--json]'
     )
     const questionId = parsed.options.get('--question')
     const text = parsed.options.get('--text')
@@ -175,8 +187,32 @@ async function runInterview(args) {
       questionId,
       text,
       actor,
-      status: parsed.options.get('--status')
+      status: parsed.options.get('--status'),
+      claims: parseJsonObjectOption(parsed.options.get('--claims'), '--claims')
     })
+    printResult(result, parsed.flags.has('--json'), () => printInterviewProgress(result))
+    return
+  }
+
+  if (subcommand === 'resolve') {
+    const parsed = parseArguments(rest, {
+      booleans: ['--json'],
+      values: ['--candidate', '--reason', '--by']
+    })
+    assertPositionalCount(
+      parsed.positionals,
+      1,
+      2,
+      'bth interview resolve <id> [path] --candidate <id> --reason <text> --by <actor> [--json]'
+    )
+    const candidateId = parsed.options.get('--candidate')
+    const reason = parsed.options.get('--reason')
+    const actor = parsed.options.get('--by')
+    if (!candidateId || !reason || !actor) {
+      throw new Error('Interview contradiction resolution requires --candidate, --reason, and --by.')
+    }
+    const [id, path = '.'] = parsed.positionals
+    const result = await resolveInterviewContradiction(path, id, { candidateId, reason, actor })
     printResult(result, parsed.flags.has('--json'), () => printInterviewProgress(result))
     return
   }
@@ -254,6 +290,20 @@ function parseArguments(args, schema = {}) {
     throw new Error('Unknown option: ' + token)
   }
   return { positionals, flags, options }
+}
+
+function parseJsonObjectOption(value, optionName) {
+  if (value === undefined) return undefined
+  let parsed
+  try {
+    parsed = JSON.parse(value)
+  } catch {
+    throw new Error(optionName + ' must be valid JSON.')
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error(optionName + ' must be a JSON object.')
+  }
+  return parsed
 }
 
 function assertPositionalCount(values, minimum, maximum, usage) {
@@ -361,11 +411,14 @@ async function runIntelligence(args) {
     console.log('Project intelligence: ' + intelligence.evaluation.status.toUpperCase())
     console.log('Source: ' + intelligence.sourceFingerprint)
     console.log('JVM cache: ' + intelligence.code.cache.status.toUpperCase())
-    console.log('Facts: ' + intelligence.facts.length + ', rules: ' + intelligence.rules.count)
+    console.log('Facts: ' + intelligence.facts.length + ' (' + intelligence.projectFacts.count + ' project-owned), rules: ' + intelligence.rules.count)
     for (const rule of intelligence.evaluation.results) {
       console.log('[' + rule.status.toUpperCase() + '] ' + rule.id + ' — ' + rule.description)
     }
     for (const diagnostic of intelligence.rules.diagnostics) {
+      console.log('[UNKNOWN] ' + diagnostic)
+    }
+    for (const diagnostic of intelligence.projectFacts.diagnostics) {
       console.log('[UNKNOWN] ' + diagnostic)
     }
   })
@@ -377,20 +430,21 @@ async function runIntelligence(args) {
 async function runTask(args) {
   const [subcommand, ...rest] = args
   if (!subcommand) {
-    throw new Error('Usage: bth task <create|context|plan|status|export-plan|advance> ...')
+    throw new Error('Usage: bth task <create|context|plan|status|handoff|export-plan|advance> ...')
   }
 
   if (subcommand === 'create') {
     const parsed = parseArguments(rest, {
       booleans: ['--json'],
-      values: ['--title', '--context']
+      values: ['--title', '--context', '--by']
     })
-    assertPositionalCount(parsed.positionals, 1, 2, 'bth task create <id> [path] [--title <text>] [--context <text>] [--json]')
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth task create <id> [path] [--title <text>] [--context <text>] [--by <actor>] [--json]')
     const [id, path = '.'] = parsed.positionals
     const result = await withProjectVerificationLock(path, undefined, () => createTask(path, {
       id,
       title: parsed.options.get('--title'),
-      context: parsed.options.get('--context')
+      context: parsed.options.get('--context'),
+      actor: parsed.options.get('--by')
     }))
     printResult(result, parsed.flags.has('--json'), () => {
       console.log('Created task ' + id + ' in state ' + result.record.state + '.')
@@ -406,7 +460,38 @@ async function runTask(args) {
     const result = await loadTask(path, id)
     printResult(result, parsed.flags.has('--json'), () => {
       console.log('Task ' + id + ': ' + result.record.state + ' (revision ' + result.record.revision + ')')
+      console.log('Active writer: ' + (result.record.writerLease?.actor ?? 'unclaimed'))
       console.log('Last evidence: ' + (result.record.lastEvidenceId ?? 'none'))
+    })
+    return
+  }
+
+  if (subcommand === 'handoff') {
+    const parsed = parseArguments(rest, {
+      booleans: ['--json'],
+      values: ['--from', '--to', '--reason']
+    })
+    assertPositionalCount(
+      parsed.positionals,
+      1,
+      2,
+      'bth task handoff <id> [path] --from <actor> --to <actor> --reason <text> [--json]'
+    )
+    const fromActor = parsed.options.get('--from')
+    const toActor = parsed.options.get('--to')
+    const reason = parsed.options.get('--reason')
+    if (!fromActor || !toActor || !reason) {
+      throw new Error('Task writer handoff requires --from, --to, and --reason.')
+    }
+    const [id, path = '.'] = parsed.positionals
+    const result = await withProjectVerificationLock(path, undefined, () => handoffTaskWriter(path, id, {
+      fromActor,
+      toActor,
+      reason
+    }))
+    printResult(result, parsed.flags.has('--json'), () => {
+      console.log('Task ' + id + ' writer handed off from ' + fromActor + ' to ' + toActor + '.')
+      console.log('Writer epoch: ' + result.record.writerLease.epoch)
     })
     return
   }

@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process'
 import { relative, sep } from 'node:path'
+import { loadProjectFacts, mergeProjectFacts } from '../config/project-facts.mjs'
 import { loadProjectRules } from '../config/project-rules.mjs'
 import { evaluateProjectRules } from '../core/constraint-engine.mjs'
 import { loadJvmIndexCache, writeJvmIndexCache } from '../core/jvm-index-cache.mjs'
@@ -256,15 +257,18 @@ export async function inspectProjectIntelligence(inputPath, options = {}) {
   } else {
     codePromise = inspectJvmProject(root, { ...(options.jvm ?? {}), manifest })
   }
-  const [knowledge, indexedCode, gitChanges, ruleContract] = await Promise.all([
+  const [knowledge, indexedCode, gitChanges, ruleContract, projectFactContract] = await Promise.all([
     inspectKnowledgeDocuments(root),
     codePromise,
     gitChangesPromise,
-    loadProjectRules(root)
+    loadProjectRules(root),
+    loadProjectFacts(root)
   ])
   const { index: _cachedIndex, root: _cacheRoot, ...cacheMetadata } = cache
   const code = { ...indexedCode, cache: cacheMetadata }
-  const facts = factsFrom(context, knowledge, code, gitChanges)
+  const builtInFacts = factsFrom(context, knowledge, code, gitChanges)
+  const projectFacts = mergeProjectFacts(builtInFacts, projectFactContract.facts)
+  const facts = [...builtInFacts, ...projectFacts]
   const evaluation = evaluateProjectRules(facts, ruleContract.rules)
   const result = {
     ...context,
@@ -275,9 +279,16 @@ export async function inspectProjectIntelligence(inputPath, options = {}) {
         deterministic: true,
         modelGenerated: false,
         compilerSemanticIndex: false,
-        verdictAuthority: false
+        verdictAuthority: false,
+        projectFacts: 'source-bound-project-declared'
       },
       facts,
+      projectFacts: {
+        source: projectFactContract.source,
+        providers: projectFactContract.providers,
+        count: projectFacts.length,
+        diagnostics: projectFactContract.diagnostics
+      },
       rules: {
         source: ruleContract.source,
         count: ruleContract.rules.length,
