@@ -39,6 +39,19 @@ fail 0
 
 This covers strict implementation configuration, project-owned executable resolution, detached implementation and recovery, and rejection of invented or symlinked policy provenance. The complete gate also includes the regression where one parallel Gate throws while a sibling is still active; verification waits for the full batch before releasing the project lock.
 
+### Clean Git configuration portability regression
+
+The first pushed CI run exposed that the implementation fixture depended on the maintainer machine's `commit.allowEmpty=true`. The fixture was changed to force-add its isolation `.gitignore` files before the first commit, rather than creating a redundant second commit. The corrected setup was rerun without a global Git configuration:
+
+```text
+GIT_CONFIG_GLOBAL=/dev/null node --test test/implementation-orchestrator.test.mjs
+tests 5
+pass 5
+fail 0
+```
+
+This proves the detached-worktree fixture carries its ignore contract from the initial commit and no longer relies on maintainer-specific Git settings.
+
 ### Real JVM execution
 
 ```text

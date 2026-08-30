@@ -8,7 +8,7 @@ import { initProject } from '../src/init-project.mjs'
 import { captureConfiguredSourceBinding } from '../src/runtime/backend-harness.mjs'
 import { runImplementation } from '../src/runtime/implementation-orchestrator.mjs'
 import { advanceTask, createTask, loadTask, updateTaskPlan } from '../src/core/task-store.mjs'
-import { initializeGit, runGit, writeGradleFixture } from '../test-support/git-project.mjs'
+import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
 
 async function approvedImplementationProject(options = {}) {
   const root = await mkdtemp(join(tmpdir(), 'bth-implementation-'))
@@ -24,9 +24,7 @@ async function approvedImplementationProject(options = {}) {
   await mkdir(join(root, 'tools'), { recursive: true })
   await rename(join(root, 'tools-implement.tmp'), join(root, 'tools/implement'))
   await chmod(join(root, 'tools/implement'), 0o755)
-  initializeGit(root)
-  runGit(root, ['add', '-f', '.gitignore', '.backend-harness/.gitignore'])
-  runGit(root, ['commit', '-qm', 'track isolation ignore contracts'])
+  initializeGit(root, { forcePaths: ['.gitignore', '.backend-harness/.gitignore'] })
   await createTask(root, { id: 'IMPL-1', context: 'Add one generated fixture class.' })
   await advanceTask(root, 'IMPL-1', 'CONTEXT_READY', { actor: 'developer' })
   const source = await captureConfiguredSourceBinding(root)

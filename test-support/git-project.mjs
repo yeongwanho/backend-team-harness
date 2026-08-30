@@ -10,11 +10,14 @@ export function runGit(root, args) {
   return result.stdout.trim()
 }
 
-export function initializeGit(root) {
+export function initializeGit(root, options = {}) {
   runGit(root, ['init', '-q'])
   runGit(root, ['config', 'user.email', 'bth-test@example.invalid'])
   runGit(root, ['config', 'user.name', 'BTH Test'])
   runGit(root, ['add', '.'])
+  if (options.forcePaths?.length > 0) {
+    runGit(root, ['add', '-f', '--', ...options.forcePaths])
+  }
   runGit(root, ['commit', '-qm', 'fixture'])
 }
 
