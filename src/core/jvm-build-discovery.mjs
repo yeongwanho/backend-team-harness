@@ -197,7 +197,17 @@ function compatibility(system, wrapperVersion, javaRuntimeMajor) {
 }
 
 export async function inspectJvmBuild(root, manifest, options = {}) {
-  const allCandidates = manifest.files.filter((path) => buildKind(path) !== null)
+  const preferredSystem = options.preferredSystem ?? null
+  if (preferredSystem !== null && !['gradle', 'maven'].includes(preferredSystem)) {
+    throw new Error('preferredSystem must be gradle or maven.')
+  }
+  const discoveredCandidates = manifest.files.filter((path) => buildKind(path) !== null)
+  const ignoredBuildFiles = preferredSystem
+    ? discoveredCandidates.filter((path) => buildKind(path) !== preferredSystem)
+    : []
+  const allCandidates = preferredSystem
+    ? discoveredCandidates.filter((path) => buildKind(path) === preferredSystem)
+    : discoveredCandidates
   const candidates = allCandidates.slice(0, MAX_BUILD_FILES)
   const candidateOverflowCount = allCandidates.length - candidates.length
   const builds = []
@@ -219,11 +229,13 @@ export async function inspectJvmBuild(root, manifest, options = {}) {
   const system = systems.length === 1 ? systems[0] : systems.length > 1 ? 'mixed' : null
   const testModules = [...new Set(manifest.files.filter((path) => /\/src\/test\/(?:java|kotlin)\//.test('/' + path)).map(sourceModule).filter(Boolean))].sort()
   const productionModules = [...new Set(manifest.files.filter((path) => /\/src\/main\/(?:java|kotlin)\//.test('/' + path)).map(sourceModule).filter(Boolean))].sort()
-  const settingsFiles = manifest.files.filter((path) => ['settings.gradle', 'settings.gradle.kts', 'gradle.properties'].includes(path)).sort()
-  const gradleWrapperProperties = manifest.files.includes('gradle/wrapper/gradle-wrapper.properties')
+  const settingsFiles = system === 'gradle'
+    ? manifest.files.filter((path) => ['settings.gradle', 'settings.gradle.kts', 'gradle.properties'].includes(path)).sort()
+    : []
+  const gradleWrapperProperties = system === 'gradle' && manifest.files.includes('gradle/wrapper/gradle-wrapper.properties')
     ? await boundedText(join(root, 'gradle/wrapper/gradle-wrapper.properties'), MAX_WRAPPER_PROPERTIES_BYTES)
     : null
-  const mavenWrapperProperties = manifest.files.includes('.mvn/wrapper/maven-wrapper.properties')
+  const mavenWrapperProperties = system === 'maven' && manifest.files.includes('.mvn/wrapper/maven-wrapper.properties')
     ? await boundedText(join(root, '.mvn/wrapper/maven-wrapper.properties'), MAX_WRAPPER_PROPERTIES_BYTES)
     : null
   const wrapperPath = system === 'gradle'
@@ -245,13 +257,17 @@ export async function inspectJvmBuild(root, manifest, options = {}) {
   const buildInputs = [...new Set([
     ...builds.map((entry) => entry.path),
     ...settingsFiles,
-    ...(manifest.files.includes('gradle/wrapper/gradle-wrapper.properties') ? ['gradle/wrapper/gradle-wrapper.properties'] : []),
-    ...(manifest.files.includes('gradle/wrapper/gradle-wrapper.jar') ? ['gradle/wrapper/gradle-wrapper.jar'] : []),
-    ...(manifest.files.includes('.mvn/wrapper/maven-wrapper.properties') ? ['.mvn/wrapper/maven-wrapper.properties'] : []),
-    ...(manifest.files.includes('.mvn/wrapper/maven-wrapper.jar') ? ['.mvn/wrapper/maven-wrapper.jar'] : []),
-    ...(manifest.files.includes('.mvn/maven.config') ? ['.mvn/maven.config'] : [])
+    ...(system === 'gradle' && manifest.files.includes('gradle/wrapper/gradle-wrapper.properties') ? ['gradle/wrapper/gradle-wrapper.properties'] : []),
+    ...(system === 'gradle' && manifest.files.includes('gradle/wrapper/gradle-wrapper.jar') ? ['gradle/wrapper/gradle-wrapper.jar'] : []),
+    ...(system === 'maven' && manifest.files.includes('.mvn/wrapper/maven-wrapper.properties') ? ['.mvn/wrapper/maven-wrapper.properties'] : []),
+    ...(system === 'maven' && manifest.files.includes('.mvn/wrapper/maven-wrapper.jar') ? ['.mvn/wrapper/maven-wrapper.jar'] : []),
+    ...(system === 'maven' && manifest.files.includes('.mvn/maven.config') ? ['.mvn/maven.config'] : [])
   ])].sort()
   const diagnostics = []
+  if (preferredSystem && ignoredBuildFiles.length > 0) {
+    diagnostics.push('Using the explicit ' + preferredSystem + ' build selection; ignored alternative build definitions: ' + ignoredBuildFiles.join(', '))
+  }
+  if (preferredSystem && allCandidates.length === 0) diagnostics.push('The explicitly selected ' + preferredSystem + ' build has no recognizable candidate file.')
   if (system === 'mixed') diagnostics.push('Both Gradle and Maven build definitions were detected; no default verification command is safe to choose.')
   if (system === null) diagnostics.push('No recognizable Gradle or Maven build definition was detected.')
   if (candidateOverflowCount > 0) diagnostics.push('Build discovery stopped after ' + MAX_BUILD_FILES + ' files; ' + candidateOverflowCount + ' additional build definitions remain uninspected.')
@@ -271,6 +287,7 @@ export async function inspectJvmBuild(root, manifest, options = {}) {
 
   return {
     schemaVersion: 1,
+    preferredSystem,
     status: systems.length === 1 && invalidBuildFiles.length === 0 && candidateOverflowCount === 0
       ? 'confirmed'
       : systems.length > 1 || invalidBuildFiles.length > 0 || candidateOverflowCount > 0
@@ -281,6 +298,7 @@ export async function inspectJvmBuild(root, manifest, options = {}) {
     framework: frameworkFrom(buildContents, manifest.files),
     buildFiles: builds.map(({ path, system: kind, module }) => ({ path, system: kind, module })),
     invalidBuildFiles,
+    ignoredBuildFiles,
     candidateOverflowCount,
     productionModules,
     testModules,

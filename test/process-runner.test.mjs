@@ -66,6 +66,22 @@ test('child-process environment keeps narrow Docker and Testcontainers routing w
   assert.equal(environment.DOCKER_AUTH_CONFIG, undefined)
 })
 
+test('stdout line observation is bounded and does not retain raw lines in process evidence', async () => {
+  const observed = []
+  const result = await runProcess({
+    program: process.execPath,
+    args: ['-e', 'process.stdout.write("one\\ntwo")'],
+    cwd: process.cwd(),
+    timeoutMs: 1000,
+    onStdoutLine: (line) => observed.push(line),
+    env: buildSafeEnvironment(process.env)
+  })
+
+  assert.deepEqual(observed, ['one', 'two'])
+  assert.deepEqual(result.stdout.observation, { lines: 2, droppedLines: 0, observerErrors: 0 })
+  assert.equal('observedLines' in result.stdout, false)
+})
+
 test('stdio-drain cleanup ignores queued descendant output after finalizing hashes', { skip: process.platform === 'win32' }, async () => {
   const grandchild = [
     'process.on("SIGTERM", () => {})',

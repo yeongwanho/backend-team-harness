@@ -103,12 +103,16 @@ export function runProcess({
   stdioDrainTimeoutMs = 250,
   stdioTerminateGraceMs = 250,
   stdioKillWaitMs = 250,
-  env
+  env,
+  onStdoutLine
 }) {
   if (!Number.isSafeInteger(tailBytes) || tailBytes < 1024 || tailBytes > 1024 * 1024) {
     throw new Error('Process tailBytes must be between 1024 and 1048576.')
   }
   return new Promise((resolvePromise, reject) => {
+    if (onStdoutLine !== undefined && typeof onStdoutLine !== 'function') {
+      throw new Error('Process stdout observer must be a function.')
+    }
     const startedAt = new Date()
     const startedMonotonic = Date.now()
     const stdoutHash = createHash('sha256')
@@ -125,6 +129,49 @@ export function runProcess({
     let observedExitCode = null
     let observedSignal = null
     let drainCleanupPending = false
+    let stdoutLineBuffer = Buffer.alloc(0)
+    let stdoutLineOverflow = false
+    let stdoutObservedLines = 0
+    let stdoutDroppedLines = 0
+    let stdoutObserverErrors = 0
+    const maxObservedLineBytes = 1024 * 1024
+
+    const observeLine = (line) => {
+      if (!onStdoutLine) return
+      stdoutObservedLines += 1
+      try {
+        onStdoutLine(line.toString('utf8'))
+      } catch {
+        stdoutObserverErrors += 1
+      }
+    }
+
+    const observeStdout = (chunk) => {
+      if (!onStdoutLine) return
+      let cursor = 0
+      while (cursor < chunk.length) {
+        const newline = chunk.indexOf(10, cursor)
+        const end = newline === -1 ? chunk.length : newline
+        const piece = chunk.subarray(cursor, end)
+        if (!stdoutLineOverflow) {
+          if (stdoutLineBuffer.length + piece.length <= maxObservedLineBytes) {
+            stdoutLineBuffer = Buffer.concat([stdoutLineBuffer, piece])
+          } else {
+            stdoutLineBuffer = Buffer.alloc(0)
+            stdoutLineOverflow = true
+          }
+        }
+        if (newline !== -1) {
+          if (stdoutLineOverflow) stdoutDroppedLines += 1
+          else observeLine(stdoutLineBuffer)
+          stdoutLineBuffer = Buffer.alloc(0)
+          stdoutLineOverflow = false
+          cursor = newline + 1
+        } else {
+          cursor = chunk.length
+        }
+      }
+    }
 
     const childEnvironment = env ?? buildSafeEnvironment()
     const launch = buildProcessLaunch({ program, args, env: childEnvironment })
@@ -197,6 +244,7 @@ export function runProcess({
       stdoutHash.update(chunk)
       stdoutBytes += chunk.length
       stdoutTail = Buffer.concat([stdoutTail, chunk]).subarray(-tailBytes)
+      observeStdout(chunk)
     }
     const onStderr = (chunk) => {
       if (settled) {
@@ -224,6 +272,10 @@ export function runProcess({
       }
       settled = true
       const finishedAt = new Date()
+      if (stdoutLineOverflow) stdoutDroppedLines += 1
+      else if (stdoutLineBuffer.length > 0) observeLine(stdoutLineBuffer)
+      stdoutLineBuffer = Buffer.alloc(0)
+      stdoutLineOverflow = false
       resolvePromise({
         exitCode,
         signal,
@@ -232,7 +284,10 @@ export function runProcess({
         startedAt: startedAt.toISOString(),
         finishedAt: finishedAt.toISOString(),
         durationMs: Date.now() - startedMonotonic,
-        stdout: { sha256: stdoutHash.digest('hex'), bytes: stdoutBytes, tail: stdoutTail.toString('utf8') },
+        stdout: {
+          sha256: stdoutHash.digest('hex'), bytes: stdoutBytes, tail: stdoutTail.toString('utf8'),
+          observation: onStdoutLine ? { lines: stdoutObservedLines, droppedLines: stdoutDroppedLines, observerErrors: stdoutObserverErrors } : null
+        },
         stderr: { sha256: stderrHash.digest('hex'), bytes: stderrBytes, tail: stderrTail.toString('utf8') }
       })
     }

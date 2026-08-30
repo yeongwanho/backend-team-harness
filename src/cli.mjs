@@ -46,15 +46,16 @@ function printFailureTail(result) {
 }
 
 async function runInit(args) {
-  const parsed = parseArguments(args, { booleans: ['--force', '--allow-unversioned'] })
-  assertPositionalCount(parsed.positionals, 0, 1, 'bth init [path] [--force] [--allow-unversioned]')
+  const parsed = parseArguments(args, { booleans: ['--force', '--allow-unversioned'], values: ['--build'] })
+  assertPositionalCount(parsed.positionals, 0, 1, 'bth init [path] [--build gradle|maven] [--force] [--allow-unversioned]')
   const force = parsed.flags.has('--force')
   if (force && parsed.positionals.length === 0) {
     throw new Error('`--force` requires an explicit project path; refusing to overwrite the current directory implicitly.')
   }
   const result = await initProject(parsed.positionals[0] ?? '.', {
     force,
-    allowUnversioned: parsed.flags.has('--allow-unversioned')
+    allowUnversioned: parsed.flags.has('--allow-unversioned'),
+    preferredSystem: parsed.options.get('--build')
   })
   console.log('Initialized backend harness contract at ' + result.root)
   console.log(

@@ -1,6 +1,6 @@
-import { constants } from 'node:fs'
+import { constants, lstatSync, realpathSync } from 'node:fs'
 import { access, lstat, realpath, stat } from 'node:fs/promises'
-import { delimiter, join } from 'node:path'
+import { delimiter, isAbsolute, join, relative, resolve } from 'node:path'
 import { buildSafeEnvironment, runProcess } from '../core/process-runner.mjs'
 
 export const PROVIDER_IDS = Object.freeze(['codex', 'claude'])
@@ -136,23 +136,28 @@ export function selectImplementationProfile(input = {}) {
   }
 }
 
-function providerPrompt(requestPath) {
+function providerPrompt(requestPath, profile) {
+  const implementationMode = profile?.selected ?? 'balanced'
   return [
     'Open ' + requestPath + ' and implement only its approved task inside the current workspace.',
-    'Before editing, follow projectConventions: read every declared rule source and relevant knowledge document, then inspect at least one adjacent production example and its matching test.',
+    'Implementation mode is ' + implementationMode + '; keep discovery proportional to that mode.',
+    'Treat confirmed structured projectConventions entries and their source citations as the starting contract; do not reread every policy document.',
+    'Open only cited rule or knowledge sections directly relevant to this task or needed to resolve an unknown, then inspect the highest-ranked adjacent production example and its paired test when present.',
     'Start with the ranked codeContext paths; when they are unavailable, use bounded Glob and Grep discovery inside allowedPrefixes.',
     'Use projectConventions.discovered as source-cited observations, not declared policy; preserve repeated naming, layering, DTO/error, transaction, persistence, and test patterns wherever the observations or adjacent examples show them, even for a small CRUD change.',
     'For MySQL/JPA work, inspect cited database observations and adjacent code for query shape, indexes, transaction scope, locks, and N+1 risk; source-pattern candidates are review prompts, never proof of a query plan or runtime defect.',
     'If a declared blocking project rule is unknown, unavailable, or conflicts with the code, do not guess; stop without changing files; preserve non-blocking warnings in the implementation evidence.',
     'Obey allowedPrefixes and authority limits. Never commit, change Git refs, deploy, access production, or edit .backend-harness control files.',
     'Do not read .env files, credential stores, private keys, tokens, or unrelated user data.',
-    'Do not run the broad verification suite; Backend Team Harness runs every declared Gate after your edit.',
+    'Do not run build, test, formatter, linter, package-manager, Docker, or database commands; Backend Team Harness owns every declared Gate after your edit.',
     'If recovery evidence is present, fix its concrete failure without widening the approved scope.'
   ].join(' ')
 }
 
-export function buildProviderInvocation(adapter, executable, requestPath, profile) {
-  const prompt = providerPrompt(requestPath)
+export function buildProviderPromptInvocation(adapter, executable, prompt, profile) {
+  if (typeof prompt !== 'string' || !prompt.trim() || Buffer.byteLength(prompt, 'utf8') > 128 * 1024) {
+    throw new Error('Provider prompt must contain between 1 and 131072 UTF-8 bytes.')
+  }
   if (adapter.provider === 'codex') {
     const args = [
       'exec', '--ephemeral', '--ignore-user-config', '--approve-for-me',
@@ -164,7 +169,7 @@ export function buildProviderInvocation(adapter, executable, requestPath, profil
   }
   if (adapter.provider === 'claude') {
     const args = [
-      '--print', '--output-format', 'json', '--no-session-persistence', '--disable-slash-commands', '--no-chrome',
+      '--print', '--output-format', 'stream-json', '--verbose', '--no-session-persistence', '--disable-slash-commands', '--no-chrome',
       '--setting-sources', 'project', '--permission-mode', 'acceptEdits', '--tools', 'Read,Edit,Write,Glob,Grep',
       '--effort', profile.effort
     ]
@@ -174,6 +179,133 @@ export function buildProviderInvocation(adapter, executable, requestPath, profil
     return { program: executable.path, args, promptShaInput: prompt }
   }
   throw new Error('Unsupported implementation provider: ' + adapter.provider)
+}
+
+const ACTIVITY_SOURCE = /\.(?:java|kt|ts|tsx|js|jsx|mjs|cjs|py|sql|json|ya?ml|toml|properties|md)$/i
+const READ_COMMAND = /(?:^|[\s;&|])(?:cat|sed|head|tail|rg|grep|find|fd|ls)\b/
+const WRITE_COMMAND = /(?:^|[\s;&|])(?:apply_patch|tee)\b|\bsed\s+-i\b|\bperl\s+-pi\b|(?:^|[^>])>{1,2}\s*[^&]/
+const VALIDATION_COMMAND = /(?:^|[\s;&|./])(?:mvnw?|gradlew?|pytest|docker)(?:\s|$)|\b(?:npm|pnpm|yarn)\s+(?:run\s+)?(?:test|check|verify|lint|format)\b|\buv\s+run\s+pytest\b/i
+
+function safeActivityPath(value, cwd, mustExist = false) {
+  if (typeof value !== 'string' || !value || value.length > 4096 || value.includes('\0')) return null
+  let candidate = value.trim().replace(/^[\[({<'"`]+|[\])}>'"`,;]+$/g, '')
+  candidate = candidate.replace(/:\d+(?::\d+)?$/, '').replaceAll('\\', '/')
+  if (isAbsolute(candidate) || /^[A-Za-z]:\//.test(candidate)) {
+    const inside = relative(cwd, resolve(candidate)).replaceAll('\\', '/')
+    if (!inside || inside === '..' || inside.startsWith('../')) return null
+    candidate = inside
+  }
+  candidate = candidate.replace(/^\.\//, '')
+  if (!ACTIVITY_SOURCE.test(candidate) || candidate.startsWith('/') || candidate.split('/').some((part) => !part || part === '..')) return null
+  if (mustExist) {
+    try {
+      const absolute = resolve(cwd, candidate)
+      const metadata = lstatSync(absolute)
+      if (!metadata.isFile() || metadata.isSymbolicLink()) return null
+      const canonical = realpathSync(absolute)
+      const inside = relative(realpathSync(cwd), canonical).replaceAll('\\', '/')
+      if (!inside || inside === '..' || inside.startsWith('../')) return null
+      candidate = inside
+    } catch {
+      return null
+    }
+  }
+  return candidate
+}
+
+function sourcePaths(text, cwd, mustExist = true) {
+  if (typeof text !== 'string' || !text) return []
+  const normalized = text.replaceAll('\\', '/')
+  const matches = normalized.match(/(?<![A-Za-z0-9_@./:-])(?:[A-Za-z]:)?(?:\/|\.{1,2}\/)?(?:[A-Za-z0-9_@.-]+\/)*[A-Za-z0-9_@.-]+\.(?:java|kt|ts|tsx|js|jsx|mjs|cjs|py|sql|json|ya?ml|toml|properties|md)(?::\d+(?::\d+)?)?/gi) ?? []
+  return [...new Set(matches.map((entry) => safeActivityPath(entry, cwd, mustExist)).filter(Boolean))].slice(0, 256)
+}
+
+function providerActivityObserver(provider, cwd) {
+  const preWritePaths = new Set()
+  const changedPaths = new Set()
+  let firstWriteObserved = false
+  let parsedEvents = 0
+  let rejectedEvents = 0
+  let readCommandCount = 0
+  let validationCommandCount = 0
+  let writeEventCount = 0
+  function addPreWrite(values) {
+    if (firstWriteObserved) return
+    for (const value of values) if (preWritePaths.size < 256) preWritePaths.add(value)
+  }
+  function markWrite(values = []) {
+    firstWriteObserved = true
+    writeEventCount += 1
+    for (const value of values) {
+      const path = safeActivityPath(value, cwd)
+      if (path && changedPaths.size < 256) changedPaths.add(path)
+    }
+  }
+  function observeCodex(document) {
+    const item = document?.item
+    if (!item || typeof item !== 'object') return
+    if (item.type === 'file_change' && document.type === 'item.completed') {
+      markWrite((item.changes ?? []).map((change) => change?.path))
+      return
+    }
+    if (item.type !== 'command_execution') return
+    const command = typeof item.command === 'string' ? item.command : ''
+    if (VALIDATION_COMMAND.test(command) && document.type === 'item.started') validationCommandCount += 1
+    if (WRITE_COMMAND.test(command) && document.type === 'item.started') markWrite(sourcePaths(command, cwd, false))
+    if (READ_COMMAND.test(command)) {
+      readCommandCount += document.type === 'item.started' ? 1 : 0
+      addPreWrite(sourcePaths(command, cwd))
+      if (document.type === 'item.completed') addPreWrite(sourcePaths(item.aggregated_output, cwd))
+    }
+  }
+  function observeClaude(document) {
+    if (document?.type !== 'assistant' || !Array.isArray(document?.message?.content)) return
+    for (const block of document.message.content) {
+      if (block?.type !== 'tool_use') continue
+      const name = block.name
+      const input = block.input ?? {}
+      if (['Edit', 'Write'].includes(name)) markWrite([input.file_path])
+      else if (name === 'Read') {
+        readCommandCount += 1
+        addPreWrite([safeActivityPath(input.file_path, cwd, true)].filter(Boolean))
+      }
+    }
+  }
+  return {
+    onLine(line) {
+      if (typeof line !== 'string' || !line.trim() || Buffer.byteLength(line) > 1024 * 1024) {
+        rejectedEvents += 1
+        return
+      }
+      try {
+        const document = JSON.parse(line)
+        parsedEvents += 1
+        if (provider === 'codex') observeCodex(document)
+        else observeClaude(document)
+      } catch {
+        rejectedEvents += 1
+      }
+    },
+    snapshot() {
+      return {
+        schemaVersion: 1,
+        provider,
+        authority: 'provider-event-derived-advisory',
+        parsedEvents,
+        rejectedEvents,
+        firstWriteObserved,
+        preWritePaths: [...preWritePaths],
+        changedPaths: [...changedPaths],
+        readCommandCount,
+        validationCommandCount,
+        writeEventCount
+      }
+    }
+  }
+}
+
+export function buildProviderInvocation(adapter, executable, requestPath, profile) {
+  return buildProviderPromptInvocation(adapter, executable, providerPrompt(requestPath, profile), profile)
 }
 
 function numericUsage(value, path = '', result = {}, depth = 0) {
@@ -232,7 +364,10 @@ export function normalizeProviderUsage(provider, usage = {}, fallbackDurationMs 
   ])
   const cachedInput = finiteUsageValue(usage, [
     'usage.cached_input_tokens', 'usage.cache_read_input_tokens', 'usage.cache_creation_input_tokens',
-    'cached_input_tokens', 'cache_read_input_tokens', 'cache_creation_input_tokens'
+    'cached_input_tokens', 'cache_read_input_tokens', 'cache_creation_input_tokens',
+    'message.usage.cached_input_tokens', 'message.usage.cache_read_input_tokens',
+    'message.usage.cache_creation_input_tokens', 'result.usage.cached_input_tokens',
+    'result.usage.cache_read_input_tokens', 'result.usage.cache_creation_input_tokens'
   ])
   const reasoningOutput = finiteUsageValue(usage, [
     'usage.reasoning_output_tokens', 'reasoning_output_tokens'
@@ -240,10 +375,11 @@ export function normalizeProviderUsage(provider, usage = {}, fallbackDurationMs 
   const reportedTotal = finiteUsageValue(usage, ['usage.total_tokens', 'total_tokens', 'totalTokens'])
   const knownTokenParts = [input, output].filter((value) => value !== null)
   const total = reportedTotal ?? (knownTokenParts.length > 0 ? knownTokenParts.reduce((sum, value) => sum + value, 0) : null)
+  const uncachedInput = input !== null && cachedInput !== null ? Math.max(0, input - cachedInput) : null
   return {
     schemaVersion: 1,
     provider,
-    tokens: { input, output, cachedInput, reasoningOutput, total },
+    tokens: { input, uncachedInput, output, cachedInput, reasoningOutput, total },
     costUsd: finiteUsageValue(usage, ['total_cost_usd', 'cost_usd', 'costUsd', 'usage.cost_usd']),
     durationMs: finiteUsageValue(usage, ['duration_ms', 'duration_api_ms', 'durationMs']) ??
       (typeof fallbackDurationMs === 'number' && Number.isFinite(fallbackDurationMs) && fallbackDurationMs >= 0 ? fallbackDurationMs : null),
@@ -294,13 +430,19 @@ export async function probeImplementationProvider(provider, options = {}) {
 export async function runImplementationProvider(adapter, input, options = {}) {
   const executable = await resolveProviderExecutable(adapter.provider, options)
   const invocation = buildProviderInvocation(adapter, executable, input.requestPath, input.profile)
+  return runResolvedProvider(adapter, input, invocation, executable, options)
+}
+
+async function runResolvedProvider(adapter, input, invocation, executable, options) {
+  const activity = providerActivityObserver(adapter.provider, input.cwd)
   const result = await (options.processRunner ?? runProcess)({
     program: invocation.program,
     args: invocation.args,
     cwd: input.cwd,
     timeoutMs: adapter.timeoutMs,
     tailBytes: 64 * 1024,
-    env: input.env
+    env: input.env,
+    onStdoutLine: activity.onLine
   })
   const passed = result.exitCode === 0 && !result.signal && !result.timedOut && !result.stdioDrainTimedOut
   const providerUsage = extractProviderUsage(result.stdout.tail)
@@ -314,7 +456,14 @@ export async function runImplementationProvider(adapter, input, options = {}) {
       model: adapter.model,
       profile: input.profile,
       usage: normalizeProviderUsage(adapter.provider, providerUsage, result.durationMs),
+      activity: activity.snapshot(),
       failure: passed ? null : extractProviderFailure(adapter.provider, result.stdout.tail, result.stderr.tail)
     }
   }
+}
+
+export async function runProviderPrompt(adapter, input, options = {}) {
+  const executable = await resolveProviderExecutable(adapter.provider, options)
+  const invocation = buildProviderPromptInvocation(adapter, executable, input.prompt, input.profile)
+  return runResolvedProvider(adapter, input, invocation, executable, options)
 }

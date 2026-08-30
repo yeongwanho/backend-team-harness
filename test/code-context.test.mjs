@@ -56,6 +56,24 @@ test('query-aware PageRank keeps the lexical entry point and exact graph neighbo
   assert.deepEqual(result.authority.forbiddenUses, ['pass-verdict', 'test-skipping'])
 })
 
+test('a selected production entry co-selects its convention-resolved test before unrelated nodes', () => {
+  const document = graphDocument()
+  document.graph.nodes.push({
+    id: 'controller-test', path: 'src/test/java/orders/OrdersControllerTests.java', language: 'java',
+    qualifiedName: 'orders.OrdersControllerTests', searchTerms: ['OrdersControllerTests']
+  })
+  document.graph.edges.push({
+    from: 'controller-test', to: 'controller', kind: 'tests', provenance: 'convention-test-name-resolved'
+  })
+
+  const result = rankCodeContext(document, 'Change OrdersController lookup behavior', { budgetCharacters: 700 })
+
+  assert.equal(result.entries[0].path, 'src/main/java/orders/OrdersController.java')
+  assert.equal(result.entries[1].path, 'src/test/java/orders/OrdersControllerTests.java')
+  assert.equal(result.algorithm.testPairCoSelection, true)
+  assert.ok(result.budget.usedCharacters <= result.budget.limitCharacters)
+})
+
 test('no lexical match uses a deterministic global fallback instead of inventing relevance', () => {
   const first = rankCodeContext(graphDocument(), '한국어 요구사항만 있음', { budgetCharacters: 700 })
   const second = rankCodeContext(graphDocument(), '한국어 요구사항만 있음', { budgetCharacters: 700 })

@@ -63,13 +63,14 @@ The bundled graph is intentionally conservative. It indexes Java/Kotlin, TypeScr
 
 Each edge records `static-import-resolved`. Wildcards and external imports count as unresolved coverage gaps. Duplicate qualified type declarations make a matching import ambiguous, so the Pack reports the ambiguity and creates no edge. The output carries a deterministic `generation` hash and a non-deterministic `generatedAt` timestamp. It is compact JSON with the same 16 MiB maximum accepted by the loader; generation fails instead of producing a report the next stage must reject. Its atomic writer replaces a final-file symbolic link without following it and rejects an output directory that resolves outside the project.
 
-The generated graph also includes a deterministic global directed PageRank for broad navigation. When an approved task is exported, BTH can compute a separate query-aware ranking with a hard character budget:
+The graph also records uniquely resolved JVM test-name pairs and adjacent TypeScript/JavaScript/Python test-path pairs as convention evidence. The generated graph includes a deterministic global directed PageRank for broad navigation. When an approved task is exported, BTH can compute a separate query-aware ranking with a hard character budget:
 
 1. verify that the graph digest and byte count match a successful observation in the latest sealed run;
 2. require that run and the current project have the same source fingerprint;
 3. seed nodes whose path, qualified declaration, or bounded declaration/import terms match normalized requirement terms;
 4. propagate only over exact stored imports, with reverse traversal at half weight;
-5. blend lexical prior and graph score, record residual/tolerance and whether the bounded iteration converged, then include only complete entries that fit the requested budget.
+5. blend lexical prior and graph score, record residual/tolerance and whether the bounded iteration converged, then include only complete entries that fit the requested budget;
+6. when a selected production/test node has a uniquely resolved test-pair neighbor, co-select the highest-ranked pair before unrelated nodes if it still fits the same budget.
 
 No match falls back to global graph importance rather than inventing semantic relevance. Authority lists are bounded to 16 short identifiers each, so they cannot inflate a tiny entry budget into an unbounded payload. A missing, stale, tampered, oversized, symlinked, or contract-invalid graph produces an explained `unavailable` result and never blocks plan export.
 

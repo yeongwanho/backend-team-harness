@@ -5,12 +5,14 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
   buildProviderInvocation,
+  buildProviderPromptInvocation,
   extractProviderFailure,
   extractProviderUsage,
   normalizeProviderUsage,
   probeImplementationProvider,
   resolveProviderExecutable,
   runImplementationProvider,
+  runProviderPrompt,
   selectImplementationProfile
 } from '../src/providers/model-cli.mjs'
 import { buildProcessLaunch } from '../src/core/process-runner.mjs'
@@ -134,15 +136,33 @@ test('provider argv uses non-interactive bounded modes without dangerous bypass 
   assert.ok(codex.args.includes('model_reasoning_effort=medium'))
   assert.match(codex.args.at(-1), /ranked codeContext paths/)
   assert.match(codex.args.at(-1), /projectConventions/)
+  assert.match(codex.args.at(-1), /do not reread every policy document/)
   assert.match(codex.args.at(-1), /naming, layering, DTO\/error, transaction, persistence, and test patterns/)
   assert.match(codex.args.at(-1), /do not guess/)
+  assert.match(codex.args.at(-1), /Do not run build, test, formatter, linter/)
 
   const claude = buildProviderInvocation({ provider: 'claude', model: 'sonnet', maxBudgetUsd: 1.5 }, executable, './request.json', profile)
+  assert.ok(claude.args.includes('stream-json'))
+  assert.ok(claude.args.includes('--verbose'))
   assert.ok(claude.args.includes('acceptEdits'))
   assert.ok(claude.args.includes('Read,Edit,Write,Glob,Grep'))
   assert.ok(claude.args.includes('--max-budget-usd'))
   assert.equal(claude.args.some((entry) => entry.includes('bypassPermissions')), false)
   assert.equal(claude.args.some((entry) => entry.includes('dangerously')), false)
+})
+
+test('direct benchmark prompts use the same provider isolation and effort argv as harness prompts', () => {
+  const executable = { path: '/usr/local/bin/provider' }
+  const profile = { effort: 'medium' }
+  const invocation = buildProviderPromptInvocation(
+    { provider: 'codex', model: null }, executable, 'Inspect and implement one bounded task.', profile
+  )
+
+  assert.equal(invocation.program, executable.path)
+  assert.ok(invocation.args.includes('--ephemeral'))
+  assert.ok(invocation.args.includes('--ignore-user-config'))
+  assert.ok(invocation.args.includes('model_reasoning_effort=medium'))
+  assert.equal(invocation.args.at(-1), 'Inspect and implement one bounded task.')
 })
 
 test('Codex provider argv remains representable through a Windows npm command shim', () => {
@@ -191,7 +211,7 @@ test('provider usage is normalized to one token, cost, time, and turn contract',
     num_turns: 2
   }, 1000)
   assert.deepEqual(claude.tokens, {
-    input: 120, output: 34, cachedInput: 50, reasoningOutput: null, total: 154
+    input: 120, uncachedInput: 70, output: 34, cachedInput: 50, reasoningOutput: null, total: 154
   })
   assert.equal(claude.costUsd, 0.012)
   assert.equal(claude.durationMs, 900)
@@ -203,6 +223,7 @@ test('provider usage is normalized to one token, cost, time, and turn contract',
     'usage.reasoning_output_tokens': 1
   }, 321)
   assert.equal(codex.tokens.total, 9)
+  assert.equal(codex.tokens.uncachedInput, null)
   assert.equal(codex.tokens.reasoningOutput, 1)
   assert.equal(codex.durationMs, 321)
   assert.equal(codex.costUsd, null)
@@ -240,7 +261,16 @@ test('real provider runner path resolves, spawns, and extracts usage from a fixt
   if (process.platform === 'win32') return t.skip('POSIX executable fixture')
   const directory = await mkdtemp(join(tmpdir(), 'bth-provider-run-'))
   const executable = join(directory, 'codex')
-  await writeFile(executable, '#!/bin/sh\nprintf \'%s\\n\' \'{"type":"turn.completed","usage":{"input_tokens":7,"output_tokens":2}}\'\n', 'utf8')
+  await mkdir(join(directory, 'src'), { recursive: true })
+  await writeFile(join(directory, 'src/users.js'), 'export const users = []\n', 'utf8')
+  await writeFile(executable, [
+    '#!/bin/sh',
+    'printf \'%s\\n\' \'{"type":"item.started","item":{"id":"1","type":"command_execution","command":"sed -n 1,80p src/users.js","aggregated_output":"","exit_code":null,"status":"in_progress"}}\'',
+    'printf \'%s\\n\' \'{"type":"item.started","item":{"id":"v1","type":"command_execution","command":"./mvnw test","aggregated_output":"","exit_code":null,"status":"in_progress"}}\'',
+    'printf \'%s\\n\' \'{"type":"item.completed","item":{"id":"2","type":"file_change","changes":[{"path":"src/users.js","kind":"update"}],"status":"completed"}}\'',
+    'printf \'%s\\n\' \'{"type":"turn.completed","usage":{"input_tokens":7,"cached_input_tokens":3,"output_tokens":2}}\'',
+    ''
+  ].join('\n'), 'utf8')
   await chmod(executable, 0o755)
   const env = { ...process.env, PATH: directory }
   const result = await runImplementationProvider(
@@ -259,7 +289,65 @@ test('real provider runner path resolves, spawns, and extracts usage from a fixt
   assert.equal(result.metadata.usage.tokens.input, 7)
   assert.equal(result.metadata.usage.tokens.output, 2)
   assert.equal(result.metadata.usage.tokens.total, 9)
+  assert.equal(result.metadata.usage.tokens.uncachedInput, 4)
+  assert.deepEqual(result.metadata.activity.preWritePaths, ['src/users.js'])
+  assert.deepEqual(result.metadata.activity.changedPaths, ['src/users.js'])
+  assert.equal(result.metadata.activity.validationCommandCount, 1)
   assert.equal(result.metadata.usage.providerReported['usage.input_tokens'], 7)
+
+  const direct = await runProviderPrompt(
+    {
+      provider: 'codex', model: null, timeoutMs: 10_000,
+      mode: 'fast', contextBudgetCharacters: null, maxBudgetUsd: null
+    },
+    {
+      prompt: 'Implement one bounded fixture task.', cwd: directory,
+      profile: selectImplementationProfile({ mode: 'fast' }), env
+    },
+    { env, version: 'codex-fixture 1.2.3' }
+  )
+  assert.equal(direct.process.exitCode, 0)
+  assert.equal(direct.metadata.usage.tokens.total, 9)
+})
+
+test('Claude stream events expose bounded pre-write activity and cache-aware usage', async (t) => {
+  if (process.platform === 'win32') return t.skip('POSIX executable fixture')
+  const directory = await mkdtemp(join(tmpdir(), 'bth-claude-provider-run-'))
+  const executable = join(directory, 'claude')
+  await mkdir(join(directory, 'src'), { recursive: true })
+  await writeFile(join(directory, 'src/users.js'), 'export const users = []\n', 'utf8')
+  await writeFile(executable, [
+    '#!/bin/sh',
+    'printf \'%s\\n\' \'{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Read","input":{"file_path":"src/users.js"}}],"usage":{"input_tokens":12,"cache_read_input_tokens":5,"output_tokens":3}}}\'',
+    'printf \'%s\\n\' \'{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Edit","input":{"file_path":"src/users.js"}}]}}\'',
+    'printf \'%s\\n\' \'{"type":"result","duration_ms":7,"num_turns":1,"total_cost_usd":0.01}\'',
+    ''
+  ].join('\n'), 'utf8')
+  await chmod(executable, 0o755)
+  const env = { ...process.env, PATH: directory }
+  const result = await runProviderPrompt(
+    {
+      provider: 'claude', model: null, timeoutMs: 10_000,
+      mode: 'fast', contextBudgetCharacters: null, maxBudgetUsd: 1
+    },
+    {
+      prompt: 'Implement one bounded fixture task.', cwd: directory,
+      profile: selectImplementationProfile({ mode: 'fast' }), env
+    },
+    { env, version: 'claude-fixture 1.0.0' }
+  )
+
+  assert.equal(result.process.exitCode, 0)
+  assert.equal(result.metadata.usage.tokens.input, 12)
+  assert.equal(result.metadata.usage.tokens.cachedInput, 5)
+  assert.equal(result.metadata.usage.tokens.uncachedInput, 7)
+  assert.equal(result.metadata.usage.tokens.output, 3)
+  assert.equal(result.metadata.usage.tokens.total, 15)
+  assert.equal(result.metadata.usage.costUsd, 0.01)
+  assert.deepEqual(result.metadata.activity.preWritePaths, ['src/users.js'])
+  assert.deepEqual(result.metadata.activity.changedPaths, ['src/users.js'])
+  assert.equal(result.metadata.activity.readCommandCount, 1)
+  assert.equal(result.metadata.activity.writeEventCount, 1)
 })
 
 test('provider discovery resolves npm-style Windows command shims', async () => {

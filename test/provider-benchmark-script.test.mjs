@@ -1,0 +1,37 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+
+const script = 'scripts/benchmark-provider-comparison.mjs'
+
+test('provider benchmark plan exposes one exact costed case without starting a provider', () => {
+  const result = spawnSync(process.execPath, [
+    script, '--plan', '--provider', 'codex', '--lane', 'bth', '--task', 'spring-02-owner-search-whitespace'
+  ], { encoding: 'utf8' })
+
+  assert.equal(result.status, 0, result.stderr)
+  const plan = JSON.parse(result.stdout)
+  assert.equal(plan.selectedCases, 1)
+  assert.equal(plan.providerCalls, 1)
+  assert.equal(plan.cases[0].id, 'codex:bth:spring-02-owner-search-whitespace')
+})
+
+test('provider benchmark execution refuses cost and network activity without the explicit acknowledgement', () => {
+  const result = spawnSync(process.execPath, [
+    script, '--execute', '--provider', 'codex', '--lane', 'bth', '--task', 'spring-02-owner-search-whitespace',
+    '--output', '/tmp/bth-provider-benchmark-refusal', '--allow-network'
+  ], { encoding: 'utf8', env: { ...process.env, BTH_PROVIDER_BENCHMARK: '' } })
+
+  assert.notEqual(result.status, 0)
+  assert.match(result.stderr, /BTH_PROVIDER_BENCHMARK=I_UNDERSTAND_PROVIDER_COSTS/)
+})
+
+test('provider benchmark preflight requires network acknowledgement but no provider-cost acknowledgement', () => {
+  const result = spawnSync(process.execPath, [
+    script, '--preflight', '--task', 'spring-02-owner-search-whitespace', '--output', '/tmp/bth-provider-preflight-refusal'
+  ], { encoding: 'utf8', env: { ...process.env, BTH_PROVIDER_BENCHMARK: '' } })
+
+  assert.notEqual(result.status, 0)
+  assert.match(result.stderr, /--preflight requires.*--allow-network/)
+  assert.doesNotMatch(result.stderr, /I_UNDERSTAND_PROVIDER_COSTS/)
+})

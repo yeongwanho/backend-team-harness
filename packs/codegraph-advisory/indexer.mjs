@@ -170,6 +170,33 @@ function testRole(projectPath) {
   return /(?:^|\/)(?:test|tests|__tests__|src\/test)(?:\/|$)|(?:\.spec|\.test)\.[^.]+$|(?:^|\/)test_[^/]+\.py$|_test\.py$/.test(projectPath)
 }
 
+function conventionTestTargets(projectPath) {
+  const targets = []
+  const extension = projectPath.match(/\.(?:ts|tsx|js|jsx|mjs|cjs|py)$/)?.[0]
+  if (!extension) return targets
+  const directory = posix.dirname(projectPath)
+  const basename = posix.basename(projectPath, extension)
+  const add = (targetDirectory, targetBasename) => {
+    const target = posix.join(targetDirectory, targetBasename + extension)
+    if (!targets.includes(target)) targets.push(target)
+  }
+  const ecma = basename.match(/^(.+)\.(?:spec|test)$/)
+  if (ecma) {
+    add(directory, ecma[1])
+    if (posix.basename(directory) === '__tests__') add(posix.dirname(directory), ecma[1])
+  }
+  const pythonPrefix = basename.match(/^test_(.+)$/)
+  const pythonSuffix = basename.match(/^(.+)_test$/)
+  const pythonName = pythonPrefix?.[1] ?? pythonSuffix?.[1]
+  if (extension === '.py' && pythonName) {
+    add(directory, pythonName)
+    if (posix.basename(directory) === 'test' || posix.basename(directory) === 'tests') {
+      add(posix.dirname(directory), pythonName)
+    }
+  }
+  return targets
+}
+
 function parseJvmSource(root, path, content) {
   const projectPath = portable(relative(root, path))
   const packageName = content.match(/^\s*package\s+([A-Za-z_][\w.]*)\s*;?/m)?.[1] ?? ''
@@ -430,6 +457,7 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
   }
   const resolveType = resolver(qualifiedTypes, simpleTypes)
   const modules = moduleIndex(nodes)
+  const nodesByPath = new Map(nodes.map((node) => [node.path, node]))
   const edges = [], edgeKeys = new Set()
   let unresolvedImports = 0, ambiguousImports = 0, unresolvedRelations = 0, ambiguousRelations = 0
   function edge(from, to, kind, provenance) {
@@ -475,6 +503,12 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
     if (node.roles.includes('test')) for (const declaredType of node.declaredTypes) {
       const declaredName = declaredType.split('.').at(-1), simple = declaredName.replace(/(?:Integration)?Tests?$/, '')
       if (simple !== declaredName) { const resolved = resolveType(simple, node); if (resolved.node) edge(node, resolved.node, 'tests', 'convention-test-name-resolved') }
+    }
+  }
+  for (const node of nodes.filter((entry) => entry.roles.includes('test'))) {
+    for (const targetPath of conventionTestTargets(node.path)) {
+      const target = nodesByPath.get(targetPath)
+      if (target && !target.roles.includes('test')) edge(node, target, 'tests', 'convention-test-path-resolved')
     }
   }
   edges.sort((left, right) => left.from.localeCompare(right.from) || left.to.localeCompare(right.to) || left.kind.localeCompare(right.kind))

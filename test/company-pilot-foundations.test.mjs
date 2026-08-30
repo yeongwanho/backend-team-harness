@@ -189,6 +189,40 @@ test('doctor rejects a Maven 4 wrapper running below Java 17', async () => {
   assert.equal(compatibility.details.minimumJavaVersion, 17)
 })
 
+test('an explicit Maven selection disambiguates a repository that intentionally ships Gradle and Maven', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-dual-jvm-build-'))
+  await mkdir(join(root, '.mvn/wrapper'), { recursive: true })
+  await mkdir(join(root, 'gradle/wrapper'), { recursive: true })
+  await mkdir(join(root, 'src/main/java/example'), { recursive: true })
+  await mkdir(join(root, 'src/test/java/example'), { recursive: true })
+  await writeFile(join(root, 'pom.xml'), '<project><dependencies></dependencies></project>\n', 'utf8')
+  await writeFile(join(root, 'build.gradle'), 'plugins { id "java" }\n', 'utf8')
+  await writeFile(join(root, 'src/main/java/example/App.java'), 'class App {}\n', 'utf8')
+  await writeFile(join(root, 'src/test/java/example/AppTest.java'), 'class AppTest {}\n', 'utf8')
+  await writeFile(join(root, '.mvn/wrapper/maven-wrapper.properties'), 'distributionUrl=https://repo.example/apache-maven-3.9.16-bin.zip\n', 'utf8')
+  await writeFile(join(root, 'gradle/wrapper/gradle-wrapper.properties'), 'distributionUrl=https://repo.example/gradle-8.14-bin.zip\n', 'utf8')
+  await writeExecutable(join(root, 'mvnw'))
+  await writeExecutable(join(root, 'gradlew'))
+  initializeGit(root)
+
+  const initialized = await initProject(root, { preferredSystem: 'maven' })
+  const verification = JSON.parse(await readFile(join(root, '.backend-harness/verification.json'), 'utf8'))
+  assert.equal(initialized.detection.system, 'maven')
+  assert.equal(verification.gates[0].command[0], './mvnw')
+  assert.ok(verification.gates[0].inputs.includes('pom.xml'))
+  assert.ok(!verification.gates[0].inputs.includes('build.gradle'))
+
+  const doctor = await doctorProject(root, { javaRuntimeMajor: 17 })
+  const metadata = doctor.checks.find((entry) => entry.id === 'build-metadata')
+  assert.equal(metadata.status, 'pass', JSON.stringify(metadata, null, 2))
+  assert.equal(metadata.details.system, 'maven')
+})
+
+test('an invalid explicit JVM build selection is rejected instead of silently falling back', async () => {
+  const root = await multiModuleGradleProject('bth-invalid-build-selection-')
+  await assert.rejects(initProject(root, { preferredSystem: 'ant' }), /preferredSystem must be gradle or maven/)
+})
+
 test('JVM build discovery fails closed at its bounded build-file limit', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-bounded-build-discovery-'))
   await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')

@@ -97,6 +97,16 @@ function check(id, status, message, details = undefined) {
   return details === undefined ? { id, status, message } : { id, status, message, details }
 }
 
+function selectedJvmSystem(verification) {
+  const systems = new Set()
+  for (const gate of verification?.config?.gates ?? []) {
+    const command = String(gate.command?.[0] ?? '').replaceAll('\\', '/').split('/').at(-1).toLowerCase()
+    if (command === 'gradlew' || command === 'gradlew.bat') systems.add('gradle')
+    if (command === 'mvnw' || command === 'mvnw.cmd') systems.add('maven')
+  }
+  return systems.size === 1 ? [...systems][0] : null
+}
+
 export async function doctorProject(inputPath = '.', options = {}) {
   const root = await resolveReadableRoot(inputPath)
   const manifest = options.manifest ?? await scanProjectManifest(root)
@@ -106,6 +116,11 @@ export async function doctorProject(inputPath = '.', options = {}) {
   const checks = []
   const detectionOptions = { processRunner: options.processRunner }
   if (Object.hasOwn(options, 'javaRuntimeMajor')) detectionOptions.javaRuntimeMajor = options.javaRuntimeMajor
+  try {
+    detectionOptions.preferredSystem = selectedJvmSystem(await loadVerificationConfig(root, { allowInferred: false }))
+  } catch {
+    // A missing or invalid contract is reported by the verification check below.
+  }
   const detection = await inspectJvmBuild(root, manifest, detectionOptions)
   const portableDetection = detection.status === 'unknown'
     ? await inspectPortableTestBuild(root, manifest)

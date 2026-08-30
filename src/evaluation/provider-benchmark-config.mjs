@@ -1,0 +1,106 @@
+import { readFile } from 'node:fs/promises'
+import { isAbsolute, posix } from 'node:path'
+
+const DATABASE_IMPACTS = new Set(['none', 'read', 'write', 'schema'])
+const API_IMPACTS = new Set(['none', 'compatible', 'breaking'])
+
+function plainObject(value, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(label + ' must be an object.')
+  return value
+}
+
+function exactKeys(value, expected, label) {
+  for (const key of Object.keys(value)) if (!expected.has(key)) throw new Error(label + ' contains unknown key ' + key + '.')
+}
+
+function safePath(value, label, directory = false) {
+  if (typeof value !== 'string' || !value || value.length > 4096 || value.includes('\0')) throw new Error(label + ' is invalid.')
+  const normalized = value.replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/$/, '')
+  const parts = normalized.split('/')
+  if (isAbsolute(normalized) || /^[A-Za-z]:\//.test(normalized) || parts.some((part) => !part || part === '.' || part === '..')) {
+    throw new Error(label + ' must stay inside the repository.')
+  }
+  return posix.normalize(normalized) + (directory ? '/' : '')
+}
+
+function command(value, label) {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 64) throw new Error(label + ' must contain 1-64 argv entries.')
+  return value.map((entry, index) => {
+    if (typeof entry !== 'string' || !entry || entry.length > 4096 || entry.includes('\0')) throw new Error(label + '[' + index + '] is invalid.')
+    return entry
+  })
+}
+
+function decisions(value, label) {
+  plainObject(value, label)
+  exactKeys(value, new Set(['modules', 'excludedModules', 'databaseImpact', 'apiImpact', 'acceptanceCriteria', 'constraints']), label)
+  if (!Array.isArray(value.modules) || value.modules.length < 1 || value.modules.length > 32) throw new Error(label + '.modules must contain 1-32 entries.')
+  const modules = value.modules.map((entry, index) => safePath(entry, label + '.modules[' + index + ']'))
+  const excludedModules = (value.excludedModules ?? []).map((entry, index) => safePath(entry, label + '.excludedModules[' + index + ']'))
+  if (!DATABASE_IMPACTS.has(value.databaseImpact)) throw new Error(label + '.databaseImpact is invalid.')
+  if (!API_IMPACTS.has(value.apiImpact)) throw new Error(label + '.apiImpact is invalid.')
+  for (const key of ['acceptanceCriteria', 'constraints']) {
+    if (value[key] !== undefined && (typeof value[key] !== 'string' || value[key].length < 1 || value[key].length > 16_384)) {
+      throw new Error(label + '.' + key + ' is invalid.')
+    }
+  }
+  return {
+    modules,
+    excludedModules,
+    databaseImpact: value.databaseImpact,
+    apiImpact: value.apiImpact,
+    ...(value.acceptanceCriteria ? { acceptanceCriteria: value.acceptanceCriteria.trim() } : {}),
+    ...(value.constraints ? { constraints: value.constraints.trim() } : {})
+  }
+}
+
+export function parseProviderBenchmarkConfig(text, corpus, source = '<inline>') {
+  let parsed
+  try { parsed = JSON.parse(text) } catch (error) { throw new Error(source + ': invalid JSON: ' + error.message) }
+  plainObject(parsed, source)
+  exactKeys(parsed, new Set(['schemaVersion', 'corpusId', 'repositories']), source)
+  if (parsed.schemaVersion !== 1) throw new Error(source + '.schemaVersion must be 1.')
+  if (parsed.corpusId !== corpus.id) throw new Error(source + '.corpusId does not match ' + corpus.id + '.')
+  if (!Array.isArray(parsed.repositories) || parsed.repositories.length !== corpus.repositories.length) {
+    throw new Error(source + '.repositories must cover every corpus repository exactly once.')
+  }
+  const byId = new Map(corpus.repositories.map((entry) => [entry.id, entry]))
+  const seenRepositories = new Set()
+  const repositories = parsed.repositories.map((repository, repositoryIndex) => {
+    const label = source + '.repositories[' + repositoryIndex + ']'
+    plainObject(repository, label)
+    exactKeys(repository, new Set(['id', 'buildSystem', 'allowedPrefixes', 'setupCommand', 'tasks']), label)
+    const corpusRepository = byId.get(repository.id)
+    if (!corpusRepository || seenRepositories.has(repository.id)) throw new Error(label + '.id is unknown or duplicated.')
+    seenRepositories.add(repository.id)
+    if (repository.buildSystem !== null && !['gradle', 'maven'].includes(repository.buildSystem)) throw new Error(label + '.buildSystem is invalid.')
+    if (!Array.isArray(repository.allowedPrefixes) || repository.allowedPrefixes.length < 1 || repository.allowedPrefixes.length > 64) {
+      throw new Error(label + '.allowedPrefixes must contain 1-64 paths.')
+    }
+    if (!Array.isArray(repository.tasks) || repository.tasks.length !== corpusRepository.tasks.length) {
+      throw new Error(label + '.tasks must cover every corpus task exactly once.')
+    }
+    const taskIds = new Set(corpusRepository.tasks.map((entry) => entry.id))
+    const seenTasks = new Set()
+    const tasks = repository.tasks.map((task, taskIndex) => {
+      const taskLabel = label + '.tasks[' + taskIndex + ']'
+      plainObject(task, taskLabel)
+      exactKeys(task, new Set(['id', 'decisions']), taskLabel)
+      if (!taskIds.has(task.id) || seenTasks.has(task.id)) throw new Error(taskLabel + '.id is unknown or duplicated.')
+      seenTasks.add(task.id)
+      return { id: task.id, decisions: decisions(task.decisions, taskLabel + '.decisions') }
+    })
+    return {
+      id: repository.id,
+      buildSystem: repository.buildSystem,
+      allowedPrefixes: repository.allowedPrefixes.map((entry, index) => safePath(entry, label + '.allowedPrefixes[' + index + ']', entry.endsWith('/'))),
+      setupCommand: command(repository.setupCommand, label + '.setupCommand'),
+      tasks
+    }
+  })
+  return { schemaVersion: 1, corpusId: corpus.id, repositories }
+}
+
+export async function loadProviderBenchmarkConfig(path, corpus) {
+  return parseProviderBenchmarkConfig(await readFile(path, 'utf8'), corpus, path)
+}

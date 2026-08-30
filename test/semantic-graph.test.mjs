@@ -89,3 +89,20 @@ test('semantic graph can stay inside one backend while retaining project-relativ
 
   assert.deepEqual(document.graph.nodes.map((node) => node.path), ['backend/app/users.py'])
 })
+
+test('semantic graph pairs adjacent TypeScript production and test files without guessing across directories', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-semantic-ts-test-pair-'))
+  await mkdir(join(root, 'src/users'), { recursive: true })
+  await writeFile(join(root, 'src/users/users.controller.ts'), 'export class UsersController {}\n')
+  await writeFile(join(root, 'src/users/users.controller.spec.ts'), 'describe("UsersController", () => {})\n')
+
+  const document = await indexProjectGraph(root)
+  const byPath = new Map(document.graph.nodes.map((node) => [node.path, node]))
+  const edge = document.graph.edges.find((entry) =>
+    entry.from === byPath.get('src/users/users.controller.spec.ts').id &&
+    entry.to === byPath.get('src/users/users.controller.ts').id &&
+    entry.kind === 'tests'
+  )
+
+  assert.equal(edge.provenance, 'convention-test-path-resolved')
+})

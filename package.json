@@ -17,6 +17,7 @@
     "test:real-db": "BTH_REAL_DB_E2E=1 node --test test/db-real-e2e.test.mjs",
     "benchmark:adaptive": "node scripts/benchmark-adaptive-verification.mjs",
     "benchmark:public": "node scripts/evaluate-public-corpus.mjs",
+    "benchmark:providers": "node scripts/benchmark-provider-comparison.mjs",
     "check": "node scripts/check-syntax.mjs && node --test test/*.test.mjs && node scripts/mutation-smoke.mjs",
     "example:init": "node src/cli.mjs init examples/spring-service",
     "example:doctor": "node src/cli.mjs doctor examples/spring-service"

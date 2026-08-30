@@ -57,6 +57,8 @@ npm test
 npm link
 
 bth init /path/to/backend-project
+# 저장소가 Gradle과 Maven을 함께 제공할 때만 명시적으로 하나를 선택
+bth init /path/to/backend-project --build maven
 bth doctor /path/to/backend-project
 bth intelligence inspect /path/to/backend-project
 bth check /path/to/backend-project
@@ -94,7 +96,7 @@ node src/cli.mjs check examples/spring-service --acknowledge-network-risk
 
 ## 프로젝트 실행 계약
 
-`bth init`은 Gradle/Maven Wrapper 또는 저장소가 선언한 고유한 Jest·Vitest·Pytest 구성을 인식하면 `.backend-harness/verification.json`과 OS별 프로젝트 전용 실행 래퍼까지 만듭니다. 여러 테스트 프로젝트가 충돌하거나 지원되지 않는 빌드라면 하나를 임의 선택하지 않고 팀이 아래 계약을 직접 정하도록 멈춥니다. Node는 프로젝트 `node_modules`의 실행 파일만, Python은 프로젝트 `.venv` 또는 `uv run --offline`만 사용하며 의존성을 자동 설치하거나 네트워크를 켜지 않습니다. 실행 Core는 이 계약만 실행합니다.
+`bth init`은 Gradle/Maven Wrapper 또는 저장소가 선언한 고유한 Jest·Vitest·Pytest 구성을 인식하면 `.backend-harness/verification.json`과 OS별 프로젝트 전용 실행 래퍼까지 만듭니다. Gradle과 Maven을 의도적으로 함께 제공하는 저장소는 `--build gradle|maven`으로 팀의 선택을 명시할 수 있고, 이후 `doctor`도 생성된 검증 명령에서 그 선택을 다시 읽습니다. 여러 테스트 프로젝트가 충돌하거나 지원되지 않는 빌드라면 하나를 임의 선택하지 않고 팀이 아래 계약을 직접 정하도록 멈춥니다. Node는 프로젝트 `node_modules`의 실행 파일만, Python은 프로젝트 `.venv` 또는 `uv run --offline`만 사용하며 의존성을 자동 설치하거나 네트워크를 켜지 않습니다. 실행 Core는 이 계약만 실행합니다.
 
 ```json
 {
@@ -305,9 +307,28 @@ node src/cli.mjs task export-plan USER-17 /path/to/project \
   --context-budget 4000 --json
 ```
 
-BTH는 요구사항의 단어를 path/type과 대조하고, provenance별 가중치가 있는 edge 위에서 bounded Personalized PageRank를 계산합니다. 가장 강한 lexical seed에서 dependencies와 dependents를 방향별로 펼치고 순환 컴포넌트도 표시합니다. 결과에는 점수뿐 아니라 사용한 문자 수, 누락된 node 수, graph 생성값, edge provenance와 알려진 한계가 들어갑니다. 그래프가 없거나 오래됐거나 run record와 digest가 다르면 계획 export는 실패하지 않고 `codeContext.status: "unavailable"`과 이유를 돌려줍니다.
+BTH는 요구사항의 단어를 path/type과 대조하고, provenance별 가중치가 있는 edge 위에서 bounded Personalized PageRank를 계산합니다. 가장 강한 lexical seed에서 dependencies와 dependents를 방향별로 펼치고 순환 컴포넌트도 표시합니다. 선택된 production node에 이름·경로 관례로 유일하게 연결된 test node가 있으면 같은 문자 예산 안에서 한 개를 바로 함께 선택해, 작은 변경이 관련 테스트를 뒤늦게 다시 찾는 비용을 줄입니다. 결과에는 점수뿐 아니라 사용한 문자 수, 누락된 node 수, graph 생성값, edge provenance와 알려진 한계가 들어갑니다. 그래프가 없거나 오래됐거나 run record와 digest가 다르면 계획 export는 실패하지 않고 `codeContext.status: "unavailable"`과 이유를 돌려줍니다.
 
-합성 순위 회귀는 50개 node, 4개 요구사항, 20개 distractor가 있는 versioned fixture에서 같은 API로 측정하며 현재 Recall@5와 Recall@20은 모두 `1.0`입니다. 별도로 `npm run benchmark:public -- --allow-network`는 Spring Petclinic, NestJS Boilerplate, Full Stack FastAPI Template의 고정 commit 20개를 clone하고 각 실제 변경 파일을 gold로 검증합니다. 현재 공개 corpus 관찰값은 mean Recall@5 `0.3682`, Recall@20 `0.7075`, nDCG@20 `0.4908`, Recall@20=0 작업 `0개`입니다. 이는 **변경 파일 위치 찾기**의 재현 가능한 관찰일 뿐 구현 성공률이나 회사 저장소 정확도 주장이 아닙니다. 원본 코드·artifact 본문은 evidence에 저장하지 않습니다.
+합성 순위 회귀는 50개 node, 4개 요구사항, 20개 distractor가 있는 versioned fixture에서 같은 API로 측정하며 현재 Recall@5와 Recall@20은 모두 `1.0`입니다. 별도로 `npm run benchmark:public -- --allow-network`는 Spring Petclinic, NestJS Boilerplate, Full Stack FastAPI Template의 고정 commit 20개를 clone하고 각 실제 변경 파일을 gold로 검증합니다. production/test pair 동시 선택을 추가한 뒤의 공개 corpus 관찰값은 mean Recall@5 `0.4390`, Recall@20 `0.7200`, nDCG@20 `0.5042`, Recall@20=0 작업 `0개`입니다. 이전 관찰값은 각각 `0.3682`, `0.7075`, `0.4908`이었습니다. 이는 **변경 파일 위치 찾기**의 재현 가능한 관찰일 뿐 구현 성공률이나 회사 저장소 정확도 주장이 아닙니다. 원본 코드·artifact 본문은 evidence에 저장하지 않습니다.
+
+실제 Codex/Claude 구현 비교는 별도 비용 승인 하에서 같은 20개 작업을 BTH lane과 direct lane으로 실행합니다. 수정 후 파일은 양쪽의 `outcomeLocalization`으로만 비교하고, 수정 전 영향 분석은 provider 이벤트에서 실제 pre-write 경로를 관찰했을 때만 `impactLocalization`으로 채웁니다. 미측정을 0점이나 수정 결과로 대체하지 않습니다. token은 total/input/cached/uncached/output/reasoning을 분리하고, provider가 evaluator 소유의 build/test 명령을 중복 실행하면 규칙 위반으로 기록합니다.
+
+```bash
+# 비용 없이 80개 case 계획만 확인
+npm run benchmark:providers -- --plan
+
+# provider 호출 전 공개 저장소 clone·의존성·동일 verification 준비만 확인
+npm run benchmark:providers -- --preflight \
+  --task spring-02-owner-search-whitespace --allow-network
+
+# 한 provider·한 작업의 BTH/direct 쌍대 실행: 명시적인 비용 승인 필요
+BTH_PROVIDER_BENCHMARK=I_UNDERSTAND_PROVIDER_COSTS \
+npm run benchmark:providers -- --execute --provider codex --lane both \
+  --task spring-02-owner-search-whitespace --output /tmp/bth-provider-comparison \
+  --allow-network
+```
+
+provider 비교는 공개 이력을 target commit 없이 단일 합성 base commit으로 만들고 gold 경로를 provider에게 전달하지 않습니다. raw provider 출력·소스 본문은 결과에 저장하지 않고 digest, byte count, 사용량, pre-write 경로와 명령 종류 집계만 남깁니다. `--all`은 provider당 40회 호출이므로 별도의 `BTH_PROVIDER_BENCHMARK_ALL=I_UNDERSTAND_40_PROVIDER_RUNS` 승인이 추가로 필요합니다.
 
 ## 테스트 수 감소 방지
 
@@ -440,7 +461,7 @@ BTH Core는 모델을 PASS 판정기로 사용하지 않습니다. 대신 설치
 
 `auto`는 구조화된 interview claims와 source-bound 규칙·인접 코드 근거로 작업 강도를 정합니다. migration이 필요하거나, DB 변경인데 migration 필요 여부가 미확정이거나, 공개 API 호환성을 지키지 못하는 변경은 `deep`(12,000자/high effort)입니다. 반대로 단일 모듈·migration 없음·DB 영향 명시·API 호환성 유지가 모두 확인되고, 차단 규칙이 해결됐으며, 현재 source에 묶인 관련 코드 경로도 있을 때만 DB를 읽고 쓰거나 호환 가능한 CRUD API를 추가하는 작업을 `fast`(2,000자/low effort)로 선택합니다. 차단 규칙이나 인접 코드 근거가 미확정이면 `balanced`(6,000자/medium effort), 차단 규칙이 충돌하면 `deep`입니다. 비차단 경고의 미확정은 숨기지 않고 provider request에 유지하되 그 자체만으로 작은 작업을 느리게 만들지는 않으며, 알려진 비차단 충돌은 balanced로 올립니다. 승인된 task 본문은 fast/balanced/deep별 8,000/24,000/64,000자로 별도 제한하며, 자동 모드의 큰 작업은 deep으로 올리고 64,000자를 넘으면 작업을 나누도록 실패합니다. 모르는 작업을 가볍다고 추측하지 않습니다. 명시적 `--mode fast|balanced|deep` 설정과 64~32,768자의 code-context override도 기록됩니다.
 
-provider request에는 승인된 계획, 허용 경로·diff budget, 봉인된 graph 또는 현재 source에서 즉석 생성한 bounded graph의 제한된 상위 문맥, `projectConventions` 규칙·지식 문서·인접 코드 경로, 직전 실패 요약만 들어갑니다. 소스 본문 전체를 복사하지 않고 프로젝트 상대 경로를 전달합니다. 즉석 graph 전후에 source fingerprint가 바뀌면 구현을 시작하지 않습니다. 요청 파일 자체도 실행 전후 SHA-256으로 봉인됩니다. provider는 편집 전에 선언된 규칙·관련 지식 문서와 최소 한 개의 인접 production/test 예제를 읽고, 이름·계층·DTO/오류·트랜잭션·영속성·테스트 관례를 보존하도록 지시받습니다. MySQL/JPA 작업에는 query shape, 인덱스 선언, transaction, lock, fetch/N+1 후보를 별도 검토하되 정적 패턴을 실제 query plan이나 runtime 결함으로 과장하지 않습니다. 차단 규칙을 확인할 수 없거나 코드와 충돌하면 추측해 수정하지 않습니다. provider 수정 뒤 BTH는 변경 경로에 맞는 feedback Gate를 먼저 실행하고, 통과했을 때만 전체 필수 Gate를 실행합니다. 최종 PASS에서 전체 Gate를 생략하지 않습니다. provider의 서로 다른 출력은 input/output/cache/reasoning/total token, USD 비용, 시간, turn의 공통 schema로 정규화하며 관찰값일 뿐 PASS 권한은 없습니다. 코드 변경이 전혀 없으면 첫 호출에서 `no-source-change`로 멈추고 Gate와 맹목적 recovery를 실행하지 않습니다. 내장 provider는 이미 로그인된 로컬 CLI 세션을 사용하며 API-key 환경변수는 의도적으로 전달하지 않습니다.
+provider request에는 승인된 계획, 허용 경로·diff budget, 봉인된 graph 또는 현재 source에서 즉석 생성한 bounded graph의 제한된 상위 문맥, `projectConventions` 규칙·지식 문서·인접 코드 경로, 직전 실패 요약만 들어갑니다. 소스 본문 전체를 복사하지 않고 프로젝트 상대 경로를 전달합니다. 즉석 graph 전후에 source fingerprint가 바뀌면 구현을 시작하지 않습니다. 요청 파일 자체도 실행 전후 SHA-256으로 봉인됩니다. provider는 이미 source-cited 형태로 평가된 규칙을 시작 계약으로 사용하고, 이번 작업과 직접 관련되거나 미확정 사항을 해결하는 문서 절만 다시 엽니다. 가장 높은 production 경로와 짝지어진 test를 먼저 확인하고 이름·계층·DTO/오류·트랜잭션·영속성·테스트 관례를 보존합니다. MySQL/JPA 작업에는 query shape, 인덱스 선언, transaction, lock, fetch/N+1 후보를 별도 검토하되 정적 패턴을 실제 query plan이나 runtime 결함으로 과장하지 않습니다. 차단 규칙을 확인할 수 없거나 코드와 충돌하면 추측해 수정하지 않습니다. provider는 build/test/formatter/linter/package-manager/Docker/DB 명령을 실행하지 않고 편집만 담당하며, 이후 BTH가 변경 경로에 맞는 feedback Gate와 전체 필수 Gate를 각 책임에 맞게 실행합니다. provider 이벤트에서 evaluator 소유 검증 명령이 관찰되면 구현 성공과 별개로 규칙 위반입니다. 최종 PASS에서 전체 Gate를 생략하지 않습니다. provider의 서로 다른 출력은 input/uncached-input/output/cache/reasoning/total token, USD 비용, 시간, turn의 공통 schema로 정규화하며 관찰값일 뿐 PASS 권한은 없습니다. 코드 변경이 전혀 없으면 첫 호출에서 `no-source-change`로 멈추고 Gate와 맹목적 recovery를 실행하지 않습니다. 내장 provider는 이미 로그인된 로컬 CLI 세션을 사용하며 API-key 환경변수는 의도적으로 전달하지 않습니다.
 
 `fast`가 제한하는 것은 BTH가 추가하는 task·code context와 provider effort입니다. 각 CLI가 자체적으로 붙이는 system prompt, tool schema, cache traffic까지 작아진다는 뜻은 아닙니다. 2026-08-30의 작은 합성 Java 구현 smoke에서 BTH request는 각각 약 1.6 KiB였지만 Codex는 총 input 97,449(그중 cached 82,688), Claude는 input 6 + cache creation 13,849 + cache read 80,424와 약 $0.076을 보고했습니다. 이 값은 한 환경의 관찰값이지 일반 성능 보장이 아닙니다. Claude는 `--max-budget-usd`를 전달할 수 있지만 현재 사용한 Codex CLI에는 같은 달러 상한이 없어 effort·timeout·attempt 한도로만 제한합니다. 따라서 내장 provider는 승인된 구현용이며, 짧은 질문을 항상 저비용으로 답하는 chat router는 아직 아닙니다.
 

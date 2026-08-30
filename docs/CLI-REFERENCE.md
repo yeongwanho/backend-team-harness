@@ -3,7 +3,7 @@
 This file is checked against the executable help in `src/cli/help.mjs`. A command rename without a matching documentation change fails the test suite.
 
 ```text
-bth init [path] [--force] [--allow-unversioned]
+bth init [path] [--build gradle|maven] [--force] [--allow-unversioned]
 bth doctor [path] [--json]
 bth intelligence inspect [path] [--no-cache] [--json]
 bth intelligence warm-cache [path] [--json]
@@ -39,4 +39,4 @@ bth diagnose <id> [path] [--json]
 bth version
 ```
 
-`bth init` generates a verification contract for a recognized Gradle/Maven wrapper or one uniquely detected project-declared Jest, Vitest, or Pytest test project. Portable runners use only installed project-local dependencies or `uv --offline`; ambiguous test roots stay explicit instead of being guessed. `bth work --run` may build a bounded, non-persisted advisory graph when no current sealed graph Gate exists, but source-fingerprint drift aborts before provider execution.
+`bth init` generates a verification contract for a recognized Gradle/Maven wrapper or one uniquely detected project-declared Jest, Vitest, or Pytest test project. Repositories that deliberately ship both Gradle and Maven require `--build gradle|maven`; the generated verification command preserves that explicit choice for later `doctor` runs. Portable runners use only installed project-local dependencies or `uv --offline`; ambiguous test roots stay explicit instead of being guessed. `bth work --run` may build a bounded, non-persisted advisory graph when no current sealed graph Gate exists, but source-fingerprint drift aborts before provider execution.

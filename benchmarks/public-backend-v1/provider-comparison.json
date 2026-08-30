@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "corpusId": "public-backend-v1",
+  "repositories": [
+    {
+      "id": "spring-petclinic",
+      "buildSystem": "maven",
+      "allowedPrefixes": ["src/"],
+      "setupCommand": ["./mvnw", "-q", "-DskipTests=false", "verify"],
+      "tasks": [
+        { "id": "spring-01-pet-association", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } },
+        { "id": "spring-02-owner-search-whitespace", "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "compatible" } },
+        { "id": "spring-03-unique-pet-name", "decisions": { "modules": ["root"], "databaseImpact": "schema", "apiImpact": "compatible" } },
+        { "id": "spring-04-future-visit", "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" } },
+        { "id": "spring-05-binder-allowlist", "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" } },
+        { "id": "spring-06-pet-update", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } },
+        { "id": "spring-07-mysql-user", "decisions": { "modules": ["root"], "databaseImpact": "schema", "apiImpact": "none" } }
+      ]
+    },
+    {
+      "id": "nestjs-boilerplate",
+      "buildSystem": null,
+      "allowedPrefixes": ["src/", "test/"],
+      "setupCommand": ["npm", "ci", "--ignore-scripts"],
+      "tasks": [
+        { "id": "nest-01-session-update-by-hash", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } },
+        { "id": "nest-02-file-relational-mapper", "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "none" } },
+        { "id": "nest-03-swagger-language-header", "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" } },
+        { "id": "nest-04-document-find-update", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "none" } },
+        { "id": "nest-05-auth-email-update", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } },
+        { "id": "nest-06-user-email-conflict", "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "compatible" } },
+        { "id": "nest-07-refresh-token-single-use", "decisions": { "modules": ["root"], "databaseImpact": "schema", "apiImpact": "compatible" } }
+      ]
+    },
+    {
+      "id": "fastapi-template",
+      "buildSystem": null,
+      "allowedPrefixes": ["backend/", "frontend/", "compose.yml", "deployment.md"],
+      "setupCommand": ["uv", "sync", "--frozen", "--project", "backend"],
+      "tasks": [
+        { "id": "fastapi-01-database-url", "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "none" } },
+        { "id": "fastapi-02-cors", "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "none" } },
+        { "id": "fastapi-03-created-at", "decisions": { "modules": ["root"], "databaseImpact": "schema", "apiImpact": "compatible" } },
+        { "id": "fastapi-04-constant-time-login", "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "compatible" } },
+        { "id": "fastapi-05-missing-user", "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "compatible" } },
+        { "id": "fastapi-06-delete-self", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } }
+      ]
+    }
+  ]
+}

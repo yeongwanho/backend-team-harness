@@ -48,7 +48,10 @@ export async function initProject(inputPath = '.', options = {}) {
     onLimit: 'throw',
     onReadError: 'throw'
   })
-  const detection = await inspectJvmBuild(root, manifest, { inspectRuntime: false })
+  const detection = await inspectJvmBuild(root, manifest, {
+    inspectRuntime: false,
+    preferredSystem: options.preferredSystem
+  })
   const portableDetection = detection.canGenerateVerification
     ? null
     : await inspectPortableTestBuild(root, manifest)

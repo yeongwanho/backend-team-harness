@@ -19,7 +19,8 @@ const EDGE_CONTRACTS = new Map([
   ['inherits\0source-declaration-resolved', 1.25],
   ['implements\0source-declaration-resolved', 1.25],
   ['injects\0source-pattern-resolved', 0.9],
-  ['tests\0convention-test-name-resolved', 0.65]
+  ['tests\0convention-test-name-resolved', 0.65],
+  ['tests\0convention-test-path-resolved', 0.65]
 ])
 const MAX_IMPACT_DEPTH = 8
 const MAX_IMPACT_NODES = 5000
@@ -365,15 +366,34 @@ export function rankCodeContext(document, query, options = {}) {
     }))
     .sort((left, right) => right.score - left.score || left.path.localeCompare(right.path))
   const entries = []
+  const selected = new Set()
+  const candidateById = new Map(candidates.map((candidate) => [candidate.nodeId, candidate]))
+  const testPairs = new Map(graph.nodes.map((node) => [node.id, []]))
+  for (const edge of graph.edges.filter((entry) => entry.kind === 'tests')) {
+    testPairs.get(edge.from).push(edge.to)
+    testPairs.get(edge.to).push(edge.from)
+  }
   let usedCharacters = 0
-  for (const candidate of candidates) {
+  function select(candidate) {
+    if (!candidate || selected.has(candidate.nodeId)) return false
     const { nodeId: _nodeId, rankIndex: _rankIndex, ...publicCandidate } = candidate
     const entry = withEntryCost(publicCandidate)
     if (usedCharacters + entry.costCharacters > budgetCharacters) {
-      continue
+      return false
     }
     entries.push(entry)
+    selected.add(candidate.nodeId)
     usedCharacters += entry.costCharacters
+    return true
+  }
+  for (const candidate of candidates) {
+    if (!select(candidate)) continue
+    const paired = (testPairs.get(candidate.nodeId) ?? [])
+      .map((id) => candidateById.get(id))
+      .filter(Boolean)
+      .sort((left, right) => right.score - left.score || left.path.localeCompare(right.path))
+      .at(0)
+    select(paired)
   }
   const seedIds = seed.seededIndexes.map((index) => graph.nodes[index].id)
   const dependencies = reachable(seedIds, graph.edges, 'forward')
@@ -408,6 +428,7 @@ export function rankCodeContext(document, query, options = {}) {
       damping: DAMPING,
       reverseEdgeWeight: 0.5,
       lexicalPriorBlend: seed.mode === 'query-personalized' ? 0.6 : 0,
+      testPairCoSelection: true,
       maxIterations: MAX_ITERATIONS,
       iterations: ranked.iterations,
       residual: ranked.residual,
@@ -435,7 +456,7 @@ export function rankCodeContext(document, query, options = {}) {
     },
     entries,
     limitations: [
-      'Imports and declared inheritance are exact only when their project type resolves uniquely; injection and test-name edges are source-pattern evidence.',
+      'Imports and declared inheritance are exact only when their project type resolves uniquely; injection and convention-resolved test-pair edges are source-pattern evidence.',
       'This remains an advisory structural graph, not a compiler call graph.',
       'Reflection, runtime dependency injection, generated code, and dynamic SQL ownership are not resolved.',
       'Ranking may guide navigation or review questions only.'

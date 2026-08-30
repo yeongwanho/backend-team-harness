@@ -2,7 +2,7 @@ export const HELP_LINES = Object.freeze([
   'Backend Team Harness',
   '',
   'Usage:',
-  '  bth init [path] [--force] [--allow-unversioned]',
+  '  bth init [path] [--build gradle|maven] [--force] [--allow-unversioned]',
   '  bth doctor [path] [--json]',
   '  bth intelligence inspect [path] [--no-cache] [--json]',
   '  bth intelligence warm-cache [path] [--json]',
