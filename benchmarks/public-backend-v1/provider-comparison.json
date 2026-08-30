@@ -57,8 +57,39 @@
             ]
           }
         },
-        { "id": "spring-05-binder-id-protection", "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" } },
-        { "id": "spring-06-pet-update", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } },
+        {
+          "id": "spring-05-binder-id-protection",
+          "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" },
+          "acceptance": {
+            "kind": "fixture-tests",
+            "files": [{ "path": "src/test/java/org/springframework/samples/petclinic/owner/BinderAcceptanceTests.java", "fixture": "fixtures/spring/BinderAcceptanceTests.java", "sha256": "00654a24c40c52f55626c1c8465f253575fcc8122af61291282aaa654d434f86" }],
+            "command": ["./mvnw", "-q", "-o", "-Dtest=BinderAcceptanceTests", "test"],
+            "reports": ["target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.BinderAcceptanceTests.xml"],
+            "cases": [
+              { "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests", "name": "ownerRequestRejectsDirectAndNestedIdsButBindsMutableFields" },
+              { "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests", "name": "petRequestRejectsDirectAndNestedIdsButBindsMutableFields" },
+              { "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests", "name": "visitRequestRejectsDirectAndNestedIdsButBindsDescription" },
+              { "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests", "name": "petNameValidationRemainsActive" },
+              { "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests", "name": "petTypeValidationRemainsActive" }
+            ]
+          }
+        },
+        {
+          "id": "spring-06-pet-update",
+          "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" },
+          "acceptance": {
+            "kind": "fixture-tests",
+            "files": [{ "path": "src/test/java/org/springframework/samples/petclinic/owner/PetUpdateAcceptanceTests.java", "fixture": "fixtures/spring/PetUpdateAcceptanceTests.java", "sha256": "bf4c3a3052701b8c5f98e817aeed01b6799a21a82a6151b373bb2f9065b19934" }],
+            "command": ["./mvnw", "-q", "-o", "-Dtest=PetUpdateAcceptanceTests", "test"],
+            "reports": ["target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests.xml"],
+            "cases": [
+              { "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests", "name": "persistsExistingPetFieldsWithoutAddingDuplicate" },
+              { "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests", "name": "preservesFallbackForNewUnassociatedPet" },
+              { "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests", "name": "duplicateNameDoesNotChangeStoredPet" },
+              { "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests", "name": "futureBirthDateDoesNotChangeStoredPet" }
+            ]
+          }
+        },
         { "id": "spring-07-mysql-user", "decisions": { "modules": ["root"], "databaseImpact": "schema", "schemaStrategy": "bootstrap-only", "apiImpact": "none" } }
       ]
     },

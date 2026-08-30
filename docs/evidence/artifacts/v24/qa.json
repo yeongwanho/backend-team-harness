@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "platform": "darwin",
+  "node": "v22.23.1",
+  "tests": {
+    "total": 403,
+    "passed": 399,
+    "failed": 0,
+    "skipped": 4
+  },
+  "coverage": {
+    "lines": 90.21,
+    "branches": 79.4,
+    "functions": 98.77
+  },
+  "focusedTests": {
+    "passed": 16,
+    "failed": 0
+  },
+  "installedPackageSmoke": true,
+  "syntaxCheck": true,
+  "diffCheck": true,
+  "sourceHashes": {
+    "benchmarks/public-backend-v1/provider-comparison.json": "0687c2d8f0be3c831705a3d8218af10ab14345a719da9266b20b505df89ae0fa",
+    "benchmarks/public-backend-v1/fixtures/spring/BinderAcceptanceTests.java": "00654a24c40c52f55626c1c8465f253575fcc8122af61291282aaa654d434f86",
+    "benchmarks/public-backend-v1/fixtures/spring/PetUpdateAcceptanceTests.java": "bf4c3a3052701b8c5f98e817aeed01b6799a21a82a6151b373bb2f9065b19934",
+    "test/provider-benchmark-config.test.mjs": "c59657428dd3cca428100817c2eb4b78cbc8dc9fb5c947fefd62b3c84cd2345e",
+    "src/evaluation/task-acceptance.mjs": "37e3be877e0b5ad24de47db512ccf194bd3b573d2e7eae7287ffa901a755925e"
+  },
+  "logDigests": [
+    {
+      "path": "/tmp/bth-v24-final-coverage.log",
+      "sha256": "a2c4cef3b73b206ea4d5a94c5b249963f97255c878daa991cbd1629cf01b3198",
+      "bytes": 100073
+    },
+    {
+      "path": "/tmp/bth-v24-final-install.log",
+      "sha256": "ea781ddfffe003a1a189e0e8327a14fe17665304b3356e6fdb1bfe15551967fe",
+      "bytes": 139
+    },
+    {
+      "path": "/tmp/bth-v24-final-focused.log",
+      "sha256": "0210d9dee39eb977d540682c79a72a383cf5f5559eb4d8a83e694b1d6623f8c3",
+      "bytes": 4036
+    },
+    {
+      "path": "/tmp/bth-v24-docs.log",
+      "sha256": "505e976b0e0c3472faa2c7fbc37980210eadb331f21a072de949e38056b05f31",
+      "bytes": 306
+    }
+  ],
+  "notes": [
+    "No paid model invocation",
+    "No production evaluator source changed",
+    "Default-suite skips remain unverified",
+    "See independent JVM control and preflight artifacts separately"
+  ]
+}
