@@ -1,0 +1,1396 @@
+{
+  "schemaVersion": 1,
+  "sourceParentCommit": "c20af5ce13d949c696461dedcda4adbe9a553002",
+  "protocolVersion": "first-test-v26-test-authoring",
+  "records": [
+    {
+      "schemaVersion": 1,
+      "case": {
+        "id": "codex:bth:nest-02-file-relational-mapper",
+        "provider": "codex",
+        "lane": "bth",
+        "repositoryId": "nestjs-boilerplate",
+        "taskId": "nest-02-file-relational-mapper",
+        "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+        "requirementSha256": "938b4e21c4530cefa9044a6f379a7c43fda08b7ac4b14ec8e20d7a69fe0c4d16",
+        "baseSha": "07ac5f29d3032bb173fd538c549966e7eb96dcff",
+        "targetSha": "f4703907ddc54dff7f6e81bc37f0a42e3fdd8d22"
+      },
+      "fairness": {
+        "sanitizedSingleCommitHistory": true,
+        "goldHiddenFromProvider": true,
+        "sameProvider": true,
+        "protocolVersion": "first-test-v26-test-authoring",
+        "configSha256": "5a40e38b067fc5bc9c33ebb55989c40d16f1982966a1f5d7b41fdbc8d2f608e7",
+        "fixedMode": "fast",
+        "fixedModel": "gpt-5.6-sol",
+        "setupCommandSha256": "25b2e2447434e1486d25ce617d01a3d1de2c008b7405891a5f21c210621acc5f"
+      },
+      "setup": {
+        "passed": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 14653,
+          "stdout": {
+            "sha256": "b260142a199017da29c1e78c02374f8ee3cebc66859b7cb6db1ed0f156be433e",
+            "bytes": 451
+          },
+          "stderr": {
+            "sha256": "79b5bbeccf43ad60f9568322ce3f9a6b409f9367a0c8d371f87dffda465b8222",
+            "bytes": 1338
+          }
+        }
+      },
+      "preflight": {
+        "confirmed": false,
+        "emptyTestBaseline": {
+          "status": "no-tests-discovered",
+          "framework": "jest",
+          "projectPath": ".",
+          "sourceStable": true,
+          "sourceFingerprint": "ed76a8dac518a17d0952449c38fe5a3ed49842dc55fc1327d9a8ed5305a63a11",
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 284,
+            "stdout": {
+              "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+              "bytes": 3
+            },
+            "stderr": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            }
+          },
+          "discoveredFiles": 0,
+          "requiredFinalMinimumTests": 1,
+          "baselinePassed": false,
+          "requirement": "Create executable focused tests; all final required gates and independent task acceptance must pass."
+        },
+        "failureCode": "verification-failed",
+        "diagnosticCode": "gate-process-failed",
+        "tests": {
+          "tests": 0,
+          "executed": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "failed",
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 993,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "c3ff852f1cc43e1e4c33ff22ceaf18a381379754e8b4939bd94317dbe07588b5",
+                "bytes": 1061
+              }
+            }
+          }
+        ]
+      },
+      "acceptanceControls": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "b77f7389c4f981480face8168974efd2d0dd86dbe530a7d264d4911ae50dd2fd",
+        "testFiles": [
+          {
+            "path": "test/bth/file-flow.spec.ts",
+            "sha256": "30f8531d2500cb29694894ab6d97ca33be35e95de077ef213f119f683c72bfe3"
+          },
+          {
+            "path": "test/bth/jest.config.cjs",
+            "sha256": "663d94b68f3a7a30e50c7c04404c1456cc8dc65944e2f97d1d1aff0fde9184d8"
+          },
+          {
+            "path": "test/bth/run.cjs",
+            "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+          },
+          {
+            "path": "test/bth/verify-jest.mjs",
+            "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 13316,
+              "stdout": {
+                "sha256": "44d1f69c1b8567f88e00c74101d21b7290ab0b7e602f0e8cdd2124a137a671e1",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "3f75d4435b33f1b5d57e0040ea490f2ba64c1fdf3dc0ac45b21f510ae74b09f3",
+                "bytes": 5786
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "9d1bb1e675c23f722bf687f768df43bc57a7eed148bf5626c88cc68028081294",
+                "bytes": 1110
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create returns mapped domain data from the saved entity",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create propagates persistence failure without returning a file",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findById maps existing files and preserves missing-file null",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findByIds maps each returned entity and preserves an empty result",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor emits resolved nested values rather than Promise objects",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor routes rejected values through the observable error channel",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor preserves an upstream observable failure",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12644,
+              "stdout": {
+                "sha256": "9380cd2e222df98b8ae64e3273de57767f4141dc17c5748f7d6b39abf4b1a3c9",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "4080f2128128f4f9f5cc4ab3ddccaf8f1404aa2fcc00650af5ee472fbd0351e6",
+                "bytes": 2085
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "d78b25a29e6031789acde96937e4996a3d7284b4255b2a71b52e71f2faf6089b",
+                "bytes": 1029
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create returns mapped domain data from the saved entity",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create propagates persistence failure without returning a file",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findById maps existing files and preserves missing-file null",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findByIds maps each returned entity and preserves an empty result",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor emits resolved nested values rather than Promise objects",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor routes rejected values through the observable error channel",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor preserves an upstream observable failure",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 26967
+      },
+      "observation": {
+        "provider": "codex",
+        "lane": "bth",
+        "providerCompleted": true,
+        "verificationConfirmed": false,
+        "acceptance": {
+          "controlsConfirmed": false,
+          "candidatePassed": null,
+          "reason": "candidate-not-eligible"
+        },
+        "attempts": 1,
+        "elapsedMs": 123312,
+        "changedPaths": [
+          "src/files/infrastructure/persistence/relational/mappers/file.mapper.ts",
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.spec.ts",
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.ts",
+          "src/utils/serializer.interceptor.spec.ts",
+          "src/utils/serializer.interceptor.ts"
+        ],
+        "impactPaths": [
+          "src/files/domain/file.ts",
+          "src/utils/relational-entity-helper.ts",
+          "src/users/infrastructure/persistence/relational/entities/user.entity.ts",
+          "src/users/domain/user.ts",
+          "src/users/infrastructure/persistence/relational/mappers/user.mapper.ts",
+          "src/config/config.type.ts",
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.ts",
+          "src/app.module.ts"
+        ],
+        "ruleViolations": [],
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 283971,
+            "uncachedInput": 43331,
+            "output": 4282,
+            "cachedInput": 240640,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 518,
+            "total": 288253
+          },
+          "costUsd": null,
+          "durationMs": 108611,
+          "turns": null
+        },
+        "evidence": {
+          "taskState": "IMPLEMENTING",
+          "implementationStatus": "failed",
+          "verificationRunPath": ".backend-harness/local/runs/latest.json",
+          "failureCode": "verification-not-confirmed",
+          "preparation": {
+            "kind": "npm-ci-offline",
+            "projectPath": ".",
+            "status": "passed",
+            "dependencyEntries": 1635,
+            "legacyIntegrityEntries": 63,
+            "inputs": [
+              {
+                "path": "package.json",
+                "sha256": "97c6abe5f0dd85b75c2ec7aa5b4c602667a2eda277c7f39f554985664e39fb4f"
+              },
+              {
+                "path": "package-lock.json",
+                "sha256": "e4ea40fc76bd34ebfb0cd28782c422bd9db14884c18a602599c3d4d027d0fcfd"
+              }
+            ],
+            "command": [
+              "npm",
+              "--prefix",
+              "<isolated-project>",
+              "--global=false",
+              "--workspaces=false",
+              "ci",
+              "--offline",
+              "--ignore-scripts",
+              "--no-audit",
+              "--no-fund"
+            ],
+            "failureCode": null,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 7780,
+              "stdout": {
+                "sha256": "9380cd2e222df98b8ae64e3273de57767f4141dc17c5748f7d6b39abf4b1a3c9",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "79b5bbeccf43ad60f9568322ce3f9a6b409f9367a0c8d371f87dffda465b8222",
+                "bytes": 1338
+              }
+            },
+            "lifecycleScripts": false,
+            "onlineFallback": false,
+            "egressIsolation": "not-enforced",
+            "sourceStable": true
+          },
+          "verificationTests": {
+            "tests": 3,
+            "executed": 3,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0
+          },
+          "verificationGates": [
+            {
+              "id": "tests",
+              "outcome": "failed"
+            }
+          ],
+          "request": {
+            "bytes": 20960,
+            "codeContextEntries": 8,
+            "codeContextCharacters": 1993,
+            "projectRuleCount": 4,
+            "knowledgeDocumentCount": 0
+          },
+          "providerActivity": [
+            {
+              "schemaVersion": 1,
+              "provider": "codex",
+              "authority": "provider-event-derived-advisory",
+              "parsedEvents": 38,
+              "rejectedEvents": 0,
+              "firstWriteObserved": true,
+              "preWritePaths": [
+                "src/files/infrastructure/persistence/relational/repositories/file.repository.ts",
+                "src/files/domain/file.ts",
+                "src/utils/relational-entity-helper.ts",
+                "src/session/infrastructure/persistence/relational/repositories/session.repository.ts",
+                "src/users/infrastructure/persistence/relational/repositories/user.repository.ts",
+                ".backend-harness/project.md",
+                ".backend-harness/architecture.md",
+                "src/utils/serializer.interceptor.ts",
+                "src/files/infrastructure/persistence/relational/mappers/file.mapper.ts",
+                "src/files/infrastructure/persistence/document/repositories/file.repository.ts",
+                "src/files/infrastructure/persistence/file.repository.ts",
+                "src/utils/deep-resolver.ts",
+                "src/files/infrastructure/persistence/relational/entities/file.entity.ts",
+                ".backend-harness/bin/verify-portable.mjs",
+                "test/user/auth.e2e-spec.ts",
+                "test/admin/auth.e2e-spec.ts",
+                "test/admin/users.e2e-spec.ts",
+                "node_modules/typeorm/cli.js",
+                "src/database/data-source.ts",
+                ".install-scripts/index.ts",
+                "src/database/seeds/relational/run-seed.ts",
+                "src/database/seeds/document/run-seed.ts",
+                "docker-compose.document.test.yaml",
+                "docker-compose.relational.test.yaml",
+                "CHANGELOG.md"
+              ],
+              "preWriteContentPaths": [
+                "src/files/infrastructure/persistence/relational/repositories/file.repository.ts",
+                "src/files/domain/file.ts",
+                "src/utils/relational-entity-helper.ts",
+                "src/session/infrastructure/persistence/relational/repositories/session.repository.ts",
+                "src/users/infrastructure/persistence/relational/repositories/user.repository.ts",
+                ".backend-harness/project.md",
+                ".backend-harness/architecture.md",
+                "src/utils/serializer.interceptor.ts",
+                "src/files/infrastructure/persistence/relational/mappers/file.mapper.ts",
+                "src/files/infrastructure/persistence/document/repositories/file.repository.ts",
+                "src/files/infrastructure/persistence/file.repository.ts",
+                "src/utils/deep-resolver.ts",
+                "src/files/infrastructure/persistence/relational/entities/file.entity.ts"
+              ],
+              "preWriteDiscoveryPaths": [
+                ".backend-harness/bin/verify-portable.mjs",
+                "test/user/auth.e2e-spec.ts",
+                "test/admin/auth.e2e-spec.ts",
+                "test/admin/users.e2e-spec.ts",
+                "node_modules/typeorm/cli.js",
+                "src/database/data-source.ts",
+                ".install-scripts/index.ts",
+                "src/database/seeds/relational/run-seed.ts",
+                "src/database/seeds/document/run-seed.ts",
+                "docker-compose.document.test.yaml",
+                "docker-compose.relational.test.yaml",
+                "CHANGELOG.md"
+              ],
+              "changedPaths": [
+                "src/files/infrastructure/persistence/relational/repositories/file.repository.spec.ts",
+                "src/files/infrastructure/persistence/relational/repositories/file.repository.ts",
+                "src/utils/serializer.interceptor.spec.ts",
+                "src/utils/serializer.interceptor.ts",
+                "src/files/infrastructure/persistence/relational/mappers/file.mapper.ts"
+              ],
+              "readCommandCount": 6,
+              "discoveryCommandCount": 3,
+              "validationCommandCount": 0,
+              "writeEventCount": 2
+            }
+          ],
+          "workspaceRetainedForAudit": false
+        }
+      },
+      "score": {
+        "schemaVersion": 3,
+        "id": "codex:bth:nest-02-file-relational-mapper",
+        "provider": "codex",
+        "lane": "bth",
+        "taskId": "nest-02-file-relational-mapper",
+        "successAt1": false,
+        "verificationSuccessAt1": false,
+        "acceptanceConfirmed": null,
+        "failureReasons": [
+          "structured-verification-not-confirmed",
+          "task-acceptance-not-measured"
+        ],
+        "providerCompleted": true,
+        "verificationConfirmed": false,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 123312,
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 283971,
+            "uncachedInput": 43331,
+            "output": 4282,
+            "cachedInput": 240640,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 518,
+            "total": 288253
+          },
+          "costUsd": null,
+          "durationMs": 108611,
+          "turns": null
+        },
+        "changedPaths": [
+          "src/files/infrastructure/persistence/relational/mappers/file.mapper.ts",
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.spec.ts",
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.ts",
+          "src/utils/serializer.interceptor.spec.ts",
+          "src/utils/serializer.interceptor.ts"
+        ],
+        "goldPathsChanged": [
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.ts",
+          "src/utils/serializer.interceptor.ts"
+        ],
+        "unexpectedChangedPaths": [
+          "src/files/infrastructure/persistence/relational/mappers/file.mapper.ts",
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.spec.ts",
+          "src/utils/serializer.interceptor.spec.ts"
+        ],
+        "changedGoldRecall": 1,
+        "ruleViolations": [],
+        "impactLocalization": {
+          "taskId": "nest-02-file-relational-mapper",
+          "goldPathCount": 2,
+          "rankedPathCount": 8,
+          "recallAt5": 0,
+          "recallAt20": 0.5,
+          "ndcgAt20": 0.20438239758848611
+        },
+        "outcomeLocalization": {
+          "taskId": "nest-02-file-relational-mapper",
+          "goldPathCount": 2,
+          "rankedPathCount": 5,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 0.5437713091520254
+        }
+      },
+      "totalElapsedMs": 183512,
+      "workspace": null
+    },
+    {
+      "schemaVersion": 1,
+      "case": {
+        "id": "codex:direct:nest-02-file-relational-mapper",
+        "provider": "codex",
+        "lane": "direct",
+        "repositoryId": "nestjs-boilerplate",
+        "taskId": "nest-02-file-relational-mapper",
+        "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+        "requirementSha256": "938b4e21c4530cefa9044a6f379a7c43fda08b7ac4b14ec8e20d7a69fe0c4d16",
+        "baseSha": "07ac5f29d3032bb173fd538c549966e7eb96dcff",
+        "targetSha": "f4703907ddc54dff7f6e81bc37f0a42e3fdd8d22"
+      },
+      "fairness": {
+        "sanitizedSingleCommitHistory": true,
+        "goldHiddenFromProvider": true,
+        "sameProvider": true,
+        "protocolVersion": "first-test-v26-test-authoring",
+        "configSha256": "5a40e38b067fc5bc9c33ebb55989c40d16f1982966a1f5d7b41fdbc8d2f608e7",
+        "fixedMode": "fast",
+        "fixedModel": "gpt-5.6-sol",
+        "setupCommandSha256": "25b2e2447434e1486d25ce617d01a3d1de2c008b7405891a5f21c210621acc5f"
+      },
+      "setup": {
+        "passed": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 8412,
+          "stdout": {
+            "sha256": "268156a9a7e8a68d9c2dab342a839a8c13f0ea7262cc5c3e2669ca08b21b09c0",
+            "bytes": 450
+          },
+          "stderr": {
+            "sha256": "79b5bbeccf43ad60f9568322ce3f9a6b409f9367a0c8d371f87dffda465b8222",
+            "bytes": 1338
+          }
+        }
+      },
+      "preflight": {
+        "confirmed": false,
+        "emptyTestBaseline": {
+          "status": "no-tests-discovered",
+          "framework": "jest",
+          "projectPath": ".",
+          "sourceStable": true,
+          "sourceFingerprint": "ed76a8dac518a17d0952449c38fe5a3ed49842dc55fc1327d9a8ed5305a63a11",
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 306,
+            "stdout": {
+              "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+              "bytes": 3
+            },
+            "stderr": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            }
+          },
+          "discoveredFiles": 0,
+          "requiredFinalMinimumTests": 1,
+          "baselinePassed": false,
+          "requirement": "Create executable focused tests; all final required gates and independent task acceptance must pass."
+        },
+        "failureCode": "verification-failed",
+        "diagnosticCode": "gate-process-failed",
+        "tests": {
+          "tests": 0,
+          "executed": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "failed",
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 1091,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "65d9c07deeec200eb886bc11adb8f49dc3aab4faafc30275ee02e9d9c75a9ea2",
+                "bytes": 1061
+              }
+            }
+          }
+        ]
+      },
+      "acceptanceControls": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "b77f7389c4f981480face8168974efd2d0dd86dbe530a7d264d4911ae50dd2fd",
+        "testFiles": [
+          {
+            "path": "test/bth/file-flow.spec.ts",
+            "sha256": "30f8531d2500cb29694894ab6d97ca33be35e95de077ef213f119f683c72bfe3"
+          },
+          {
+            "path": "test/bth/jest.config.cjs",
+            "sha256": "663d94b68f3a7a30e50c7c04404c1456cc8dc65944e2f97d1d1aff0fde9184d8"
+          },
+          {
+            "path": "test/bth/run.cjs",
+            "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+          },
+          {
+            "path": "test/bth/verify-jest.mjs",
+            "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12312,
+              "stdout": {
+                "sha256": "9380cd2e222df98b8ae64e3273de57767f4141dc17c5748f7d6b39abf4b1a3c9",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "28f0905154695e2185aa4863414f5d20f681c00d7d7f56a7ca205c1e37852c5d",
+                "bytes": 5778
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "9d1bb1e675c23f722bf687f768df43bc57a7eed148bf5626c88cc68028081294",
+                "bytes": 1110
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create returns mapped domain data from the saved entity",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create propagates persistence failure without returning a file",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findById maps existing files and preserves missing-file null",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findByIds maps each returned entity and preserves an empty result",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor emits resolved nested values rather than Promise objects",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor routes rejected values through the observable error channel",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor preserves an upstream observable failure",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12194,
+              "stdout": {
+                "sha256": "9380cd2e222df98b8ae64e3273de57767f4141dc17c5748f7d6b39abf4b1a3c9",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "9f8857ea2b1afd484e1b899cc66196ea8ba492830efe73c56eece56a5240774f",
+                "bytes": 2085
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "d78b25a29e6031789acde96937e4996a3d7284b4255b2a71b52e71f2faf6089b",
+                "bytes": 1029
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create returns mapped domain data from the saved entity",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create propagates persistence failure without returning a file",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findById maps existing files and preserves missing-file null",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findByIds maps each returned entity and preserves an empty result",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor emits resolved nested values rather than Promise objects",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor routes rejected values through the observable error channel",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor preserves an upstream observable failure",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 25458
+      },
+      "observation": {
+        "provider": "codex",
+        "lane": "direct",
+        "providerCompleted": true,
+        "verificationConfirmed": true,
+        "acceptance": {
+          "schemaVersion": 1,
+          "kind": "fixture-tests",
+          "controlsConfirmed": true,
+          "candidatePassed": true,
+          "candidateSourceSha256": "771d720289d7243014199bc90d42717bb4c82b13e554b974acd38cab7164d32a",
+          "candidateUntouched": true,
+          "reason": null,
+          "oracleSha256": "b77f7389c4f981480face8168974efd2d0dd86dbe530a7d264d4911ae50dd2fd",
+          "testFiles": [
+            {
+              "path": "test/bth/file-flow.spec.ts",
+              "sha256": "30f8531d2500cb29694894ab6d97ca33be35e95de077ef213f119f683c72bfe3"
+            },
+            {
+              "path": "test/bth/jest.config.cjs",
+              "sha256": "663d94b68f3a7a30e50c7c04404c1456cc8dc65944e2f97d1d1aff0fde9184d8"
+            },
+            {
+              "path": "test/bth/run.cjs",
+              "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+            },
+            {
+              "path": "test/bth/verify-jest.mjs",
+              "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+            }
+          ],
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 13135,
+                "stdout": {
+                  "sha256": "9380cd2e222df98b8ae64e3273de57767f4141dc17c5748f7d6b39abf4b1a3c9",
+                  "bytes": 27
+                },
+                "stderr": {
+                  "sha256": "e74117c368877c984617976150023f5f8a86a7bbeabd1e9cf3af05fc87cc74e1",
+                  "bytes": 5786
+                }
+              },
+              "reports": [
+                {
+                  "path": "coverage/bth-junit.xml",
+                  "sha256": "9d1bb1e675c23f722bf687f768df43bc57a7eed148bf5626c88cc68028081294",
+                  "bytes": 1110
+                }
+              ],
+              "cases": [
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "create returns mapped domain data from the saved entity",
+                  "outcome": "failed"
+                },
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "create propagates persistence failure without returning a file",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "findById maps existing files and preserves missing-file null",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "findByIds maps each returned entity and preserves an empty result",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "interceptor emits resolved nested values rather than Promise objects",
+                  "outcome": "failed"
+                },
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "interceptor routes rejected values through the observable error channel",
+                  "outcome": "failed"
+                },
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "interceptor preserves an upstream observable failure",
+                  "outcome": "passed"
+                }
+              ],
+              "passed": false,
+              "regressionReproduced": true
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 0,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 13745,
+                "stdout": {
+                  "sha256": "44d1f69c1b8567f88e00c74101d21b7290ab0b7e602f0e8cdd2124a137a671e1",
+                  "bytes": 27
+                },
+                "stderr": {
+                  "sha256": "15bbfcc34b0457263cfb1eaecde18a53ae3139c04cee0cb9a70d5b40ca1d2695",
+                  "bytes": 2078
+                }
+              },
+              "reports": [
+                {
+                  "path": "coverage/bth-junit.xml",
+                  "sha256": "d78b25a29e6031789acde96937e4996a3d7284b4255b2a71b52e71f2faf6089b",
+                  "bytes": 1029
+                }
+              ],
+              "cases": [
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "create returns mapped domain data from the saved entity",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "create propagates persistence failure without returning a file",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "findById maps existing files and preserves missing-file null",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "findByIds maps each returned entity and preserves an empty result",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "interceptor emits resolved nested values rather than Promise objects",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "interceptor routes rejected values through the observable error channel",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test/bth/file-flow.spec.ts",
+                  "name": "interceptor preserves an upstream observable failure",
+                  "outcome": "passed"
+                }
+              ],
+              "passed": true,
+              "regressionReproduced": false
+            }
+          },
+          "candidate": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12431,
+              "stdout": {
+                "sha256": "9380cd2e222df98b8ae64e3273de57767f4141dc17c5748f7d6b39abf4b1a3c9",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "6f9a6783410085ab655b3798001f0438f524b34f79d528106bf4052ac03d528a",
+                "bytes": 2071
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "d78b25a29e6031789acde96937e4996a3d7284b4255b2a71b52e71f2faf6089b",
+                "bytes": 1029
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create returns mapped domain data from the saved entity",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create propagates persistence failure without returning a file",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findById maps existing files and preserves missing-file null",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findByIds maps each returned entity and preserves an empty result",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor emits resolved nested values rather than Promise objects",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor routes rejected values through the observable error channel",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor preserves an upstream observable failure",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          },
+          "elapsedMs": 42026
+        },
+        "attempts": 1,
+        "elapsedMs": 88180,
+        "changedPaths": [
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.spec.ts",
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.ts",
+          "src/utils/serializer.interceptor.spec.ts",
+          "src/utils/serializer.interceptor.ts"
+        ],
+        "impactPaths": null,
+        "ruleViolations": [],
+        "usage": {
+          "schemaVersion": 2,
+          "provider": "codex",
+          "tokens": {
+            "input": 205270,
+            "uncachedInput": 29142,
+            "output": 3730,
+            "cachedInput": 176128,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 766,
+            "total": 209000
+          },
+          "costUsd": null,
+          "durationMs": 82835,
+          "turns": null,
+          "providerReported": {
+            "usage.input_tokens": 205270,
+            "usage.cached_input_tokens": 176128,
+            "usage.cache_write_input_tokens": 0,
+            "usage.output_tokens": 3730,
+            "usage.reasoning_output_tokens": 766
+          },
+          "scope": "invocation-final"
+        },
+        "evidence": {
+          "providerFailureCode": null,
+          "verificationFailureCode": null,
+          "verificationTests": {
+            "tests": 4,
+            "executed": 4,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "request": {
+            "promptBytes": 1838
+          },
+          "providerActivity": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "authority": "provider-event-derived-advisory",
+            "parsedEvents": 21,
+            "rejectedEvents": 0,
+            "firstWriteObserved": true,
+            "preWritePaths": [],
+            "preWriteContentPaths": [],
+            "preWriteDiscoveryPaths": [],
+            "changedPaths": [
+              "AGENTS.md",
+              "src/users/infrastructure/persistence/relational/repositories/user.repository.ts",
+              "src/statuses/infrastructure/persistence/relational/repositories/status.repository.ts",
+              "src/files/domain/file.ts",
+              "src/files/infrastructure/persistence/relational/entities/file.entity.ts",
+              "tsconfig.js"
+            ],
+            "readCommandCount": 5,
+            "discoveryCommandCount": 0,
+            "validationCommandCount": 0,
+            "writeEventCount": 4
+          },
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdout": {
+              "sha256": "f83a5038ce5c4793af9d1af31dca00b499e0579f6481bc8809f8bb5999484753",
+              "bytes": 51294
+            },
+            "stderr": {
+              "sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+              "bytes": 39
+            }
+          }
+        }
+      },
+      "score": {
+        "schemaVersion": 3,
+        "id": "codex:direct:nest-02-file-relational-mapper",
+        "provider": "codex",
+        "lane": "direct",
+        "taskId": "nest-02-file-relational-mapper",
+        "successAt1": true,
+        "verificationSuccessAt1": true,
+        "acceptanceConfirmed": true,
+        "failureReasons": [],
+        "providerCompleted": true,
+        "verificationConfirmed": true,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 88180,
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 205270,
+            "uncachedInput": 29142,
+            "output": 3730,
+            "cachedInput": 176128,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 766,
+            "total": 209000
+          },
+          "costUsd": null,
+          "durationMs": 82835,
+          "turns": null
+        },
+        "changedPaths": [
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.spec.ts",
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.ts",
+          "src/utils/serializer.interceptor.spec.ts",
+          "src/utils/serializer.interceptor.ts"
+        ],
+        "goldPathsChanged": [
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.ts",
+          "src/utils/serializer.interceptor.ts"
+        ],
+        "unexpectedChangedPaths": [
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.spec.ts",
+          "src/utils/serializer.interceptor.spec.ts"
+        ],
+        "changedGoldRecall": 1,
+        "ruleViolations": [],
+        "impactLocalization": null,
+        "outcomeLocalization": {
+          "taskId": "nest-02-file-relational-mapper",
+          "goldPathCount": 2,
+          "rankedPathCount": 4,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 0.6509209298071326
+        }
+      },
+      "totalElapsedMs": 192147,
+      "workspace": null
+    }
+  ],
+  "comparisons": [
+    {
+      "provider": "codex",
+      "pairedTasks": 1,
+      "taskIds": [
+        "nest-02-file-relational-mapper"
+      ],
+      "bth": {
+        "cases": 1,
+        "successAt1": {
+          "count": 0,
+          "measured": 1,
+          "total": 1,
+          "rate": 0,
+          "observedRate": 0
+        },
+        "verificationSuccessAt1": {
+          "count": 0,
+          "total": 1
+        },
+        "acceptanceCoverage": {
+          "measured": 0,
+          "total": 1
+        },
+        "ruleViolations": {
+          "cases": 0,
+          "total": 0
+        },
+        "impactLocalization": {
+          "coverage": {
+            "measured": 1,
+            "total": 1,
+            "rate": 1
+          },
+          "metrics": {
+            "taskCount": 1,
+            "meanRecallAt5": 0,
+            "meanRecallAt20": 0.5,
+            "meanNdcgAt20": 0.20438239758848611,
+            "zeroRecallAt20Tasks": []
+          }
+        },
+        "outcomeLocalization": {
+          "coverage": {
+            "measured": 1,
+            "total": 1,
+            "rate": 1
+          },
+          "metrics": {
+            "taskCount": 1,
+            "meanRecallAt5": 1,
+            "meanRecallAt20": 1,
+            "meanNdcgAt20": 0.5437713091520254,
+            "zeroRecallAt20Tasks": []
+          }
+        },
+        "elapsedMs": {
+          "mean": 123312,
+          "total": 123312
+        },
+        "retries": {
+          "cases": 0,
+          "rate": 0,
+          "total": 0
+        },
+        "usage": {
+          "tokens": {
+            "total": {
+              "value": 288253,
+              "measured": 1,
+              "total": 1
+            },
+            "input": {
+              "value": 283971,
+              "measured": 1,
+              "total": 1
+            },
+            "uncachedInput": {
+              "value": 43331,
+              "measured": 1,
+              "total": 1
+            },
+            "cachedInput": {
+              "value": 240640,
+              "measured": 1,
+              "total": 1
+            },
+            "cacheCreationInput": {
+              "value": 0,
+              "measured": 1,
+              "total": 1
+            },
+            "output": {
+              "value": 4282,
+              "measured": 1,
+              "total": 1
+            },
+            "reasoningOutput": {
+              "value": 518,
+              "measured": 1,
+              "total": 1
+            }
+          },
+          "costUsd": {
+            "value": null,
+            "measured": 0,
+            "total": 1
+          },
+          "providerDurationMs": {
+            "value": 108611,
+            "measured": 1,
+            "total": 1
+          }
+        }
+      },
+      "direct": {
+        "cases": 1,
+        "successAt1": {
+          "count": 1,
+          "measured": 1,
+          "total": 1,
+          "rate": 1,
+          "observedRate": 1
+        },
+        "verificationSuccessAt1": {
+          "count": 1,
+          "total": 1
+        },
+        "acceptanceCoverage": {
+          "measured": 1,
+          "total": 1
+        },
+        "ruleViolations": {
+          "cases": 0,
+          "total": 0
+        },
+        "impactLocalization": {
+          "coverage": {
+            "measured": 0,
+            "total": 1,
+            "rate": 0
+          },
+          "metrics": null
+        },
+        "outcomeLocalization": {
+          "coverage": {
+            "measured": 1,
+            "total": 1,
+            "rate": 1
+          },
+          "metrics": {
+            "taskCount": 1,
+            "meanRecallAt5": 1,
+            "meanRecallAt20": 1,
+            "meanNdcgAt20": 0.6509209298071326,
+            "zeroRecallAt20Tasks": []
+          }
+        },
+        "elapsedMs": {
+          "mean": 88180,
+          "total": 88180
+        },
+        "retries": {
+          "cases": 0,
+          "rate": 0,
+          "total": 0
+        },
+        "usage": {
+          "tokens": {
+            "total": {
+              "value": 209000,
+              "measured": 1,
+              "total": 1
+            },
+            "input": {
+              "value": 205270,
+              "measured": 1,
+              "total": 1
+            },
+            "uncachedInput": {
+              "value": 29142,
+              "measured": 1,
+              "total": 1
+            },
+            "cachedInput": {
+              "value": 176128,
+              "measured": 1,
+              "total": 1
+            },
+            "cacheCreationInput": {
+              "value": 0,
+              "measured": 1,
+              "total": 1
+            },
+            "output": {
+              "value": 3730,
+              "measured": 1,
+              "total": 1
+            },
+            "reasoningOutput": {
+              "value": 766,
+              "measured": 1,
+              "total": 1
+            }
+          },
+          "costUsd": {
+            "value": null,
+            "measured": 0,
+            "total": 1
+          },
+          "providerDurationMs": {
+            "value": 82835,
+            "measured": 1,
+            "total": 1
+          }
+        }
+      },
+      "delta": {
+        "successAt1Rate": -1,
+        "ruleViolationCases": 0,
+        "meanImpactRecallAt20": null,
+        "meanImpactNdcgAt20": null,
+        "meanOutcomeRecallAt20": 0,
+        "meanElapsedMs": 35132
+      }
+    }
+  ]
+}

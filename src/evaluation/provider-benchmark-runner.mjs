@@ -6,7 +6,7 @@ import { configureImplementationProvider } from '../config/implementation-setup.
 import { buildSafeEnvironment } from '../core/process-runner.mjs'
 import { resolveSafeProjectPath } from '../fs-safety.mjs'
 import { initProject } from '../init-project.mjs'
-import { runProviderPrompt, selectImplementationProfile } from '../providers/model-cli.mjs'
+import { runProviderPrompt, selectImplementationProfile, TEST_AUTHORING_CONTRACT } from '../providers/model-cli.mjs'
 import { checkProject } from '../runtime/backend-harness.mjs'
 import { implementationStatus, resetImplementation } from '../runtime/implementation-orchestrator.mjs'
 import { runWork } from '../runtime/work-orchestrator.mjs'
@@ -77,6 +77,7 @@ function directPrompt(task, repositoryConfig) {
     'Write only inside these approved paths: ' + repositoryConfig.allowedPrefixes.join(', ') + '.',
     'Preserve observed naming, layering, DTO/error, persistence, transaction, migration, and test patterns. Do not guess through an unknown or conflicting project rule.',
     'Do not read .env files, credentials, private keys, tokens, or unrelated user data. Do not commit, change Git refs, deploy, access production, or use a production database.',
+    TEST_AUTHORING_CONTRACT,
     'Do not run build, test, formatter, linter, package-manager, Docker, or database commands; the benchmark evaluator owns the same project-declared structured verification used for the harness lane.',
     'Finish after making the smallest complete implementation and focused tests. Do not create benchmark or harness metadata files.'
   ].join(' ')
@@ -201,7 +202,7 @@ async function runBthLane(root, task, repositoryConfig, input, options) {
       providerCompleted: attempts.length > 0 && attempts.every((attempt) => processPassed(attempt.adapter)),
       verificationConfirmed: record?.verification?.confirmed === true,
       acceptance,
-      attempts: Math.max(1, attempts.length),
+      attempts: attempts.length,
       elapsedMs,
       changedPaths: paths,
       impactPaths: request?.codeContextPaths?.length ? request.codeContextPaths : null,
@@ -211,7 +212,10 @@ async function runBthLane(root, task, repositoryConfig, input, options) {
         taskState: result.task?.state ?? null,
         implementationStatus: record?.status ?? null,
         verificationRunPath: record?.verification?.runPath ?? null,
-        failureCode: record?.verification?.failure?.code ?? null,
+        failureCode: record?.preparation?.failureCode ?? record?.verification?.failure?.code ?? (record?.verification?.confirmed === false ? 'verification-not-confirmed' : null),
+        preparation: record?.preparation ?? null,
+        verificationTests: record?.verification?.tests ?? null,
+        verificationGates: (record?.verification?.gates ?? []).map(gate => ({ id: gate.id, outcome: gate.outcome })),
         request: request ? {
           bytes: request.bytes,
           codeContextEntries: request.codeContextPaths.length,
@@ -265,11 +269,13 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
   }
   let verificationConfirmed = false
   let verificationFailure = null
+  let verificationTests = null
   if (processPassed(run.process) && paths.length > 0 && ruleViolations.length === 0) {
     try {
       await initProject(root, { preferredSystem: repositoryConfig.buildSystem })
       const checked = await (options.projectChecker ?? checkProject)(root, { allowNetwork: true })
       verificationConfirmed = checked.confirmed === true
+      verificationTests = checked.result?.tests ?? null
       verificationFailure = checked.confirmed ? null : checked.result?.failure?.code ?? 'verification-failed'
     } catch (error) {
       verificationFailure = error?.code ?? 'verification-exception'
@@ -292,6 +298,7 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
     evidence: {
       providerFailureCode: run.metadata?.failure?.code ?? null,
       verificationFailureCode: verificationFailure,
+      verificationTests,
       request: { promptBytes: Buffer.byteLength(prompt) },
       providerActivity: run.metadata?.activity ?? null,
       process: {

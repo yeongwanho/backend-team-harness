@@ -14,6 +14,7 @@ import {
   snapshotImplementedFiles
 } from '../core/implementation-record-store.mjs'
 import { buildSafeEnvironment, runProcess } from '../core/process-runner.mjs'
+import { prepareWorkspaceDependencies } from '../core/workspace-preparation.mjs'
 import { implementationStateDirectory } from '../core/platform.mjs'
 import { withProjectVerificationLock } from '../core/project-lock.mjs'
 import { captureSourceBinding } from '../core/source-binding.mjs'
@@ -395,14 +396,32 @@ async function materializeWorkspace(root, workspace, sourceBinding) {
   await runGit(root, ['worktree', 'add', '--detach', workspace.path, sourceBinding.headCommit])
 }
 
-async function stageMissingVerificationInputs(root, worktree, verificationConfig) {
+function withoutCarriageReturnsBeforeNewline(bytes) {
+  const output = Buffer.allocUnsafe(bytes.length)
+  let length = 0
+  for (let index = 0; index < bytes.length; index++) {
+    if (bytes[index] === 13 && bytes[index + 1] === 10) continue
+    output[length++] = bytes[index]
+  }
+  return output.subarray(0, length)
+}
+
+async function stageApprovedVerificationInputs(root, worktree, verificationConfig) {
   for (const path of verificationInputPaths(verificationConfig)) {
     const source = await resolveSafeProjectPath(root, path)
     const target = await resolveSafeProjectPath(worktree, path)
-    if (await statPath(target)) continue
     const metadata = await statPath(source)
-    if (!metadata?.isFile() || metadata.isSymbolicLink()) {
+    if (!metadata?.isFile() || metadata.isSymbolicLink() || metadata.size > 32 * 1024 * 1024) {
       throw new Error('Declared verification input is unavailable in the isolated workspace: ' + path)
+    }
+    const existing = await statPath(target)
+    if (existing) {
+      if (!existing.isFile() || existing.isSymbolicLink() || existing.size > 32 * 1024 * 1024) throw new Error('Isolated verification input is unsafe: ' + path)
+      const [approved, staged] = await Promise.all([readFile(source), readFile(target)])
+      if (approved.equals(staged)) continue
+      if (!withoutCarriageReturnsBeforeNewline(approved).equals(withoutCarriageReturnsBeforeNewline(staged))) {
+        throw new Error('Isolated verification input differs from its approved content: ' + path)
+      }
     }
     await mkdir(dirname(target), { recursive: true, mode: 0o700 })
     await copyFile(source, target)
@@ -425,6 +444,28 @@ async function captureImplementationBinding(root, verificationConfig) {
       error: error instanceof Error ? error.message : String(error)
     }
   }
+}
+
+async function prepareIsolatedDependencies(root, workspace, preparationConfig, verificationConfig, sourceBinding, refsHash, options) {
+  if (!preparationConfig) return null
+  const before = await captureImplementationBinding(workspace, verificationConfig)
+  let receipt
+  try {
+    receipt = await prepareWorkspaceDependencies(root, workspace, preparationConfig, verificationInputPaths(verificationConfig), { processRunner: options.preparationRunner })
+  } catch {
+    receipt = { kind: preparationConfig.kind, projectPath: preparationConfig.projectPath, status: 'failed', failureCode: 'invalid-or-unavailable-workspace-preparation' }
+  }
+  const after = await captureImplementationBinding(workspace, verificationConfig)
+  let sourceStable = false
+  try {
+    sourceStable = Boolean(before.binding) && Boolean(after.binding) &&
+      before.binding.fingerprint === after.binding.fingerprint &&
+      await workspaceHead(workspace) === sourceBinding.headCommit &&
+      await sharedRefsSha256(root) === refsHash &&
+      (await suspiciousIndexFlags(workspace)).length === 0 &&
+      (await captureConfiguredSourceBinding(root)).fingerprint === sourceBinding.fingerprint
+  } catch { /* Missing or changed evidence is never a preparation success. */ }
+  return { ...receipt, sourceStable, ...(sourceStable ? {} : { status: 'failed', failureCode: 'workspace-preparation-source-changed' }) }
 }
 
 export async function implementationStatus(inputPath, taskId) {
@@ -532,6 +573,9 @@ async function runUnlocked(root, taskId, options) {
   if (prior.record?.attempts?.at(-1)?.outcome === 'gate-integrity-failure') {
     throw new Error('A verification Gate changed the isolated implementation inventory or Git metadata. Reset the tainted workspace before another implementation run.')
   }
+  if (prior.record?.preparation?.sourceStable === false) {
+    throw new Error('Workspace preparation changed bound source or Git metadata. Reset the tainted workspace before retrying.')
+  }
   if (prior.record?.status === 'passed') {
     if (prior.record.schemaVersion !== 2 || !prior.record.baseHeadCommit || !Array.isArray(prior.record.implementedFiles) || prior.record.implementedFiles.length < 1) {
       throw new Error('Legacy passed implementation record lacks file-level integration evidence. Run `bth implement reset ' + taskId + ' --by <actor> --discard-workspace` before rebuilding it.')
@@ -588,13 +632,27 @@ async function runUnlocked(root, taskId, options) {
     if (!transition.applied) throw new Error('Could not advance task to IMPLEMENTING: ' + transition.audit.reason)
   }
   if (!prior.record) await materializeWorkspace(root, workspace, sourceBinding)
-  await stageMissingVerificationInputs(root, workspace.path, sourceVerificationConfig)
+  await stageApprovedVerificationInputs(root, workspace.path, sourceVerificationConfig)
   if (await workspaceHead(workspace.path) !== sourceBinding.headCommit) {
     throw new Error('Implementation workspace history moved away from its immutable base commit.')
   }
   const preexistingIndexFlags = await suspiciousIndexFlags(workspace.path)
   if (preexistingIndexFlags.length > 0) {
     throw new Error('Implementation workspace contains assume-unchanged or skip-worktree index flags: ' + preexistingIndexFlags.slice(0, 16).map((entry) => entry.path).join(', '))
+  }
+
+  const preparation = await prepareIsolatedDependencies(root, workspace.path, loadedConfig.config.workspacePreparation, sourceVerificationConfig, sourceBinding, baseRefsSha256, options)
+  if (preparation) {
+    const allocated = await loadImplementationRecord(root, taskId)
+    const { recordSha256: previousSeal, ...allocatedFields } = allocated.record
+    const record = await saveImplementationRecord(prior.path, {
+      ...allocatedFields, preparation, status: preparation.status === 'passed' ? 'running' : 'failed',
+      updatedAt: new Date().toISOString(),
+      nextAction: preparation.status === 'passed'
+        ? 'Isolated dependencies prepared; provider implementation will start.'
+        : 'No provider attempt was spent. Inspect the preparation code, warm approved pinned dependencies separately if the cache is missing, then retry. Source changes require workspace reset.'
+    })
+    if (preparation.status !== 'passed') return { root, path: relative(root, prior.path).replaceAll('\\', '/'), record }
   }
 
   const adapter = loadedConfig.config.adapter.kind === 'command'
@@ -637,6 +695,14 @@ async function runUnlocked(root, taskId, options) {
           },
           codeContext,
           projectConventions,
+          verification: {
+            contractPath: '.backend-harness/verification.json',
+            executionOwner: 'harness',
+            focusedRegressionTestsRequired: true,
+            requiredGates: verificationConfig.gates.filter(gate => gate.required).map(gate => ({
+              id: gate.id, resultType: gate.result.type, minimumExecutedTests: gate.result.minimumTests ?? null
+            }))
+          },
           authority: {
             workspaceOnly: true,
             deployment: false,
@@ -749,7 +815,9 @@ async function runUnlocked(root, taskId, options) {
     } else if (adapterPassed) {
       candidateFiles = await snapshotImplementedFiles(workspace.path, changedPaths)
       const selectedFeedbackGates = selectVerificationGates(verificationConfig.gates, { mode: 'feedback', changedPaths })
-      if (selectedFeedbackGates.length > 0) {
+      // An identical selection gains no early feedback: run the full scope once.
+      // Strict subsets still get early feedback followed by full verification.
+      if (selectedFeedbackGates.length > 0 && selectedFeedbackGates.length < verificationConfig.gates.length) {
         feedback = compactVerification(await checkProject(workspace.path, {
           allowNetwork: options.allowNetwork === true,
           verificationScope: { mode: 'feedback', changedPaths }
@@ -861,6 +929,7 @@ async function runUnlocked(root, taskId, options) {
   const record = await saveImplementationRecord(prior.path, {
     schemaVersion: 2,
     taskId,
+    ...(preparation ? { preparation } : {}),
     adapter: loadedConfig.config.adapter.id,
     adapterKind: loadedConfig.config.adapter.kind,
     provider: providerProbe ? {

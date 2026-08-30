@@ -46,6 +46,17 @@ test('init preserves an existing team document by default', async () => {
   assert.equal(await readFile(projectFile, 'utf8'), '# Team-owned content\n')
 })
 
+test('mixed JVM and Node repositories prepare only the selected verification system', async () => {
+  const root = await backendProject('bth-init-mixed-preparation-')
+  await writeFile(join(root, 'package.json'), JSON.stringify({ scripts: { test: 'jest' }, devDependencies: { jest: '29.7.0' } }))
+  await writeFile(join(root, 'package-lock.json'), '{"lockfileVersion":3,"packages":{"":{}}}')
+  await initProject(root)
+  const verification = JSON.parse(await readFile(join(root, '.backend-harness/verification.json'), 'utf8'))
+  const implementation = JSON.parse(await readFile(join(root, '.backend-harness/implementation.json'), 'utf8'))
+  assert.equal(verification.gates[0].command[0], './gradlew')
+  assert.equal(implementation.workspacePreparation, undefined, 'unrelated npm install must not precede JVM verification')
+})
+
 test('force backs up every replaced team document before overwriting', async () => {
   const root = await backendProject('bth-force-')
   await initProject(root)
@@ -112,6 +123,7 @@ test('init generates and executes structured Jest verification without an extra 
 
   const initialized = await initProject(root, { allowUnversioned: true })
   assert.equal(initialized.detection.system, 'node-jest')
+  assert.deepEqual(JSON.parse(await readFile(join(root, '.backend-harness/implementation.json'), 'utf8')).workspacePreparation, { kind: 'npm-ci-offline', projectPath: '.', timeoutMs: 180000 })
   const verification = JSON.parse(await readFile(join(root, '.backend-harness/verification.json'), 'utf8'))
   assert.equal(verification.gates[0].command[0], './.backend-harness/bin/verify-portable')
   assert.equal(verification.gates[0].result.type, 'junit')

@@ -33,6 +33,15 @@ test('implementation config is disabled by default and normalizes a strict enabl
   assert.equal(parsed.recovery.maxAttempts, 2)
 })
 
+test('optional workspace preparation is explicit, bounded and schema-v2 only', () => {
+  const document = { schemaVersion: 2, adapter: null, workspacePreparation: { kind: 'npm-ci-offline', projectPath: 'backend' } }
+  assert.deepEqual(parseImplementationConfig(JSON.stringify(document)).workspacePreparation, { kind: 'npm-ci-offline', projectPath: 'backend', timeoutMs: 180000 })
+  assert.equal(parseImplementationConfig(JSON.stringify({ ...document, workspacePreparation: null })).workspacePreparation, null)
+  for (const value of [{ ...document, schemaVersion: 1 }, ...[
+    { kind: 'npm-install-online' }, { projectPath: '../outside' }, { projectPath: '/tmp' }, { timeoutMs: 0 }, { timeoutMs: 600001 }, { command: ['sh'] }
+  ].map(change => ({ ...document, workspacePreparation: { ...document.workspacePreparation, ...change } }))]) assert.throws(() => parseImplementationConfig(JSON.stringify(value)))
+})
+
 test('implementation config rejects unknown authority, traversal, missing budgets, and excessive recovery', () => {
   const unknown = structuredClone(valid)
   unknown.adapter.deploy = true

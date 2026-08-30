@@ -15,6 +15,8 @@ test('resumed and aggregated comparisons cannot mix changed task/config inputs o
   assert.doesNotThrow(() => assertComparisonInputs(record, expected))
   for (const changed of [{ corpusSha256: 'c'.repeat(64) }, { configSha256: 'c'.repeat(64) }, { mode: 'deep' }, { model: 'different-model' }]) assert.throws(() => assertComparisonInputs(record, { ...expected, ...changed }), /Comparison inputs/)
   assert.throws(() => assertComparisonInputs({ case: {}, fairness: {} }, expected), /lack fingerprints/)
+  assert.throws(() => assertComparisonInputs(record, { ...expected, protocolVersion: 'first-test-v26' }), /Comparison inputs/)
+  assert.doesNotThrow(() => assertComparisonInputs({ ...record, fairness: { ...record.fairness, protocolVersion: 'first-test-v26' } }, { ...expected, protocolVersion: 'first-test-v26' }))
 })
 
 test('comparison matrix pairs every selected task across providers and lanes', () => {
@@ -25,6 +27,18 @@ test('comparison matrix pairs every selected task across providers and lanes', (
   assert.equal(new Set(matrix.map((entry) => entry.id)).size, 8)
   assert.equal(matrix.filter((entry) => entry.taskId === 'task-one').length, 4)
   assert.throws(() => buildComparisonMatrix(corpus, { taskIds: ['missing'] }), /Unknown comparison task ids/)
+})
+
+test('preparation failure preserves zero attempts and unknown model success instead of inventing a failed call', () => {
+  const observation = { provider: 'codex', lane: 'bth', attempts: 0, elapsedMs: 10, evidence: { failureCode: 'offline-dependency-cache-incomplete' } }
+  const scored = scoreProviderCase(task, observation)
+  assert.equal(scored.attempts, 0)
+  assert.equal(scored.retries, 0)
+  assert.equal(scored.successAt1, null)
+  assert.equal(scored.verificationSuccessAt1, null)
+  assert.deepEqual(scored.failureReasons, ['provider-not-attempted', 'offline-dependency-cache-incomplete'])
+  assert.throws(() => scoreProviderCase(task, { ...observation, providerCompleted: true }), /Zero-attempt/)
+  assert.throws(() => scoreProviderCase(task, { ...observation, verificationConfirmed: true }), /Zero-attempt/)
 })
 
 test('success at one requires independent task acceptance while historical path coverage remains separate', () => {

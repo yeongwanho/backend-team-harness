@@ -3,7 +3,7 @@ import { access, readFile } from 'node:fs/promises'
 import { isAbsolute, posix, relative } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 
-const CONFIG_KEYS = new Set(['schemaVersion', 'adapter', 'writePolicy', 'recovery'])
+const CONFIG_KEYS = new Set(['schemaVersion', 'adapter', 'writePolicy', 'recovery', 'workspacePreparation'])
 const COMMAND_ADAPTER_KEYS = new Set(['kind', 'id', 'command', 'network', 'timeoutMs'])
 const PROVIDER_ADAPTER_KEYS = new Set(['kind', 'provider', 'network', 'timeoutMs', 'model', 'mode', 'contextBudgetCharacters', 'maxBudgetUsd'])
 const RECOVERY_KEYS = new Set(['maxAttempts'])
@@ -34,7 +34,22 @@ export function parseImplementationConfig(text, source = '<inline>') {
   plainObject(parsed, source)
   onlyKeys(parsed, CONFIG_KEYS, source)
   if (parsed.schemaVersion !== 1 && parsed.schemaVersion !== 2) throw new Error(source + ': schemaVersion must be 1 or 2.')
-  if (parsed.adapter === null) return { schemaVersion: parsed.schemaVersion, adapter: null, recovery: { maxAttempts: 2 } }
+  const preparation = {}
+  if (parsed.workspacePreparation !== undefined) {
+    if (parsed.schemaVersion !== 2) throw new Error(source + ': workspacePreparation requires schemaVersion 2.')
+    if (parsed.workspacePreparation === null) preparation.workspacePreparation = null
+    else {
+      const value = parsed.workspacePreparation
+      plainObject(value, source + ': workspacePreparation')
+      onlyKeys(value, new Set(['kind', 'projectPath', 'timeoutMs']), source + ': workspacePreparation')
+      if (value.kind !== 'npm-ci-offline') throw new Error(source + ': workspacePreparation.kind must be npm-ci-offline.')
+      const projectPath = safePath(value.projectPath, source + ': workspacePreparation.projectPath')
+      const timeoutMs = value.timeoutMs ?? 180000
+      if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 600000) throw new Error(source + ': workspacePreparation.timeoutMs must be between 1000 and 600000.')
+      preparation.workspacePreparation = { kind: value.kind, projectPath, timeoutMs }
+    }
+  }
+  if (parsed.adapter === null) return { schemaVersion: parsed.schemaVersion, adapter: null, recovery: { maxAttempts: 2 }, ...preparation }
   plainObject(parsed.adapter, source + ': adapter')
   const kind = parsed.schemaVersion === 1 ? 'command' : parsed.adapter.kind
   if (kind !== 'command' && kind !== 'provider') throw new Error(source + ': adapter.kind must be command or provider.')
@@ -110,7 +125,8 @@ export function parseImplementationConfig(text, source = '<inline>') {
     schemaVersion: parsed.schemaVersion,
     adapter,
     writePolicy: { allowedPrefixes, maxChangedFiles, maxDiffBytes },
-    recovery: { maxAttempts }
+    recovery: { maxAttempts },
+    ...preparation
   }
 }
 

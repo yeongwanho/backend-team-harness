@@ -15,12 +15,14 @@ import { probeImplementationProvider } from '../src/providers/model-cli.mjs'
 import { initProject } from '../src/init-project.mjs'
 import { checkProject } from '../src/runtime/backend-harness.mjs'
 import { evaluateTaskAcceptance } from '../src/evaluation/task-acceptance.mjs'
+import { canAttemptBaseline, inspectEmptyTestBaseline } from '../src/evaluation/empty-test-baseline.mjs'
 
 const execute = promisify(execFile)
 const DEFAULT_CORPUS = 'benchmarks/public-backend-v1/corpus.json'
 const DEFAULT_CONFIG = 'benchmarks/public-backend-v1/provider-comparison.json'
 const EXECUTE_ACK = 'I_UNDERSTAND_PROVIDER_COSTS'
 const ALL_ACK = 'I_UNDERSTAND_40_PROVIDER_RUNS'
+const PROTOCOL_VERSION = 'first-test-v26-test-authoring'
 
 function parseArguments(argv) {
   const result = {
@@ -179,6 +181,7 @@ async function preflightBaseVerification(project, repositoryConfig) {
   try {
     await initProject(project, { preferredSystem: repositoryConfig.buildSystem })
     const checked = await checkProject(project, { allowNetwork: true })
+    const emptyTestBaseline = checked.confirmed ? null : await inspectEmptyTestBaseline(project, checked)
     const failedGate = checked.result?.gates?.find((gate) => gate.outcome === 'failed')
     const diagnosticText = ((failedGate?.process?.stdout?.tail ?? '') + '\n' + (failedGate?.process?.stderr?.tail ?? '')).toLowerCase()
     const diagnosticCode = /offline mode|cannot access .* in offline|not been downloaded/.test(diagnosticText)
@@ -190,6 +193,7 @@ async function preflightBaseVerification(project, repositoryConfig) {
           : failedGate ? 'gate-process-failed' : null
     return {
       confirmed: checked.confirmed === true,
+      emptyTestBaseline,
       failureCode: checked.confirmed ? null : checked.result?.failure?.code ?? 'verification-failed',
       diagnosticCode: checked.confirmed ? null : diagnosticCode,
       tests: checked.result?.tests ? {
@@ -221,12 +225,12 @@ async function writeOnce(path, value) {
   await writeFile(path, JSON.stringify(value, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' })
 }
 
-function preProviderFailureCase(caseEntry, task, setup, preflight, elapsedMs, comparisonInputs) {
-  const reason = setup.passed ? 'baseline-verification-failed' : 'dependency-setup-failed'
+function preProviderFailureCase(caseEntry, task, setup, preflight, elapsedMs, comparisonInputs, failureReason = null) {
+  const reason = failureReason ?? (setup.passed ? 'baseline-verification-failed' : 'dependency-setup-failed')
   return {
     schemaVersion: 1,
     case: caseEntry,
-    fairness: { sanitizedSingleCommitHistory: true, goldHiddenFromProvider: true, fixedMode: comparisonInputs.mode, fixedModel: comparisonInputs.model, configSha256: comparisonInputs.configSha256 },
+    fairness: { sanitizedSingleCommitHistory: true, goldHiddenFromProvider: true, fixedMode: comparisonInputs.mode, fixedModel: comparisonInputs.model, configSha256: comparisonInputs.configSha256, protocolVersion: PROTOCOL_VERSION },
     setup,
     preflight,
     observation: null,
@@ -259,7 +263,7 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
   const repositoryConfig = config.repositories.find((entry) => entry.id === repository.id)
   const task = repository.tasks.find((entry) => entry.id === caseEntry.taskId)
   const outputPath = resultPath(options.output, caseEntry)
-  const comparisonInputs = { corpusSha256: corpus.sourceSha256, configSha256: config.sourceSha256, mode: options.mode, model: options.model }
+  const comparisonInputs = { corpusSha256: corpus.sourceSha256, configSha256: config.sourceSha256, mode: options.mode, model: options.model, protocolVersion: PROTOCOL_VERSION }
   if (await exists(outputPath)) {
     if (options.resume) {
       const existing = JSON.parse(await readFile(outputPath, 'utf8'))
@@ -284,8 +288,17 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
     const preflight = await preflightBaseVerification(project, repositoryConfig)
     const cleanAfterPreflight = await git(['status', '--porcelain=v1', '--untracked-files=all'], project)
     if (cleanAfterPreflight) throw new Error('Baseline verification left visible source changes; refusing an unfair provider run.')
-    if (!preflight.confirmed) {
+    if (!canAttemptBaseline(preflight)) {
       const record = preProviderFailureCase(caseEntry, task, setup, preflight, Date.now() - startedAt, comparisonInputs)
+      await writeOnce(outputPath, record)
+      return { skipped: false, outputPath, record }
+    }
+    const acceptanceControls = await evaluateTaskAcceptance({
+      mirror, task, timeoutMs: options.timeoutMs, fixtureRoot: dirname(resolve(options.config)),
+      acceptance: repositoryConfig.tasks.find(entry => entry.id === task.id).acceptance
+    })
+    if (!acceptanceControls.controlsConfirmed) {
+      const record = { ...preProviderFailureCase(caseEntry, task, setup, preflight, Date.now() - startedAt, comparisonInputs, 'acceptance-controls-failed'), acceptanceControls }
       await writeOnce(outputPath, record)
       return { skipped: false, outputPath, record }
     }
@@ -313,6 +326,7 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
         sanitizedSingleCommitHistory: true,
         goldHiddenFromProvider: true,
         sameProvider: true,
+        protocolVersion: PROTOCOL_VERSION,
         configSha256: config.sourceSha256,
         fixedMode: options.mode,
         fixedModel: options.model,
@@ -320,6 +334,7 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
       },
       setup,
       preflight,
+      acceptanceControls,
       observation: run.observation,
       score: run.score,
       totalElapsedMs: Date.now() - startedAt,
@@ -340,7 +355,7 @@ async function executePreflight(caseEntry, corpus, config, options) {
   if (await exists(outputPath)) {
     if (options.resume) {
       const existing = JSON.parse(await readFile(outputPath, 'utf8'))
-      if (existing.corpusSha256 !== corpus.sourceSha256 || existing.configSha256 !== config.sourceSha256 ||
+      if (existing.protocolVersion !== PROTOCOL_VERSION || existing.corpusSha256 !== corpus.sourceSha256 || existing.configSha256 !== config.sourceSha256 ||
         existing.taskId !== task.id || existing.baseSha !== task.baseSha || existing.targetSha !== task.targetSha) {
         throw new Error('Preflight inputs differ or lack fingerprints; refusing stale readiness evidence.')
       }
@@ -356,11 +371,12 @@ async function executePreflight(caseEntry, corpus, config, options) {
     const setup = await prepareDependencies(project, repositoryConfig, options.timeoutMs)
     const preflight = setup.passed ? await preflightBaseVerification(project, repositoryConfig) : null
     const acceptance = repositoryConfig.tasks.find((entry) => entry.id === task.id).acceptance
-    const acceptanceControls = preflight?.confirmed && acceptance
+    const acceptanceControls = canAttemptBaseline(preflight) && acceptance
       ? await evaluateTaskAcceptance({ mirror, task, acceptance, timeoutMs: options.timeoutMs, fixtureRoot: dirname(resolve(options.config)) })
       : null
     const record = {
       schemaVersion: 1,
+      protocolVersion: PROTOCOL_VERSION,
       repositoryId: repository.id,
       taskId: task.id,
       baseSha: task.baseSha,
@@ -372,8 +388,8 @@ async function executePreflight(caseEntry, corpus, config, options) {
       setup,
       preflight,
       acceptanceControls,
-      readyForProviderComparison: setup.passed && preflight?.confirmed === true,
-      readyForTaskSuccessComparison: setup.passed && preflight?.confirmed === true && acceptanceControls?.controlsConfirmed === true,
+      readyForProviderComparison: setup.passed && canAttemptBaseline(preflight) && acceptanceControls?.controlsConfirmed === true,
+      readyForTaskSuccessComparison: setup.passed && canAttemptBaseline(preflight) && acceptanceControls?.controlsConfirmed === true,
       elapsedMs: Date.now() - startedAt,
       workspace: options.keepWorkspace ? project : null
     }
@@ -474,9 +490,9 @@ async function main() {
     }, probe)
     process.stderr.write((result.skipped ? '[SKIP] ' : '[RECORDED] ') + caseEntry.id + ' -> ' + result.outputPath + '\n')
   }
-  const comparison = await reportFromOutput(resolve(options.output), { corpusSha256: corpus.sourceSha256, configSha256: config.sourceSha256, mode: options.mode, model: options.model })
+  const comparison = await reportFromOutput(resolve(options.output), { corpusSha256: corpus.sourceSha256, configSha256: config.sourceSha256, mode: options.mode, model: options.model, protocolVersion: PROTOCOL_VERSION })
   const summaryPath = resolve(options.output, 'summary-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json')
-  await writeOnce(summaryPath, { schemaVersion: 1, corpusId: corpus.id, corpusSha256: corpus.sourceSha256, configSha256: config.sourceSha256, comparisons: comparison })
+  await writeOnce(summaryPath, { schemaVersion: 1, protocolVersion: PROTOCOL_VERSION, corpusId: corpus.id, corpusSha256: corpus.sourceSha256, configSha256: config.sourceSha256, comparisons: comparison })
   process.stdout.write(JSON.stringify({ summaryPath, comparisons: comparison }, null, 2) + '\n')
 }
 

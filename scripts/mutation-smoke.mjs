@@ -7,6 +7,24 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/core/workspace-preparation.mjs',
+    from: "'ci', '--offline', '--ignore-scripts'",
+    to: "'ci', '--ignore-scripts'",
+    test: 'test/workspace-preparation.test.mjs'
+  },
+  {
+    file: 'src/evaluation/empty-test-baseline.mjs',
+    from: 'if (!Array.isArray(files) || files.length !== 0)',
+    to: 'if (!Array.isArray(files))',
+    test: 'test/empty-test-baseline.test.mjs'
+  },
+  {
+    file: 'src/runtime/implementation-orchestrator.mjs',
+    from: 'selectedFeedbackGates.length > 0 && selectedFeedbackGates.length < verificationConfig.gates.length',
+    to: 'selectedFeedbackGates.length > 0',
+    test: 'test/work-first-test.test.mjs'
+  },
+  {
     file: 'src/core/jest-report.mjs',
     from: "if (!entry || !['passed', 'failed', 'pending', 'todo', 'disabled', 'skipped'].includes(entry.status)) fail('unknown assertion status')",
     to: "if (entry.status === 'focused') entry.status = 'passed'",

@@ -58,6 +58,15 @@ export async function initProject(inputPath = '.', options = {}) {
   const activeDetection = detection.canGenerateVerification ? detection : portableDetection
   const detectedVerification = await defaultVerificationConfig(root, { manifest, detection, portableDetection })
   const detectedTemplates = sharedTemplates.map((template) => {
+    if (template.path === '.backend-harness/implementation.json' &&
+        ['jest', 'vitest'].includes(portableDetection?.framework)) {
+      const prefix = portableDetection.projectPath === '.' ? '' : portableDetection.projectPath + '/'
+      if (portableDetection.buildInputs.includes(prefix + 'package-lock.json')) {
+        const document = JSON.parse(template.content)
+        document.workspacePreparation = { kind: 'npm-ci-offline', projectPath: portableDetection.projectPath, timeoutMs: 180000 }
+        return { ...template, content: JSON.stringify(document, null, 2) + '\n' }
+      }
+    }
     if (template.path !== '.backend-harness/project.md') return template
     return {
       ...template,

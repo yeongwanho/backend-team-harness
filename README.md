@@ -83,7 +83,7 @@ bth work "기존 응답과 호환되는 사용자 상태 조회 API를 추가한
 bth implement apply USER-17 /path/to/backend-project --by developer --allow-write
 ```
 
-질문이 남으면 출력된 decision id만 `--decisions` JSON으로 다시 전달합니다. 작은 CRUD도 규칙 탐색을 생략하지 않지만, 관련 경로용 feedback Gate가 먼저 실패하면 넓은 전체 테스트를 쓰지 않고 즉시 복구합니다. 최종 성공 판정은 항상 전체 required Gate를 통과해야 합니다.
+질문이 남으면 출력된 decision id만 `--decisions` JSON으로 다시 전달합니다. 작은 CRUD도 규칙 탐색을 생략하지 않지만, 관련 경로용 feedback Gate가 먼저 실패하면 넓은 전체 테스트를 쓰지 않고 즉시 복구합니다. 선택된 feedback이 전체 Gate와 같으면 같은 테스트를 두 번 실행하지 않고 전체 검증을 한 번만 실행합니다. 최종 성공 판정은 항상 전체 required Gate를 통과해야 합니다.
 
 DB 구조를 바꾸는데 기존 변경 이력이 확인되지 않으면, **기존 DB를 업그레이드할지 / 새 빈 DB의 초기화 코드만 바꿀지** 먼저 묻습니다. `--decisions` JSON의 `schemaStrategy`에 `migration` 또는 `bootstrap-only`를 넣습니다. 초기화만 선택해도 승인·프로젝트 규칙·테스트는 생략하지 않으며, 기존 데이터의 업그레이드가 검증됐다고 기록하지 않습니다.
 
@@ -98,7 +98,7 @@ node src/cli.mjs check examples/spring-service --acknowledge-network-risk
 
 ## 프로젝트 실행 계약
 
-`bth init`은 Gradle/Maven Wrapper 또는 저장소가 선언한 고유한 Jest·Vitest·Pytest 구성을 인식하면 `.backend-harness/verification.json`과 OS별 프로젝트 전용 실행 래퍼까지 만듭니다. Gradle과 Maven을 의도적으로 함께 제공하는 저장소는 `--build gradle|maven`으로 팀의 선택을 명시할 수 있고, 이후 `doctor`도 생성된 검증 명령에서 그 선택을 다시 읽습니다. 여러 테스트 프로젝트가 충돌하거나 지원되지 않는 빌드라면 하나를 임의 선택하지 않고 팀이 아래 계약을 직접 정하도록 멈춥니다. Node는 프로젝트 `node_modules`의 실행 파일만, Python은 프로젝트 `.venv` 또는 `uv run --offline`만 사용하며 의존성을 자동 설치하거나 네트워크를 켜지 않습니다. 실행 Core는 이 계약만 실행합니다.
+`bth init`은 Gradle/Maven Wrapper 또는 저장소가 선언한 고유한 Jest·Vitest·Pytest 구성을 인식하면 `.backend-harness/verification.json`과 OS별 프로젝트 전용 실행 래퍼까지 만듭니다. Gradle과 Maven을 의도적으로 함께 제공하는 저장소는 `--build gradle|maven`으로 팀의 선택을 명시할 수 있고, 이후 `doctor`도 생성된 검증 명령에서 그 선택을 다시 읽습니다. 여러 테스트 프로젝트가 충돌하거나 지원되지 않는 빌드라면 하나를 임의 선택하지 않고 팀이 아래 계약을 직접 정하도록 멈춥니다. 검증 자체는 Node의 프로젝트 `node_modules`, Python의 프로젝트 `.venv` 또는 `uv run --offline`만 사용하며 설치나 네트워크를 자동으로 켜지 않습니다. 별도로 npm lock이 있는 Jest·Vitest 프로젝트는 **승인된 격리 구현에만** 아래의 오프라인 의존성 준비 계약을 생성합니다. `init` 자체는 설치하지 않습니다.
 
 ```json
 {
@@ -315,7 +315,7 @@ BTH는 요구사항의 단어를 path/type과 대조하고, provenance별 가중
 
 위 공개 corpus 수치는 과거 과제 문구로 측정한 기록입니다. 날짜 허용 방향뿐 아니라 이메일 변경·CORS·인증 과제의 실제 요구사항도 원본 코드와 대조해 수정했습니다. 수정된 20개 과제의 정적 파일 탐색은 Recall@5 **0.3682**, Recall@20 **0.6190**, nDCG@20 **0.4467**이며, Swagger 과제는 실제 파일을 39번째로 놓쳤습니다. 아직 탐색 품질에 개선이 필요합니다. 요구사항 자체가 바뀌었으므로 이전 수치와의 차이를 알고리즘 개선/퇴보로 단정하지 않습니다. 새 결과는 corpus·요구사항·설정 hash로 구분합니다. [20개 과제의 대조 근거와 남은 검증](docs/evidence/corpus-behavior-audit-v21.md).
 
-실제 Codex/Claude 구현 비교는 별도 비용 승인 하에서 같은 20개 작업을 BTH lane과 direct lane으로 실행합니다. 수정 후 파일은 양쪽의 `outcomeLocalization`으로만 비교하고, 수정 전 영향 분석은 provider 이벤트에서 실제 pre-write 경로를 관찰했을 때만 `impactLocalization`으로 채웁니다. 실제 내용 읽기를 단순 파일 목록·검색 발견보다 앞에 순위화하며 미측정을 0점이나 수정 결과로 대체하지 않습니다. 작업 시간은 양쪽 모두 provider 실행과 사후 검증을 포함합니다. token은 total/input/cached/uncached/output/reasoning을 분리하고, provider가 evaluator 소유의 build/test 명령을 중복 실행하면 규칙 위반으로 기록합니다.
+실제 Codex/Claude 구현 비교는 별도 비용 승인 하에서 같은 20개 작업을 BTH lane과 direct lane으로 실행합니다. 수정 후 파일은 양쪽의 `outcomeLocalization`으로만 비교합니다. `impactLocalization`의 BTH 값은 요청에 제공한 코드 문맥 순위, direct 값은 provider 이벤트에서 관찰한 pre-write 경로입니다. 서로 다른 관찰 경로이므로 완전히 동일한 영향 분석 측정이라고 주장하지 않습니다. direct의 실제 내용 읽기를 단순 파일 목록·검색 발견보다 앞에 순위화하며 미측정을 0점이나 수정 결과로 대체하지 않습니다. lane 시간은 provider 실행과 자체 사후 검증을 포함하며 BTH는 계획·격리 준비 시간도 포함합니다. 공통 사전 준비와 독립 수락 검사는 별도이고 `totalElapsedMs`에 전체 시간이 남습니다. token은 total/input/cached/uncached/output/reasoning을 분리하고, provider가 evaluator 소유의 build/test 명령을 중복 실행하면 규칙 위반으로 기록합니다.
 
 ```bash
 # 비용 없이 80개 case 계획만 확인
@@ -323,7 +323,7 @@ npm run benchmark:providers -- --plan
 
 # provider 호출 전 공개 저장소 clone·의존성·동일 verification 준비만 확인
 npm run benchmark:providers -- --preflight \
-  --task spring-02-owner-search-whitespace --allow-network
+  --task spring-02-owner-search-whitespace --output /tmp/bth-provider-preflight --allow-network
 
 # 한 provider·한 작업의 BTH/direct 쌍대 실행: 명시적인 비용 승인 필요
 BTH_PROVIDER_BENCHMARK=I_UNDERSTAND_PROVIDER_COSTS \
@@ -338,9 +338,11 @@ provider 비교는 공개 이력을 target commit 없이 단일 합성 base comm
 
 현재 기능별 독립 회귀 검증이 준비된 과제는 **6/20개**입니다: 반려동물 연결, 소유자 이름 공백 처리, 방문일 검증, 식별자 변조 방어, 기존 반려동물 수정, NestJS 파일 저장·비동기 응답 처리. 수정 전에는 해당 동작이 실패하고 정답 코드에서는 통과하는 대조 검증을 했습니다. HTTP의 직접·중첩 ID 변조와 정상 입력 유지, JPA/H2의 저장 후 재조회·중복 방지·기존 검증도 확인합니다. H2 결과를 MySQL 검증으로 취급하지 않습니다.
 
-NestJS 과제는 실제 클래스와 Observable을 실행해 **수정 전 3개 실패·4개 통과 → 수정 후 7개 통과**를 확인했습니다. DB 경계는 mock이므로 DB/S3/E2E 검증이 아닙니다. 이 버전의 기본 단위 테스트가 비어 있어 일반 preflight는 여전히 실패하며, **NestJS 유료 구현 비교 준비 완료로 계산하지 않습니다.** `--execute`는 별도 복사본에서 구현 후보를 검사하고, 과제 검증 또는 일반 검증이 준비되지 않으면 모델 실행을 거절합니다. **대조군 준비 완료는 AI의 구현 성공이 아닙니다.** 컴파일 실패·누락/중복/건너뛴 테스트도 성공으로 세지 않습니다. [Nest 검증·Jest 판정 수정과 한계](docs/evidence/nest-verification-v25.md), [Spring 기능 대조 검증](docs/evidence/spring-acceptance-v24.md).
+NestJS 과제는 실제 클래스와 Observable을 실행해 **수정 전 3개 실패·4개 통과 → 수정 후 7개 통과**를 확인했습니다. DB 경계는 mock이므로 DB/S3/E2E 검증이 아닙니다. 기본 단위 테스트가 없는 프로젝트는 일반 검증을 통과한 것으로 취급하지 않습니다. v26은 생성된 Jest 계약의 테스트 목록이 실제로 비었음을 별도 확인한 경우에만 ‘첫 테스트 작성’ 비교를 허용합니다. 모델을 부르기 전에 독립 대조 검증도 통과해야 하며, 구현 후에는 실제 실행된 테스트 1개 이상과 전체 필수 검증, 독립 과제 검증이 모두 필요합니다. **대조군 준비 완료는 AI의 구현 성공이 아닙니다.** 컴파일 실패·누락/중복/건너뛴 테스트도 성공으로 세지 않습니다. [기존 Nest 검증·Jest 판정과 한계](docs/evidence/nest-verification-v25.md), [Spring 기능 대조 검증](docs/evidence/spring-acceptance-v24.md).
 
-반려동물 연결 과제도 고정 모델·빠른 모드로 실제 비교했습니다. 둘 다 구현과 독립 검증을 통과했지만, BTH는 **146.3초·286,654토큰**, 직접 Codex는 **144.6초·283,135토큰**으로 효율 우위를 확인하지 못했습니다. 단일·순차 실행이라 캐시와 순서의 영향도 남습니다. 현재 실제 Codex 비교는 서로 다른 2개 과제뿐이며, 검색 품질과 불필요한 문맥을 계속 개선해야 합니다. [같은 조건의 실제 비교와 한계](docs/evidence/fast-comparison-v22.md).
+반려동물 연결 과제도 고정 모델·빠른 모드로 실제 비교했습니다. 둘 다 구현과 독립 검증을 통과했지만, BTH는 **146.3초·286,654토큰**, 직접 Codex는 **144.6초·283,135토큰**으로 효율 우위를 확인하지 못했습니다. 단일·순차 실행이라 캐시와 순서의 영향도 남습니다. [당시 비교와 한계](docs/evidence/fast-comparison-v22.md).
+
+v26에서 실제 Codex 비교는 서로 다른 **3개 과제**가 됐습니다. NestJS의 최초 비교는 양쪽 모두 실패했습니다. 테스트 작성 계약을 보완한 재비교에서는 **BTH: 123.3초·288,253토큰·실패 / 직접 Codex: 88.2초·209,000토큰·통과**였습니다. 이 과제에서 하네스 우위는 없었습니다. 최초 실패와 재비교를 모두 보존하며, 20개 과제 완료나 2배 성능을 주장하지 않습니다. [첫 테스트 경로 개선과 불리한 실제 비교 결과](docs/evidence/first-test-workflow-v26.md).
 
 이후 검색어에 검증·운영 문장이 섞이는 문제를 고쳤습니다. 계획과 규칙은 그대로 전달하고, 코드 검색에는 인터뷰의 원래 요구사항을 사용합니다. 같은 **2,000자 제공 제한**에서 16개 과제의 파일 탐색 Recall@20은 **0.3741 → 0.4126**으로 개선됐지만 일부 순위는 내려갔고, 나머지 4개는 DB 변경 절차 설정이 없어 계획이 막혔습니다. 토큰·시간 감소는 아직 입증하지 않았습니다. [개선·퇴보·미완료를 함께 기록한 결과](docs/evidence/retrieval-query-v22.md).
 
@@ -489,6 +491,10 @@ provider request에는 승인된 계획, 허용 경로·diff budget, 봉인된 g
 
 실행 조건과 경계:
 
+- 새로 초기화한 단일 npm-lock 기반 Jest·Vitest 프로젝트는 implementation schema v2에 `workspacePreparation: { "kind": "npm-ci-offline", "projectPath": ".", "timeoutMs": 180000 }`를 갖습니다. `null`이면 끕니다. 선언한 package/lock을 확인한 뒤 격리 worktree에서만 `npm ci --offline --ignore-scripts --no-audit --no-fund`를 실행합니다. 원본 `node_modules`를 수정하거나 공유 링크로 연결하지 않습니다.
+- 캐시에 필요한 패키지가 없으면 모델 호출 **0회**로 실패 기록을 남깁니다. 허용된 의존성을 따로 준비한 뒤 같은 `bth work ... --approve --run` 명령으로 이어갈 수 있습니다. 기존 승인을 재사용하되 소스·계획 일치를 다시 검사합니다. 준비 과정이 소스를 바꿨다면 재시도 대신 workspace reset이 필요합니다.
+- 준비 지원 범위는 standalone npm lockfile v2/v3입니다. npm workspaces, file/git/link 의존성, shrinkwrap, overrides·bundled dependencies는 임의 처리하지 않고 거절합니다. 오래된 lock의 SHA-1 항목은 개수로 별도 기록합니다. lifecycle scripts가 필요한 패키지는 이 준비만으로 실행 가능하다고 보장하지 않습니다. 온라인 fallback이나 OS 네트워크 격리는 제공하지 않습니다.
+- 기존 `.backend-harness/implementation.json`은 자동 교체하지 않습니다. 새 생성 계약은 버리는 복사본에서 diff를 검토한 뒤 적용해야 합니다. `implement configure`는 이미 설정된 preparation을 보존합니다. 이전 BTH 버전은 새 필드를 이해하지 못할 수 있으므로 팀 버전을 맞춰야 합니다. 이 소스 변경은 npm 새 정식 버전 발행이 아닙니다.
 - source-bound 계획이 사람에게 승인됐고 원본 소스가 clean이어야 합니다.
 - 매 실행마다 `--allow-write`, 네트워크 어댑터는 `--acknowledge-network-risk`도 필요합니다.
 - 구현은 `~/.local/state/backend-team-harness/worktrees/`의 현재 사용자 전용(0700·소유자 확인) 루트에 만든 detached worktree에서만 진행됩니다. Git worktree 등록 때문에 원본 저장소의 `.git/worktrees` 메타데이터는 바뀌지만 bound source 파일은 바꾸지 않습니다.

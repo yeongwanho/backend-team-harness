@@ -56,7 +56,8 @@ export async function configureImplementationProvider(inputPath, provider, optio
       maxChangedFiles: options.maxChangedFiles ?? previous?.writePolicy?.maxChangedFiles ?? 100,
       maxDiffBytes: options.maxDiffBytes ?? previous?.writePolicy?.maxDiffBytes ?? 2 * 1024 * 1024
     },
-    recovery: { maxAttempts: options.maxAttempts ?? previous?.recovery?.maxAttempts ?? 2 }
+    recovery: { maxAttempts: options.maxAttempts ?? previous?.recovery?.maxAttempts ?? 2 },
+    ...(previous?.workspacePreparation !== undefined ? { workspacePreparation: previous.workspacePreparation } : {})
   }
   const content = JSON.stringify(document, null, 2) + '\n'
   const normalized = parseImplementationConfig(content, '.backend-harness/implementation.json')

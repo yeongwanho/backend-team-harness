@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtemp, readFile } from 'node:fs/promises'
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { configureImplementationProvider } from '../src/config/implementation-setup.mjs'
@@ -48,6 +48,16 @@ test('provider configure rejects invalid write scope before replacing the shared
     /stay inside the project/
   )
   assert.equal(await readFile(join(root, '.backend-harness/implementation.json'), 'utf8'), before)
+})
+
+test('provider selection preserves explicit workspace preparation and its null opt-out', async () => {
+  const root = await project()
+  for (const value of [{ kind: 'npm-ci-offline', projectPath: '.', timeoutMs: 9000 }, null]) {
+    await writeFile(join(root, '.backend-harness/implementation.json'), JSON.stringify({ schemaVersion: 2, adapter: null, workspacePreparation: value }))
+    const result = await configureImplementationProvider(root, 'codex')
+    assert.deepEqual(result.config.workspacePreparation, value)
+    assert.deepEqual(JSON.parse(await readFile(join(root, result.backup), 'utf8')).workspacePreparation, value)
+  }
 })
 
 test('CLI configures a provider with explicit model, mode, and write prefixes', async () => {

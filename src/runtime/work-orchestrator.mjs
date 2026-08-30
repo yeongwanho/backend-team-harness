@@ -92,6 +92,7 @@ async function approvePlan(root, taskId, actor) {
   return withProjectVerificationLock(root, undefined, async () => {
     const task = await loadTask(root, taskId)
     if (task.record.state === 'PLAN_APPROVED') return { applied: false, record: task.record, audit: { reason: 'already-approved' } }
+    if (task.record.state === 'IMPLEMENTING' && task.record.approvalReceipt) return { applied: false, record: task.record, audit: { reason: 'already-implementing' } }
     if (task.record.state !== 'PLAN_PROPOSED') {
       throw new Error('Work plan approval requires PLAN_PROPOSED; current state is ' + task.record.state + '.')
     }
@@ -170,7 +171,8 @@ export async function runWork(inputPath, input, options = {}) {
       allowWrite: options.allowWrite,
       allowNetwork: options.allowNetwork,
       providerProbe: options.providerProbe,
-      providerRunner: options.providerRunner
+      providerRunner: options.providerRunner,
+      preparationRunner: options.preparationRunner
     })
     task = await loadTask(root, taskId)
   }
@@ -179,7 +181,7 @@ export async function runWork(inputPath, input, options = {}) {
     taskId,
     status: implementation
       ? implementation.record.status === 'passed' ? 'implementation-passed' : 'implementation-failed'
-      : task.record.state === 'PLAN_APPROVED' ? 'plan-approved' : 'plan-proposed',
+      : task.record.state === 'IMPLEMENTING' ? 'implementation-in-progress' : task.record.state === 'PLAN_APPROVED' ? 'plan-approved' : 'plan-proposed',
     draft: draftResult,
     planPath: plan?.planPath ?? '.backend-harness/tasks/' + taskId + '/interview/plan.md',
     task: task.record,
@@ -187,7 +189,7 @@ export async function runWork(inputPath, input, options = {}) {
     implementation,
     nextAction: implementation
       ? implementation.record.nextAction
-      : task.record.state === 'PLAN_APPROVED'
+      : ['PLAN_APPROVED', 'IMPLEMENTING'].includes(task.record.state)
         ? 'Re-run with --approve --run --allow-write after confirming the implementation provider.'
         : 'Review the generated plan and re-run the same command with --approve.'
   }

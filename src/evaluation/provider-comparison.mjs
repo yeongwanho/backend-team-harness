@@ -68,7 +68,8 @@ export function assertComparisonInputs(record, expected) {
     record.case?.corpusSha256 !== expected.corpusSha256 ||
     record.fairness?.configSha256 !== expected.configSha256 ||
     record.fairness?.fixedMode !== expected.mode ||
-    (record.fairness?.fixedModel ?? null) !== (expected.model ?? null)) {
+    (record.fairness?.fixedModel ?? null) !== (expected.model ?? null) ||
+    (expected.protocolVersion !== undefined && record.fairness?.protocolVersion !== expected.protocolVersion)) {
     throw new Error('Comparison inputs differ or lack fingerprints; use a fresh output directory instead of mixing results.')
   }
 }
@@ -129,7 +130,8 @@ export function scoreProviderCase(task, observation) {
   const impactLocalization = impactPaths === null ? null : scoreLocalization(task, impactPaths)
   const outcomeLocalization = scoreLocalization(task, changedPaths)
   const attempts = observation.attempts ?? 1
-  if (!Number.isSafeInteger(attempts) || attempts < 1 || attempts > 100) throw new Error('attempts must be an integer between 1 and 100.')
+  if (!Number.isSafeInteger(attempts) || attempts < 0 || attempts > 100) throw new Error('attempts must be an integer between 0 and 100.')
+  if (attempts === 0 && (providerCompleted || verificationConfirmed)) throw new Error('Zero-attempt observation cannot claim completed implementation or verification.')
   const elapsedMs = finiteNonNegative(observation.elapsedMs, 'elapsedMs')
   const normalizedUsage = usage(observation.usage, provider)
   const failureReasons = []
@@ -138,7 +140,7 @@ export function scoreProviderCase(task, observation) {
   if (changedPaths.length === 0) failureReasons.push('no-source-change')
   if (attempts > 1) failureReasons.push('required-retry')
   if (violations.length) failureReasons.push('rule-violation')
-  const verificationSuccessAt1 = failureReasons.length === 0
+  const verificationSuccessAt1 = attempts === 0 ? null : failureReasons.length === 0
   const acceptanceConfirmed = observation.acceptance?.controlsConfirmed === true && typeof observation.acceptance?.candidatePassed === 'boolean'
     ? observation.acceptance.candidatePassed
     : null
@@ -150,14 +152,14 @@ export function scoreProviderCase(task, observation) {
     provider,
     lane,
     taskId: task.id,
-    successAt1: verificationSuccessAt1 ? acceptanceConfirmed : false,
+    successAt1: attempts === 0 ? null : verificationSuccessAt1 ? acceptanceConfirmed : false,
     verificationSuccessAt1,
     acceptanceConfirmed,
-    failureReasons,
+    failureReasons: attempts === 0 ? ['provider-not-attempted', observation.evidence?.failureCode ?? 'implementation-not-started'] : failureReasons,
     providerCompleted,
     verificationConfirmed,
     attempts,
-    retries: attempts - 1,
+    retries: Math.max(0, attempts - 1),
     elapsedMs,
     usage: normalizedUsage,
     changedPaths,

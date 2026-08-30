@@ -138,6 +138,8 @@ export function selectImplementationProfile(input = {}) {
   }
 }
 
+export const TEST_AUTHORING_CONTRACT = 'Add or update focused executable regression tests for the changed production behavior and relevant failure paths inside the existing test discovery scope. Writing tests is required; executing them belongs to the evaluator. If no tests exist yet, create the first tests using the declared framework and configuration. Do not add pass-only placeholders, skip assertions, or weaken verification. If required tests cannot fit the approved paths or available framework, stop and explain the missing decision instead of claiming completion.'
+
 function providerPrompt(requestPath, profile) {
   const implementationMode = profile?.selected ?? 'balanced'
   return [
@@ -151,6 +153,8 @@ function providerPrompt(requestPath, profile) {
     'If a declared blocking project rule is unknown, unavailable, or conflicts with the code, do not guess; stop without changing files; preserve non-blocking warnings in the implementation evidence.',
     'Obey allowedPrefixes and authority limits. Never commit, change Git refs, deploy, access production, or edit .backend-harness control files.',
     'Do not read .env files, credential stores, private keys, tokens, or unrelated user data.',
+    TEST_AUTHORING_CONTRACT,
+    'Read the request verification contract and its required test minimums; zero discovered or only skipped tests cannot complete the task.',
     'Do not run build, test, formatter, linter, package-manager, Docker, or database commands; Backend Team Harness owns every declared Gate after your edit.',
     'If recovery evidence is present, fix its concrete failure without widening the approved scope.'
   ].join(' ')
