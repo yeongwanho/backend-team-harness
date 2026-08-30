@@ -1,6 +1,9 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 const script = 'scripts/benchmark-provider-comparison.mjs'
 
@@ -43,4 +46,15 @@ test('paid provider execution refuses a task without an independent acceptance o
   ], { encoding: 'utf8', env: { ...process.env, BTH_PROVIDER_BENCHMARK: 'I_UNDERSTAND_PROVIDER_COSTS' } })
   assert.notEqual(result.status, 0)
   assert.match(result.stderr, /no independent acceptance oracle/)
+})
+
+test('preflight resume refuses legacy readiness before any clone or test execution', async () => {
+  const output = await mkdtemp(join(tmpdir(), 'bth-stale-preflight-'))
+  await mkdir(join(output, 'preflight'))
+  await writeFile(join(output, 'preflight/spring-02-owner-search-whitespace.json'), JSON.stringify({ readyForProviderComparison: true }))
+  const result = spawnSync(process.execPath, [
+    script, '--preflight', '--task', 'spring-02-owner-search-whitespace', '--output', output, '--resume', '--allow-network'
+  ], { encoding: 'utf8' })
+  assert.notEqual(result.status, 0)
+  assert.match(result.stderr, /refusing stale readiness evidence/)
 })

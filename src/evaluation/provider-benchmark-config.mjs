@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import { isAbsolute, posix } from 'node:path'
 
 const DATABASE_IMPACTS = new Set(['none', 'read', 'write', 'schema'])
@@ -124,7 +125,7 @@ export function parseProviderBenchmarkConfig(text, corpus, source = '<inline>') 
       tasks
     }
   })
-  return { schemaVersion: 1, corpusId: corpus.id, repositories }
+  return { schemaVersion: 1, corpusId: corpus.id, sourceSha256: createHash('sha256').update(text).digest('hex'), repositories }
 }
 
 export async function loadProviderBenchmarkConfig(path, corpus) {

@@ -10,6 +10,22 @@ test('public backend corpus is three independently sourced repositories and exac
   assert.equal(corpus.taskCount, 20)
   assert.deepEqual(corpus.repositories.map((entry) => entry.language).sort(), ['java', 'python', 'typescript'])
   assert.equal(new Set(corpus.repositories.map((entry) => new URL(entry.url).pathname.split('/')[1])).size, 3)
+  assert.match(corpus.sourceSha256, /^[a-f0-9]{64}$/)
+  for (const task of corpus.repositories.flatMap((entry) => entry.tasks)) assert.match(task.requirementSha256, /^[a-f0-9]{64}$/)
+  const visit = corpus.repositories[0].tasks.find((entry) => entry.id === 'spring-04-future-visit')
+  assert.match(visit.requirement, /strictly in the future/)
+  assert.match(visit.requirement, /reject today or earlier/)
+})
+
+test('requirement edits change both corpus and task fingerprints despite identical commit pins', async () => {
+  const original = await readFile('benchmarks/public-backend-v1/corpus.json', 'utf8')
+  const edited = JSON.parse(original)
+  edited.repositories[0].tasks[0].requirement += ' Preserve existing compatibility.'
+  const before = parseEvaluationCorpus(original)
+  const after = parseEvaluationCorpus(JSON.stringify(edited))
+  assert.notEqual(before.sourceSha256, after.sourceSha256)
+  assert.notEqual(before.repositories[0].tasks[0].requirementSha256, after.repositories[0].tasks[0].requirementSha256)
+  assert.equal(before.repositories[0].tasks[1].requirementSha256, after.repositories[0].tasks[1].requirementSha256)
 })
 
 test('corpus parser rejects unsafe paths, duplicate task ids, unknown fields, and abbreviated SHAs', async () => {

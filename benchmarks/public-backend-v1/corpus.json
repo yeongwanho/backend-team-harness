@@ -32,28 +32,28 @@
         },
         {
           "id": "spring-04-future-visit",
-          "requirement": "Reject visits dated in the future, surface a localized validation message, and add controller coverage.",
+          "requirement": "Require new visit dates to be strictly in the future, reject today or earlier with a localized validation message, default new visits and the form minimum to tomorrow, and add controller coverage.",
           "baseSha": "3c06fbfc1e42eb40802e0d0ca989bc9226755804",
           "targetSha": "753d35c2f84432d88c0f3b61c9302a16069b78dd",
           "goldPaths": ["src/main/java/org/springframework/samples/petclinic/owner/Visit.java", "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java", "src/main/resources/messages/messages.properties", "src/main/resources/messages/messages_de.properties", "src/main/resources/messages/messages_es.properties", "src/main/resources/messages/messages_fa.properties", "src/main/resources/messages/messages_ko.properties", "src/main/resources/messages/messages_pt.properties", "src/main/resources/messages/messages_ru.properties", "src/main/resources/messages/messages_tr.properties", "src/main/resources/templates/fragments/inputField.html", "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java"]
         },
         {
-          "id": "spring-05-binder-allowlist",
-          "requirement": "Restrict web-data binders to the intended mutable fields for owners, pets, and visits.",
+          "id": "spring-05-binder-id-protection",
+          "requirement": "Prevent binding direct and nested identifier fields for owners, pets, and visits while preserving existing mutable-field binding and pet validation.",
           "baseSha": "f1e0e22b883e185e680d44b264fb73a8efcff8b9",
           "targetSha": "c7ee170434ec3e369fdc9201290ba2ea4c92b557",
           "goldPaths": ["src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java", "src/main/java/org/springframework/samples/petclinic/owner/PetController.java", "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java"]
         },
         {
           "id": "spring-06-pet-update",
-          "requirement": "Fix pet update so changes to the existing pet name or type are persisted instead of adding another pet.",
+          "requirement": "Fix pet update so changes to an existing pet name, birth date, and type are persisted on that pet instead of adding another pet, while preserving the fallback for a pet not yet associated with its owner.",
           "baseSha": "6328d2c9dc8eb2c367c6a613a1ae959c994003c7",
           "targetSha": "2aa53f929d32b0d41e0fe0391b8385eabe9a3432",
           "goldPaths": ["src/main/java/org/springframework/samples/petclinic/owner/PetController.java"]
         },
         {
           "id": "spring-07-mysql-user",
-          "requirement": "Update the MySQL bootstrap user creation so it works on MySQL 8 and newer.",
+          "requirement": "Separate MySQL user creation from privilege grants in the bootstrap script, preserving the existing database, account, and grant settings with MySQL 8-compatible syntax.",
           "baseSha": "37d53152a08a5de9d225c7f25f41b77c5d8b3cae",
           "targetSha": "8f08b38f2c8412b9298f63e79e5e830ae247cd6e",
           "goldPaths": ["src/main/resources/db/mysql/user.sql"]

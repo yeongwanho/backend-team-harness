@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
 import { isAbsolute, posix } from 'node:path'
 
 const SHA = /^[a-f0-9]{40}$/
@@ -79,13 +80,15 @@ export function parseEvaluationCorpus(text, source = '<inline>') {
       }
       const goldPaths = [...new Set(task.goldPaths.map((path, pathIndex) => safePath(path, taskLabel + '.goldPaths[' + pathIndex + ']')))].sort()
       if (goldPaths.length !== task.goldPaths.length) throw new Error(taskLabel + '.goldPaths contains duplicates.')
-      return { id: taskId, requirement: task.requirement.trim(), baseSha: task.baseSha, targetSha: task.targetSha, goldPaths }
+      const requirement = task.requirement.trim()
+      return { id: taskId, requirement, requirementSha256: createHash('sha256').update(requirement).digest('hex'), baseSha: task.baseSha, targetSha: task.targetSha, goldPaths }
     })
     return { id, language: repository.language, url: url.toString(), license: repository.license, tasks }
   })
   return {
     schemaVersion: 1,
     id: corpusId,
+    sourceSha256: createHash('sha256').update(text).digest('hex'),
     description: parsed.description.trim(),
     repositoryCount: repositories.length,
     taskCount: repositories.reduce((sum, repository) => sum + repository.tasks.length, 0),

@@ -10,7 +10,7 @@ import { buildSafeEnvironment, runProcess } from '../src/core/process-runner.mjs
 import { loadEvaluationCorpus } from '../src/evaluation/corpus.mjs'
 import { loadProviderBenchmarkConfig } from '../src/evaluation/provider-benchmark-config.mjs'
 import { runPreparedComparisonCase } from '../src/evaluation/provider-benchmark-runner.mjs'
-import { buildComparisonMatrix, compareProviderLanes } from '../src/evaluation/provider-comparison.mjs'
+import { assertComparisonInputs, buildComparisonMatrix, compareProviderLanes } from '../src/evaluation/provider-comparison.mjs'
 import { probeImplementationProvider } from '../src/providers/model-cli.mjs'
 import { initProject } from '../src/init-project.mjs'
 import { checkProject } from '../src/runtime/backend-harness.mjs'
@@ -221,12 +221,12 @@ async function writeOnce(path, value) {
   await writeFile(path, JSON.stringify(value, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' })
 }
 
-function preProviderFailureCase(caseEntry, task, setup, preflight, elapsedMs) {
+function preProviderFailureCase(caseEntry, task, setup, preflight, elapsedMs, comparisonInputs) {
   const reason = setup.passed ? 'baseline-verification-failed' : 'dependency-setup-failed'
   return {
     schemaVersion: 1,
     case: caseEntry,
-    fairness: { sanitizedSingleCommitHistory: true, goldHiddenFromProvider: true, fixedMode: null },
+    fairness: { sanitizedSingleCommitHistory: true, goldHiddenFromProvider: true, fixedMode: comparisonInputs.mode, fixedModel: comparisonInputs.model, configSha256: comparisonInputs.configSha256 },
     setup,
     preflight,
     observation: null,
@@ -259,8 +259,14 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
   const repositoryConfig = config.repositories.find((entry) => entry.id === repository.id)
   const task = repository.tasks.find((entry) => entry.id === caseEntry.taskId)
   const outputPath = resultPath(options.output, caseEntry)
+  const comparisonInputs = { corpusSha256: corpus.sourceSha256, configSha256: config.sourceSha256, mode: options.mode, model: options.model }
   if (await exists(outputPath)) {
-    if (options.resume) return { skipped: true, outputPath }
+    if (options.resume) {
+      const existing = JSON.parse(await readFile(outputPath, 'utf8'))
+      assertComparisonInputs(existing, comparisonInputs)
+      if (JSON.stringify(existing.case) !== JSON.stringify(caseEntry)) throw new Error('Comparison case identity differs; refusing resume.')
+      return { skipped: true, outputPath }
+    }
     throw new Error('Benchmark result already exists: ' + outputPath)
   }
   const caseRoot = await mkdtemp(join(tmpdir(), 'bth-provider-case-'))
@@ -271,7 +277,7 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
     project = await materializeSanitizedWorkspace(mirror, task, caseRoot)
     const setup = await prepareDependencies(project, repositoryConfig, options.timeoutMs)
     if (!setup.passed) {
-      const record = preProviderFailureCase(caseEntry, task, setup, null, Date.now() - startedAt)
+      const record = preProviderFailureCase(caseEntry, task, setup, null, Date.now() - startedAt, comparisonInputs)
       await writeOnce(outputPath, record)
       return { skipped: false, outputPath, record }
     }
@@ -279,7 +285,7 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
     const cleanAfterPreflight = await git(['status', '--porcelain=v1', '--untracked-files=all'], project)
     if (cleanAfterPreflight) throw new Error('Baseline verification left visible source changes; refusing an unfair provider run.')
     if (!preflight.confirmed) {
-      const record = preProviderFailureCase(caseEntry, task, setup, preflight, Date.now() - startedAt)
+      const record = preProviderFailureCase(caseEntry, task, setup, preflight, Date.now() - startedAt, comparisonInputs)
       await writeOnce(outputPath, record)
       return { skipped: false, outputPath, record }
     }
@@ -307,7 +313,9 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
         sanitizedSingleCommitHistory: true,
         goldHiddenFromProvider: true,
         sameProvider: true,
+        configSha256: config.sourceSha256,
         fixedMode: options.mode,
+        fixedModel: options.model,
         setupCommandSha256: createDigest(repositoryConfig.setupCommand)
       },
       setup,
@@ -330,7 +338,14 @@ async function executePreflight(caseEntry, corpus, config, options) {
   const task = repository.tasks.find((entry) => entry.id === caseEntry.taskId)
   const outputPath = resolve(options.output, 'preflight', task.id + '.json')
   if (await exists(outputPath)) {
-    if (options.resume) return { skipped: true, outputPath }
+    if (options.resume) {
+      const existing = JSON.parse(await readFile(outputPath, 'utf8'))
+      if (existing.corpusSha256 !== corpus.sourceSha256 || existing.configSha256 !== config.sourceSha256 ||
+        existing.taskId !== task.id || existing.baseSha !== task.baseSha || existing.targetSha !== task.targetSha) {
+        throw new Error('Preflight inputs differ or lack fingerprints; refusing stale readiness evidence.')
+      }
+      return { skipped: true, outputPath }
+    }
     throw new Error('Benchmark preflight result already exists: ' + outputPath)
   }
   const caseRoot = await mkdtemp(join(tmpdir(), 'bth-provider-preflight-'))
@@ -349,6 +364,10 @@ async function executePreflight(caseEntry, corpus, config, options) {
       repositoryId: repository.id,
       taskId: task.id,
       baseSha: task.baseSha,
+      targetSha: task.targetSha,
+      corpusSha256: corpus.sourceSha256,
+      requirementSha256: task.requirementSha256,
+      configSha256: config.sourceSha256,
       sanitizedSingleCommitHistory: true,
       setup,
       preflight,
@@ -369,7 +388,7 @@ function createDigest(value) {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex')
 }
 
-async function reportFromOutput(output) {
+async function reportFromOutput(output, comparisonInputs) {
   const scores = []
   for (const provider of ['codex', 'claude']) {
     for (const lane of ['bth', 'direct']) {
@@ -378,6 +397,7 @@ async function reportFromOutput(output) {
       if (!metadata?.isDirectory()) continue
       for (const name of (await readdir(directory)).filter((entry) => entry.endsWith('.json')).sort()) {
         const record = JSON.parse(await readFile(join(directory, name), 'utf8'))
+        assertComparisonInputs(record, comparisonInputs)
         if (record.score) scores.push(record.score)
       }
     }
@@ -396,7 +416,7 @@ async function main() {
   if (options.action === 'plan') {
     process.stdout.write(JSON.stringify({
       schemaVersion: 1,
-      corpus: { id: corpus.id, repositories: corpus.repositoryCount, tasks: corpus.taskCount },
+      corpus: { id: corpus.id, sha256: corpus.sourceSha256, repositories: corpus.repositoryCount, tasks: corpus.taskCount },
       selectedCases: matrix.length,
       providerCalls: matrix.length,
       cases: matrix,
@@ -454,9 +474,9 @@ async function main() {
     }, probe)
     process.stderr.write((result.skipped ? '[SKIP] ' : '[RECORDED] ') + caseEntry.id + ' -> ' + result.outputPath + '\n')
   }
-  const comparison = await reportFromOutput(resolve(options.output))
+  const comparison = await reportFromOutput(resolve(options.output), { corpusSha256: corpus.sourceSha256, configSha256: config.sourceSha256, mode: options.mode, model: options.model })
   const summaryPath = resolve(options.output, 'summary-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json')
-  await writeOnce(summaryPath, { schemaVersion: 1, corpusId: corpus.id, comparisons: comparison })
+  await writeOnce(summaryPath, { schemaVersion: 1, corpusId: corpus.id, corpusSha256: corpus.sourceSha256, configSha256: config.sourceSha256, comparisons: comparison })
   process.stdout.write(JSON.stringify({ summaryPath, comparisons: comparison }, null, 2) + '\n')
 }
 

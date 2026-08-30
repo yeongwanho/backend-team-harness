@@ -30,6 +30,10 @@ success@1. Preserve it separately as verificationSuccessAt1.
    fixture assumed a grandchild wrote output within 80 ms. Replace elapsed-time
    guessing with an IPC ready message sent after the first stdout write, then
    rerun the process tests and full suite. Do not weaken cleanup assertions.
+8. Source audit found `spring-04-future-visit` described the opposite behavior
+   from its pinned target. Correct the requirement, retract the old aggregate
+   as a current-corpus result, and bind corpus/requirement/config bytes by SHA-256
+   in future records so task-text changes cannot silently share a result identity.
 
 No outcome may be reported as general superiority from a single paired task.
 Benchmark-only acceptance checks do not add repeated Gates to user CRUD work.

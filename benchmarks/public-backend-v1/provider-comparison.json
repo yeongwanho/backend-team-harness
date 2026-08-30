@@ -25,7 +25,7 @@
         },
         { "id": "spring-03-unique-pet-name", "decisions": { "modules": ["root"], "databaseImpact": "schema", "apiImpact": "compatible" } },
         { "id": "spring-04-future-visit", "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" } },
-        { "id": "spring-05-binder-allowlist", "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" } },
+        { "id": "spring-05-binder-id-protection", "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" } },
         { "id": "spring-06-pet-update", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } },
         { "id": "spring-07-mysql-user", "decisions": { "modules": ["root"], "databaseImpact": "schema", "apiImpact": "none" } }
       ]

@@ -63,6 +63,16 @@ export function comparisonCaseId(provider, lane, taskId) {
   return provider + ':' + lane + ':' + taskId
 }
 
+export function assertComparisonInputs(record, expected) {
+  if (typeof expected.corpusSha256 !== 'string' || typeof expected.configSha256 !== 'string' ||
+    record.case?.corpusSha256 !== expected.corpusSha256 ||
+    record.fairness?.configSha256 !== expected.configSha256 ||
+    record.fairness?.fixedMode !== expected.mode ||
+    (record.fairness?.fixedModel ?? null) !== (expected.model ?? null)) {
+    throw new Error('Comparison inputs differ or lack fingerprints; use a fresh output directory instead of mixing results.')
+  }
+}
+
 export function buildComparisonMatrix(corpus, options = {}) {
   const providers = options.providers ?? COMPARISON_PROVIDERS
   const lanes = options.lanes ?? COMPARISON_LANES
@@ -81,6 +91,8 @@ export function buildComparisonMatrix(corpus, options = {}) {
             lane,
             repositoryId: repository.id,
             taskId: task.id,
+            corpusSha256: corpus.sourceSha256 ?? null,
+            requirementSha256: task.requirementSha256 ?? null,
             baseSha: task.baseSha,
             targetSha: task.targetSha
           })

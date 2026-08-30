@@ -55,6 +55,7 @@ async function evaluateRepository(repository, root) {
       const score = scoreLocalization(task, rankedPaths)
       tasks.push({
         ...score,
+        requirementSha256: task.requirementSha256,
         baseSha: task.baseSha,
         targetSha: task.targetSha,
         graph: { nodes: graph.metrics.nodes, edges: graph.metrics.edges },
@@ -91,7 +92,7 @@ async function main() {
     const tasks = repositories.flatMap((repository) => repository.tasks)
     const report = {
       schemaVersion: 1,
-      corpus: { id: corpus.id, repositoryCount: corpus.repositoryCount, taskCount: corpus.taskCount },
+      corpus: { id: corpus.id, sha256: corpus.sourceSha256, repositoryCount: corpus.repositoryCount, taskCount: corpus.taskCount },
       evaluation: 'source-bound-static-impact-localization',
       authority: 'benchmark-observation-not-verdict',
       durationMs: Date.now() - startedAt,

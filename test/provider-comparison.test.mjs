@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildComparisonMatrix, compareProviderLanes, scoreProviderCase } from '../src/evaluation/provider-comparison.mjs'
+import { assertComparisonInputs, buildComparisonMatrix, compareProviderLanes, scoreProviderCase } from '../src/evaluation/provider-comparison.mjs'
 
 const task = {
   id: 'task-one',
@@ -8,6 +8,14 @@ const task = {
   targetSha: 'b'.repeat(40),
   goldPaths: ['src/a.js', 'test/a.test.js']
 }
+
+test('resumed and aggregated comparisons cannot mix changed task/config inputs or effort', () => {
+  const expected = { corpusSha256: 'a'.repeat(64), configSha256: 'b'.repeat(64), mode: 'balanced', model: null }
+  const record = { case: { corpusSha256: expected.corpusSha256 }, fairness: { configSha256: expected.configSha256, fixedMode: 'balanced', fixedModel: null } }
+  assert.doesNotThrow(() => assertComparisonInputs(record, expected))
+  for (const changed of [{ corpusSha256: 'c'.repeat(64) }, { configSha256: 'c'.repeat(64) }, { mode: 'deep' }, { model: 'different-model' }]) assert.throws(() => assertComparisonInputs(record, { ...expected, ...changed }), /Comparison inputs/)
+  assert.throws(() => assertComparisonInputs({ case: {}, fairness: {} }, expected), /lack fingerprints/)
+})
 
 test('comparison matrix pairs every selected task across providers and lanes', () => {
   const corpus = { repositories: [{ id: 'repo', tasks: [task, { ...task, id: 'task-two' }] }] }

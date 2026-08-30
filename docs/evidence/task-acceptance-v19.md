@@ -97,3 +97,47 @@ The failed invocations do not establish Claude implementation quality or a
 performance comparison. No task oracle ran on a Claude candidate. The functional
 attempt also overlapped local QA, so its wall times are not controlled performance
 measurements. Claude comparison remains pending service availability.
+
+## First acceptance-confirmed Codex pair
+
+The same whitespace task was executed through both lanes with balanced/medium
+effort using the v19 implementation (`de144db`). Both candidates passed the
+existing project verification and both hidden regression cases; both source
+workspaces remained unchanged by the evaluator. Neither lane required a retry
+or recorded a provider-owned validation command.
+
+| Observation | BTH | Direct |
+| --- | ---: | ---: |
+| Task acceptance | passed | passed |
+| Implementation + normal verification | 114,319 ms | 115,435 ms |
+| Provider duration | 58,644 ms | 63,075 ms |
+| Total tokens | 162,326 | 113,434 |
+| Uncached input | 33,944 | 30,177 |
+| Cached input | 125,696 | 80,896 |
+| Output | 2,686 | 2,361 |
+| Pre-write Recall@5 / Recall@20 | 1 / 1 | 0.5 / 1 |
+| Pre-write nDCG@20 | 0.6934 | 0.4306 |
+| Oracle-only elapsed | 39,915 ms | 38,854 ms |
+
+The two completion times were effectively equal in this observation; BTH used
+more total and uncached tokens. No general speed or cost advantage is established.
+Cost remains null. This is one historical task on a shared workstation, not an
+independent holdout or a repeated statistical experiment. Heavy local QA was not
+run concurrently with this pair; only light source inspection and small metadata
+contract tests continued. The default provider model was not explicitly pinned.
+
+Candidate source digests:
+
+- BTH: `145b62027a97add449657fe4076987a8c20239a2c22585ee3f92a786ddcc22c3`
+- Direct: `7216f1db4c8d97dd08e07a93d45d6a669c437e3f8d3a890a7bf49b4e0ee4ce98`
+
+Candidate regression report digests:
+
+- BTH: `c54e9a6346e77be26aa6a44fd84536228408e6563f25e24f0a4b57d779d357c5`
+- Direct: `428db043075e505bbe86a0384f77604e258686810b7352740dd1aa8511d31d70`
+
+Records: local `/tmp/bth-provider-comparison-codex-oracle-v1/`. These records
+predate the v20 input-fingerprint fields and must not be resumed or aggregated
+as new-format results. Their unchanged task definition and harness source are
+explicitly identified above. Remaining corpus tasks still need independent
+acceptance definitions and actual execution.
