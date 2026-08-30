@@ -85,13 +85,13 @@ test('stdout line observation is bounded and does not retain raw lines in proces
 test('stdio-drain cleanup ignores queued descendant output after finalizing hashes', { skip: process.platform === 'win32' }, async () => {
   const grandchild = [
     'process.on("SIGTERM", () => {})',
+    'process.stdout.write("late-output\\n", () => process.send("ready"))',
     'setInterval(() => process.stdout.write("late-output\\n"), 1)'
   ].join(';')
   const parent = [
     'const { spawn } = require("node:child_process")',
-    'const child = spawn(process.execPath, ["-e", ' + JSON.stringify(grandchild) + '], { stdio: ["ignore", "inherit", "inherit"] })',
-    'child.unref()',
-    'setTimeout(() => {}, 80)'
+    'const child = spawn(process.execPath, ["-e", ' + JSON.stringify(grandchild) + '], { stdio: ["ignore", "inherit", "inherit", "ipc"] })',
+    'child.once("message", () => { child.disconnect(); child.unref() })'
   ].join(';')
 
   const result = await runProcess({
@@ -107,6 +107,7 @@ test('stdio-drain cleanup ignores queued descendant output after finalizing hash
 
   assert.equal(result.stdioDrainTimedOut, true)
   assert.ok(result.stdout.bytes > 0)
+  assert.match(result.stdout.tail, /late-output/)
   assert.match(result.stdout.sha256, /^[a-f0-9]{64}$/)
 })
 

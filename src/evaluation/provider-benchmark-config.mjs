@@ -54,6 +54,32 @@ function decisions(value, label) {
   }
 }
 
+export function parseTaskAcceptance(value, label = 'acceptance') {
+  if (value === undefined || value === null) return null
+  plainObject(value, label)
+  exactKeys(value, new Set(['kind', 'testPaths', 'command', 'reports', 'cases']), label)
+  if (value.kind !== 'target-tests') throw new Error(label + '.kind must be target-tests.')
+  const paths = (key) => {
+    if (!Array.isArray(value[key]) || value[key].length < 1 || value[key].length > 32) throw new Error(label + '.' + key + ' must contain 1-32 paths.')
+    const normalized = value[key].map((entry) => safePath(entry, label + '.' + key))
+    if (new Set(normalized).size !== normalized.length || normalized.some((entry) => /[?*\[\]]/.test(entry))) throw new Error(label + '.' + key + ' must be unique exact paths.')
+    return normalized
+  }
+  const testPaths = paths('testPaths')
+  if (testPaths.some((path) => !/(^|\/)(?:test|tests|__tests__)\/|\.(?:test|spec)\.[cm]?[jt]sx?$/.test(path))) throw new Error(label + '.testPaths may contain only test source paths.')
+  const reports = paths('reports')
+  if (reports.some((path) => !path.endsWith('.xml') || testPaths.includes(path))) throw new Error(label + '.reports must be separate XML report paths.')
+  if (!Array.isArray(value.cases) || value.cases.length < 1 || value.cases.length > 256) throw new Error(label + '.cases must contain 1-256 named tests.')
+  const cases = value.cases.map((entry) => {
+    plainObject(entry, label + '.cases')
+    exactKeys(entry, new Set(['className', 'name']), label + '.cases')
+    for (const key of ['className', 'name']) if (typeof entry[key] !== 'string' || !entry[key] || entry[key].length > 512 || /[\0\r\n]/.test(entry[key])) throw new Error(label + '.cases.' + key + ' is invalid.')
+    return { className: entry.className, name: entry.name }
+  })
+  if (new Set(cases.map((entry) => JSON.stringify(entry))).size !== cases.length) throw new Error(label + '.cases must be unique.')
+  return { kind: value.kind, testPaths, command: command(value.command, label + '.command'), reports, cases }
+}
+
 export function parseProviderBenchmarkConfig(text, corpus, source = '<inline>') {
   let parsed
   try { parsed = JSON.parse(text) } catch (error) { throw new Error(source + ': invalid JSON: ' + error.message) }
@@ -85,10 +111,10 @@ export function parseProviderBenchmarkConfig(text, corpus, source = '<inline>') 
     const tasks = repository.tasks.map((task, taskIndex) => {
       const taskLabel = label + '.tasks[' + taskIndex + ']'
       plainObject(task, taskLabel)
-      exactKeys(task, new Set(['id', 'decisions']), taskLabel)
+      exactKeys(task, new Set(['id', 'decisions', 'acceptance']), taskLabel)
       if (!taskIds.has(task.id) || seenTasks.has(task.id)) throw new Error(taskLabel + '.id is unknown or duplicated.')
       seenTasks.add(task.id)
-      return { id: task.id, decisions: decisions(task.decisions, taskLabel + '.decisions') }
+      return { id: task.id, decisions: decisions(task.decisions, taskLabel + '.decisions'), acceptance: parseTaskAcceptance(task.acceptance, taskLabel + '.acceptance') }
     })
     return {
       id: repository.id,

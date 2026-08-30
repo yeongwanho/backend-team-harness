@@ -332,6 +332,8 @@ provider 비교는 공개 이력을 target commit 없이 단일 합성 base comm
 
 기존 테스트 통과는 `verificationSuccessAt1`이며, 요청한 기능의 성공과 다릅니다. `successAt1`은 수정 전 코드에서는 실패하고 정답 코드에서는 통과하는 독립 회귀 테스트로 해당 구현도 확인했을 때만 인정합니다. 그 검증이 없으면 `null`이며, 전체 성공률도 미측정 항목이 남은 동안 확정하지 않습니다. schema 2 이하의 과거 `successAt1`은 기존 테스트 통과 관찰값으로만 취급합니다.
 
+현재 기능별 회귀 검증이 준비된 과제는 `spring-02-owner-search-whitespace` 하나입니다. `--preflight`는 이 과제의 수정 전/정답 대조군도 확인하며, `--execute`는 별도 복사본에 고정된 테스트를 넣어 실제 구현 후보까지 검사합니다. 과제 검증이 없는 나머지는 유료 모델 실행을 거절합니다. 컴파일 실패·누락/중복/건너뛴 테스트를 정상적인 대조군으로 인정하지 않습니다. [구현 범위와 실제 검증 근거](docs/evidence/task-acceptance-v19.md).
+
 사용량은 완전한 마지막 실행 결과 이벤트에서만 수집합니다. Claude의 `input_tokens`는 캐시 읽기·생성 토큰을 포함하지 않으므로 총 입력은 세 값을 합하고 `cacheCreationInput`도 별도로 기록합니다. Codex의 입력에서는 보고된 캐시 입력을 빼서 미캐시 입력을 계산합니다. 누락된 값이나 마지막 응답 한 개의 사용량을 실행 전체의 합계로 추정하지 않습니다. 정의 근거: [Anthropic prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching).
 
 ## 테스트 수 감소 방지

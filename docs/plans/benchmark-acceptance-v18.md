@@ -26,6 +26,10 @@ success@1. Preserve it separately as verificationSuccessAt1.
    remain explicitly unmeasured until their independent acceptance is defined.
 6. Update README and evidence with exact metrics and missing coverage. Run syntax,
    full coverage, mutation, installed-package smoke, and diff checks before push.
+7. Full-suite rerun reproduced a race in `test/process-runner.test.mjs`: the
+   fixture assumed a grandchild wrote output within 80 ms. Replace elapsed-time
+   guessing with an IPC ready message sent after the first stdout write, then
+   rerun the process tests and full suite. Do not weaken cleanup assertions.
 
 No outcome may be reported as general superiority from a single paired task.
 Benchmark-only acceptance checks do not add repeated Gates to user CRUD work.

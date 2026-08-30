@@ -135,7 +135,13 @@ export async function clearReportFiles(root, patterns) {
   return removed
 }
 
-export function parseJUnitXml(text, source = '<inline>') {
+export function parseJUnitXml(text, source = '<inline>', options = {}) {
+  const selectedCases = options.selectedCases
+  if (selectedCases !== undefined && (!Array.isArray(selectedCases) || selectedCases.length < 1 || selectedCases.length > 256 ||
+    selectedCases.some((entry) => typeof entry?.className !== 'string' || typeof entry?.name !== 'string' || entry.className.length > 512 || entry.name.length > 512))) {
+    throw new Error('selectedCases must contain 1-256 bounded className/name pairs.')
+  }
+  const selectedIds = new Set((selectedCases ?? []).map((entry) => JSON.stringify([entry.className, entry.name])))
   if (typeof text !== 'string' || Buffer.byteLength(text, 'utf8') > 16 * 1024 * 1024) {
     throw new Error(source + ': JUnit XML must be a string no larger than 16 MiB.')
   }
@@ -156,6 +162,7 @@ export function parseJUnitXml(text, source = '<inline>') {
     removeNSPrefix: true
   }).parse(text)
   const summary = { tests: 0, executed: 0, failures: 0, errors: 0, skipped: 0, failedTests: [] }
+  if (selectedCases) summary.selectedTests = []
   let suiteFound = false
   let declaredFailures = 0
   let declaredErrors = 0
@@ -194,6 +201,12 @@ export function parseJUnitXml(text, source = '<inline>') {
     summary.failures += failed ? 1 : 0
     summary.errors += errored ? 1 : 0
     summary.skipped += skipped ? 1 : 0
+    const className = typeof node[':@']?.classname === 'string' ? node[':@'].classname : ''
+    const name = typeof node[':@']?.name === 'string' ? node[':@'].name : ''
+    if (selectedIds.has(JSON.stringify([className, name]))) {
+      if (summary.selectedTests.length >= 512) throw new Error(source + ': too many selected testcase occurrences.')
+      summary.selectedTests.push({ className, name, outcome: failed ? 'failed' : errored ? 'error' : skipped ? 'skipped' : 'passed' })
+    }
     if (summary.tests > 1_000_000) {
       throw new Error(source + ': JUnit XML exceeds the 1000000-test safety limit.')
     }

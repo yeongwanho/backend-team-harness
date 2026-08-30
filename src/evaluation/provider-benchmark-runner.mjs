@@ -139,6 +139,18 @@ async function commitHarnessContract(root) {
   return (await git(root, ['rev-parse', 'HEAD'])).trim()
 }
 
+async function taskAcceptance(candidateRoot, eligible, options) {
+  if (!eligible) return { controlsConfirmed: false, candidatePassed: null, reason: 'candidate-not-eligible' }
+  if (typeof options.acceptanceEvaluator !== 'function') return { controlsConfirmed: false, candidatePassed: null, reason: 'task-oracle-not-defined' }
+  try {
+    return await options.acceptanceEvaluator({ candidateRoot })
+  } catch {
+    // Preserve the paid implementation evidence even if evaluator preparation
+    // fails. A missing oracle result must not become a candidate success.
+    return { controlsConfirmed: false, candidatePassed: null, reason: 'oracle-evaluation-failed' }
+  }
+}
+
 async function runBthLane(root, task, repositoryConfig, input, options) {
   await initProject(root, { preferredSystem: repositoryConfig.buildSystem })
   await configureImplementationProvider(root, input.provider, {
@@ -182,11 +194,13 @@ async function runBthLane(root, task, repositoryConfig, input, options) {
     if (attempts.some((attempt) => (attempt.invocation?.activity?.validationCommandCount ?? 0) > 0)) {
       ruleViolations.push('provider-ran-evaluator-owned-validation')
     }
+    const acceptance = await taskAcceptance(workspace, Boolean(workspace) && record?.verification?.confirmed === true && ruleViolations.length === 0, options)
     return {
       provider: input.provider,
       lane: 'bth',
       providerCompleted: attempts.length > 0 && attempts.every((attempt) => processPassed(attempt.adapter)),
       verificationConfirmed: record?.verification?.confirmed === true,
+      acceptance,
       attempts: Math.max(1, attempts.length),
       elapsedMs,
       changedPaths: paths,
@@ -261,13 +275,16 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
       verificationFailure = error?.code ?? 'verification-exception'
     }
   }
+  const elapsedMs = Date.now() - startedAt
+  const acceptance = await taskAcceptance(root, verificationConfirmed && ruleViolations.length === 0, options)
   return {
     provider: input.provider,
     lane: 'direct',
     providerCompleted: processPassed(run.process),
     verificationConfirmed,
+    acceptance,
     attempts: 1,
-    elapsedMs: Date.now() - startedAt,
+    elapsedMs,
     changedPaths: paths,
     impactPaths: run.metadata?.activity?.preWritePaths?.length ? run.metadata.activity.preWritePaths : null,
     ruleViolations,

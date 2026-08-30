@@ -14,6 +14,7 @@ import { buildComparisonMatrix, compareProviderLanes } from '../src/evaluation/p
 import { probeImplementationProvider } from '../src/providers/model-cli.mjs'
 import { initProject } from '../src/init-project.mjs'
 import { checkProject } from '../src/runtime/backend-harness.mjs'
+import { evaluateTaskAcceptance } from '../src/evaluation/task-acceptance.mjs'
 
 const execute = promisify(execFile)
 const DEFAULT_CORPUS = 'benchmarks/public-backend-v1/corpus.json'
@@ -235,8 +236,8 @@ function preProviderFailureCase(caseEntry, task, setup, preflight, elapsedMs) {
       provider: caseEntry.provider,
       lane: caseEntry.lane,
       taskId: task.id,
-      successAt1: false,
-      verificationSuccessAt1: false,
+      successAt1: null,
+      verificationSuccessAt1: null,
       acceptanceConfirmed: null,
       failureReasons: [reason],
       providerCompleted: false,
@@ -293,7 +294,11 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
     }, {
       providerProbe: async () => providerProbe,
       providerVersion: providerProbe.version,
-      cleanupBthWorkspace: !options.keepWorkspace
+      cleanupBthWorkspace: !options.keepWorkspace,
+      acceptanceEvaluator: ({ candidateRoot }) => evaluateTaskAcceptance({
+        mirror, task, candidateRoot, timeoutMs: options.timeoutMs,
+        acceptance: repositoryConfig.tasks.find((entry) => entry.id === task.id).acceptance
+      })
     })
     const record = {
       schemaVersion: 1,
@@ -335,6 +340,10 @@ async function executePreflight(caseEntry, corpus, config, options) {
     const project = await materializeSanitizedWorkspace(mirror, task, caseRoot)
     const setup = await prepareDependencies(project, repositoryConfig, options.timeoutMs)
     const preflight = setup.passed ? await preflightBaseVerification(project, repositoryConfig) : null
+    const acceptance = repositoryConfig.tasks.find((entry) => entry.id === task.id).acceptance
+    const acceptanceControls = preflight?.confirmed && acceptance
+      ? await evaluateTaskAcceptance({ mirror, task, acceptance, timeoutMs: options.timeoutMs })
+      : null
     const record = {
       schemaVersion: 1,
       repositoryId: repository.id,
@@ -343,7 +352,9 @@ async function executePreflight(caseEntry, corpus, config, options) {
       sanitizedSingleCommitHistory: true,
       setup,
       preflight,
+      acceptanceControls,
       readyForProviderComparison: setup.passed && preflight?.confirmed === true,
+      readyForTaskSuccessComparison: setup.passed && preflight?.confirmed === true && acceptanceControls?.controlsConfirmed === true,
       elapsedMs: Date.now() - startedAt,
       workspace: options.keepWorkspace ? project : null
     }
@@ -425,6 +436,12 @@ async function main() {
   }
   if (options.all && process.env.BTH_PROVIDER_BENCHMARK_ALL !== ALL_ACK) {
     throw new Error('An all-task run requires BTH_PROVIDER_BENCHMARK_ALL=' + ALL_ACK + '.')
+  }
+  for (const entry of matrix) {
+    const repository = config.repositories.find((repository) => repository.id === entry.repositoryId)
+    if (!repository.tasks.find((task) => task.id === entry.taskId).acceptance) {
+      throw new Error(entry.taskId + ': no independent acceptance oracle is defined; use --preflight until task acceptance is ready.')
+    }
   }
   const probe = await probeImplementationProvider(options.provider)
   if (!probe.available) throw new Error('Selected provider is unavailable: ' + options.provider)

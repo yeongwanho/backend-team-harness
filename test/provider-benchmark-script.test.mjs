@@ -35,3 +35,12 @@ test('provider benchmark preflight requires network acknowledgement but no provi
   assert.match(result.stderr, /--preflight requires.*--allow-network/)
   assert.doesNotMatch(result.stderr, /I_UNDERSTAND_PROVIDER_COSTS/)
 })
+
+test('paid provider execution refuses a task without an independent acceptance oracle', () => {
+  const result = spawnSync(process.execPath, [
+    script, '--execute', '--provider', 'codex', '--lane', 'bth', '--task', 'spring-01-pet-association',
+    '--output', '/tmp/bth-missing-oracle', '--allow-network'
+  ], { encoding: 'utf8', env: { ...process.env, BTH_PROVIDER_BENCHMARK: 'I_UNDERSTAND_PROVIDER_COSTS' } })
+  assert.notEqual(result.status, 0)
+  assert.match(result.stderr, /no independent acceptance oracle/)
+})

@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { chmod, mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { runPreparedComparisonCase } from '../src/evaluation/provider-benchmark-runner.mjs'
@@ -145,4 +145,40 @@ test('provider-owned validation is a measured rule violation instead of hidden d
   assert.equal(result.score.successAt1, false)
   assert.deepEqual(result.score.ruleViolations, ['provider-ran-evaluator-owned-validation'])
   assert.equal(result.score.impactLocalization.recallAt5, 0)
+})
+
+test('both lanes invoke independent acceptance on the candidate, before BTH workspace cleanup', async () => {
+  for (const lane of ['bth', 'direct']) {
+    const root = await project('bth-comparison-acceptance-')
+    let observedRoot
+    const result = await runPreparedComparisonCase(root, task, repositoryConfig, {
+      lane, provider: 'codex', mode: 'balanced', model: null, maxAttempts: 1, timeoutMs: 30_000, maxBudgetUsd: null
+    }, {
+      providerProbe: async () => ({ available: true, version: 'fixture' }),
+      bthProviderRunner: fixtureProvider, directProviderRunner: fixtureProvider,
+      cleanupBthWorkspace: true,
+      acceptanceEvaluator: async ({ candidateRoot }) => {
+        observedRoot = candidateRoot
+        assert.match(await readFile(join(candidateRoot, task.goldPaths[0]), 'utf8'), /class Feature/)
+        return { controlsConfirmed: true, candidatePassed: true }
+      }
+    })
+    assert.equal(result.score.successAt1, true, lane)
+    assert.equal(result.score.acceptanceConfirmed, true)
+    if (lane === 'bth') {
+      assert.notEqual(observedRoot, root)
+      await assert.rejects(readFile(join(observedRoot, task.goldPaths[0])), /ENOENT/)
+    } else assert.equal(observedRoot, root)
+  }
+})
+
+test('an evaluator exception preserves implementation evidence but leaves task success unknown', async () => {
+  const root = await project('bth-comparison-acceptance-failure-')
+  const result = await runPreparedComparisonCase(root, task, repositoryConfig, {
+    lane: 'direct', provider: 'codex', mode: 'balanced', model: null, maxAttempts: 1, timeoutMs: 30_000, maxBudgetUsd: null
+  }, { directProviderRunner: fixtureProvider, acceptanceEvaluator: async () => { throw new Error('private diagnostic') } })
+  assert.equal(result.score.verificationSuccessAt1, true)
+  assert.equal(result.score.successAt1, null)
+  assert.equal(result.observation.acceptance.reason, 'oracle-evaluation-failed')
+  assert.doesNotMatch(JSON.stringify(result), /private diagnostic/)
 })
