@@ -4,6 +4,15 @@ import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { parseEvaluationCorpus } from '../src/evaluation/corpus.mjs'
 import { parseProviderBenchmarkConfig } from '../src/evaluation/provider-benchmark-config.mjs'
+import { portableVerificationTemplates } from '../src/core/portable-test-discovery.mjs'
+
+test('Nest oracle executes the exact generated production Jest runner', async () => {
+  const runner = portableVerificationTemplates({
+    canGenerateVerification: true, framework: 'jest', projectPath: '.',
+    testArgs: ['--config', 'test/bth/jest.config.cjs', '--ci', '--no-cache']
+  })[0]
+  assert.equal(await readFile('benchmarks/public-backend-v1/fixtures/nest/verify-jest.mjs', 'utf8'), runner.content)
+})
 
 test('provider comparison config covers all three repositories and twenty tasks without embedding gold paths', async () => {
   const corpus = parseEvaluationCorpus(await readFile('benchmarks/public-backend-v1/corpus.json', 'utf8'), 'corpus')

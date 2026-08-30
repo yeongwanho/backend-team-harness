@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "jestVersion": "29.7.0",
+  "node": "v22.23.1",
+  "suites": [
+    {
+      "status": "focused",
+      "assertions": [
+        "passed",
+        "pending",
+        "todo"
+      ]
+    },
+    {
+      "status": "skipped",
+      "assertions": [
+        "pending"
+      ]
+    }
+  ],
+  "counts": {
+    "tests": 4,
+    "executed": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 3,
+    "failedTests": []
+  },
+  "inputSha256": "c21560bf6abbc0c75b0aa9101dcf321cdceaeb4ecda189e167108f02a6db4723",
+  "xmlSha256": "7079239612415a6756a657d671532324737892f96a620aff73307afd85256c6d"
+}

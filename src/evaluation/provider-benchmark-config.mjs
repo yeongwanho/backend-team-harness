@@ -94,7 +94,11 @@ export function parseTaskAcceptance(value, label = 'acceptance') {
     return { className: entry.className, name: entry.name }
   })
   if (new Set(cases.map((entry) => JSON.stringify(entry))).size !== cases.length) throw new Error(label + '.cases must be unique.')
-  return { kind: value.kind, ...(files ? { files } : { testPaths }), command: command(value.command, label + '.command'), reports, cases }
+  const argv = command(value.command, label + '.command')
+  if (argv[0] === 'node' && (argv.length !== 2 || !testPaths.includes(argv[1]) || !/\.[cm]?js$/.test(argv[1]))) {
+    throw new Error(label + '.command node must execute exactly one pinned JavaScript test file, without flags.')
+  }
+  return { kind: value.kind, ...(files ? { files } : { testPaths }), command: argv, reports, cases }
 }
 
 export function parseProviderBenchmarkConfig(text, corpus, source = '<inline>') {

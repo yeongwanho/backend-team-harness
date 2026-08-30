@@ -6,6 +6,7 @@ import { chmod, mkdir, mkdtemp, readFile, readdir, stat, symlink, writeFile } fr
 import { initProject } from '../src/init-project.mjs'
 import { checkProject } from '../src/runtime/backend-harness.mjs'
 import { initializeGit } from '../test-support/git-project.mjs'
+import { jestDocument } from '../test-support/jest-document.mjs'
 
 async function backendProject(prefix) {
   const root = await mkdtemp(join(tmpdir(), prefix))
@@ -105,7 +106,7 @@ test('init generates and executes structured Jest verification without an extra 
     "import { writeFileSync } from 'node:fs'",
     "if (!process.argv.includes('--config') || !process.argv.includes('test/jest.config.js')) process.exit(19)",
     "const output = process.argv.find((value) => value.startsWith('--outputFile=')).slice(13)",
-    "writeFileSync(output, JSON.stringify({ testResults: [{ assertionResults: [{ fullName: 'api works', status: 'passed' }, { fullName: 'pending behavior', status: 'pending' }] }] }))",
+    'writeFileSync(output, ' + JSON.stringify(JSON.stringify(jestDocument(['passed', 'pending']))) + ')',
     ''
   ].join('\n'))
 

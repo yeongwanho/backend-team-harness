@@ -103,8 +103,12 @@ async function runOracle(root, oracle, testFiles, timeoutMs, processRunner) {
   }
   for (const report of oracle.reports) await rm(await resolveSafeProjectPath(root, report), { force: true })
   const before = digest(JSON.stringify(await snapshot(root)))
-  const executable = await resolveGateExecutable(root, oracle.command)
-  const process = await processRunner({ program: executable.path, args: oracle.command.slice(1), cwd: root, timeoutMs, env: buildSafeEnvironment() })
+  // "node" is not PATH lookup: the validated argv names one hash-pinned test
+  // file, executed by the same runtime as this evaluator. No -e/loader flags.
+  const executable = oracle.command[0] === 'node'
+    ? { path: process.execPath }
+    : await resolveGateExecutable(root, oracle.command)
+  const execution = await processRunner({ program: executable.path, args: oracle.command.slice(1), cwd: root, timeoutMs, env: buildSafeEnvironment() })
   const sourceStable = before === digest(JSON.stringify(await snapshot(root)))
   const reports = []
   const selected = []
@@ -127,12 +131,12 @@ async function runOracle(root, oracle, testFiles, timeoutMs, processRunner) {
     const matches = selected.filter((entry) => entry.className === expected.className && entry.name === expected.name)
     return { ...expected, outcome: matches.length === 1 ? matches[0].outcome : matches.length ? 'duplicate' : 'missing' }
   })
-  const processFinished = !process.signal && !process.timedOut && !process.stdioDrainTimedOut && Number.isInteger(process.exitCode)
+  const processFinished = !execution.signal && !execution.timedOut && !execution.stdioDrainTimedOut && Number.isInteger(execution.exitCode)
   const casesExecuted = !reportError && cases.every((entry) => ['passed', 'failed', 'error'].includes(entry.outcome))
   return {
-    sourceStable, process: compactProcess(process), reports, cases,
-    passed: sourceStable && processFinished && process.exitCode === 0 && casesExecuted && cases.every((entry) => entry.outcome === 'passed') && failures === 0 && errors === 0,
-    regressionReproduced: sourceStable && processFinished && process.exitCode !== 0 && casesExecuted && cases.some((entry) => ['failed', 'error'].includes(entry.outcome))
+    sourceStable, process: compactProcess(execution), reports, cases,
+    passed: sourceStable && processFinished && execution.exitCode === 0 && casesExecuted && cases.every((entry) => entry.outcome === 'passed') && failures === 0 && errors === 0,
+    regressionReproduced: sourceStable && processFinished && execution.exitCode !== 0 && casesExecuted && cases.some((entry) => ['failed', 'error'].includes(entry.outcome))
   }
 }
 

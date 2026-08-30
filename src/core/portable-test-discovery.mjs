@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { posix } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
+import { jestJsonToJUnit } from './jest-report.mjs'
 
 const MAX_BUILD_BYTES = 1024 * 1024
 const MAX_CANDIDATES = 32
@@ -129,7 +130,7 @@ function portableRunnerSource(detection) {
   const testArgs = JSON.stringify(detection.testArgs ?? [])
   return `#!/usr/bin/env node
 import { spawn } from 'node:child_process'
-import { access, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
+import { access, lstat, mkdir, open, rm, writeFile } from 'node:fs/promises'
 import { constants } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -141,7 +142,16 @@ const project = resolve(root, projectPath)
 const reportDirectory = resolve(root, '.backend-harness/local/reports/tests')
 const report = resolve(reportDirectory, 'junit.xml')
 const raw = resolve(reportDirectory, 'jest.json')
-await mkdir(reportDirectory, { recursive: true })
+async function ensureReportDirectory() {
+  let directory = root
+  for (const segment of ['.backend-harness', 'local', 'reports', 'tests']) {
+    directory = resolve(directory, segment)
+    try { await mkdir(directory) } catch (error) { if (error.code !== 'EEXIST') throw error }
+    const metadata = await lstat(directory)
+    if (!metadata.isDirectory() || metadata.isSymbolicLink()) throw new Error('Report directory must not contain symbolic links.')
+  }
+}
+await ensureReportDirectory()
 
 function run(program, args, options = {}) {
   return new Promise((resolvePromise, reject) => {
@@ -151,9 +161,7 @@ function run(program, args, options = {}) {
   })
 }
 
-function xml(value) {
-  return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;')
-}
+${jestJsonToJUnit.toString()}
 
 async function exists(path) {
   try { await access(path, constants.R_OK); return true } catch { return false }
@@ -163,24 +171,31 @@ let result
 if (framework === 'jest') {
   const entry = resolve(project, 'node_modules/jest/bin/jest.js')
   if (!await exists(entry)) throw new Error('Local Jest is missing; install the pinned project dependencies before verification.')
+  await rm(raw, { force: true })
   result = await run(process.execPath, [entry, ...testArgs, '--runInBand', '--json', '--outputFile=' + raw])
-  if (await exists(raw)) {
-    const metadata = await stat(raw)
-    if (metadata.size > 16 * 1024 * 1024) throw new Error('Jest JSON exceeded the 16 MiB conversion limit.')
-    const document = JSON.parse(await readFile(raw, 'utf8'))
-    const cases = (document.testResults ?? []).flatMap((suite) => suite.assertionResults ?? [])
-    if (cases.length > 100000) throw new Error('Jest reported more than 100000 test cases.')
-    const failures = cases.filter((entry) => entry.status === 'failed').length
-    const skipped = cases.filter((entry) => ['pending', 'todo', 'disabled'].includes(entry.status)).length
-    const body = cases.map((entry, index) => {
-      const name = xml(entry.fullName ?? entry.title ?? ('test-' + index))
-      if (entry.status === 'failed') return '<testcase name="' + name + '"><failure message="failed"/></testcase>'
-      if (['pending', 'todo', 'disabled'].includes(entry.status)) return '<testcase name="' + name + '"><skipped/></testcase>'
-      return '<testcase name="' + name + '"/>'
-    }).join('')
-    const output = '<?xml version="1.0" encoding="UTF-8"?><testsuite name="jest" tests="' + cases.length + '" failures="' + failures + '" errors="0" skipped="' + skipped + '">' + body + '</testsuite>\\n'
-    if (Buffer.byteLength(output) > 16 * 1024 * 1024) throw new Error('Converted JUnit report exceeded 16 MiB.')
+  await ensureReportDirectory()
+  const metadata = await lstat(raw)
+  if (!metadata.isFile() || metadata.isSymbolicLink()) throw new Error('Jest JSON must be a regular file.')
+  const handle = await open(raw, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0))
+  try {
+    const opened = await handle.stat()
+    const limit = 16 * 1024 * 1024
+    if (!opened.isFile() || opened.size > limit) throw new Error('Jest JSON exceeded the regular-file 16 MiB limit.')
+    const buffer = Buffer.alloc(Math.min(opened.size + 1, limit + 1))
+    let length = 0
+    while (length < buffer.length) {
+      const { bytesRead } = await handle.read(buffer, length, buffer.length - length, length)
+      if (!bytesRead) break
+      length += bytesRead
+    }
+    const after = await handle.stat()
+    if (length !== opened.size || after.size !== opened.size || after.mtimeMs !== opened.mtimeMs) throw new Error('Jest JSON changed while being read.')
+    let document
+    try { document = JSON.parse(buffer.toString('utf8', 0, length)) } catch { throw new Error('Jest JSON is malformed.') }
+    const output = jestJsonToJUnit(document, project)
     await writeFile(report, output, { encoding: 'utf8', flag: 'wx' })
+  } finally {
+    await handle.close()
     await rm(raw, { force: true })
   }
 } else if (framework === 'vitest') {

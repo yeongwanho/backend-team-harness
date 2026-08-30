@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "repositoryId": "nestjs-boilerplate",
+  "taskId": "nest-02-file-relational-mapper",
+  "baseSha": "07ac5f29d3032bb173fd538c549966e7eb96dcff",
+  "targetSha": "f4703907ddc54dff7f6e81bc37f0a42e3fdd8d22",
+  "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+  "requirementSha256": "938b4e21c4530cefa9044a6f379a7c43fda08b7ac4b14ec8e20d7a69fe0c4d16",
+  "configSha256": "5a40e38b067fc5bc9c33ebb55989c40d16f1982966a1f5d7b41fdbc8d2f608e7",
+  "sanitizedSingleCommitHistory": true,
+  "setup": {
+    "passed": true,
+    "process": {
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "stdioDrainTimedOut": false,
+      "durationMs": 43568,
+      "stdout": {
+        "sha256": "777bab4f35b4fb33f308da7f58949121aa647f4e9728f5f85fbdaa016d076f07",
+        "bytes": 451
+      },
+      "stderr": {
+        "sha256": "79b5bbeccf43ad60f9568322ce3f9a6b409f9367a0c8d371f87dffda465b8222",
+        "bytes": 1338
+      }
+    }
+  },
+  "preflight": {
+    "confirmed": false,
+    "failureCode": "verification-failed",
+    "diagnosticCode": "gate-process-failed",
+    "tests": {
+      "tests": 0,
+      "executed": 0,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "gates": [
+      {
+        "id": "tests",
+        "outcome": "failed",
+        "process": {
+          "exitCode": 1,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 1733,
+          "stdout": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "stderr": {
+            "sha256": "c9078d654e040d65a3b3e56ceb6d6ea4bf262406132671f7a4a479d7ca27a7ef",
+            "bytes": 1081
+          }
+        }
+      }
+    ]
+  },
+  "acceptanceControls": null,
+  "readyForProviderComparison": false,
+  "readyForTaskSuccessComparison": false,
+  "elapsedMs": 50767,
+  "workspace": null
+}

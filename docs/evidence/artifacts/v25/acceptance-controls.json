@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "833ed49c4663735d146752e065481d58b4c948ab",
+  "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+  "configSha256": "5a40e38b067fc5bc9c33ebb55989c40d16f1982966a1f5d7b41fdbc8d2f608e7",
+  "taskId": "nest-02-file-relational-mapper",
+  "baseSha": "07ac5f29d3032bb173fd538c549966e7eb96dcff",
+  "targetSha": "f4703907ddc54dff7f6e81bc37f0a42e3fdd8d22",
+  "result": {
+    "schemaVersion": 1,
+    "kind": "fixture-tests",
+    "controlsConfirmed": true,
+    "candidatePassed": null,
+    "candidateSourceSha256": null,
+    "candidateUntouched": null,
+    "reason": "candidate-not-provided",
+    "oracleSha256": "b77f7389c4f981480face8168974efd2d0dd86dbe530a7d264d4911ae50dd2fd",
+    "testFiles": [
+      {
+        "path": "test/bth/file-flow.spec.ts",
+        "sha256": "30f8531d2500cb29694894ab6d97ca33be35e95de077ef213f119f683c72bfe3"
+      },
+      {
+        "path": "test/bth/jest.config.cjs",
+        "sha256": "663d94b68f3a7a30e50c7c04404c1456cc8dc65944e2f97d1d1aff0fde9184d8"
+      },
+      {
+        "path": "test/bth/run.cjs",
+        "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+      },
+      {
+        "path": "test/bth/verify-jest.mjs",
+        "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+      }
+    ],
+    "controls": {
+      "base": {
+        "sourceStable": true,
+        "process": {
+          "exitCode": 1,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 44973,
+          "stdout": {
+            "sha256": "730d5671688eec87c21f7c9d619a879cc8168c0c502137240fbc62ddad5aa4d9",
+            "bytes": 28
+          },
+          "stderr": {
+            "sha256": "4c859388407b4d40cceb0dfbda67775c8922ba868ab90e81d20ed4b1bf3468a1",
+            "bytes": 5803
+          }
+        },
+        "reports": [
+          {
+            "path": "coverage/bth-junit.xml",
+            "sha256": "9d1bb1e675c23f722bf687f768df43bc57a7eed148bf5626c88cc68028081294",
+            "bytes": 1110
+          }
+        ],
+        "cases": [
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "create returns mapped domain data from the saved entity",
+            "outcome": "failed"
+          },
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "create propagates persistence failure without returning a file",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "findById maps existing files and preserves missing-file null",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "findByIds maps each returned entity and preserves an empty result",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "interceptor emits resolved nested values rather than Promise objects",
+            "outcome": "failed"
+          },
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "interceptor routes rejected values through the observable error channel",
+            "outcome": "failed"
+          },
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "interceptor preserves an upstream observable failure",
+            "outcome": "passed"
+          }
+        ],
+        "passed": false,
+        "regressionReproduced": true
+      },
+      "target": {
+        "sourceStable": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 19633,
+          "stdout": {
+            "sha256": "61e29d734f433045703cf53fd7500fedecd9b1f52ccc377a420600a56b9fc924",
+            "bytes": 28
+          },
+          "stderr": {
+            "sha256": "1d77fd9da77af7bb8d7719ad8aaabea3f00490d9ba5bc7c1dde7d7cf66cf7201",
+            "bytes": 2085
+          }
+        },
+        "reports": [
+          {
+            "path": "coverage/bth-junit.xml",
+            "sha256": "d78b25a29e6031789acde96937e4996a3d7284b4255b2a71b52e71f2faf6089b",
+            "bytes": 1029
+          }
+        ],
+        "cases": [
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "create returns mapped domain data from the saved entity",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "create propagates persistence failure without returning a file",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "findById maps existing files and preserves missing-file null",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "findByIds maps each returned entity and preserves an empty result",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "interceptor emits resolved nested values rather than Promise objects",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "interceptor routes rejected values through the observable error channel",
+            "outcome": "passed"
+          },
+          {
+            "className": "test/bth/file-flow.spec.ts",
+            "name": "interceptor preserves an upstream observable failure",
+            "outcome": "passed"
+          }
+        ],
+        "passed": true,
+        "regressionReproduced": false
+      }
+    },
+    "candidate": null,
+    "elapsedMs": 65857
+  }
+}

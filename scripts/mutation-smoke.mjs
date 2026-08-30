@@ -7,6 +7,12 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/core/jest-report.mjs',
+    from: "if (!entry || !['passed', 'failed', 'pending', 'todo', 'disabled', 'skipped'].includes(entry.status)) fail('unknown assertion status')",
+    to: "if (entry.status === 'focused') entry.status = 'passed'",
+    test: 'test/jest-report.test.mjs'
+  },
+  {
     file: 'src/core/task-state.mjs',
     from: "if (!ALLOWED_TRANSITIONS[record.state].includes(to)) {",
     to: "if (false && !ALLOWED_TRANSITIONS[record.state].includes(to)) {",

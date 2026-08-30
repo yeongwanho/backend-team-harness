@@ -75,6 +75,16 @@ test('control-only run has no candidate success, and missing oracle remains unme
   await assert.rejects(evaluateTaskAcceptance({ ...input, timeoutMs: 0 }), /timeout/)
 })
 
+test('Node oracle uses the evaluator runtime for one pinned test file and disallows argument expansion', async () => {
+  const { input } = await fixture()
+  const nodeOracle = { ...input.acceptance, command: ['node', 'test/oracle.mjs'] }
+  const result = await evaluateTaskAcceptance({ ...input, acceptance: nodeOracle })
+  assert.equal(result.controlsConfirmed, true)
+  for (const command of [['node', '-e', 'process.exit(0)'], ['node', 'test/unpinned.js'], ['node', '--import', 'test/oracle.mjs'], ['node', 'test/oracle.mjs', '--extra']]) {
+    assert.throws(() => parseTaskAcceptance({ ...nodeOracle, command }), /one pinned JavaScript/)
+  }
+})
+
 test('hash-pinned evaluator fixtures validate both controls without exposing tests to the candidate', async (t) => {
   const { root, input } = await fixture()
   const fixtureRoot = await mkdtemp(join(tmpdir(), 'bth-owned-regression-'))

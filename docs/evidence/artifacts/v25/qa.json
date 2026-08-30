@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "sourceParentCommit": "833ed49c4663735d146752e065481d58b4c948ab",
+  "host": {
+    "platform": "darwin",
+    "architecture": "arm64",
+    "node": "v22.23.1"
+  },
+  "sources": [
+    {
+      "path": "benchmarks/public-backend-v1/fixtures/nest/file-flow.spec.ts",
+      "sha256": "30f8531d2500cb29694894ab6d97ca33be35e95de077ef213f119f683c72bfe3"
+    },
+    {
+      "path": "benchmarks/public-backend-v1/fixtures/nest/jest.config.cjs",
+      "sha256": "663d94b68f3a7a30e50c7c04404c1456cc8dc65944e2f97d1d1aff0fde9184d8"
+    },
+    {
+      "path": "benchmarks/public-backend-v1/fixtures/nest/run.cjs",
+      "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+    },
+    {
+      "path": "benchmarks/public-backend-v1/fixtures/nest/verify-jest.mjs",
+      "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+    },
+    {
+      "path": "benchmarks/public-backend-v1/provider-comparison.json",
+      "sha256": "5a40e38b067fc5bc9c33ebb55989c40d16f1982966a1f5d7b41fdbc8d2f608e7"
+    },
+    {
+      "path": "scripts/generate-nest-oracle-runner.mjs",
+      "sha256": "78530766e8e8cf8e07b98bcb6f6fde53d631b42b27d393b23ba76df40784f085"
+    },
+    {
+      "path": "scripts/mutation-smoke.mjs",
+      "sha256": "f66360f16e6b2deb4f03b80222aefc4e726f74dce7f901e2b1c0bbc522f92b44"
+    },
+    {
+      "path": "src/core/jest-report.mjs",
+      "sha256": "c4e49101c6b808673c69b78fb8af0a04ca332a16ddf95e76b9c90d207cb28395"
+    },
+    {
+      "path": "src/core/portable-test-discovery.mjs",
+      "sha256": "c41acd9cc20bdf9ab2e073cef89508c4168ac38d35dc71d3067385943ff6cf51"
+    },
+    {
+      "path": "src/evaluation/provider-benchmark-config.mjs",
+      "sha256": "fc0f14360b1d310f3026beb9446047bd076864c0a1cc45b5514c346fe7b84b4e"
+    },
+    {
+      "path": "src/evaluation/task-acceptance.mjs",
+      "sha256": "d5ba13a763fadf82773cec94012b75437f6d957da3af359e8364c6beaa091ee3"
+    },
+    {
+      "path": "test-support/jest-document.mjs",
+      "sha256": "4965359947951bec8bea8c3d0c005a39d4608d2c0779fbcfe227bf921dfc0376"
+    },
+    {
+      "path": "test/init-project.test.mjs",
+      "sha256": "ecb75cffacda1f5134f1dce3ae351557413a94c211b0ad286a167e4e09d18328"
+    },
+    {
+      "path": "test/jest-report.test.mjs",
+      "sha256": "b15f72b52762fc657e1a60b99c9dcffdd5af2a6f5574d43d840e16674bbdf3ea"
+    },
+    {
+      "path": "test/portable-jest-runner.test.mjs",
+      "sha256": "f8ad9ac571f5212721a59ef11508371091eb2d1a5f2d23970473c60dcd787dae"
+    },
+    {
+      "path": "test/provider-benchmark-config.test.mjs",
+      "sha256": "48807f87c017e0f3587ffa3e2a1e5a8cc742208d4cf1d360427c6ab71c5f5096"
+    },
+    {
+      "path": "test/task-acceptance.test.mjs",
+      "sha256": "8d5b87c8a7ce6a0e81e70b4fd7852a50abd369a0bf741dccc1dc34e8b787256c"
+    }
+  ],
+  "failingFirst": {
+    "command": "node --test test/portable-jest-runner.test.mjs",
+    "beforePatch": {
+      "tests": 2,
+      "passed": 0,
+      "failed": 2,
+      "observed": [
+        "unknown focused assertion produced exit 0",
+        "old raw JSON reused despite no current output"
+      ]
+    },
+    "afterPatch": "both rejected with nonzero exit and no JUnit success"
+  },
+  "coverage": {
+    "command": "npm run test:coverage",
+    "exitCode": 0,
+    "tests": 418,
+    "passed": 414,
+    "failed": 0,
+    "skipped": 4,
+    "durationMs": 52458.90375,
+    "percent": {
+      "statements": 90.28,
+      "branches": 79.7,
+      "functions": 98.78,
+      "lines": 90.28
+    },
+    "logSha256": "c06ee2f400803eb48d56683055532bc4e279bf56dca1c9640a99669ce1bed54e"
+  },
+  "mutation": {
+    "command": "node scripts/mutation-smoke.mjs",
+    "exitCode": 0,
+    "killed": 9,
+    "controls": [
+      "KILLED src/core/jest-report.mjs by test/jest-report.test.mjs (baseline 4 passed; mutant 1 failed tests with assertion evidence)",
+      "KILLED src/core/task-state.mjs by test/task-state.test.mjs (baseline 8 passed; mutant 1 failed tests with assertion evidence)",
+      "KILLED src/adapters/verification-tool.mjs by test/generic-verification.test.mjs (baseline 11 passed; mutant 6 failed tests with assertion evidence)",
+      "KILLED src/core/work-draft.mjs by test/work-draft.test.mjs (baseline 5 passed; mutant 3 failed tests with assertion evidence)",
+      "KILLED src/core/junit.mjs by test/junit.test.mjs (baseline 14 passed; mutant 2 failed tests with assertion evidence)",
+      "KILLED src/core/junit.mjs by test/junit.test.mjs (baseline 14 passed; mutant 1 failed tests with assertion evidence)",
+      "KILLED src/core/retrieval-query.mjs by test/retrieval-query.test.mjs (baseline 5 passed; mutant 1 failed tests with assertion evidence)",
+      "KILLED src/core/migration-discovery.mjs by test/migration-discovery.test.mjs (baseline 7 passed; mutant 1 failed tests with assertion evidence)",
+      "KILLED src/core/migration-discovery.mjs by test/migration-discovery.test.mjs (baseline 7 passed; mutant 1 failed tests with assertion evidence)"
+    ],
+    "logSha256": "1bd0c923cd34a54e356b7d2c4e1de9724750de9c96de96462c1e526f8e491a2e"
+  },
+  "install": {
+    "command": "npm run test:install",
+    "exitCode": 0,
+    "version": "0.9.0",
+    "logSha256": "ea781ddfffe003a1a189e0e8327a14fe17665304b3356e6fdb1bfe15551967fe"
+  },
+  "syntax": {
+    "command": "node scripts/check-syntax.mjs",
+    "exitCode": 0
+  },
+  "docs": {
+    "command": "node --test test/docs-contract.test.mjs",
+    "exitCode": 0,
+    "tests": 1,
+    "passed": 1,
+    "logSha256": "756bb87a35994a4b65eaacfe4661aa5dfb412701f440bf766471c87492331f44"
+  },
+  "omitted": {
+    "rawProviderOrSourceLogs": true,
+    "paidProviderCalls": 0
+  },
+  "skipped": [
+    "DB Pack runs real MySQL migrations and integration behavior",
+    "real Maven and Gradle projects produce accepted JUnit verification",
+    "real Windows command shim executes provider JSON and normalizes telemetry",
+    "real Windows timeout terminates the provider descendant tree"
+  ],
+  "limitations": [
+    "Independent task controls: 6/20; paid Codex pairs remain 2 distinct tasks",
+    "Nest baseline contains no src unit tests; public preflight and provider readiness remain false",
+    "Nest DB persistence is mocked; real DB/S3/HTTP E2E not executed",
+    "No actual Windows provider session or OS egress sandbox proof",
+    "Historical latest full controls ran concurrently with other QA; times are not a performance comparison",
+    "Existing generated project runners need explicit reviewed regeneration"
+  ]
+}
