@@ -47,7 +47,7 @@ npm run check
 focused mutation smoke: 3/3 mutants killed
 
 npm run test:coverage
-lines 89.86%, branches 78.63%, functions 91.76%
+lines 88.95%, branches 78.27%, functions 98.32%
 
 npm run test:install
 installed package smoke passed for backend-team-harness@0.9.0
@@ -55,6 +55,11 @@ installed package smoke passed for backend-team-harness@0.9.0
 git diff --check
 passed
 ```
+
+The canonical coverage command uses `c8` so the same thresholds run on the
+supported Node 20 baseline and newer Node versions. The first CI attempt
+exposed that Node's newer built-in threshold flags were unavailable on Node
+20; the gate was made version-portable instead of lowering its thresholds.
 
 The four skipped tests are environment-bound checks, including the two tests
 that require an actual Windows process model. A macOS skip is not Windows
