@@ -69,10 +69,25 @@ The focused mutation smoke mutates three high-value predicates (task
 transition, verification success, and work-draft completion). It is not a
 claim of exhaustive mutation coverage.
 
+## Cross-platform CI observed
+
+GitHub Actions run
+[`33324335444`](https://github.com/yeongwanho/backend-team-harness/actions/runs/33324335444)
+completed successfully for implementation commit `e2c541f`:
+
+- Ubuntu Node 20 syntax, coverage, mutation, and installed-package Gates passed.
+- A real Windows runner passed the command-shim provider fixture, descendant
+  process-tree timeout cleanup, Windows contracts, cache, inspect, and check
+  flows.
+- The real JVM fixture passed.
+- The Docker-backed real MySQL E2E passed.
+
+The Windows provider fixture proves process and output contracts on Windows;
+it does not claim that an authenticated Codex or Claude installation was used.
+
 ## Evidence still required before completion
 
-1. Run the real Windows command-shim and descendant-process cleanup tests in
-   CI and run one opt-in authenticated pilot for each of Codex and Claude on a
+1. Run one opt-in authenticated pilot for each of Codex and Claude on a
    developer Windows machine.
 2. Measure the same versioned twenty-task corpus across three independently
    maintained repositories, including one monorepo service and one non-JVM
