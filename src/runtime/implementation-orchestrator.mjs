@@ -24,6 +24,7 @@ import { loadBudgetedCodeContext } from '../core/code-context.mjs'
 import { inspectBoundSourceCodeContext } from '../adapters/bounded-code-context.mjs'
 import { buildProjectConventions, projectRuleReadiness } from '../core/project-conventions.mjs'
 import { selectProviderContext } from '../core/provider-context.mjs'
+import { selectTaskRetrievalQuery } from '../core/retrieval-query.mjs'
 import { assertNoSymlinkSegments, assertRelativeChild, resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { captureConfiguredSourceBinding, checkProject } from './backend-harness.mjs'
 import {
@@ -260,10 +261,6 @@ function protectedControlPlaneChanges(paths, implementationConfig, verificationC
   return paths.filter((path) => path === '.backend-harness' || path.startsWith('.backend-harness/') || protectedPaths.has(path))
 }
 
-function planQuery(task) {
-  return [task.title, task.context, task.plan].filter((value) => typeof value === 'string').join('\n').slice(0, 64 * 1024)
-}
-
 function providerTaskPayload(task) {
   const payload = { id: task.id, title: task.title, context: task.context, approvedPlan: task.plan }
   const characters = Object.values(payload).reduce((total, value) => total + (typeof value === 'string' ? value.length : 0), 0)
@@ -272,6 +269,7 @@ function providerTaskPayload(task) {
 
 async function structuredImplementationContext(root, task) {
   const fallback = {
+    retrievalRequirement: null,
     claims: {},
     projectRuleEvaluation: {
       schemaVersion: 1, status: 'unknown', blocking: false,
@@ -288,6 +286,7 @@ async function structuredImplementationContext(root, task) {
     claims.requiredGates = [...interview.artifacts.plan.declaredRequiredGates]
   }
   return {
+    retrievalRequirement: interview.record.requirement,
     claims,
     projectRuleEvaluation: interview.artifacts?.plan?.projectRuleEvaluation ?? fallback.projectRuleEvaluation,
     knowledge: interview.contextSnapshot?.intelligence?.knowledge ?? fallback.knowledge,
@@ -453,13 +452,14 @@ async function prepareProviderPlanning(root, task, config, sourceBinding) {
   let profile = selectImplementationProfile(profileInput)
   const conventionModules = (planningContext.conventions?.modules ?? []).filter((module) => module !== 'root')
   const codegraphProjectPath = conventionModules.length === 1 ? conventionModules[0] : '.'
+  const retrievalQuery = selectTaskRetrievalQuery(task, planningContext.retrievalRequirement)
   const loadContext = async (budgetCharacters) => {
-    const persisted = await loadBudgetedCodeContext(root, planQuery(task), {
+    const persisted = await loadBudgetedCodeContext(root, retrievalQuery, {
       budgetCharacters,
       sourceFingerprint: sourceBinding.fingerprint
     })
     if (persisted.status === 'available') return persisted
-    return inspectBoundSourceCodeContext(root, planQuery(task), {
+    return inspectBoundSourceCodeContext(root, retrievalQuery, {
       budgetCharacters,
       sourceFingerprint: sourceBinding.fingerprint,
       indexerOptions: { projectPath: codegraphProjectPath }

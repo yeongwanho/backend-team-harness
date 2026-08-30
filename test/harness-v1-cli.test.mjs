@@ -63,6 +63,7 @@ test('approved plan export includes source-bound budgeted codegraph context when
     'utf8'
   )
   await writeFile(join(root, 'src/main/java/orders/OrdersService.java'), 'package orders;\nclass OrdersService {}\n', 'utf8')
+  await writeFile(join(root, 'src/main/java/orders/AuditClockLockJournalGate.java'), 'package orders;\nclass AuditClockLockJournalGate {}\n', 'utf8')
   initializeGit(root)
   assert.equal(runCli(['init', root]).status, 0)
   assert.equal(runCli(['pack', 'install', 'codegraph-advisory', root]).status, 0)
@@ -71,7 +72,7 @@ test('approved plan export includes source-bound budgeted codegraph context when
   for (const command of [
     ['task', 'create', 'MAP-1', root, '--context', 'Change OrdersController lookup behavior.'],
     ['task', 'advance', 'MAP-1', 'CONTEXT_READY', root, '--by', 'developer'],
-    ['task', 'plan', 'MAP-1', root, '--text', 'Inspect OrdersController and its exact project dependencies.', '--by', 'developer'],
+    ['task', 'plan', 'MAP-1', root, '--text', 'Preserve Audit Clock Lock Journal Gate checks and all existing tests.', '--by', 'developer'],
     ['task', 'advance', 'MAP-1', 'PLAN_PROPOSED', root, '--by', 'developer'],
     ['task', 'advance', 'MAP-1', 'PLAN_APPROVED', root, '--by', 'reviewer', '--approve']
   ]) {
@@ -86,6 +87,10 @@ test('approved plan export includes source-bound budgeted codegraph context when
   assert.equal(contract.codeContext.entries[0].path, 'src/main/java/orders/OrdersController.java')
   assert.ok(contract.codeContext.budget.usedCharacters <= 700)
   assert.equal(contract.codeContext.authority.advisory, true)
+  assert.equal(contract.plan.planText, 'Preserve Audit Clock Lock Journal Gate checks and all existing tests.')
+  assert.equal(contract.plan.objective, 'Change OrdersController lookup behavior.')
+  assert.equal(contract.authority.write, false)
+  assert.equal(contract.authority.verdict, false)
 })
 
 test('CLI refuses approval after canonical plan artifact tampering', async () => {

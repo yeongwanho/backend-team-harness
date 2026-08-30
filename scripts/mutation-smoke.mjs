@@ -35,6 +35,12 @@ const mutations = [
     from: 'if (containsXmlDeclaration(text)) {',
     to: 'if (containsXmlDeclaration(text) || text.includes("<!DOCTYPE")) {',
     test: 'test/junit.test.mjs'
+  },
+  {
+    file: 'src/core/retrieval-query.mjs',
+    from: 'if (requirement) return requirement',
+    to: 'if (false && requirement) return requirement',
+    test: 'test/retrieval-query.test.mjs'
   }
 ]
 

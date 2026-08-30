@@ -12,6 +12,8 @@ import { applyImplementation } from '../src/runtime/implementation-apply.mjs'
 import { answerInterview, completeInterview, startInterview } from '../src/runtime/interview-orchestrator.mjs'
 import { advanceTask, createTask, loadTask, updateTaskPlan } from '../src/core/task-store.mjs'
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
+import { loadBudgetedCodeContext } from '../src/core/code-context.mjs'
+import { exportApprovedPlan } from '../src/runtime/plan-export.mjs'
 
 async function approvedImplementationProject(options = {}) {
   const root = await mkdtemp(join(tmpdir(), 'bth-implementation-'))
@@ -82,10 +84,10 @@ async function approvedImplementationProject(options = {}) {
     await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify(options.verificationConfig, null, 2) + '\n', 'utf8')
   }
   initializeGit(root, { forcePaths: ['.gitignore', '.backend-harness/.gitignore'] })
-  await createTask(root, { id: 'IMPL-1', context: 'Add one generated fixture class.' })
+  await createTask(root, { id: 'IMPL-1', context: options.taskContext ?? 'Add one generated fixture class.' })
   await advanceTask(root, 'IMPL-1', 'CONTEXT_READY', { actor: 'developer' })
   const source = await captureConfiguredSourceBinding(root)
-  await updateTaskPlan(root, 'IMPL-1', 'Create src/main/java/example/Generated.java and preserve all verification Gates.', {
+  await updateTaskPlan(root, 'IMPL-1', options.taskPlan ?? 'Create src/main/java/example/Generated.java and preserve all verification Gates.', {
     actor: 'developer', sourceFingerprint: source.fingerprint
   })
   await advanceTask(root, 'IMPL-1', 'PLAN_PROPOSED', { actor: 'developer' })
@@ -183,9 +185,13 @@ test('approved implementation runs in a detached worktree, verifies changes, and
 })
 
 test('built-in provider receives a bounded approved request with on-demand adjacent code and produces a fully verified isolated change', async () => {
+  const approvedPlan = 'Preserve Audit Clock Lock Journal Gate checks. Create src/main/java/example/Generated.java; do not weaken any verification gate.'
   const root = await approvedImplementationProject({
+    taskContext: 'Change FixtureService.',
+    taskPlan: approvedPlan,
     projectFiles: {
-      'src/main/java/example/FixtureService.java': 'package example; class FixtureService {}\n'
+      'src/main/java/example/FixtureService.java': 'package example; class FixtureService {}\n',
+      'src/main/java/example/AuditClockLockJournalGate.java': 'package example; class AuditClockLockJournalGate {}\n'
     },
     providerConfig: {
       schemaVersion: 2,
@@ -232,6 +238,9 @@ test('built-in provider receives a bounded approved request with on-demand adjac
   assert.equal(capturedRequest.codeContext.budget.limitCharacters, 6000)
   assert.equal(capturedRequest.codeContext.status, 'available', JSON.stringify(capturedRequest.codeContext, null, 2))
   assert.equal(capturedRequest.codeContext.provenance.mode, 'bounded-read-only-source-snapshot')
+  assert.equal(capturedRequest.codeContext.entries[0].path, 'src/main/java/example/FixtureService.java')
+  assert.equal(capturedRequest.task.approvedPlan, approvedPlan)
+  assert.equal(capturedRequest.task.context, 'Change FixtureService.')
   assert.ok(capturedRequest.codeContext.entries.length > 0, JSON.stringify({
     codeContext: capturedRequest.codeContext,
     modules: capturedRequest.projectConventions.discovered.modules
@@ -249,6 +258,16 @@ test('built-in provider receives a bounded approved request with on-demand adjac
 
 test('automatic fast implementation requires confirmed project rules and adjacent source-bound code', async () => {
   const root = await approvedRuleAwareFastProject()
+  const taskBefore = (await loadTask(root, 'FAST-1')).record
+  const source = await captureConfiguredSourceBinding(root)
+  const semanticContext = await loadBudgetedCodeContext(root, 'Add one compatible order lookup behavior.', {
+    sourceFingerprint: source.fingerprint, budgetCharacters: 2000
+  })
+  assert.equal(semanticContext.status, 'available')
+  const exported = await exportApprovedPlan(root, 'FAST-1', { contextBudget: 2000 })
+  assert.deepEqual(exported.codeContext.entries, semanticContext.entries)
+  assert.equal(exported.plan.objective, 'Add one compatible order lookup behavior.')
+  assert.match(exported.plan.requestedVerification, /every required project Gate/)
   let capturedRequest
   const result = await runImplementation(root, 'FAST-1', {
     actor: 'developer', allowWrite: true, allowNetwork: true,
@@ -285,6 +304,9 @@ test('automatic fast implementation requires confirmed project rules and adjacen
   assert.equal(capturedRequest.projectConventions.projectRules.readiness, 'confirmed')
   assert.ok(capturedRequest.projectConventions.adjacentCode.paths.some((path) => path.endsWith('OrdersController.java')))
   assert.equal(capturedRequest.implementation.profile.verificationStrategy, 'all-required-gates')
+  assert.deepEqual(capturedRequest.codeContext.entries, semanticContext.entries)
+  assert.equal(capturedRequest.task.approvedPlan, taskBefore.plan)
+  assert.equal(capturedRequest.task.context, taskBefore.context)
 })
 
 test('an unavailable built-in provider fails before creating implementation state or changing the task', async () => {

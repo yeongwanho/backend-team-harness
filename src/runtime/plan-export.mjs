@@ -6,24 +6,10 @@ import { captureConfiguredSourceBinding } from './backend-harness.mjs'
 import { loadBudgetedCodeContext } from '../core/code-context.mjs'
 import { sourceBindingMatchesFingerprint } from '../core/source-binding.mjs'
 import { withProjectVerificationLock } from '../core/project-lock.mjs'
+import { selectTaskRetrievalQuery } from '../core/retrieval-query.mjs'
 
 function sha256(value) {
   return createHash('sha256').update(canonicalJson(value)).digest('hex')
-}
-
-function planQuery(plan) {
-  const values = []
-  const visit = (value) => {
-    if (typeof value === 'string') {
-      values.push(value)
-    } else if (Array.isArray(value)) {
-      value.forEach(visit)
-    } else if (value && typeof value === 'object') {
-      Object.values(value).forEach(visit)
-    }
-  }
-  visit(plan)
-  return values.join('\n').slice(0, 64 * 1024)
 }
 
 async function exportApprovedPlanUnlocked(inputPath, taskId, options = {}) {
@@ -47,6 +33,7 @@ async function exportApprovedPlanUnlocked(inputPath, taskId, options = {}) {
 
   let plan
   let planDigest
+  let retrievalRequirement
   let source = 'manual-task-plan'
   if (task.planArtifactSha256) {
     const interview = await loadInterview(loaded.root, taskId)
@@ -54,6 +41,7 @@ async function exportApprovedPlanUnlocked(inputPath, taskId, options = {}) {
       throw new Error('Approved plan artifact stale or inconsistent with the task record.')
     }
     plan = interview.artifacts.plan
+    retrievalRequirement = interview.record.requirement
     planDigest = task.planArtifactSha256
     source = interview.path + '/plan.json'
   } else {
@@ -67,7 +55,7 @@ async function exportApprovedPlanUnlocked(inputPath, taskId, options = {}) {
     planDigest = sha256(plan)
   }
 
-  const codeContext = await loadBudgetedCodeContext(loaded.root, planQuery(plan), {
+  const codeContext = await loadBudgetedCodeContext(loaded.root, selectTaskRetrievalQuery(task, retrievalRequirement), {
     budgetCharacters: options.contextBudget ?? 4000,
     sourceFingerprint: currentSource.fingerprint
   })
