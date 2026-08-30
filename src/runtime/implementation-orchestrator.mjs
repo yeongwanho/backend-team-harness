@@ -4,7 +4,7 @@ import { chmod, copyFile, lstat, mkdir, realpath, rename, rm, unlink, writeFile 
 import { homedir, tmpdir } from 'node:os'
 import { dirname, relative, resolve } from 'node:path'
 import { loadImplementationConfig, resolveImplementationExecutable } from '../config/implementation.mjs'
-import { loadVerificationConfig, verificationInputPaths } from '../config/verification.mjs'
+import { loadVerificationConfig, verificationExecutablePaths, verificationInputPaths } from '../config/verification.mjs'
 import { canonicalJson } from '../core/canonical-json.mjs'
 import {
   implementationIntegrationStatus,
@@ -13,6 +13,7 @@ import {
   snapshotImplementedFiles
 } from '../core/implementation-record-store.mjs'
 import { buildSafeEnvironment, runProcess } from '../core/process-runner.mjs'
+import { implementationStateDirectory } from '../core/platform.mjs'
 import { withProjectVerificationLock } from '../core/project-lock.mjs'
 import { captureSourceBinding } from '../core/source-binding.mjs'
 import { advanceTask, loadTask, recordImplementationLifecycle } from '../core/task-store.mjs'
@@ -196,10 +197,17 @@ async function suspiciousIndexFlags(worktree) {
 }
 
 async function implementationWorktreesRoot(root) {
-  const canonicalHome = await realpath(homedir())
-  const parent = resolve(canonicalHome, '.local/state/backend-team-harness/worktrees')
+  const requestedStateRoot = implementationStateDirectory()
+  await mkdir(requestedStateRoot, { recursive: true, mode: 0o700 })
+  if (process.platform !== 'win32' && !(typeof process.env.XDG_STATE_HOME === 'string' && process.env.XDG_STATE_HOME.trim())) {
+    await assertNoSymlinkSegments(await realpath(homedir()), requestedStateRoot)
+  }
+  const stateMetadata = await lstat(requestedStateRoot)
+  if (!stateMetadata.isDirectory() || stateMetadata.isSymbolicLink()) throw new Error('Implementation state root is unsafe.')
+  const canonicalStateRoot = await realpath(requestedStateRoot)
+  const parent = resolve(canonicalStateRoot, 'worktrees')
   await mkdir(parent, { recursive: true, mode: 0o700 })
-  await assertNoSymlinkSegments(canonicalHome, parent)
+  await assertNoSymlinkSegments(canonicalStateRoot, parent)
   const parentMetadata = await lstat(parent)
   if (!parentMetadata.isDirectory() || parentMetadata.isSymbolicLink()) throw new Error('Implementation worktree parent is unsafe.')
   if (process.platform !== 'win32') {
@@ -289,7 +297,7 @@ async function captureImplementationBinding(root, verificationConfig) {
     return {
       binding: await captureSourceBinding(root, {
         explicitPaths: verificationInputPaths(verificationConfig),
-        allowSymlinkPaths: verificationConfig.gates.map((gate) => gate.command[0])
+        allowSymlinkPaths: verificationExecutablePaths(verificationConfig)
       }),
       error: null
     }

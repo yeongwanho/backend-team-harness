@@ -2,6 +2,7 @@ import { constants } from 'node:fs'
 import { access, readFile } from 'node:fs/promises'
 import { isAbsolute, posix, relative } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
+import { projectExecutableForPlatform } from '../core/platform.mjs'
 import { reportGlobBase, reportPatternsMayOverlap } from '../core/report-glob.mjs'
 
 const GATE_ID = /^[a-z][a-z0-9-]{0,63}$/
@@ -296,10 +297,16 @@ export function parseVerificationConfig(text, source = '<inline>') {
   }
 }
 
-export function verificationInputPaths(config) {
+export function verificationExecutablePaths(config, options = {}) {
+  const platform = options.platform ?? process.platform
+  return [...new Set(config.gates.map((gate) => projectExecutableForPlatform(gate.command[0], platform)))].sort()
+}
+
+export function verificationInputPaths(config, options = {}) {
+  const platform = options.platform ?? process.platform
   return [...new Set([
     '.backend-harness/verification.json',
-    ...config.gates.flatMap((gate) => [gate.command[0], ...gate.inputs])
+    ...config.gates.flatMap((gate) => [projectExecutableForPlatform(gate.command[0], platform), ...gate.inputs])
   ])].sort()
 }
 
@@ -310,7 +317,6 @@ async function regularFile(root, path) {
 }
 
 export async function defaultVerificationConfig(root) {
-  const windows = process.platform === 'win32'
   if (await regularFile(root, 'build.gradle') || await regularFile(root, 'build.gradle.kts')) {
     const inputs = []
     for (const path of ['gradle/wrapper/gradle-wrapper.properties', 'gradle/wrapper/gradle-wrapper.jar', 'gradle.properties']) {
@@ -324,7 +330,7 @@ export async function defaultVerificationConfig(root) {
       gates: [{
         id: 'tests',
         required: true,
-        command: [windows ? './gradlew.bat' : './gradlew', 'test', '--offline', '--no-daemon', '--console=plain', '--rerun-tasks'],
+        command: ['./gradlew', 'test', '--offline', '--no-daemon', '--console=plain', '--rerun-tasks'],
         inputs,
         timeoutMs: 600000,
         result: {
@@ -348,7 +354,7 @@ export async function defaultVerificationConfig(root) {
       gates: [{
         id: 'tests',
         required: true,
-        command: [windows ? './mvnw.cmd' : './mvnw', '-o', '-B', 'verify'],
+        command: ['./mvnw', '-o', '-B', 'verify'],
         inputs,
         timeoutMs: 600000,
         result: {
@@ -387,14 +393,16 @@ export async function loadVerificationConfig(root, options = {}) {
   }
 }
 
-export async function resolveGateExecutable(root, command) {
-  const relativePath = normalizeProjectRelativePath(command[0], 'gate command')
+export async function resolveGateExecutable(root, command, options = {}) {
+  const platform = options.platform ?? process.platform
+  const executable = projectExecutableForPlatform(command[0], platform)
+  const relativePath = normalizeProjectRelativePath(executable, 'gate command')
   const path = await resolveSafeProjectPath(root, relativePath)
   const stat = await statPath(path)
   if (!stat?.isFile() || stat.isSymbolicLink()) {
     throw new Error('Gate executable is missing or unsafe: ' + command[0])
   }
-  if (process.platform !== 'win32') {
+  if (platform !== 'win32') {
     try {
       await access(path, constants.X_OK)
     } catch {

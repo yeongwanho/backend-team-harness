@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { runProcess } from './process-runner.mjs'
+import { projectExecutableForPlatform } from './platform.mjs'
 
 async function sha256File(root, relativePath) {
   const path = await resolveSafeProjectPath(root, relativePath)
@@ -68,7 +69,7 @@ async function javaRuntime(root, needed) {
 export async function captureToolchain(root, config) {
   const executables = []
   for (const gate of config.gates) {
-    const relativePath = gate.command[0].replace(/^\.\//, '')
+    const relativePath = projectExecutableForPlatform(gate.command[0]).replace(/^\.\//, '')
     executables.push({ gateId: gate.id, path: './' + relativePath, ...await sha256File(root, relativePath) })
   }
   const commandNames = config.gates.map((gate) => basename(gate.command[0]).toLowerCase())

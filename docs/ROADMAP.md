@@ -137,7 +137,7 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 ## Later, only with measured demand
 
 - [ ] optional trusted-CI signature/attestation policy for organizations that need hostile-author assurance
-- [ ] Windows CI proof for wrapper execution and descendant-process cleanup
+- [ ] Windows CI proof for wrapper execution and descendant-process cleanup (hosted wrapper smoke added; descendant cleanup still needs a native leak fixture)
 - [ ] explicit lock inspection/unlock workflow with the same ownership safeguards
 - [ ] starter recipes for non-JVM backends, driven by measured team demand
 - [ ] runtime coverage-to-test observation index

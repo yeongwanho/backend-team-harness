@@ -5,7 +5,7 @@ import { captureSourceBinding } from '../core/source-binding.mjs'
 import { recordProjectRun } from '../core/run-record-store.mjs'
 import { withProjectVerificationLock } from '../core/project-lock.mjs'
 import { verifyTask as verifyWithRegistry } from '../core/verify-task.mjs'
-import { loadVerificationConfig, verificationInputPaths } from '../config/verification.mjs'
+import { loadVerificationConfig, verificationExecutablePaths, verificationInputPaths } from '../config/verification.mjs'
 
 async function configuredSourceBinder(inputPath, options) {
   if (options.captureSourceBinding) {
@@ -13,7 +13,7 @@ async function configuredSourceBinder(inputPath, options) {
   }
   const loaded = await loadVerificationConfig(inputPath)
   const explicitPaths = verificationInputPaths(loaded.config)
-  const allowSymlinkPaths = loaded.config.gates.map((gate) => gate.command[0])
+  const allowSymlinkPaths = verificationExecutablePaths(loaded.config)
   return () => captureSourceBinding(inputPath, { explicitPaths, allowSymlinkPaths })
 }
 
@@ -21,7 +21,7 @@ export async function captureConfiguredSourceBinding(inputPath) {
   const loaded = await loadVerificationConfig(inputPath)
   return captureSourceBinding(inputPath, {
     explicitPaths: verificationInputPaths(loaded.config),
-    allowSymlinkPaths: loaded.config.gates.map((gate) => gate.command[0])
+    allowSymlinkPaths: verificationExecutablePaths(loaded.config)
   })
 }
 

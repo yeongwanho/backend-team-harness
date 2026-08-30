@@ -12,10 +12,13 @@ const SAFE_ENVIRONMENT_KEYS = [
   'LANG',
   'LC_ALL',
   'M2_HOME',
+  'ComSpec',
+  'COMSPEC',
   'HTTP_PROXY',
   'HTTPS_PROXY',
   'NO_PROXY',
   'PATH',
+  'PATHEXT',
   'SystemRoot',
   'TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE',
   'TESTCONTAINERS_HOST_OVERRIDE',
@@ -23,6 +26,8 @@ const SAFE_ENVIRONMENT_KEYS = [
   'TMPDIR',
   'TEMP',
   'TMP',
+  'USERPROFILE',
+  'WINDIR',
   'XDG_RUNTIME_DIR',
   'http_proxy',
   'https_proxy',
@@ -37,6 +42,46 @@ export function buildSafeEnvironment(source = process.env) {
     }
   }
   return result
+}
+
+function quoteWindowsBatchToken(value, label) {
+  if (typeof value !== 'string' || /[\0\r\n"%]/.test(value)) {
+    throw new Error(label + ' cannot be represented safely by cmd.exe.')
+  }
+  return '"' + value + '"'
+}
+
+export function buildProcessLaunch({ program, args = [], platform = process.platform, env = process.env }) {
+  if (platform !== 'win32' || !/\.(?:cmd|bat)$/i.test(program)) {
+    return {
+      program,
+      args,
+      options: { detached: platform !== 'win32', shell: false, windowsHide: platform === 'win32' }
+    }
+  }
+  const shell = env.ComSpec || env.COMSPEC || (env.SystemRoot ? env.SystemRoot + '\\System32\\cmd.exe' : 'cmd.exe')
+  const command = [
+    quoteWindowsBatchToken(program, 'Windows batch executable'),
+    ...args.map((argument, index) => quoteWindowsBatchToken(argument, 'Windows batch argument ' + index))
+  ].join(' ')
+  return {
+    program: shell,
+    args: ['/d', '/s', '/c', '"' + command + '"'],
+    options: {
+      detached: false,
+      shell: false,
+      windowsHide: true,
+      windowsVerbatimArguments: true
+    }
+  }
+}
+
+export function windowsTaskkillInvocation(pid, signal) {
+  if (!Number.isInteger(pid) || pid <= 0) throw new Error('Windows process-tree termination requires a positive PID.')
+  return {
+    program: 'taskkill.exe',
+    args: ['/pid', String(pid), '/t', ...(signal === 'SIGKILL' ? ['/f'] : [])]
+  }
 }
 
 export function runProcess({
@@ -67,11 +112,12 @@ export function runProcess({
     let observedSignal = null
     let drainCleanupPending = false
 
-    const child = spawn(program, args, {
+    const childEnvironment = env ?? buildSafeEnvironment()
+    const launch = buildProcessLaunch({ program, args, env: childEnvironment })
+    const child = spawn(launch.program, launch.args, {
       cwd,
-      env: env ?? buildSafeEnvironment(),
-      detached: process.platform !== 'win32',
-      shell: false,
+      env: childEnvironment,
+      ...launch.options,
       stdio: ['ignore', 'pipe', 'pipe']
     })
 
@@ -86,6 +132,26 @@ export function runProcess({
           }
           return
         }
+      }
+      if (process.platform === 'win32' && child.pid) {
+        const termination = windowsTaskkillInvocation(child.pid, signal)
+        const killer = spawn(termination.program, termination.args, {
+          env: childEnvironment,
+          shell: false,
+          windowsHide: true,
+          stdio: 'ignore'
+        })
+        let fallbackRequested = false
+        const fallback = () => {
+          if (fallbackRequested) return
+          fallbackRequested = true
+          child.kill(signal)
+        }
+        killer.once('error', fallback)
+        killer.once('close', (code) => {
+          if (code !== 0) fallback()
+        })
+        return
       }
       child.kill(signal)
     }

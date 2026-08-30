@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
+    "test:windows-contract": "node --test test/windows-compat.test.mjs",
     "test:real-jvm": "BTH_REAL_JVM_E2E=1 node --test test/jvm-real-e2e.test.mjs",
     "test:real-db": "BTH_REAL_DB_E2E=1 node --test test/db-real-e2e.test.mjs",
     "benchmark:adaptive": "node scripts/benchmark-adaptive-verification.mjs",

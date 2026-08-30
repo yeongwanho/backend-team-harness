@@ -95,16 +95,15 @@ export async function gateForPack(pack, root) {
     return structuredClone(pack.gate)
   }
   const build = await buildKind(root)
-  const windows = process.platform === 'win32'
   if (pack.id === 'db-integration') {
     return build === 'gradle' ? {
       id: 'db-integration', required: true, network: true,
-      command: [windows ? './gradlew.bat' : './gradlew', 'integrationTest', '--no-daemon', '--console=plain', '--rerun-tasks'],
+      command: ['./gradlew', 'integrationTest', '--no-daemon', '--console=plain', '--rerun-tasks'],
       inputs: [], timeoutMs: 900000,
       result: { type: 'junit', reports: ['build/test-results/integrationTest/**/*.xml'], minimumTests: 1 }
     } : {
       id: 'db-integration', required: true, network: true,
-      command: [windows ? './mvnw.cmd' : './mvnw', '-B', '-Pdb-integration', '-Dfailsafe.reportsDirectory=target/bth-reports/db-integration', 'verify'],
+      command: ['./mvnw', '-B', '-Pdb-integration', '-Dfailsafe.reportsDirectory=target/bth-reports/db-integration', 'verify'],
       inputs: [], timeoutMs: 900000,
       result: { type: 'junit', reports: ['target/bth-reports/db-integration/TEST-*.xml'], minimumTests: 1 }
     }
@@ -112,24 +111,24 @@ export async function gateForPack(pack, root) {
   if (pack.id === 'architecture') {
     return build === 'gradle' ? {
       id: 'architecture', required: true,
-      command: [windows ? './gradlew.bat' : './gradlew', 'architectureTest', '--offline', '--no-daemon', '--console=plain', '--rerun-tasks'],
+      command: ['./gradlew', 'architectureTest', '--offline', '--no-daemon', '--console=plain', '--rerun-tasks'],
       inputs: [], timeoutMs: 600000,
       result: { type: 'junit', reports: ['build/test-results/architectureTest/**/*.xml'], minimumTests: 1 }
     } : {
       id: 'architecture', required: true,
-      command: [windows ? './mvnw.cmd' : './mvnw', '-o', '-B', '-Dtest=*ArchitectureTest', '-Dsurefire.reportsDirectory=target/bth-reports/architecture', 'test'],
+      command: ['./mvnw', '-o', '-B', '-Dtest=*ArchitectureTest', '-Dsurefire.reportsDirectory=target/bth-reports/architecture', 'test'],
       inputs: [], timeoutMs: 600000,
       result: { type: 'junit', reports: ['target/bth-reports/architecture/TEST-*.xml'], minimumTests: 1 }
     }
   }
   return build === 'gradle' ? {
     id: 'contract', required: true,
-    command: [windows ? './gradlew.bat' : './gradlew', 'contractTest', '--offline', '--no-daemon', '--console=plain', '--rerun-tasks'],
+    command: ['./gradlew', 'contractTest', '--offline', '--no-daemon', '--console=plain', '--rerun-tasks'],
     inputs: [], timeoutMs: 900000,
     result: { type: 'junit', reports: ['build/test-results/contractTest/**/*.xml'], minimumTests: 1 }
   } : {
     id: 'contract', required: true,
-    command: [windows ? './mvnw.cmd' : './mvnw', '-o', '-B', '-Pcontract-test', '-Dfailsafe.reportsDirectory=target/bth-reports/contract', 'verify'],
+    command: ['./mvnw', '-o', '-B', '-Pcontract-test', '-Dfailsafe.reportsDirectory=target/bth-reports/contract', 'verify'],
     inputs: [], timeoutMs: 900000,
     result: { type: 'junit', reports: ['target/bth-reports/contract/TEST-*.xml'], minimumTests: 1 }
   }

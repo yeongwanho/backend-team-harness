@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
-import { loadVerificationConfig, parseVerificationConfig, verificationInputPaths } from './config/verification.mjs'
+import { loadVerificationConfig, parseVerificationConfig, verificationExecutablePaths, verificationInputPaths } from './config/verification.mjs'
 import { captureSourceBinding } from './core/source-binding.mjs'
 import { resolveReadableRoot, resolveSafeProjectPath, statPath } from './fs-safety.mjs'
 import { withProjectVerificationLock } from './core/project-lock.mjs'
@@ -37,7 +37,7 @@ async function updateTestBaselineUnlocked(inputPath) {
   const loaded = await loadVerificationConfig(root, { allowInferred: false })
   const current = await captureSourceBinding(root, {
     explicitPaths: verificationInputPaths(loaded.config),
-    allowSymlinkPaths: loaded.config.gates.map((gate) => gate.command[0])
+    allowSymlinkPaths: verificationExecutablePaths(loaded.config)
   })
   if (current.fingerprint !== run.source?.fingerprint) {
     throw new Error('Source changed after the latest run. Run `bth check` again before updating the baseline.')

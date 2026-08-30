@@ -1,6 +1,6 @@
 import { isAbsolute, relative, sep } from 'node:path'
 import { doctorProject } from '../doctor.mjs'
-import { loadVerificationConfig, verificationInputPaths } from '../config/verification.mjs'
+import { loadVerificationConfig, verificationExecutablePaths, verificationInputPaths } from '../config/verification.mjs'
 import { loadQualityGates } from '../config/quality-gates.mjs'
 import { captureSourceBinding } from '../core/source-binding.mjs'
 
@@ -32,7 +32,7 @@ export async function inspectProjectContext(inputPath, options = {}) {
   const policies = options.policies ?? await loadQualityGates(doctor.root)
   const sourceBinding = options.sourceBinding ?? await captureSourceBinding(inputPath, {
     explicitPaths: verificationInputPaths(verification.config),
-    allowSymlinkPaths: verification.config.gates.map((gate) => gate.command[0])
+    allowSymlinkPaths: verificationExecutablePaths(verification.config)
   })
   const build = checkById(doctor, 'build-file')
   const wrapper = checkById(doctor, 'build-wrapper')
