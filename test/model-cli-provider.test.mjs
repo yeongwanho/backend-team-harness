@@ -263,8 +263,11 @@ test('real provider runner path resolves, spawns, and extracts usage from a fixt
   const executable = join(directory, 'codex')
   await mkdir(join(directory, 'src'), { recursive: true })
   await writeFile(join(directory, 'src/users.js'), 'export const users = []\n', 'utf8')
+  await writeFile(join(directory, 'src/other.js'), 'export const other = true\n', 'utf8')
   await writeFile(executable, [
     '#!/bin/sh',
+    'printf \'%s\\n\' \'{"type":"item.started","item":{"id":"d1","type":"command_execution","command":"find src -type f","aggregated_output":"","exit_code":null,"status":"in_progress"}}\'',
+    'printf \'%s\\n\' \'{"type":"item.completed","item":{"id":"d1","type":"command_execution","command":"find src -type f","aggregated_output":"src/other.js\\nsrc/users.js\\n","exit_code":0,"status":"completed"}}\'',
     'printf \'%s\\n\' \'{"type":"item.started","item":{"id":"1","type":"command_execution","command":"sed -n 1,80p src/users.js","aggregated_output":"","exit_code":null,"status":"in_progress"}}\'',
     'printf \'%s\\n\' \'{"type":"item.started","item":{"id":"v1","type":"command_execution","command":"./mvnw test","aggregated_output":"","exit_code":null,"status":"in_progress"}}\'',
     'printf \'%s\\n\' \'{"type":"item.completed","item":{"id":"2","type":"file_change","changes":[{"path":"src/users.js","kind":"update"}],"status":"completed"}}\'',
@@ -290,8 +293,11 @@ test('real provider runner path resolves, spawns, and extracts usage from a fixt
   assert.equal(result.metadata.usage.tokens.output, 2)
   assert.equal(result.metadata.usage.tokens.total, 9)
   assert.equal(result.metadata.usage.tokens.uncachedInput, 4)
-  assert.deepEqual(result.metadata.activity.preWritePaths, ['src/users.js'])
+  assert.deepEqual(result.metadata.activity.preWritePaths, ['src/users.js', 'src/other.js'])
+  assert.deepEqual(result.metadata.activity.preWriteContentPaths, ['src/users.js'])
+  assert.deepEqual(result.metadata.activity.preWriteDiscoveryPaths, ['src/other.js', 'src/users.js'])
   assert.deepEqual(result.metadata.activity.changedPaths, ['src/users.js'])
+  assert.equal(result.metadata.activity.discoveryCommandCount, 1)
   assert.equal(result.metadata.activity.validationCommandCount, 1)
   assert.equal(result.metadata.usage.providerReported['usage.input_tokens'], 7)
 
@@ -345,6 +351,8 @@ test('Claude stream events expose bounded pre-write activity and cache-aware usa
   assert.equal(result.metadata.usage.tokens.total, 15)
   assert.equal(result.metadata.usage.costUsd, 0.01)
   assert.deepEqual(result.metadata.activity.preWritePaths, ['src/users.js'])
+  assert.deepEqual(result.metadata.activity.preWriteContentPaths, ['src/users.js'])
+  assert.deepEqual(result.metadata.activity.preWriteDiscoveryPaths, [])
   assert.deepEqual(result.metadata.activity.changedPaths, ['src/users.js'])
   assert.equal(result.metadata.activity.readCommandCount, 1)
   assert.equal(result.metadata.activity.writeEventCount, 1)

@@ -243,7 +243,6 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
     profile,
     env: buildSafeEnvironment()
   }, { version: options.providerVersion })
-  const elapsedMs = Date.now() - startedAt
   const paths = await changedPaths(root, baseCommit)
   const ruleViolations = await directRuleViolations(root, baseCommit, paths, repositoryConfig)
   if ((run.metadata?.activity?.validationCommandCount ?? 0) > 0) {
@@ -254,7 +253,7 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
   if (processPassed(run.process) && paths.length > 0 && ruleViolations.length === 0) {
     try {
       await initProject(root, { preferredSystem: repositoryConfig.buildSystem })
-      const checked = await checkProject(root, { allowNetwork: true })
+      const checked = await (options.projectChecker ?? checkProject)(root, { allowNetwork: true })
       verificationConfirmed = checked.confirmed === true
       verificationFailure = checked.confirmed ? null : checked.result?.failure?.code ?? 'verification-failed'
     } catch (error) {
@@ -267,7 +266,7 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
     providerCompleted: processPassed(run.process),
     verificationConfirmed,
     attempts: 1,
-    elapsedMs,
+    elapsedMs: Date.now() - startedAt,
     changedPaths: paths,
     impactPaths: run.metadata?.activity?.preWritePaths?.length ? run.metadata.activity.preWritePaths : null,
     ruleViolations,

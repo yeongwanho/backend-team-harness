@@ -311,7 +311,7 @@ BTH는 요구사항의 단어를 path/type과 대조하고, provenance별 가중
 
 합성 순위 회귀는 50개 node, 4개 요구사항, 20개 distractor가 있는 versioned fixture에서 같은 API로 측정하며 현재 Recall@5와 Recall@20은 모두 `1.0`입니다. 별도로 `npm run benchmark:public -- --allow-network`는 Spring Petclinic, NestJS Boilerplate, Full Stack FastAPI Template의 고정 commit 20개를 clone하고 각 실제 변경 파일을 gold로 검증합니다. production/test pair 동시 선택을 추가한 뒤의 공개 corpus 관찰값은 mean Recall@5 `0.4390`, Recall@20 `0.7200`, nDCG@20 `0.5042`, Recall@20=0 작업 `0개`입니다. 이전 관찰값은 각각 `0.3682`, `0.7075`, `0.4908`이었습니다. 이는 **변경 파일 위치 찾기**의 재현 가능한 관찰일 뿐 구현 성공률이나 회사 저장소 정확도 주장이 아닙니다. 원본 코드·artifact 본문은 evidence에 저장하지 않습니다.
 
-실제 Codex/Claude 구현 비교는 별도 비용 승인 하에서 같은 20개 작업을 BTH lane과 direct lane으로 실행합니다. 수정 후 파일은 양쪽의 `outcomeLocalization`으로만 비교하고, 수정 전 영향 분석은 provider 이벤트에서 실제 pre-write 경로를 관찰했을 때만 `impactLocalization`으로 채웁니다. 미측정을 0점이나 수정 결과로 대체하지 않습니다. token은 total/input/cached/uncached/output/reasoning을 분리하고, provider가 evaluator 소유의 build/test 명령을 중복 실행하면 규칙 위반으로 기록합니다.
+실제 Codex/Claude 구현 비교는 별도 비용 승인 하에서 같은 20개 작업을 BTH lane과 direct lane으로 실행합니다. 수정 후 파일은 양쪽의 `outcomeLocalization`으로만 비교하고, 수정 전 영향 분석은 provider 이벤트에서 실제 pre-write 경로를 관찰했을 때만 `impactLocalization`으로 채웁니다. 실제 내용 읽기를 단순 파일 목록·검색 발견보다 앞에 순위화하며 미측정을 0점이나 수정 결과로 대체하지 않습니다. 작업 시간은 양쪽 모두 provider 실행과 사후 검증을 포함합니다. token은 total/input/cached/uncached/output/reasoning을 분리하고, provider가 evaluator 소유의 build/test 명령을 중복 실행하면 규칙 위반으로 기록합니다.
 
 ```bash
 # 비용 없이 80개 case 계획만 확인

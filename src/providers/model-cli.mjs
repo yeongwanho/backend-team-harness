@@ -182,7 +182,8 @@ export function buildProviderPromptInvocation(adapter, executable, prompt, profi
 }
 
 const ACTIVITY_SOURCE = /\.(?:java|kt|ts|tsx|js|jsx|mjs|cjs|py|sql|json|ya?ml|toml|properties|md)$/i
-const READ_COMMAND = /(?:^|[\s;&|])(?:cat|sed|head|tail|rg|grep|find|fd|ls)\b/
+const CONTENT_READ_COMMAND = /(?:^|[\s;&|])(?:cat|sed|head|tail)\b/
+const DISCOVERY_COMMAND = /(?:^|[\s;&|])(?:rg|grep|find|fd|ls)\b/
 const WRITE_COMMAND = /(?:^|[\s;&|])(?:apply_patch|tee)\b|\bsed\s+-i\b|\bperl\s+-pi\b|(?:^|[^>])>{1,2}\s*[^&]/
 const VALIDATION_COMMAND = /(?:^|[\s;&|./])(?:mvnw?|gradlew?|pytest|docker)(?:\s|$)|\b(?:npm|pnpm|yarn)\s+(?:run\s+)?(?:test|check|verify|lint|format)\b|\buv\s+run\s+pytest\b/i
 
@@ -221,17 +222,23 @@ function sourcePaths(text, cwd, mustExist = true) {
 }
 
 function providerActivityObserver(provider, cwd) {
-  const preWritePaths = new Set()
+  const preWriteContentPaths = new Set()
+  const preWriteDiscoveryPaths = new Set()
   const changedPaths = new Set()
   let firstWriteObserved = false
   let parsedEvents = 0
   let rejectedEvents = 0
   let readCommandCount = 0
+  let discoveryCommandCount = 0
   let validationCommandCount = 0
   let writeEventCount = 0
-  function addPreWrite(values) {
+  function addPreWriteContent(values) {
     if (firstWriteObserved) return
-    for (const value of values) if (preWritePaths.size < 256) preWritePaths.add(value)
+    for (const value of values) if (preWriteContentPaths.size < 256) preWriteContentPaths.add(value)
+  }
+  function addPreWriteDiscovery(values) {
+    if (firstWriteObserved) return
+    for (const value of values) if (preWriteDiscoveryPaths.size < 256) preWriteDiscoveryPaths.add(value)
   }
   function markWrite(values = []) {
     firstWriteObserved = true
@@ -252,10 +259,13 @@ function providerActivityObserver(provider, cwd) {
     const command = typeof item.command === 'string' ? item.command : ''
     if (VALIDATION_COMMAND.test(command) && document.type === 'item.started') validationCommandCount += 1
     if (WRITE_COMMAND.test(command) && document.type === 'item.started') markWrite(sourcePaths(command, cwd, false))
-    if (READ_COMMAND.test(command)) {
+    if (CONTENT_READ_COMMAND.test(command)) {
       readCommandCount += document.type === 'item.started' ? 1 : 0
-      addPreWrite(sourcePaths(command, cwd))
-      if (document.type === 'item.completed') addPreWrite(sourcePaths(item.aggregated_output, cwd))
+      addPreWriteContent(sourcePaths(command, cwd))
+    } else if (DISCOVERY_COMMAND.test(command)) {
+      discoveryCommandCount += document.type === 'item.started' ? 1 : 0
+      addPreWriteDiscovery(sourcePaths(command, cwd))
+      if (document.type === 'item.completed') addPreWriteDiscovery(sourcePaths(item.aggregated_output, cwd))
     }
   }
   function observeClaude(document) {
@@ -267,7 +277,7 @@ function providerActivityObserver(provider, cwd) {
       if (['Edit', 'Write'].includes(name)) markWrite([input.file_path])
       else if (name === 'Read') {
         readCommandCount += 1
-        addPreWrite([safeActivityPath(input.file_path, cwd, true)].filter(Boolean))
+        addPreWriteContent([safeActivityPath(input.file_path, cwd, true)].filter(Boolean))
       }
     }
   }
@@ -287,6 +297,10 @@ function providerActivityObserver(provider, cwd) {
       }
     },
     snapshot() {
+      const rankedPreWritePaths = [
+        ...preWriteContentPaths,
+        ...[...preWriteDiscoveryPaths].filter((path) => !preWriteContentPaths.has(path))
+      ].slice(0, 256)
       return {
         schemaVersion: 1,
         provider,
@@ -294,9 +308,12 @@ function providerActivityObserver(provider, cwd) {
         parsedEvents,
         rejectedEvents,
         firstWriteObserved,
-        preWritePaths: [...preWritePaths],
+        preWritePaths: rankedPreWritePaths,
+        preWriteContentPaths: [...preWriteContentPaths],
+        preWriteDiscoveryPaths: [...preWriteDiscoveryPaths],
         changedPaths: [...changedPaths],
         readCommandCount,
+        discoveryCommandCount,
         validationCommandCount,
         writeEventCount
       }

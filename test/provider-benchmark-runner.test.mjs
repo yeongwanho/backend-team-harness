@@ -103,6 +103,24 @@ test('prepared direct lane uses the same verification contract after provider ex
   assert.equal(result.score.outcomeLocalization.recallAt5, 1)
 })
 
+test('prepared direct lane elapsed time includes evaluator-owned verification', async () => {
+  const root = await project('bth-comparison-direct-elapsed-')
+  const verificationDelayMs = 80
+  const result = await runPreparedComparisonCase(root, task, repositoryConfig, {
+    lane: 'direct', provider: 'codex', mode: 'balanced', model: null,
+    maxAttempts: 1, timeoutMs: 30_000, maxBudgetUsd: null
+  }, {
+    directProviderRunner: fixtureProvider,
+    projectChecker: async () => {
+      await new Promise((resolve) => setTimeout(resolve, verificationDelayMs))
+      return { confirmed: true, result: { failure: null } }
+    }
+  })
+
+  assert.equal(result.score.successAt1, true, JSON.stringify(result, null, 2))
+  assert.ok(result.score.elapsedMs >= verificationDelayMs)
+})
+
 test('provider-owned validation is a measured rule violation instead of hidden duplicate work', async () => {
   const root = await project('bth-comparison-provider-validation-')
   const provider = async (adapter, input) => {
