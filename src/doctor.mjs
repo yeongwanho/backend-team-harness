@@ -103,20 +103,20 @@ async function inspectFlyway(root) {
   const duplicates = []
   for (const path of found.matches) {
     const name = path.split(sep).at(-1)
-    const versionMatch = name.match(/^V([0-9]+(?:[._][0-9]+)*)__[^/]+\.sql$/)
+    const versionMatch = name.match(/^([VU])([0-9]+(?:[._][0-9]+)*)__[^/]+\.sql$/)
     const repeatable = /^R__[^/]+\.sql$/.test(name)
     if (!versionMatch && !repeatable) {
       invalid.push(path)
       continue
     }
     if (versionMatch) {
-      const parts = versionMatch[1]
+      const parts = versionMatch[2]
         .split(/[._]/)
         .map((part) => BigInt(part).toString())
       while (parts.length > 1 && parts.at(-1) === '0') {
         parts.pop()
       }
-      const version = parts.join('.')
+      const version = versionMatch[1] + ':' + parts.join('.')
       if (versioned.has(version)) {
         duplicates.push([versioned.get(version), path])
       } else {

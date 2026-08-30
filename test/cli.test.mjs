@@ -164,6 +164,11 @@ test('CLI drives one approved task through real guarded verification', async () 
   for (const command of commands) {
     const result = runCli(command)
     assert.equal(result.status, 0, result.stderr || result.stdout)
+    if (command.includes('PLAN_APPROVED')) {
+      const forbidden = runCli(['task', 'advance', 'CLI-1', 'VERIFYING', root, '--by', 'developer'])
+      assert.equal(forbidden.status, 1)
+      assert.match(forbidden.stderr, /VERIFYING is owned by `bth verify`/)
+    }
   }
 
   const status = runCli(['task', 'status', 'CLI-1', root, '--json'])

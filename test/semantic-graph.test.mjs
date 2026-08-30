@@ -15,7 +15,13 @@ test('semantic advisory graph resolves multiple declarations, inheritance, injec
   const root = await mkdtemp(join(tmpdir(), 'bth-semantic-graph-'))
   await writeSource(root, 'BaseService', 'class BaseService {}')
   await writeSource(root, 'UserPort', 'interface UserPort {}')
-  await writeSource(root, 'UserService', '@org.springframework.stereotype.Service class UserService extends BaseService implements UserPort {}')
+  await writeSource(root, 'UserService', [
+    '@org.springframework.stereotype.Service',
+    'class UserService',
+    '  extends BaseService',
+    '  implements UserPort',
+    '{}'
+  ].join('\n'))
   await writeSource(root, 'UserController', [
     '@org.springframework.web.bind.annotation.RestController',
     'class UserController {',
@@ -47,4 +53,27 @@ test('semantic advisory graph resolves multiple declarations, inheritance, injec
   assert.equal(nodesByType.get('example.CycleA').componentId, nodesByType.get('example.CycleB').componentId)
   assert.equal(document.graph.ranking.algorithm, 'weighted-pagerank')
   assert.deepEqual(document.graph.permittedUses, ['navigation', 'review-questions', 'impact-localization'])
+})
+
+test('semantic graph names Kotlin modifier declarations instead of indexing the word class', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-semantic-kotlin-'))
+  const directory = join(root, 'src/main/kotlin/example')
+  await mkdir(directory, { recursive: true })
+  await writeFile(join(directory, 'Kinds.kt'), [
+    'package example',
+    'enum class UserKind { ACTIVE }',
+    ''
+  ].join('\n'), 'utf8')
+  await writeFile(join(directory, 'UserEvent.kt'), 'package example\nsealed interface UserEvent\n', 'utf8')
+  await writeFile(join(directory, 'UserCreated.kt'), 'package example\ndata class UserCreated(val id: Long) : UserEvent\n', 'utf8')
+
+  const document = await indexProjectGraph(root, { generatedAt: '2026-08-30T00:00:00.000Z' })
+  const nodesByType = new Map(document.graph.nodes.flatMap((node) => node.declaredTypes.map((type) => [type, node])))
+  const relation = document.graph.edges.find((edge) =>
+    edge.from === nodesByType.get('example.UserCreated').id && edge.to === nodesByType.get('example.UserEvent').id
+  )
+
+  assert.deepEqual([...nodesByType.keys()].sort(), ['example.UserCreated', 'example.UserEvent', 'example.UserKind'])
+  assert.equal(nodesByType.get('example.UserKind').qualifiedName, 'example.UserKind')
+  assert.equal(relation.kind, 'implements')
 })

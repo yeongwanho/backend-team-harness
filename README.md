@@ -112,7 +112,7 @@ node src/cli.mjs check examples/spring-service --allow-network
 
 ### 실패를 더 빨리 보여 주는 선택적 순서 최적화
 
-기본값은 언제나 작성된 Gate 순서입니다. 서로 선후 의존성이 없는 required Gate만 팀이 직접 표시하면, BTH가 로컬 실행 이력으로 실패 가능성과 평균 비용을 추정해 첫 실패를 더 빨리 보여 줄 수 있습니다.
+기본값은 언제나 작성된 Gate 순서입니다. 팀이 required Gate를 직접 `reorderable`로 표시하면, BTH가 로컬 실행 이력으로 실패 가능성과 평균 비용을 추정해 첫 실패를 더 빨리 보여 줄 수 있습니다.
 
 ```json
 {
@@ -131,7 +131,7 @@ node src/cli.mjs check examples/spring-service --allow-network
 }
 ```
 
-순서는 Beta 평활한 실패확률 `p`를 평균 시간 `c`로 나눈 `p/c` 내림차순입니다. 단, 다음 경계는 바뀌지 않습니다.
+의존성이 없는 직렬 구간은 Beta 평활한 실패확률 `p`를 평균 시간 `c`로 나눈 `p/c` 내림차순이 pairwise optimum입니다. 의존성이 있는 18개 이하의 직렬 구간은 `duration + passProbability × remainingCost` 점화식의 동적계획법으로 가능한 위상 순서 중 기대 실패 피드백 시간이 가장 짧은 순서를 정확히 구합니다. 병렬 구간이나 더 큰 DAG는 안전한 ready-set 휴리스틱으로 표시하며 전역 최적이라고 주장하지 않습니다. 다음 경계는 항상 유지됩니다.
 
 - `reorderable: true`가 없는 Gate는 이동하지 않습니다.
 - required Gate가 연속된 구간 안에서만 이동하며 `dependsOn`의 ready-set을 절대 추월하지 않습니다. fixed/optional Gate도 건너지 않습니다.
@@ -294,7 +294,7 @@ node src/cli.mjs interview rebind USER-17 /path/to/project --by developer
 node src/cli.mjs interview finalize USER-17 /path/to/project --by developer
 ```
 
-인터뷰 시작 시 BTH는 Git 지문, 빌드 정의, 소스·테스트 수, Flyway, DB dialect, 품질 정책, `verification.json` Gate를 읽기 전용으로 수집합니다. 질문은 완료 조건·변경 범위·DB 영향·검증·제약의 다섯 가지이며, 한 번에 현재 질문 하나만 답할 수 있습니다. 질문의 힌트는 감지한 MySQL/Flyway/Gate 사실을 보여 주지만 답을 대신 채우지는 않습니다. 확정되지 않은 답은 `--status unknown` 또는 `--status conflict`로 남길 수 있지만 해결 전에는 계획을 확정하지 못합니다.
+인터뷰 시작 시 BTH는 Git 지문, 빌드 정의, 소스·테스트 수, Flyway, DB dialect, 품질 정책, `verification.json` Gate를 읽기 전용으로 수집합니다. 파일별 JVM 색인은 `bth intelligence inspect`에서 볼 수 있고, 장기 보관 인터뷰 스냅샷에는 크기 폭증을 막기 위해 파일 목록 대신 집계·누락 수만 남깁니다. 질문은 완료 조건·변경 범위·DB 영향·검증·제약의 다섯 가지이며, 한 번에 현재 질문 하나만 답할 수 있습니다. 질문의 힌트는 감지한 MySQL/Flyway/Gate 사실을 보여 주지만 답을 대신 채우지는 않습니다. 확정되지 않은 답은 `--status unknown` 또는 `--status conflict`로 남길 수 있지만 해결 전에는 계획을 확정하지 못합니다.
 
 `finalize`는 다음 파일을 만듭니다.
 
@@ -321,8 +321,14 @@ node src/cli.mjs task export-plan USER-17 /path/to/project --json
 node src/cli.mjs implement run USER-17 /path/to/project \
   --by developer --allow-write --allow-network
 node src/cli.mjs implement status USER-17 /path/to/project
+# 실패 기록·격리 worktree를 감사 영수증과 함께 폐기해야 할 때만
+node src/cli.mjs implement reset USER-17 /path/to/project \
+  --by developer --discard-workspace
 # 격리 diff를 사람이 검토해 정상 Git 흐름으로 반영한 뒤
 node src/cli.mjs verify USER-17 /path/to/project
+# 실제 소스 검증까지 끝난 뒤 격리 worktree만 감사 기록과 함께 정리
+node src/cli.mjs implement cleanup USER-17 /path/to/project \
+  --by developer --discard-workspace
 # 실패했다면 sealed run record에서 Gate·테스트·재실행 명령을 설명
 node src/cli.mjs diagnose USER-17 /path/to/project
 ```
@@ -353,10 +359,15 @@ BTH Core는 모델을 내장하지 않습니다. 대신 프로젝트가 신뢰�
 
 - source-bound 계획이 사람에게 승인됐고 원본 소스가 clean이어야 합니다.
 - 매 실행마다 `--allow-write`, 네트워크 어댑터는 `--allow-network`도 필요합니다.
-- 구현은 `.backend-harness/local/worktrees/` 아래 detached worktree에서만 진행됩니다.
+- 구현은 `~/.local/state/backend-team-harness/worktrees/`의 현재 사용자 전용(0700·소유자 확인) 루트에 만든 detached worktree에서만 진행됩니다. Git worktree 등록 때문에 원본 저장소의 `.git/worktrees` 메타데이터는 바뀌지만 bound source 파일은 바꾸지 않습니다.
+- 현재 격리 구현은 harness 프로젝트 루트와 Git 최상위가 같은 저장소만 받습니다. monorepo 하위 서비스는 경로를 잘못 인증하지 않고 명시적으로 거절하며, project-scoped worktree 증거는 로드맵 항목입니다.
 - 허용 prefix·파일 수·diff bytes를 넘긴 변경, `verification.json`, 구현 wrapper, Gate 실행 파일 변경은 실패로 분류됩니다.
-- 실패 Gate와 테스트 요약만 다음 bounded repair 요청에 들어갑니다. 최대 5회를 넘길 수 없습니다.
-- 격리 검증이 통과해도 자동 merge·commit·배포·운영 DB 접근·`VERIFIED` 전환은 하지 않습니다. 사람이 diff를 반영한 실제 소스에서 `bth verify`를 다시 실행해야 합니다.
+- 어댑터가 격리 `HEAD`를 commit/reset으로 움직이거나 공유 branch/tag ref, assume-unchanged, skip-worktree를 바꿔도 해당 시도는 실패합니다. 소스 diff는 immutable base commit과 비교합니다.
+- 실패 Gate와 테스트 요약만 다음 bounded repair 요청에 들어갑니다. 최대 5회를 넘길 수 없습니다. 단, Gate가 후보 파일·전체 변경 경로·공유 ref·숨김 index flag를 바꾸면 작업공간 신뢰가 깨진 것으로 보아 자동 repair를 중단하고 reset을 요구합니다.
+- 실패 횟수를 소진했거나 오래된 구현 기록을 폐기할 때는 `implement reset --by ... --discard-workspace`가 worktree를 제거하고 원본 sealed record와 별도 sealed reset receipt를 보관합니다.
+- 통합 후 task가 `VERIFIED` 또는 `DONE`이면 `implement cleanup --by ... --discard-workspace`가 격리 worktree를 제거하되 passed record와 이전 seal 연결은 유지합니다.
+- 격리 검증이 통과해도 자동 merge·commit·배포·운영 DB 접근·`VERIFIED` 전환은 하지 않습니다. 사람이 diff를 반영해야 하며, isolated task의 `bth verify`는 상태가 `VERIFY_FAILED`여도 격리 결과의 전체 Git 변경 경로·일반 파일 내용·삭제·실행 비트·선언 입력이 실제 소스와 정확히 일치할 때만 시작합니다. 인증 목록 밖의 추가 변경과 symlink 구현은 거절됩니다.
+- 이 경계는 우발적인 경로 탈출과 잘못된 인증을 막는 하네스 정책이지 악성 프로젝트 실행 파일을 가두는 OS sandbox가 아닙니다. 프로젝트가 고른 adapter와 Gate는 신뢰 코드로 취급합니다.
 
 ```text
 CONTEXT_MISSING → CONTEXT_READY → PLAN_PROPOSED → PLAN_APPROVED
@@ -381,10 +392,12 @@ CONTEXT_MISSING → CONTEXT_READY → PLAN_PROPOSED → PLAN_APPROVED
 ├── tasks/<id>/runs/history/*.json
 ├── tasks/<id>/evidence/              # local, Git ignored
 ├── local/runs/{latest.json,history/}  # local, Git ignored
-├── local/worktrees/<task-run>/         # 격리 구현 작업공간
 ├── local/implementation/<id>.json      # seal된 구현/복구 요약
+├── local/implementation/archive/       # 폐기된 record + reset receipt
 └── local/optimization/gate-history.json # aggregate only, Git ignored
 ```
+
+격리 구현 worktree 자체는 저장소 안이 아니라 `~/.local/state/backend-team-harness/worktrees/<project-key>/`에 있습니다.
 
 기록에는 command argv, 프로세스 상태, 출력 byte/hash, 새로 생성된 report 통계, 실행 파일 hash, Node/JDK/Wrapper 정보, 선언 profile/dialect, source fingerprint가 들어갑니다. Gate 실행 전에는 그 Gate 전용 폴더의 이전 structured report를 제거하므로, 오래된 XML을 `touch`해서 새 증거처럼 만들 수 없습니다. 이 정리는 Git에 추적되거나 ignore되지 않은 파일을 만나면 삭제하지 않고 실패합니다. stdout/stderr 원문은 공유 기록에서 제외합니다. 프로젝트·home·temp 절대경로와 일반적인 token/secret/credential 형태는 저장 전에 redaction합니다. JSON hash는 key 순서와 무관한 canonical serialization을 사용합니다.
 

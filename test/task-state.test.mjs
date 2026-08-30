@@ -133,3 +133,18 @@ test('an interrupted VERIFYING task can start a new serialized verification atte
   assert.equal(retried.record.state, 'VERIFYING')
   assert.equal(retried.record.revision, 5)
 })
+
+test('isolated implementation mode cannot be rewritten to manual on a retry transition', () => {
+  let record = createTaskRecord({ id: 'TASK-ISOLATED', context: 'Known', plan: 'Bound plan' })
+  record = transitionTaskRecord(record, 'CONTEXT_READY', { actor: 'developer' }).record
+  record = transitionTaskRecord(record, 'PLAN_PROPOSED', { actor: 'developer' }).record
+  record = transitionTaskRecord(record, 'PLAN_APPROVED', { actor: 'reviewer', approved: true }).record
+  record = transitionTaskRecord(record, 'IMPLEMENTING', { actor: 'developer', implementationMode: 'isolated' }).record
+  record = transitionTaskRecord(record, 'VERIFYING', { actor: 'bth.verify' }).record
+  record = transitionTaskRecord(record, 'VERIFY_FAILED', { actor: 'bth.verify' }).record
+
+  const retried = transitionTaskRecord(record, 'IMPLEMENTING', { actor: 'developer', implementationMode: 'manual' })
+
+  assert.equal(retried.applied, true)
+  assert.equal(retried.record.implementationMode, 'isolated')
+})

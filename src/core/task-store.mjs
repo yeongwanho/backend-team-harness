@@ -61,6 +61,8 @@ function taskMarkdown(record) {
     '- Planned source: ' + (record.planSourceFingerprint ? '`' + record.planSourceFingerprint + '`' : '_not bound_'),
     '- Canonical plan artifact: ' + (record.planArtifactSha256 ? '`' + record.planArtifactSha256 + '`' : '_manual plan_'),
     '- Approved: ' + (record.approvalReceipt ? record.approvalReceipt.at + ' by ' + record.approvalReceipt.actor : '_not approved_'),
+    '- Implementation mode: ' + (record.implementationMode ? '`' + record.implementationMode + '`' : '_not started_'),
+    '- Last implementation lifecycle: ' + (record.implementationAudit ? '`' + record.implementationAudit.action + '` at ' + record.implementationAudit.at + ' by ' + record.implementationAudit.actor : '_none_'),
     '',
     '## Context',
     '',
@@ -407,6 +409,45 @@ export async function advanceTask(inputPath, taskId, to, input = {}, options = {
   }
 }
 
+export async function recordImplementationLifecycle(inputPath, taskId, action, input = {}, options = {}) {
+  if (!['reset', 'cleanup'].includes(action)) throw new Error('Unknown implementation lifecycle action.')
+  const actor = normalizeTaskText(input.actor, 'actor', 128)
+  const artifact = normalizeTaskText(input.artifact, 'implementation artifact', 1024)
+  const recordSha256 = normalizeTaskText(input.recordSha256, 'implementation record digest', 128)
+  if (!actor || !artifact || !/^[a-f0-9]{64}$/.test(recordSha256 ?? '')) {
+    throw new Error('Implementation lifecycle audit requires actor, artifact, and a SHA-256 record digest.')
+  }
+  const paths = await harnessPaths(inputPath, taskId)
+  const release = await acquireLock(paths.lockPath, options)
+  try {
+    const loaded = await loadFromTaskDirectory(paths.taskDir, paths.id)
+    const at = input.at ?? new Date().toISOString()
+    const implementationAudit = { action, actor, at, artifact, recordSha256 }
+    const record = {
+      ...loaded.record,
+      revision: loaded.record.revision + 1,
+      updatedAt: at,
+      implementationAudit
+    }
+    const event = sealEvent({
+      schemaVersion: 1,
+      seq: record.revision,
+      type: 'implementation_' + action,
+      at,
+      audit: implementationAudit,
+      record
+    }, loaded.events.at(-1).eventSha256)
+    const eventPath = resolve(paths.taskDir, 'events.jsonl')
+    await assertNoSymlinkSegments(paths.taskDir, eventPath)
+    await appendEvent(eventPath, event)
+    await atomicJsonWrite(resolve(paths.taskDir, 'task.json'), record)
+    await atomicTextWrite(resolve(paths.taskDir, 'task.md'), taskMarkdown(record))
+    return { root: paths.root, record, event }
+  } finally {
+    await release()
+  }
+}
+
 async function updateTaskField(inputPath, taskId, field, value, input = {}, options = {}) {
   const normalized = normalizeTaskText(value, field, 256 * 1024)
   if (!normalized) {
@@ -451,7 +492,8 @@ async function updateTaskField(inputPath, taskId, field, value, input = {}, opti
       planArtifactSha256: field === 'plan'
         ? planArtifactSha256
         : null,
-      approvalReceipt: approvalInvalidated ? null : (loaded.record.approvalReceipt ?? null)
+      approvalReceipt: approvalInvalidated ? null : (loaded.record.approvalReceipt ?? null),
+      implementationMode: approvalInvalidated ? null : (loaded.record.implementationMode ?? null)
     }
     const event = sealEvent({
       schemaVersion: 1,

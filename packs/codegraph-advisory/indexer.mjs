@@ -1,6 +1,6 @@
 import { availableParallelism } from 'node:os'
 import { createHash } from 'node:crypto'
-import { readdir, readFile, stat } from 'node:fs/promises'
+import { lstat, readdir, readFile, stat } from 'node:fs/promises'
 import { relative, resolve, sep } from 'node:path'
 
 const SKIPPED = new Set(['.git', '.gradle', '.backend-harness', 'build', 'node_modules', 'out', 'target'])
@@ -18,12 +18,22 @@ function portable(path) {
 async function discover(root) {
   const files = []
   let visitedEntries = 0
+  let skippedSymlinks = 0
   async function visit(directory) {
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       visitedEntries += 1
       if (visitedEntries > MAX_ENTRIES) throw new Error('Codegraph safety limit exceeded (' + MAX_ENTRIES + ' entries or ' + MAX_FILES + ' source files).')
-      if (entry.isSymbolicLink() || SKIPPED.has(entry.name)) continue
+      if (SKIPPED.has(entry.name)) continue
       const path = resolve(directory, entry.name)
+      if (entry.isSymbolicLink()) {
+        const sourceLink = /\.(?:java|kt)$/.test(entry.name)
+        let directoryLink = false
+        if (!sourceLink) {
+          try { directoryLink = (await stat(path)).isDirectory() } catch {}
+        }
+        if (sourceLink || directoryLink) skippedSymlinks += 1
+        continue
+      }
       if (entry.isDirectory()) await visit(path)
       else if (entry.isFile() && /\.(?:java|kt)$/.test(entry.name)) {
         if (files.length >= MAX_FILES) throw new Error('Codegraph safety limit exceeded (' + MAX_ENTRIES + ' entries or ' + MAX_FILES + ' source files).')
@@ -32,7 +42,7 @@ async function discover(root) {
     }
   }
   await visit(root)
-  return { files: files.sort(), visitedEntries }
+  return { files: files.sort(), visitedEntries, skippedSymlinks }
 }
 
 async function mapLimit(values, limit, mapper) {
@@ -65,17 +75,42 @@ function declarationRelations(kind, tail) {
   const kotlinParents = withoutPrimaryConstructor.match(/^\s*:\s*([^\{]+)/)
   if (kotlinParents) {
     const parents = kotlinParents[1].split(',').flatMap(typeTokens)
-    parents.forEach((type, index) => relations.push({ kind: index === 0 && kind === 'class' ? 'inherits' : 'implements', type }))
+    parents.forEach((type) => relations.push({ kind: 'kotlin-supertype', type }))
   }
   return relations
+}
+
+function kotlinRelationKind(sourceKind, type, target) {
+  const simpleName = type.replace(/[?\[\]]/g, '').split('<')[0].split('.').at(-1)
+  const declaration = target.declarations.find((entry) => entry.name === simpleName)
+  if (!declaration) throw new Error('Resolved Kotlin supertype lacks declaration metadata: ' + type)
+  return declaration.kind === 'interface' && sourceKind !== 'interface' ? 'implements' : 'inherits'
+}
+
+function sourceDeclarations(content, packageName) {
+  const pattern = /\b(?:(enum|data|sealed|annotation|value|fun)\s+)?(class|interface|enum|record|object)\s+([A-Za-z_$][\w$]*)\b/g
+  const matches = [...content.matchAll(pattern)]
+  return matches.map((match, index) => {
+    const kind = match[1] === 'enum' && match[2] === 'class' ? 'enum' : match[2]
+    const tailStart = match.index + match[0].length
+    const nextStart = matches[index + 1]?.index ?? content.length
+    const boundedEnd = Math.min(nextStart, tailStart + 16 * 1024)
+    const candidate = content.slice(tailStart, boundedEnd)
+    const terminator = candidate.search(/[\{;]/)
+    const tail = terminator === -1 ? candidate : candidate.slice(0, terminator)
+    return {
+      kind,
+      name: match[3],
+      qualifiedName: packageName ? packageName + '.' + match[3] : match[3],
+      relations: declarationRelations(kind, tail)
+    }
+  })
 }
 
 function parseSource(root, path, content) {
   const projectPath = portable(relative(root, path))
   const packageName = content.match(/^\s*package\s+([A-Za-z_][\w.]*)\s*;?/m)?.[1] ?? ''
-  const declarations = [...content.matchAll(/\b(class|interface|enum|record|object)\s+([A-Za-z_$][\w$]*)([^\{;]*)[\{;]/g)].map((match) => ({
-    kind: match[1], name: match[2], qualifiedName: packageName ? packageName + '.' + match[2] : match[2], relations: declarationRelations(match[1], match[3])
-  }))
+  const declarations = sourceDeclarations(content, packageName)
   const fallbackName = path.split(sep).at(-1).replace(/\.(?:java|kt)$/, '')
   if (declarations.length === 0) declarations.push({ kind: 'file', name: fallbackName, qualifiedName: packageName ? packageName + '.' + fallbackName : fallbackName, relations: [] })
   const imports = [...content.matchAll(/^\s*import\s+(?:static\s+)?([A-Za-z_][\w.*$]*)\s*;?/gm)].map((match) => match[1])
@@ -203,7 +238,8 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
   let indexedBytes = 0, oversizedFiles = 0
   const readable = []
   for (const path of discovered.files) {
-    const metadata = await stat(path)
+    const metadata = await lstat(path)
+    if (!metadata.isFile() || metadata.isSymbolicLink()) { discovered.skippedSymlinks += 1; continue }
     if (metadata.size > MAX_FILE_BYTES) { oversizedFiles += 1; continue }
     indexedBytes += metadata.size
     if (indexedBytes > MAX_SOURCE_BYTES) throw new Error('Codegraph source input exceeded the 256 MiB safety limit.')
@@ -243,7 +279,14 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
       const resolved = resolveType(relation.type, node)
       if (resolved.ambiguous) ambiguousRelations += 1
       else if (!resolved.node) unresolvedRelations += 1
-      else edge(node, resolved.node, relation.kind, 'source-declaration-resolved')
+      else edge(
+        node,
+        resolved.node,
+        relation.kind === 'kotlin-supertype'
+          ? kotlinRelationKind(declaration.kind, relation.type, resolved.node)
+          : relation.kind,
+        'source-declaration-resolved'
+      )
     }
     for (const injected of node.injectionTypes) {
       const resolved = resolveType(injected, node)
@@ -264,12 +307,13 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
   const findings = []
   if (unresolvedImports > 0) findings.push({ ruleId: 'graph.coverage.unresolved-imports', severity: 'info', message: unresolvedImports + ' imports were intentionally left unresolved.', location: null })
   if (oversizedFiles > 0) findings.push({ ruleId: 'graph.coverage.oversized-files', severity: 'warning', message: oversizedFiles + ' source files larger than 2 MiB were not indexed.', location: null })
+  if (discovered.skippedSymlinks > 0) findings.push({ ruleId: 'graph.coverage.skipped-symlinks', severity: 'warning', message: discovered.skippedSymlinks + ' symbolic links were not indexed.', location: null })
   if (ambiguousImports > 0) findings.push({ ruleId: 'graph.coverage.ambiguous-imports', severity: 'warning', message: ambiguousImports + ' imports matched duplicate project type declarations and were not linked.', location: null })
   if (unresolvedRelations > 0) findings.push({ ruleId: 'graph.coverage.unresolved-relations', severity: 'info', message: unresolvedRelations + ' declared inheritance/implementation relations were left unresolved.', location: null })
   if (ambiguousRelations > 0) findings.push({ ruleId: 'graph.coverage.ambiguous-relations', severity: 'warning', message: ambiguousRelations + ' structural relations were ambiguous and not linked.', location: null })
   const metrics = {
     nodes: nodes.length, edges: edges.length, unresolvedImports, ambiguousImports, unresolvedRelations, ambiguousRelations,
-    duplicateTypes: [...qualifiedTypes.values()].filter((entries) => entries.length > 1).length, oversizedFiles,
+    duplicateTypes: [...qualifiedTypes.values()].filter((entries) => entries.length > 1).length, oversizedFiles, skippedSymlinks: discovered.skippedSymlinks,
     indexedBytes: actualBytes, rankedNodes: nodes.length, declarations: nodes.reduce((sum, node) => sum + node.declaredTypes.length, 0),
     stronglyConnectedComponents: scc.components.length, cyclicComponents: scc.components.filter((members) => members.length > 1).length,
     ...Object.fromEntries(Object.keys(EDGE_WEIGHTS).map((kind) => ['edges.' + kind, edges.filter((edge) => edge.kind === kind).length]))

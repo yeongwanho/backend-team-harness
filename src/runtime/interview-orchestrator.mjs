@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { inspectProjectIntelligence } from '../adapters/project-intelligence.mjs'
 import { canonicalJson } from '../core/canonical-json.mjs'
+import { evaluateProjectRules } from '../core/constraint-engine.mjs'
 import {
   createInterview,
   finalizeInterview,
@@ -252,6 +253,81 @@ function nextCommand(taskId, question, root) {
     : 'bth interview finalize ' + taskId + target + ' --by "<actor>"'
 }
 
+const SNAPSHOT_ARRAY_LIMIT = 256
+const SNAPSHOT_ARRAY_BYTES = 512 * 1024
+
+function boundedSnapshotArray(values) {
+  const retained = []
+  let bytes = 2
+  for (const value of values) {
+    if (retained.length >= SNAPSHOT_ARRAY_LIMIT) break
+    const serialized = JSON.stringify(value) ?? 'null'
+    const nextBytes = Buffer.byteLength(serialized) + (retained.length ? 1 : 0)
+    if (bytes + nextBytes > SNAPSHOT_ARRAY_BYTES) break
+    retained.push(value)
+    bytes += nextBytes
+  }
+  return { retained, omitted: values.length - retained.length }
+}
+
+function projectedFact(fact) {
+  if (!Array.isArray(fact.value)) return fact
+  const projection = boundedSnapshotArray(fact.value)
+  if (projection.omitted === 0) return fact
+  return {
+    ...fact,
+    status: 'unknown',
+    value: projection.retained,
+    evidence: {
+      ...fact.evidence,
+      snapshotTruncated: true,
+      originalEntryCount: fact.value.length,
+      retainedEntryCount: projection.retained.length
+    }
+  }
+}
+
+function interviewContextSnapshot(contextSnapshot) {
+  const code = contextSnapshot.intelligence?.code
+  if (!code) return contextSnapshot
+  const gitChanges = contextSnapshot.intelligence.gitChanges
+  const tables = boundedSnapshotArray(code.tables)
+  const packages = boundedSnapshotArray(code.packages)
+  const changes = boundedSnapshotArray(gitChanges.changes)
+  const facts = contextSnapshot.intelligence.facts.map(projectedFact)
+  const ruleDefinitions = contextSnapshot.intelligence.rules?.definitions ?? []
+  return {
+    ...contextSnapshot,
+    intelligence: {
+      ...contextSnapshot.intelligence,
+      facts,
+      evaluation: {
+        ...evaluateProjectRules(facts, ruleDefinitions),
+        basis: 'durable-projected-facts'
+      },
+      code: {
+        ...code,
+        files: [],
+        tables: tables.retained,
+        packages: packages.retained,
+        snapshotProjection: {
+          filesOmitted: code.files.length,
+          tablesOmitted: tables.omitted,
+          packagesOmitted: packages.omitted,
+          reason: 'Detailed JVM entries are available from `bth intelligence inspect`; durable interview snapshots keep bounded summaries.'
+        }
+      },
+      gitChanges: {
+        ...gitChanges,
+        changes: changes.retained,
+        snapshotProjection: {
+          changesOmitted: changes.omitted
+        }
+      }
+    }
+  }
+}
+
 async function recoverableTask(root, taskId, requirement) {
   try {
     const task = await loadTask(root, taskId)
@@ -269,7 +345,7 @@ async function recoverableTask(root, taskId, requirement) {
 
 export async function startInterview(inputPath, input, options = {}) {
   return withProjectVerificationLock(inputPath, options.projectLock, async () => {
-    const contextSnapshot = await inspectProjectIntelligence(inputPath, options)
+    const contextSnapshot = interviewContextSnapshot(await inspectProjectIntelligence(inputPath, options))
     const existing = await recoverableTask(inputPath, input.taskId, input.requirement?.trim())
     if (!existing) {
       await createTask(inputPath, {
@@ -314,7 +390,7 @@ export async function reviseInterview(inputPath, taskId, input, options = {}) {
 
 export async function rebindInterview(inputPath, taskId, input, options = {}) {
   return withProjectVerificationLock(inputPath, options.projectLock, async () => {
-    const contextSnapshot = await inspectProjectIntelligence(inputPath, options)
+    const contextSnapshot = interviewContextSnapshot(await inspectProjectIntelligence(inputPath, options))
     const rebound = await rebindInterviewContext(inputPath, taskId, {
       actor: input.actor,
       sourceBinding: contextSnapshot.sourceBinding,

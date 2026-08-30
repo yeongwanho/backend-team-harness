@@ -122,13 +122,17 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] explicit Gate dependency ready-set scheduling
 - [x] opt-in bounded parallel batches with distinct resource classes
 - [x] provider-neutral project-owned implementation adapter contract
-- [x] detached task worktree with explicit write/network approval and unchanged-original proof
+- [x] external detached task worktree with explicit write/network approval and bound-source breach evidence
 - [x] allowed-prefix, changed-file, diff-byte, and verification-control-plane guards
 - [x] bounded repair attempts driven by structured verification failure summaries
+- [x] immutable-base diff detection even when an adapter commits, plus file-level integration proof before verify
+- [x] per-user ownership-checked worktree root, running-record crash recovery, hidden-index/ref rejection, and task-audited destructive reset
+- [x] exact dependency-constrained sequential Gate scheduling up to 18 Gates with honest heuristic fallback labels
 - [x] no automatic commit, merge, deployment, production access, or task VERIFIED transition
 - [ ] incremental source index cache measured on a large real backend
 - [ ] versioned gold impact fixture with Recall@20 >= 0.85
 - [ ] independently maintained second backend validation
+- [ ] path-scoped isolated implementation for a harness rooted below a monorepo Git top-level
 
 ## Later, only with measured demand
 

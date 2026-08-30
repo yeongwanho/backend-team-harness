@@ -117,19 +117,27 @@ function factsFrom(context, knowledge, code, gitChanges) {
   const quality = contextFact(context, 'policy.quality-gates')
   const dialect = context.verification.context.databaseDialect
   const gates = context.verification.gates.map((gate) => gate.id).sort()
-  const isFlywayMigration = (path) => typeof path === 'string' && /(^|\/)db\/migration\/[^/]+\.sql$/.test(path)
+  const isVersionedFlywayMigration = (path) => typeof path === 'string' && /(^|\/)db\/migration\/(?:[^/]+\/)*[VU][0-9]+(?:[._][0-9]+)*__[^/]+\.sql$/.test(path)
   const changedMigrations = gitChanges.changes.filter((entry) =>
-    entry.kind !== 'added' && (isFlywayMigration(entry.path) || isFlywayMigration(entry.previousPath))
+    entry.kind !== 'added' && (isVersionedFlywayMigration(entry.path) || isVersionedFlywayMigration(entry.previousPath))
   )
   const migrationChangeStatus = changedMigrations.length > 0
     ? 'confirmed'
     : gitChanges.truncated
       ? 'unknown'
       : 'confirmed'
+  const codeIndexComplete = code.metrics.oversizedFiles === 0 && code.metrics.skippedSymlinks === 0
+  const codeFactStatus = codeIndexComplete ? 'confirmed' : 'unknown'
+  const codeEvidence = {
+    ...code.authority,
+    complete: codeIndexComplete,
+    oversizedFiles: code.metrics.oversizedFiles,
+    skippedSymlinks: code.metrics.skippedSymlinks
+  }
   return [
     fact('git.clean', 'confirmed', context.sourceBinding.clean, 'Whether the bound project source has no working changes.', { source: 'git source binding' }),
     fact('git.changed.count', 'confirmed', gitChanges.count, 'Number of changed project entries.', { source: 'git status', truncated: gitChanges.truncated }),
-    fact('git.changed.paths', 'confirmed', gitChanges.changes.map((entry) => entry.path), 'Bounded changed project paths.', { source: 'git status', truncated: gitChanges.truncated }),
+    fact('git.changed.paths', gitChanges.truncated ? 'unknown' : 'confirmed', gitChanges.changes.map((entry) => entry.path), 'Bounded changed project paths.', { source: 'git status', truncated: gitChanges.truncated }),
     fact('build.definition.present', factStatus(build), (build?.evidence?.valid?.length ?? 0) > 0, 'Recognizable build definition availability.', build?.evidence ?? {}),
     fact('build.wrapper.present', factStatus(wrapper), (wrapper?.evidence?.files?.length ?? 0) > 0, 'Project build-wrapper availability.', wrapper?.evidence ?? {}),
     fact('source.production.present', factStatus(source), (source?.evidence?.count ?? 0) > 0, 'Conventional production-source availability.', source?.evidence ?? {}),
@@ -137,7 +145,7 @@ function factsFrom(context, knowledge, code, gitChanges) {
     fact('database.dialect', dialect ? 'confirmed' : 'unknown', dialect ?? null, 'Declared verification database dialect.', { source: context.verification.path }),
     fact('database.flyway.present', factStatus(flyway), (flyway?.evidence?.files?.length ?? 0) > 0, 'Conventional Flyway migration availability.', flyway?.evidence ?? {}),
     fact('database.flyway.modified-existing', migrationChangeStatus, migrationChangeStatus === 'confirmed' ? changedMigrations.length > 0 : null, 'Whether an existing versioned migration is modified, deleted, copied, or renamed.', { source: 'git status', paths: changedMigrations.map((entry) => entry.path), truncated: gitChanges.truncated }),
-    fact('database.tables', 'confirmed', code.tables, 'Table names explicitly declared by indexed JPA @Table annotations.', { source: 'bounded JVM source patterns' }),
+    fact('database.tables', codeFactStatus, code.tables, 'Table names explicitly declared by indexed JPA @Table annotations.', codeEvidence),
     fact('contract.shared.present', factStatus(sharedContract), (sharedContract?.evidence?.missing?.length ?? 0) === 0, 'Required repository knowledge documents are present.', sharedContract?.evidence ?? {}),
     fact('knowledge.documents.complete', 'confirmed', knowledge.complete, 'Required knowledge documents are present.', { missing: knowledge.missing }),
     fact('knowledge.documents.count', 'confirmed', knowledge.documents.length, 'Number of bounded indexed knowledge documents.', { paths: knowledge.documents.map((entry) => entry.path) }),
@@ -146,13 +154,13 @@ function factsFrom(context, knowledge, code, gitChanges) {
     fact('verification.config.present', factStatus(verification), factStatus(verification) === 'confirmed', 'Executable verification contract availability.', verification?.evidence ?? {}),
     fact('verification.gates', factStatus(verification), gates, 'Configured executable Gate ids.', { source: context.verification.path }),
     fact('verification.required-junit-gate.present', factStatus(verification), context.verification.gates.some((gate) => gate.required && gate.resultType === 'junit'), 'Whether at least one required JUnit Gate exists.', { source: context.verification.path }),
-    fact('code.jvm.files', 'confirmed', code.metrics.files, 'Indexed Java/Kotlin source files.', code.authority),
-    fact('code.declarations.count', 'confirmed', code.metrics.declarations, 'Indexed Java/Kotlin declarations.', code.authority),
-    fact('code.routes.count', 'confirmed', code.metrics.routes, 'Explicit Spring mapping annotations.', code.authority),
-    fact('code.entities.count', 'confirmed', code.metrics.entities, 'Files carrying an explicit JPA @Entity annotation.', code.authority),
-    fact('code.tests.count', 'confirmed', code.metrics.tests, 'Indexed conventional JVM test files.', code.authority),
-    fact('code.roles', 'confirmed', code.roles, 'Observed JVM architectural roles.', code.authority),
-    fact('code.packages', 'confirmed', code.packages, 'Observed Java/Kotlin package names.', code.authority)
+    fact('code.jvm.files', codeFactStatus, code.metrics.files, 'Indexed Java/Kotlin source files.', codeEvidence),
+    fact('code.declarations.count', codeFactStatus, code.metrics.declarations, 'Indexed Java/Kotlin declarations.', codeEvidence),
+    fact('code.routes.count', codeFactStatus, code.metrics.routes, 'Explicit Spring mapping annotations.', codeEvidence),
+    fact('code.entities.count', codeFactStatus, code.metrics.entities, 'Files carrying an explicit JPA @Entity annotation.', codeEvidence),
+    fact('code.tests.count', codeFactStatus, code.metrics.tests, 'Indexed conventional JVM test files.', codeEvidence),
+    fact('code.roles', codeFactStatus, code.roles, 'Observed JVM architectural roles.', codeEvidence),
+    fact('code.packages', codeFactStatus, code.packages, 'Observed Java/Kotlin package names.', codeEvidence)
   ]
 }
 
@@ -182,7 +190,8 @@ export async function inspectProjectIntelligence(inputPath, options = {}) {
       rules: {
         source: ruleContract.source,
         count: ruleContract.rules.length,
-        diagnostics: ruleContract.diagnostics
+        diagnostics: ruleContract.diagnostics,
+        definitions: ruleContract.rules
       },
       evaluation,
       knowledge,

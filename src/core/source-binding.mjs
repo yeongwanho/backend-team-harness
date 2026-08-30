@@ -16,6 +16,10 @@ const RUNTIME_PREFIXES = [
   '.backend-harness/local/',
   '.backend-harness/generated/'
 ]
+
+export function isHarnessRuntimePath(path) {
+  return typeof path === 'string' && RUNTIME_PREFIXES.some((prefix) => path.startsWith(prefix))
+}
 const MAX_BOUND_FILE_BYTES = 32 * 1024 * 1024
 const MAX_BOUND_TOTAL_BYTES = 256 * 1024 * 1024
 

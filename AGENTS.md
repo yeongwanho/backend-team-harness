@@ -8,7 +8,7 @@ This repository is an evidence-driven backend engineering workflow harness. Mode
 - Prefer deterministic inspection and verification over model claims.
 - Every `confirmed` result must be bound to Git source and fresh machine-readable test results.
 - Treat missing or conflicting policy as `unknown`; never invent a decision.
-- Keep inspection commands read-only. Every write command must be explicit, project-contained, symlink-safe, and recoverable.
+- Keep inspection commands read-only. Every source/config write must be explicit, project-contained, symlink-safe, and recoverable. Detached implementation workspaces are the sole exception: keep them under an ownership-checked per-user state root, bind them to one project/task, and provide an audited removal path.
 - Never add deploy, production database, or secret-reading behavior to a default workflow.
 - Add tests for every state transition, permission boundary, and failure mode.
 

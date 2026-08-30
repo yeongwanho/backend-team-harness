@@ -69,7 +69,8 @@ export function createTaskRecord(input, options = {}) {
     lastEvidenceId: null,
     planSourceFingerprint: null,
     planArtifactSha256: null,
-    approvalReceipt: null
+    approvalReceipt: null,
+    implementationMode: null
   }
 }
 
@@ -144,13 +145,19 @@ export function transitionTaskRecord(record, to, input = {}) {
         planSha256: createHash('sha256').update(canonicalJson({ plan: record.plan })).digest('hex')
       }
     : record.approvalReceipt ?? null
+  const implementationMode = to === 'PLAN_APPROVED'
+    ? null
+    : to === 'IMPLEMENTING'
+      ? (record.implementationMode === 'isolated' || input.implementationMode === 'isolated' ? 'isolated' : 'manual')
+      : record.implementationMode ?? null
   const next = {
     ...record,
     state: to,
     revision: record.revision + 1,
     updatedAt: at,
     lastEvidenceId: evidenceId,
-    approvalReceipt
+    approvalReceipt,
+    implementationMode
   }
 
   return {
@@ -165,6 +172,7 @@ export function transitionTaskRecord(record, to, input = {}) {
       evidenceId: input.evidence?.id ?? null,
       evidenceConfirmed: input.evidence?.confirmed === true,
       approved: input.approved === true,
+      implementationMode: to === 'IMPLEMENTING' ? implementationMode : null,
       approvalReceipt: to === 'PLAN_APPROVED' ? approvalReceipt : null,
       at
     }

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp, mkdir, rename, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, rename, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { inspectProjectIntelligence } from '../src/adapters/project-intelligence.mjs'
@@ -130,4 +130,86 @@ test('renaming an existing Flyway migration out of its migration directory remai
   assert.equal(fact.value, true)
   assert.equal(rule.outcome, 'violated')
   assert.equal(result.intelligence.evaluation.blocking, true)
+})
+
+test('editing a repeatable Flyway migration is not mislabeled as an immutable versioned migration', async () => {
+  const root = await fixture()
+  const repeatable = join(root, 'src/main/resources/db/migration/R__refresh_user_view.sql')
+  await writeFile(repeatable, 'create view user_view as select id from users;\n', 'utf8')
+  initializeGit(root)
+  await writeFile(repeatable, 'create or replace view user_view as select id from users;\n', 'utf8')
+
+  const result = await inspectProjectIntelligence(root)
+  const fact = result.intelligence.facts.find((entry) => entry.id === 'database.flyway.modified-existing')
+  const rule = result.intelligence.evaluation.results.find((entry) => entry.id === 'released-migration-immutable')
+
+  assert.equal(fact.status, 'confirmed')
+  assert.equal(fact.value, false)
+  assert.equal(rule.outcome, 'satisfied')
+})
+
+test('nested vendor and undo Flyway migrations remain immutable once committed', async () => {
+  const root = await fixture()
+  const migrationDir = join(root, 'src/main/resources/db/migration/mysql/archive')
+  await mkdir(migrationDir, { recursive: true })
+  const undo = join(migrationDir, 'U2_1__undo_users.sql')
+  await writeFile(undo, 'drop table users;\n', 'utf8')
+  initializeGit(root)
+  await writeFile(undo, 'drop table if exists users;\n', 'utf8')
+
+  const result = await inspectProjectIntelligence(root)
+  const fact = result.intelligence.facts.find((entry) => entry.id === 'database.flyway.modified-existing')
+
+  assert.equal(fact.status, 'confirmed')
+  assert.equal(fact.value, true)
+  assert.deepEqual(fact.evidence.paths, ['src/main/resources/db/migration/mysql/archive/U2_1__undo_users.sql'])
+})
+
+test('Kotlin declaration indexing keeps the name after enum class and sealed interface modifiers', async () => {
+  const root = await fixture()
+  await mkdir(join(root, 'src/main/kotlin/com/example/users'), { recursive: true })
+  await writeFile(join(root, 'src/main/kotlin/com/example/users/UserKind.kt'), [
+    'package com.example.users',
+    'enum class UserKind { ACTIVE }',
+    'sealed interface UserEvent',
+    'data class UserCreated(val id: Long) : UserEvent',
+    ''
+  ].join('\n'), 'utf8')
+
+  const result = await inspectProjectIntelligence(root)
+  const file = result.intelligence.code.files.find((entry) => entry.path.endsWith('UserKind.kt'))
+
+  assert.deepEqual(file.declarations.map((entry) => [entry.kind, entry.name]), [
+    ['enum', 'UserKind'],
+    ['interface', 'UserEvent'],
+    ['class', 'UserCreated']
+  ])
+})
+
+test('skipped JVM symlinks downgrade source-pattern facts to unknown instead of certifying a partial index', async () => {
+  const root = await fixture()
+  await symlink(
+    join(root, 'src/main/java/com/example/users/UserService.java'),
+    join(root, 'src/main/java/com/example/users/LinkedService.java')
+  )
+
+  const result = await inspectProjectIntelligence(root)
+  const files = result.intelligence.facts.find((entry) => entry.id === 'code.jvm.files')
+  const routes = result.intelligence.facts.find((entry) => entry.id === 'code.routes.count')
+
+  assert.equal(files.status, 'unknown')
+  assert.equal(routes.status, 'unknown')
+  assert.equal(files.evidence.complete, false)
+  assert.equal(files.evidence.skippedSymlinks, 1)
+})
+
+test('an unrelated file symlink does not downgrade JVM source coverage', async () => {
+  const root = await fixture()
+  await symlink(join(root, 'build.gradle.kts'), join(root, 'LICENSE-link'))
+
+  const result = await inspectProjectIntelligence(root)
+  const files = result.intelligence.facts.find((entry) => entry.id === 'code.jvm.files')
+
+  assert.equal(files.status, 'confirmed')
+  assert.equal(files.evidence.skippedSymlinks, 0)
 })

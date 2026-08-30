@@ -50,8 +50,72 @@ function eligible(gate) {
   return gate.required === true && gate.reorderable === true
 }
 
+const EXACT_PRECEDENCE_LIMIT = 18
+
+function greedyReadyOrder(pending, segmentIds) {
+  const remaining = [...pending]
+  const emitted = new Set()
+  const ordered = []
+  while (remaining.length > 0) {
+    const ready = remaining.filter((entry) => (entry.gate.dependsOn ?? []).every((dependency) => !segmentIds.has(dependency) || emitted.has(dependency)))
+    if (ready.length === 0) throw new Error('Verification gate dependencies cannot be scheduled without violating a fixed boundary.')
+    ready.sort((left, right) => right.estimate.score - left.estimate.score || left.offset - right.offset)
+    const selected = ready[0]
+    ordered.push(selected.gate)
+    emitted.add(selected.gate.id)
+    remaining.splice(remaining.indexOf(selected), 1)
+  }
+  return ordered
+}
+
+function exactPrecedenceOrder(pending, segmentIds) {
+  const count = pending.length
+  const fullMask = (1 << count) - 1
+  const indexById = new Map(pending.map((entry, index) => [entry.gate.id, index]))
+  const prerequisites = pending.map((entry) => (entry.gate.dependsOn ?? []).reduce((mask, dependency) => {
+    if (!segmentIds.has(dependency)) return mask
+    return mask | (1 << indexById.get(dependency))
+  }, 0))
+  const memo = new Float64Array(1 << count)
+  memo.fill(Number.NaN)
+  const choice = new Int16Array(1 << count)
+  choice.fill(-1)
+  memo[fullMask] = 0
+
+  function solve(mask) {
+    if (!Number.isNaN(memo[mask])) return memo[mask]
+    let best = Number.POSITIVE_INFINITY
+    let bestIndex = -1
+    for (let index = 0; index < count; index += 1) {
+      const bit = 1 << index
+      if ((mask & bit) !== 0 || (prerequisites[index] & mask) !== prerequisites[index]) continue
+      const estimate = pending[index].estimate
+      const expected = estimate.meanDurationMs + (1 - estimate.failureProbability) * solve(mask | bit)
+      if (expected < best - 1e-9) {
+        best = expected
+        bestIndex = index
+      }
+    }
+    if (bestIndex < 0) throw new Error('Verification gate dependencies cannot be scheduled without violating a fixed boundary.')
+    memo[mask] = best
+    choice[mask] = bestIndex
+    return best
+  }
+
+  solve(0)
+  const ordered = []
+  let mask = 0
+  while (mask !== fullMask) {
+    const index = choice[mask]
+    ordered.push(pending[index].gate)
+    mask |= 1 << index
+  }
+  return ordered
+}
+
 export function buildGateSchedule(gates, history, scheduling) {
   const original = [...gates]
+  const maxParallel = scheduling.maxParallel ?? 1
   const historyMap = historyBySignature(history)
   const estimates = new Map(original.map((gate) => [gateSignature(gate), estimate(gate, historyMap, scheduling)]))
   const scheduled = []
@@ -73,21 +137,13 @@ export function buildGateSchedule(gates, history, scheduling) {
       segment.every((gate) => estimates.get(gateSignature(gate)).samples >= scheduling.minimumObservations)
     const segmentIds = new Set(segment.map((gate) => gate.id))
     const pending = segment.map((gate, offset) => ({ gate, offset, estimate: estimates.get(gateSignature(gate)) }))
-    const emitted = new Set()
-    const ordered = []
-    while (pending.length > 0) {
-      const ready = pending.filter((entry) => (entry.gate.dependsOn ?? []).every((dependency) => !segmentIds.has(dependency) || emitted.has(dependency)))
-      if (ready.length === 0) {
-        throw new Error('Verification gate dependencies cannot be scheduled without violating a fixed boundary.')
-      }
-      ready.sort((left, right) => sufficient
-        ? right.estimate.score - left.estimate.score || left.offset - right.offset
-        : left.offset - right.offset)
-      const selected = ready[0]
-      ordered.push(selected.gate)
-      emitted.add(selected.gate.id)
-      pending.splice(pending.indexOf(selected), 1)
-    }
+    const hasInternalDependencies = segment.some((gate) => (gate.dependsOn ?? []).some((dependency) => segmentIds.has(dependency)))
+    const exact = sufficient && hasInternalDependencies && segment.length <= EXACT_PRECEDENCE_LIMIT && maxParallel === 1
+    const ordered = sufficient
+      ? exact
+        ? exactPrecedenceOrder(pending, segmentIds)
+        : greedyReadyOrder(pending, segmentIds)
+      : segment
     scheduled.push(...ordered)
     segments.push({
       start,
@@ -98,9 +154,15 @@ export function buildGateSchedule(gates, history, scheduling) {
         : segment.length < 2
           ? 'single_gate_segment'
           : sufficient
-            ? segment.some((gate) => (gate.dependsOn ?? []).some((dependency) => segmentIds.has(dependency)))
-              ? 'dependency_constrained_posterior_failure_probability_per_millisecond'
-              : 'posterior_failure_probability_per_millisecond'
+            ? exact
+              ? 'exact_dependency_constrained_dp_expected_failure_feedback'
+              : hasInternalDependencies
+                ? maxParallel > 1
+                  ? 'parallel_dependency_greedy_ready_set'
+                  : 'large_dependency_greedy_ready_set'
+                : maxParallel > 1
+                  ? 'parallel_posterior_failure_probability_per_millisecond'
+                  : 'pairwise_optimal_posterior_failure_probability_per_millisecond'
             : 'minimum_observations_not_met'
     })
   }
@@ -128,9 +190,9 @@ export function buildGateSchedule(gates, history, scheduling) {
     decision: {
       schemaVersion: 1,
       strategy: scheduling.strategy,
-      objective: 'minimize_expected_time_to_first_required_failure_without_skipping_gates',
+      objective: 'reduce_expected_time_to_first_required_failure_without_skipping_gates',
       applied,
-      assumptions: ['only-ready-gates-are-reordered', 'gate-failures-are-estimated-as-independent'],
+      assumptions: ['only-ready-gates-are-reordered', 'gate-failures-are-estimated-as-independent', 'exact-optimality-applies-only-to-sequential-segments-of-at-most-18-gates'],
       minimumObservations: scheduling.minimumObservations,
       prior: { failures: scheduling.priorFailures, passes: scheduling.priorPasses },
       originalOrder: original.map((gate) => gate.id),

@@ -1,5 +1,5 @@
 import { availableParallelism } from 'node:os'
-import { readdir, readFile, stat } from 'node:fs/promises'
+import { lstat, readdir, readFile, stat } from 'node:fs/promises'
 import { relative, resolve, sep } from 'node:path'
 
 const SKIPPED_DIRECTORIES = new Set(['.git', '.gradle', '.backend-harness', 'build', 'node_modules', 'out', 'target'])
@@ -15,6 +15,7 @@ function portable(path) {
 async function discover(root) {
   const files = []
   let visitedEntries = 0
+  let skippedSymlinks = 0
   async function visit(directory) {
     const entries = await readdir(directory, { withFileTypes: true })
     for (const entry of entries) {
@@ -22,10 +23,19 @@ async function discover(root) {
       if (visitedEntries > MAX_ENTRIES) {
         throw new Error('JVM project index exceeded the ' + MAX_ENTRIES + '-entry safety limit.')
       }
-      if (entry.isSymbolicLink() || SKIPPED_DIRECTORIES.has(entry.name)) {
+      if (SKIPPED_DIRECTORIES.has(entry.name)) {
         continue
       }
       const path = resolve(directory, entry.name)
+      if (entry.isSymbolicLink()) {
+        const sourceLink = /\.(?:java|kt)$/.test(entry.name)
+        let directoryLink = false
+        if (!sourceLink) {
+          try { directoryLink = (await stat(path)).isDirectory() } catch {}
+        }
+        if (sourceLink || directoryLink) skippedSymlinks += 1
+        continue
+      }
       if (entry.isDirectory()) {
         await visit(path)
       } else if (entry.isFile() && /\.(?:java|kt)$/.test(entry.name)) {
@@ -37,7 +47,7 @@ async function discover(root) {
     }
   }
   await visit(root)
-  return { files: files.sort(), visitedEntries }
+  return { files: files.sort(), visitedEntries, skippedSymlinks }
 }
 
 async function mapLimit(values, limit, mapper) {
@@ -60,8 +70,11 @@ async function mapLimit(values, limit, mapper) {
 function parseSource(root, path, content) {
   const projectPath = portable(relative(root, path))
   const packageName = content.match(/^\s*package\s+([A-Za-z_][\w.]*)\s*;?/m)?.[1] ?? ''
-  const declarations = [...content.matchAll(/\b(class|interface|enum|record|object)\s+([A-Za-z_$][\w$]*)/g)]
-    .map((match) => ({ kind: match[1], name: match[2], qualifiedName: packageName ? packageName + '.' + match[2] : match[2] }))
+  const declarations = [...content.matchAll(/\b(?:(enum|data|sealed|annotation|value|fun)\s+)?(class|interface|enum|record|object)\s+([A-Za-z_$][\w$]*)/g)]
+    .map((match) => {
+      const kind = match[1] === 'enum' && match[2] === 'class' ? 'enum' : match[2]
+      return { kind, name: match[3], qualifiedName: packageName ? packageName + '.' + match[3] : match[3] }
+    })
   const imports = [...content.matchAll(/^\s*import\s+(?:static\s+)?([A-Za-z_][\w.*$]*)\s*;?/gm)].map((match) => match[1])
   const annotations = [...new Set([...content.matchAll(/@([A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)/g)].map((match) => match[1].split('.').at(-1)))].sort()
   const roles = new Set()
@@ -82,7 +95,7 @@ export async function inspectJvmProject(root, options = {}) {
   let declaredBytes = 0
   const metadata = []
   for (const path of discovered.files) {
-    const fileStat = await stat(path)
+    const fileStat = await lstat(path)
     if (!fileStat.isFile() || fileStat.isSymbolicLink()) {
       continue
     }
@@ -117,6 +130,7 @@ export async function inspectJvmProject(root, options = {}) {
     authority: { evidenceTier: 'REPORTED', provenance: 'bounded-source-patterns', semanticCompilerIndex: false },
     metrics: {
       visitedEntries: discovered.visitedEntries,
+      skippedSymlinks: discovered.skippedSymlinks,
       files: parsed.length,
       oversizedFiles: metadata.filter((entry) => entry.oversized).length,
       bytes: readBytes,

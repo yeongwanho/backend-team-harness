@@ -129,3 +129,24 @@ test('adaptive scheduling optimizes only the ready set and preserves declared de
   assert.ok(scheduled.gates.findIndex((entry) => entry.id === 'compile') < scheduled.gates.findIndex((entry) => entry.id === 'integration'))
   assert.match(scheduled.decision.segments[0].reason, /dependency_constrained/)
 })
+
+test('exact precedence DP opens a cheap dependency chain when greedy ready-set scoring is suboptimal', () => {
+  const prerequisite = gate('prerequisite')
+  const likelyFailure = { ...gate('likely-failure'), dependsOn: ['prerequisite'] }
+  const temptingReady = gate('tempting-ready')
+  const gates = [prerequisite, likelyFailure, temptingReady]
+  const history = [
+    observation(prerequisite, 98, 0, 10),
+    observation(likelyFailure, 98, 89, 1),
+    observation(temptingReady, 98, 9, 5)
+  ]
+
+  const scheduled = buildGateSchedule(gates, history, { ...adaptive, maxParallel: 1 })
+
+  assert.deepEqual(scheduled.gates.map((entry) => entry.id), ['prerequisite', 'likely-failure', 'tempting-ready'])
+  assert.match(scheduled.decision.segments[0].reason, /exact_dependency_constrained_dp/)
+  assert.ok(
+    expectedFailureFeedbackMs(scheduled.gates, history, adaptive) <
+    expectedFailureFeedbackMs([temptingReady, prerequisite, likelyFailure], history, adaptive)
+  )
+})

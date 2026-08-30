@@ -134,6 +134,7 @@ function lexicalTerms(value) {
 
 function personalization(nodes, query) {
   const queryTerms = lexicalTerms(query)
+  const compactQueryTerms = String(query).toLowerCase().match(/[\p{L}\p{N}_$]{4,}/gu) ?? []
   const nodeTerms = nodes.map((node) => new Set(lexicalTerms(node.path + ' ' + node.qualifiedName)))
   const raw = nodeTerms.map((terms) => {
     return queryTerms.reduce((weight, token) => weight + (terms.has(token) ? 1 : 0), 0)
@@ -150,13 +151,18 @@ function personalization(nodes, query) {
     }
   }
   const total = raw.reduce((sum, value) => sum + value, 0)
+  const exactIndexes = nodeTerms
+    .map((terms, index) => compactQueryTerms.some((token) => terms.has(token)) ? index : -1)
+    .filter((index) => index >= 0)
   const strongest = Math.max(...raw)
   return {
     weights: raw.map((value) => value / total),
     mode: 'query-personalized',
     matchedTokens,
     seededNodeCount,
-    seededIndexes: raw.map((weight, index) => weight === strongest ? index : -1).filter((index) => index >= 0)
+    seededIndexes: exactIndexes.length > 0
+      ? exactIndexes
+      : raw.map((weight, index) => weight === strongest ? index : -1).filter((index) => index >= 0)
   }
 }
 
@@ -467,6 +473,9 @@ export async function loadBudgetedCodeContext(inputPath, query, options = {}) {
     run = JSON.parse(await readFile(runPath, 'utf8'))
   } catch (error) {
     return unavailable('bound_run_invalid', 'Latest project run has invalid JSON: ' + error.message, budgetCharacters)
+  }
+  if (!run || typeof run !== 'object' || Array.isArray(run)) {
+    return unavailable('bound_run_invalid', 'Latest project run must be a JSON object.', budgetCharacters)
   }
   const { recordSha256, ...unsignedRun } = run
   const expectedRunSha = createHash('sha256').update(canonicalJson(unsignedRun)).digest('hex')

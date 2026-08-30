@@ -1,5 +1,6 @@
 import { ToolPermissionError } from '../policy/tool-gate.mjs'
 import { recordEvidence } from './evidence-store.mjs'
+import { implementationIntegrationStatus, loadImplementationRecord } from './implementation-record-store.mjs'
 import { recordRun } from './run-record-store.mjs'
 import { advanceTask, loadTask } from './task-store.mjs'
 import { transitionTaskRecord } from './task-state.mjs'
@@ -41,6 +42,21 @@ export async function verifyTask(inputPath, taskId, options = {}) {
   const sourceBinding = options.sourceBinding ?? await options.captureSourceBinding?.()
   if (!sourceBinding?.fingerprint) {
     throw new Error('Verification requires a Git source binding.')
+  }
+  const implementation = await loadImplementationRecord(loaded.root, taskId)
+  if (loaded.record.implementationMode === 'isolated' || implementation.record) {
+    if (!implementation.record) {
+      throw new Error('Verification cannot start because this task is in isolated implementation mode but has no sealed implementation record. Run `bth implement run` or explicitly reset the failed run first.')
+    }
+    if (implementation.record.status !== 'passed' || implementation.record.originalBoundSourceUnchanged !== true) {
+      const code = implementation.record.verification?.failure?.code ?? 'implementation_not_passed'
+      throw new Error('Verification cannot start because the isolated implementation is not certified as passed (' + code + ').')
+    }
+    const integration = await implementationIntegrationStatus(loaded.root, implementation.record, { currentSourceBinding: sourceBinding })
+    if (!integration.integrated) {
+      const detail = integration.mismatches?.length ? ' Mismatched paths: ' + integration.mismatches.join(', ') : ''
+      throw new Error('Verification cannot start until the passed isolated implementation is integrated into the bound source. ' + integration.reason + detail)
+    }
   }
   const started = await advanceTask(loaded.root, taskId, 'VERIFYING', transitionInput)
   if (!started.applied) {

@@ -26,7 +26,7 @@ import {
 import { exportApprovedPlan } from './runtime/plan-export.mjs'
 import { diagnoseTaskFailure } from './runtime/failure-diagnosis.mjs'
 import { inspectProjectIntelligence } from './adapters/project-intelligence.mjs'
-import { implementationStatus, runImplementation } from './runtime/implementation-orchestrator.mjs'
+import { cleanupImplementation, implementationStatus, resetImplementation, runImplementation } from './runtime/implementation-orchestrator.mjs'
 
 const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version
 
@@ -56,6 +56,8 @@ function printHelp() {
     '  bth interview finalize <id> [path] --by <actor> [--json]',
     '  bth implement run <id> [path] --by <actor> --allow-write [--allow-network] [--json]',
     '  bth implement status <id> [path] [--json]',
+    '  bth implement reset <id> [path] --by <actor> --discard-workspace [--json]',
+    '  bth implement cleanup <id> [path] --by <actor> --discard-workspace [--json]',
     '  bth verify <id> [path] [--allow-network] [--json]',
     '  bth diagnose <id> [path] [--json]',
     '  bth version',
@@ -458,7 +460,11 @@ async function runTask(args) {
     }
     const [id, state, path = '.'] = parsed.positionals
     const targetState = state.toUpperCase()
+    if (targetState === 'VERIFYING') {
+      throw new Error('VERIFYING is owned by `bth verify`; generic task advance cannot start or bypass executable verification.')
+    }
     const result = await withProjectVerificationLock(path, undefined, async () => {
+      const currentTask = await loadTask(path, id)
       const currentSource = ['PLAN_APPROVED', 'DONE'].includes(targetState)
         ? await captureConfiguredSourceBinding(path)
         : null
@@ -470,7 +476,7 @@ async function runTask(args) {
         ? { currentSourceFingerprint, compatibleSourceFingerprints }
         : {}
       const currentPlanArtifactSha256 = targetState === 'PLAN_APPROVED'
-        ? (await loadTask(path, id)).record.planArtifactSha256
+        ? currentTask.record.planArtifactSha256
         : undefined
       if (currentPlanArtifactSha256) {
         const interview = await interviewStatus(path, id)
@@ -481,6 +487,9 @@ async function runTask(args) {
       return advanceTask(path, id, targetState, {
         actor,
         reason: parsed.options.get('--reason'),
+        implementationMode: targetState === 'IMPLEMENTING'
+          ? (currentTask.record.implementationMode === 'isolated' ? 'isolated' : 'manual')
+          : undefined,
         approved: parsed.flags.has('--approve'),
         currentSourceFingerprint,
         compatibleSourceFingerprints,
@@ -552,13 +561,55 @@ async function runImplement(args) {
       console.log('Isolated implementation ' + result.record.status + ' for task ' + id + '.')
       console.log('Workspace: ' + result.record.workspace)
       console.log('Changed files: ' + result.record.changedFiles.changedEntryCount)
-      console.log('Original worktree unchanged: ' + result.record.originalWorktreeUnchanged)
+      console.log('Original bound source unchanged: ' + result.record.originalBoundSourceUnchanged)
+      if (result.record.verification?.failure?.code) console.log('Failure code: ' + result.record.verification.failure.code)
       console.log('Next: ' + result.record.nextAction)
     })
     if (result.record.status !== 'passed') process.exitCode = 1
     return
   }
-  throw new Error('Usage: bth implement <run|status> ...')
+  if (subcommand === 'reset') {
+    const parsed = parseArguments(rest, {
+      booleans: ['--json', '--discard-workspace'],
+      values: ['--by']
+    })
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth implement reset <id> [path] --by <actor> --discard-workspace [--json]')
+    const actor = parsed.options.get('--by')
+    if (!actor) throw new Error('Implementation reset requires --by <actor>.')
+    const [id, path = '.'] = parsed.positionals
+    const result = await resetImplementation(path, id, {
+      actor,
+      discardWorkspace: parsed.flags.has('--discard-workspace')
+    })
+    printResult(result, parsed.flags.has('--json'), () => {
+      console.log('Reset isolated implementation for task ' + id + '.')
+      console.log('Archived record: ' + result.archivedRecord)
+      console.log('Reset receipt: ' + result.resetReceipt)
+      console.log('Workspace removed: ' + result.workspaceRemoved)
+      console.log('Next: ' + result.nextAction)
+    })
+    return
+  }
+  if (subcommand === 'cleanup') {
+    const parsed = parseArguments(rest, {
+      booleans: ['--json', '--discard-workspace'],
+      values: ['--by']
+    })
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth implement cleanup <id> [path] --by <actor> --discard-workspace [--json]')
+    const actor = parsed.options.get('--by')
+    if (!actor) throw new Error('Implementation cleanup requires --by <actor>.')
+    const [id, path = '.'] = parsed.positionals
+    const result = await cleanupImplementation(path, id, {
+      actor,
+      discardWorkspace: parsed.flags.has('--discard-workspace')
+    })
+    printResult(result, parsed.flags.has('--json'), () => {
+      console.log('Removed integrated implementation workspace for task ' + id + '.')
+      console.log('Archived record: ' + result.archivedRecord)
+    })
+    return
+  }
+  throw new Error('Usage: bth implement <run|status|reset|cleanup> ...')
 }
 
 async function runPack(args) {

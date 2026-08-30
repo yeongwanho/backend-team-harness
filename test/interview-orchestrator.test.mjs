@@ -38,6 +38,8 @@ async function answerAll(root, taskId) {
 
 test('native interview materializes a source-bound PLAN_PROPOSED task', async () => {
   const root = await initializedProject('bth-interview-flow-')
+  await mkdir(join(root, 'src/main/java/example'), { recursive: true })
+  await writeFile(join(root, 'src/main/java/example/VisibleInInspection.java'), 'package example; class VisibleInInspection {}\n', 'utf8')
   const started = await startInterview(root, {
     taskId: 'USER-17',
     title: 'Safe user lookup',
@@ -46,6 +48,9 @@ test('native interview materializes a source-bound PLAN_PROPOSED task', async ()
   })
   assert.equal(started.progress.currentQuestion.id, 'acceptance')
   assert.equal(started.contextSnapshot.verification.gates[0].id, 'tests')
+  assert.deepEqual(started.contextSnapshot.intelligence.code.files, [])
+  assert.equal(started.contextSnapshot.intelligence.code.snapshotProjection.filesOmitted, 1)
+  assert.equal(started.contextSnapshot.intelligence.code.metrics.files, 1)
 
   await answerAll(root, 'USER-17')
   const ready = await interviewStatus(root, 'USER-17')
@@ -262,4 +267,41 @@ test('project observations specialize DB and verification questions without answ
   assert.match(status.progress.currentQuestion.hint, /V1__users\.sql/)
   assert.equal(status.record.answers.some((answer) => answer.questionId === 'data'), false)
   assert.ok(status.contextSnapshot.policyGates.length > 0)
+})
+
+test('durable interview snapshots bound large code indexes while preserving aggregate facts', async () => {
+  const root = await initializedProject('bth-interview-bounded-index-')
+  for (let index = 0; index < 300; index += 1) {
+    const directory = join(root, 'src/main/java/example/p' + index)
+    await mkdir(directory, { recursive: true })
+    await writeFile(join(directory, 'Type' + index + '.java'), 'package example.p' + index + '; class Type' + index + ' {}\n', 'utf8')
+  }
+  await writeFile(join(root, '.backend-harness/project-rules.json'), JSON.stringify({
+    schemaVersion: 1,
+    rules: [{
+      id: 'late-package-required',
+      description: 'A package beyond the durable projection must not be silently certified.',
+      severity: 'blocker',
+      assert: { fact: 'code.packages', operator: 'includes', value: 'example.p299' },
+      source: { path: '.backend-harness/policies/api.md', section: 'Executable verification' }
+    }]
+  }, null, 2) + '\n', 'utf8')
+
+  const started = await startInterview(root, {
+    taskId: 'BOUNDED-1',
+    requirement: 'Change one bounded type safely.',
+    actor: 'developer'
+  })
+  const loaded = await interviewStatus(root, 'BOUNDED-1')
+  const packageFact = loaded.contextSnapshot.intelligence.facts.find((fact) => fact.id === 'code.packages')
+
+  assert.equal(started.contextSnapshot.intelligence.code.metrics.files, 300)
+  assert.equal(loaded.contextSnapshot.intelligence.code.files.length, 0)
+  assert.equal(loaded.contextSnapshot.intelligence.code.packages.length, 256)
+  assert.equal(loaded.contextSnapshot.intelligence.code.snapshotProjection.packagesOmitted, 44)
+  assert.equal(packageFact.status, 'unknown')
+  assert.equal(packageFact.evidence.originalEntryCount, 300)
+  assert.equal(loaded.contextSnapshot.intelligence.evaluation.basis, 'durable-projected-facts')
+  assert.equal(loaded.contextSnapshot.intelligence.evaluation.results[0].status, 'unknown')
+  assert.equal(loaded.contextSnapshot.intelligence.evaluation.blocking, true)
 })

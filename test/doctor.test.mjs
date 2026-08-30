@@ -122,6 +122,31 @@ test('Flyway trailing zero versions compare equal just like MigrationVersion', a
   assert.equal(flyway.details.duplicates.length, 1)
 })
 
+test('nested directories do not invent a Flyway version namespace inside one recursive location', async () => {
+  const root = await preparedProject('bth-doctor-flyway-nested-')
+  const nested = join(root, 'src/main/resources/db/migration/mysql')
+  await mkdir(nested, { recursive: true })
+  await writeFile(join(nested, 'V1__duplicate.sql'), 'select 2;\n', 'utf8')
+
+  const result = await doctorProject(root)
+  const flyway = result.checks.find((entry) => entry.id === 'flyway')
+
+  assert.equal(flyway.status, 'fail')
+  assert.equal(flyway.details.duplicates.length, 1)
+})
+
+test('Flyway undo migrations are valid and versioned independently from forward migrations', async () => {
+  const root = await preparedProject('bth-doctor-flyway-undo-')
+  await writeFile(join(root, 'src/main/resources/db/migration/U1__undo.sql'), 'drop table users;\n', 'utf8')
+
+  const result = await doctorProject(root)
+  const flyway = result.checks.find((entry) => entry.id === 'flyway')
+
+  assert.equal(flyway.status, 'pass')
+  assert.deepEqual(flyway.details.invalid, [])
+  assert.deepEqual(flyway.details.duplicates, [])
+})
+
 test('doctor rejects a verification config that could pass without tests', async () => {
   const root = await preparedProject('bth-doctor-verification-')
   await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify({

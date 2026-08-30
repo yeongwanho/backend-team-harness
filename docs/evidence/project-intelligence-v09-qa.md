@@ -2,8 +2,8 @@
 
 **Date:** 2026-08-30
 
-**Base revision:** `404de1799fb0c3f84d4f4b5376ab13192aafbaf7`
-**Scope:** deterministic project rules, bounded repository intelligence, semantic impact graph, Gate DAG scheduling, opt-in parallel verification, isolated implementation, bounded recovery, CLI and documentation
+**Base revision:** `aae3f1018ba3f51e6bc0ba06625a4601ce99bf09`
+**Scope:** deterministic project rules, bounded repository intelligence, semantic impact graph, exact/heuristic Gate DAG scheduling, opt-in parallel verification, isolated implementation/integration/reset lifecycle, bounded recovery, CLI, and documentation
 
 ## What was tested
 
@@ -20,24 +20,30 @@ The release was checked at four boundaries:
 
 ```text
 npm run check
-tests 197
-pass 195
+tests 227
+pass 225
 fail 0
 skipped 2
 ```
 
 The two skips are the environment-gated real JVM and real database tests. They were run separately below.
 
-### Focused configuration and provenance hardening gate
+### Focused adversarial hardening gates
 
 ```text
-node --test test/implementation-config.test.mjs test/implementation-orchestrator.test.mjs test/project-rules.test.mjs
-tests 14
-pass 14
+node --test test/implementation-orchestrator.test.mjs
+tests 24
+pass 24
+fail 0
+
+node --test --test-name-pattern='rename detection|original-source|Kotlin modifier' \
+  test/implementation-orchestrator.test.mjs test/semantic-graph.test.mjs
+tests 3
+pass 3
 fail 0
 ```
 
-This covers strict implementation configuration, project-owned executable resolution, detached implementation and recovery, and rejection of invented or symlinked policy provenance. The complete gate also includes the regression where one parallel Gate throws while a sibling is still active; verification waits for the full batch before releasing the project lock.
+These cover detached implementation and recovery, exact integration inventory, plan-edit reset recovery, hostile inherited Git environment, shared refs/index flags, Gate mutation, large rename byte-budget bypass, original-source escape evidence, and Kotlin supertype classification. The complete gate also includes strict configuration/provenance and the regression where one parallel Gate throws while a sibling is still active; verification waits for the full batch before releasing the project lock.
 
 ### Clean Git configuration portability regression
 
@@ -45,8 +51,8 @@ The first pushed CI run exposed that the implementation fixture depended on the 
 
 ```text
 GIT_CONFIG_GLOBAL=/dev/null node --test test/implementation-orchestrator.test.mjs
-tests 5
-pass 5
+tests 24
+pass 24
 fail 0
 ```
 
@@ -59,7 +65,7 @@ npm run test:real-jvm
 tests 3
 pass 3
 fail 0
-duration 24.4 s
+duration 31.2 s
 ```
 
 Observed behavior: real Maven `verify` produced accepted JUnit evidence, and a Gradle Wrapper resolved from an isolated cold cache before producing accepted JUnit evidence.
@@ -71,7 +77,7 @@ npm run test:real-db
 tests 1
 pass 1
 fail 0
-duration 132.9 s
+duration 131.0 s
 ```
 
 Observed behavior: the DB Pack applied real Flyway migrations to the pinned MySQL 8.4 fixture and exercised MySQL-specific schema behavior plus JDBC reads/writes. The suite also verifies cleanup after success and adverse test-process outcomes. A post-run query found no remaining Testcontainers-labeled containers.
@@ -84,7 +90,7 @@ vulnerabilities 0
 
 npm pack --dry-run --json
 backend-team-harness@0.9.0
-entryCount 120
+entryCount 121
 
 npm run benchmark:adaptive
 configuredExpectedFeedbackMs 1711.98347107438
@@ -105,6 +111,12 @@ exit 0
 The scheduler result is a deterministic analytical fixture under the documented independent fail-fast assumptions. It is not a production speed claim and does not compare BTH with OMO.
 
 The package inspection includes `TECH_DEBT_AUDIT.md` and no `.backend-harness/local/` execution workspace or generated run artifact.
+
+### Independent review response
+
+- Claude Opus/high previously identified stale CLI fields, unsafe shared temporary workspace assumptions, post-Gate evidence ambiguity, missing reset/cleanup authority, hidden Git index/ref paths, Flyway coverage, and documentation overclaims. Those findings were checked against code and addressed. A final fresh Claude run on this revision was attempted but rejected by Claude's account session limit; it is not counted as completed review evidence.
+- Grok 4.6/xhigh independently read the 26-file delta and surrounding code. Its release-blocking large-rename diff-budget finding was reproduced and fixed with a `--no-renames` byte diff plus a 128 KiB regression. Its overall/attempt outcome inconsistency and Kotlin interface-edge finding were also fixed and tested.
+- Grok's proposal to namespace duplicate Flyway versions by nested directory was rejected after checking Flyway's current official contract: one location is scanned recursively and each versioned migration in a run must have a unique version. A regression now proves that a nested directory does not silently invent a namespace. Separately configured Flyway locations remain a future configuration-aware enhancement rather than an inferred exception.
 
 ## Why the result is credible
 
