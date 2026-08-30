@@ -12,6 +12,7 @@
 
 - Full suite: 291 tests, 289 passed, 0 failed, 2 explicit opt-in tests skipped by the default suite.
 - Opt-in real JVM suite: 3/3 passed, including Maven `verify` with real JUnit and an isolated cold-cache Gradle Wrapper run.
+- GitHub CI real MySQL/Testcontainers suite passed on Linux with Docker.
 - Windows contract: 8/8 passed.
 - Adaptive benchmark: all 3 Gates retained; analytical speedup 3.612661318451343x.
 - Production dependency audit: 0 vulnerabilities.
@@ -28,7 +29,7 @@ The regression cases directly reproduce the pilot's three P0 boundaries: first-r
 
 ## What remains unproven
 
-- The opt-in real MySQL suite still requires a usable Docker environment and was not claimed passed here.
+- The real MySQL suite passed in GitHub CI; it was not repeated on the local host whose Docker storage was previously unavailable.
 - Windows behavior is contract-tested in CI-compatible code but was not driven on a physical Windows host in this local run.
 - BTH still does not provide operating-system egress isolation; the CLI and records now state that explicitly.
 - Broad natural-language impact ranking on private work items is not claimed improved by this change; it requires a reproducible, share-safe gold set rather than another synthetic assertion.
