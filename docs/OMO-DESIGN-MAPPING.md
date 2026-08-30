@@ -16,9 +16,10 @@ The useful comparison is therefore “which runtime technique has an equivalent?
 | Tool registry | OpenCode adapter tool registry | `src/core/tool-registry.mjs` | Named structured dispatch implemented |
 | Pre-tool guard | OpenCode `tool.execute.before` guard tier | `src/policy/tool-gate.mjs` | Deny-before-execute implemented |
 | Deterministic QA evidence | OMO `.omo/evidence/` QA rule | source/input binding + fresh JUnit/Findings + canonical run/evidence history | Result contract implemented; hashes are not called signatures |
-| Planning handoff | harness-specific task/prompt adapters | canonical human-approved plan digest + provider-neutral read-only JSON export | Port implemented; provider-specific execution adapters remain separate |
-| Failure continuation | task/continuation components | sealed failed-run diagnosis + exact rerun argv | Deterministic advisory equivalent; no automatic retry |
-| Config validation | `packages/omo-config-core` | `src/config/verification.mjs`, `src/config/quality-gates.mjs` | Executable verification and review checklists are separate |
+| Planning handoff | harness-specific task/prompt adapters | canonical human-approved plan digest + provider-neutral read-only JSON export | Port implemented |
+| Isolated implementation | adapter-specific tool execution | project-owned adapter contract + detached worktree + explicit write/network latch | Small provider-neutral port; no model embedded |
+| Failure continuation | task/continuation components | sealed failure diagnosis + bounded same-worktree repair request + full re-verification | Independently implemented; never promotes its own verdict |
+| Config validation | `packages/omo-config-core` | strict verification, project-rule, and implementation contracts | Executable verification and review checklists are separate |
 | Lifecycle hook system | OpenCode hook composition / Senpi components | none | Not implemented |
 | Memory engine | `packages/memory-core` | none | Not implemented; Markdown context is not called memory |
 | Model routing/providers | `packages/model-core`, harness adapters | none | Not implemented |
@@ -29,7 +30,7 @@ The useful comparison is therefore “which runtime technique has an equivalent?
 
 OMO is an agent runtime: the agent is a primary worker and the harness coordinates tools, hooks, memory, tasks, and multiple host environments.
 
-Backend Team Harness is a backend verification runner with an optional developer-review lifecycle: the human or AI performs implementation, while the harness serializes project execution, binds source and ignored inputs, separates executed from reported evidence, rejects false test success, and records rerunnable results.
+Backend Team Harness is a backend engineering workflow with a small optional implementation port: the project chooses the coding adapter, while BTH binds its approved plan, isolates writes, enforces a path/diff budget, runs deterministic project verification, separates executed from reported evidence, and records rerunnable results. It still is not a general agent OS.
 
 That difference is intentional. Porting OMO's full hook count, team mode, memory engine, or model router would add complexity without proving the backend collaboration problem.
 

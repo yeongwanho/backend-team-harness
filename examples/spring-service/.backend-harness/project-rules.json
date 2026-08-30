@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "rules": [
+    {
+      "id": "required-junit-evidence",
+      "description": "At least one required JUnit Gate must produce executed test evidence.",
+      "severity": "blocker",
+      "assert": {
+        "fact": "verification.required-junit-gate.present",
+        "operator": "equals",
+        "value": true
+      },
+      "source": {
+        "path": ".backend-harness/policies/api.md",
+        "section": "Executable verification"
+      }
+    },
+    {
+      "id": "released-migration-immutable",
+      "description": "An existing versioned Flyway migration must not be edited, deleted, copied, or renamed.",
+      "severity": "blocker",
+      "assert": {
+        "fact": "database.flyway.modified-existing",
+        "operator": "equals",
+        "value": false
+      },
+      "source": {
+        "path": ".backend-harness/policies/database.md",
+        "section": "Migration policy"
+      }
+    },
+    {
+      "id": "knowledge-documents-present",
+      "description": "The required project, architecture, and glossary documents must remain present.",
+      "severity": "blocker",
+      "assert": {
+        "fact": "knowledge.documents.complete",
+        "operator": "equals",
+        "value": true
+      },
+      "source": {
+        "path": ".backend-harness/project.md",
+        "section": "Repository knowledge"
+      }
+    },
+    {
+      "id": "database-dialect-explicit",
+      "description": "A project with Flyway migrations should declare its verification database dialect.",
+      "severity": "warning",
+      "when": {
+        "fact": "database.flyway.present",
+        "operator": "equals",
+        "value": true
+      },
+      "assert": {
+        "fact": "database.dialect",
+        "operator": "present"
+      },
+      "source": {
+        "path": ".backend-harness/policies/database.md",
+        "section": "Database dialect"
+      }
+    }
+  ]
+}

@@ -55,7 +55,7 @@ test('native interview materializes a source-bound PLAN_PROPOSED task', async ()
   assert.equal(finalized.record.status, 'FINALIZED')
   assert.equal(finalized.task.state, 'PLAN_PROPOSED')
   assert.match(finalized.artifacts.plan.sourceFingerprint, /^[a-f0-9]{64}$/)
-  assert.equal(finalized.artifacts.plan.schemaVersion, 2)
+  assert.equal(finalized.artifacts.plan.schemaVersion, 3)
   assert.deepEqual(finalized.artifacts.plan.declaredRequiredGates, ['tests'])
   assert.ok(finalized.artifacts.plan.declaredRequiredReviewChecklists.length > 0)
   assert.equal('declaredRequiredPolicyGates' in finalized.artifacts.plan, false)
@@ -65,6 +65,7 @@ test('native interview materializes a source-bound PLAN_PROPOSED task', async ()
   assert.match(task.record.plan, /Execution plan — USER-17/)
   assert.match(task.record.plan, /Human approval is still required/)
   assert.match(task.record.plan, /Required human review checklists \(not executable\)/)
+  assert.match(task.record.plan, /Deterministic project-rule evaluation/)
   assert.match(task.record.plan, /api-contract/)
   const plan = JSON.parse(await readFile(
     join(root, '.backend-harness/tasks/USER-17/interview/plan.json'),
@@ -74,6 +75,35 @@ test('native interview materializes a source-bound PLAN_PROPOSED task', async ()
 
   const retried = await completeInterview(root, 'USER-17', { actor: 'developer' })
   assert.equal(retried.task.revision, task.record.revision)
+})
+
+test('interview surfaces deterministic project-rule conflicts and blocks finalization', async () => {
+  const root = await initializedProject('bth-interview-rules-')
+  await writeFile(join(root, '.backend-harness/project-rules.json'), JSON.stringify({
+    schemaVersion: 1,
+    rules: [{
+      id: 'contract-required',
+      description: 'This project requires a contract Gate.',
+      severity: 'blocker',
+      assert: { fact: 'verification.gates', operator: 'includes', value: 'contract' },
+      source: { path: '.backend-harness/policies/api.md', section: 'Executable verification' }
+    }]
+  }, null, 2) + '\n', 'utf8')
+  const started = await startInterview(root, {
+    taskId: 'RULE-1',
+    requirement: 'Change the public API.',
+    actor: 'developer'
+  })
+  assert.equal(started.contextSnapshot.intelligence.evaluation.blocking, true)
+  assert.match(
+    started.progress.questions.find((question) => question.id === 'scope').hint,
+    /contract-required=conflict/
+  )
+  await answerAll(root, 'RULE-1')
+  await assert.rejects(
+    completeInterview(root, 'RULE-1', { actor: 'developer' }),
+    /contract-required=conflict/
+  )
 })
 
 test('interview refuses finalization after project source drift', async () => {

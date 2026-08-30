@@ -13,7 +13,7 @@ BTH 0.7은 “최신 수학”이라는 말만 붙인 기능을 넣지 않았다
 그 결과 이번 버전에 채택한 것은 두 가지다.
 
 - 모든 필수 검증을 유지하면서, 독립적으로 순서를 바꿔도 된다고 프로젝트가 선언한 Gate만 `p/c` 순서로 실행한다.
-- 검증된 import 그래프를 Personalized PageRank로 정렬해, 정해진 문자 예산 안에서 계획을 수행할 사람이 먼저 볼 파일을 제시한다.
+- provenance가 있는 구조 그래프를 Personalized PageRank와 방향별 도달성으로 정렬해, 정해진 문자 예산 안에서 계획을 수행할 사람이 먼저 볼 파일을 제시한다.
 
 예측 모델로 테스트를 생략하는 기능, 그래프가 PASS를 결정하는 기능, 강화학습 기반 자동 정책은 채택하지 않았다. BTH에는 아직 이를 안전하게 보정할 실제 다중 프로젝트 운영 데이터가 없기 때문이다.
 
@@ -63,7 +63,7 @@ estimated p = (failures + priorFailures)
 - RETECS의 [reinforcement-learning test prioritization 연구](https://arxiv.org/abs/1811.04122)는 테스트 우선순위를 학습하는 접근을 제시한다. 후속 [산업 데이터 연구](https://arxiv.org/abs/2011.01834)도 존재하지만, 학습 정책은 데이터 분포와 보상 정의에 의존한다.
 - [동적 우선순위 연구](https://arxiv.org/abs/2402.02925)는 테스트 상관관계를 이용한 동적 정책이 이미 좋은 정적 순서보다 나빠질 수도 있음을 보인다. 복잡한 정책이 항상 더 좋은 것은 아니다.
 
-그래서 BTH는 테스트 선택이나 생략을 하지 않는다. 사용자가 `reorderable: true`로 명시한 **연속된 required Gate 구간**에서만 순서를 바꾸고, 성공 경로에서는 모든 Gate를 정확히 한 번 실행한다. 고정 Gate와 optional Gate는 이동 경계다. 이력은 순서만 바꾸며 결과, 증거 등급, 테스트 수, source fingerprint, PASS 판정에는 영향을 주지 못한다.
+그래서 BTH는 테스트 선택이나 생략을 하지 않는다. 사용자가 `reorderable: true`로 명시한 **연속된 required Gate 구간**의 dependency ready-set에서만 순서를 바꾸고, 성공 경로에서는 모든 Gate를 정확히 한 번 실행한다. 고정 Gate와 optional Gate는 이동 경계다. 병렬 실행도 `parallelSafe`, 서로 다른 `resourceClass`, bounded `maxParallel`을 모두 명시한 ready Gate에만 허용한다. 이력은 순서만 바꾸며 결과, 증거 등급, 테스트 수, source fingerprint, PASS 판정에는 영향을 주지 못한다.
 
 ### 2.3 “2배”의 정확한 범위
 
@@ -96,16 +96,16 @@ Gate identity는 보존된다. 이 수치는 sleep이나 실제 빌드 시간을
 
 ### 3.3 BTH의 제한된 구현
 
-현재 graph Pack은 Java/Kotlin의 명시적 import만 `static-import-resolved` edge로 만든다. 계획 export 시 다음 순서로 처리한다.
+현재 graph Pack은 Java/Kotlin의 고유하게 해석된 import·상속·구현과 보수적인 주입·테스트 관계를 서로 다른 provenance edge로 만든다. 계획 export 시 다음 순서로 처리한다.
 
 1. 최신 graph observation이 현재 source fingerprint에 묶인 sealed run에서 성공했는지 확인한다.
 2. graph 파일의 byte 수와 SHA-256이 run record와 같은지 확인한다.
 3. 요구사항 단어와 path/qualified name의 일치로 teleport prior를 만든다.
-4. import 방향 가중치 1.0, 역방향 0.5의 Personalized PageRank를 최대 30회 계산한다.
+4. provenance별 forward 가중치와 역방향 0.5의 Personalized PageRank를 최대 30회 계산한다.
 5. query match가 있으면 lexical prior 0.6, graph score 0.4를 결합한다.
 6. JSON entry의 실제 문자 수를 누적해 사용자가 준 hard budget을 넘기지 않는다.
 
-이 결과는 `REPORTED/advisory`다. 탐색과 리뷰 질문에는 쓸 수 있지만 PASS, 테스트 생략, 런타임 호출 관계 주장에는 쓸 수 없다. Reflection, Spring DI, generated code, SQL/table ownership, method call은 아직 모른다고 명시한다.
+이 결과는 `REPORTED/advisory`다. 탐색과 리뷰 질문에는 쓸 수 있지만 PASS, 테스트 생략, 런타임 호출 관계 주장에는 쓸 수 없다. Reflection, 실제 Spring bean 선택, generated code, 동적 SQL ownership, method call은 아직 모른다고 명시한다.
 
 ## 4. 하네스 구조 자체에 대한 조사
 

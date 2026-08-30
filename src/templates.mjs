@@ -1,5 +1,40 @@
 const lines = (...values) => values.join('\n') + '\n'
 
+const defaultProjectRules = {
+  schemaVersion: 1,
+  rules: [
+    {
+      id: 'required-junit-evidence',
+      description: 'At least one required JUnit Gate must produce executed test evidence.',
+      severity: 'blocker',
+      assert: { fact: 'verification.required-junit-gate.present', operator: 'equals', value: true },
+      source: { path: '.backend-harness/policies/api.md', section: 'Executable verification' }
+    },
+    {
+      id: 'released-migration-immutable',
+      description: 'An existing versioned Flyway migration must not be edited, deleted, copied, or renamed.',
+      severity: 'blocker',
+      assert: { fact: 'database.flyway.modified-existing', operator: 'equals', value: false },
+      source: { path: '.backend-harness/policies/database.md', section: 'Migration policy' }
+    },
+    {
+      id: 'knowledge-documents-present',
+      description: 'The required project, architecture, and glossary documents must remain present.',
+      severity: 'blocker',
+      assert: { fact: 'knowledge.documents.complete', operator: 'equals', value: true },
+      source: { path: '.backend-harness/project.md', section: 'Repository knowledge' }
+    },
+    {
+      id: 'database-dialect-explicit',
+      description: 'A project with Flyway migrations should declare its verification database dialect.',
+      severity: 'warning',
+      when: { fact: 'database.flyway.present', operator: 'equals', value: true },
+      assert: { fact: 'database.dialect', operator: 'present' },
+      source: { path: '.backend-harness/policies/database.md', section: 'Database dialect' }
+    }
+  ]
+}
+
 export const sharedTemplates = [
   {
     path: '.backend-harness/project.md',
@@ -25,7 +60,11 @@ export const sharedTemplates = [
       '',
       '## Completion rule',
       '',
-      'A task is complete only when its acceptance criteria and deterministic verification evidence agree.'
+      'A task is complete only when its acceptance criteria and deterministic verification evidence agree.',
+      '',
+      '## Repository knowledge',
+      '',
+      'The project, architecture, and glossary documents are required inputs and must remain present.'
     )
   },
   {
@@ -57,12 +96,30 @@ export const sharedTemplates = [
     )
   },
   {
+    path: '.backend-harness/project-rules.json',
+    content: JSON.stringify(defaultProjectRules, null, 2) + '\n'
+  },
+  {
+    path: '.backend-harness/implementation.json',
+    content: JSON.stringify({
+      schemaVersion: 1,
+      adapter: null,
+      recovery: { maxAttempts: 2 }
+    }, null, 2) + '\n'
+  },
+  {
     path: '.backend-harness/policies/api.md',
     content: lines(
       '# API policy',
       '',
+      '## Compatibility',
+      '',
       '- State compatibility and versioning rules.',
       '- Define validation and error-response conventions.',
+      '',
+      '## Executable verification',
+      '',
+      '- At least one required JUnit Gate must produce executed test evidence.',
       '- Record when contract tests are required.',
       '- Treat an undocumented breaking change as blocked.'
     )
@@ -72,9 +129,15 @@ export const sharedTemplates = [
     content: lines(
       '# Database policy',
       '',
+      '## Migration policy',
+      '',
       '- Migrations are append-only after release.',
       '- Record data backfill and rollback expectations.',
       '- Review transaction boundaries, indexes, and locking risk.',
+      '',
+      '## Database dialect',
+      '',
+      '- A project with migrations declares the database dialect used by executable verification.',
       '- Never connect to production by default.'
     )
   },

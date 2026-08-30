@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { inspectProjectContext } from '../adapters/project-context.mjs'
+import { inspectProjectIntelligence } from '../adapters/project-intelligence.mjs'
 import { canonicalJson } from '../core/canonical-json.mjs'
 import {
   createInterview,
@@ -107,8 +107,15 @@ function makeArtifacts(interview, contextSnapshot) {
   const requiredReviewChecklists = (contextSnapshot.policyGates ?? [])
     .filter((gate) => gate.required)
     .map((gate) => ({ name: gate.name, checks: [...gate.checks] }))
+  const projectRuleEvaluation = contextSnapshot.intelligence?.evaluation ?? {
+    schemaVersion: 1,
+    status: 'unknown',
+    blocking: false,
+    counts: { confirmed: 0, unknown: 0, conflict: 0 },
+    results: []
+  }
   const plan = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     taskId: interview.taskId,
     sourceFingerprint: interview.sourceFingerprint,
     objective: interview.requirement,
@@ -119,6 +126,7 @@ function makeArtifacts(interview, contextSnapshot) {
     constraintsAndExclusions: answerById(interview, 'constraints'),
     declaredRequiredGates: requiredGates,
     declaredRequiredReviewChecklists: requiredReviewChecklists,
+    projectRuleEvaluation,
     steps: executionSteps(interview, contextSnapshot, requiredGates),
     provenance: {
       requirementSha256: interview.requirementSha256,
@@ -144,6 +152,11 @@ function planMarkdown(artifacts, contextSnapshot) {
   const steps = artifacts.plan.steps
     .map((step, index) => (index + 1) + '. **' + step.id + '** — ' + step.action + '\n   - Proof: ' + step.proof)
     .join('\n')
+  const projectRules = artifacts.plan.projectRuleEvaluation.results.length
+    ? artifacts.plan.projectRuleEvaluation.results
+      .map((rule) => '- [' + rule.status.toUpperCase() + '] `' + rule.id + '` — ' + rule.description + ' (source: `' + rule.source.path + '`, ' + rule.source.section + ')')
+      .join('\n')
+    : '- _No machine-readable project rules were configured._'
   return [
     '# Execution plan — ' + artifacts.plan.taskId,
     '',
@@ -185,6 +198,12 @@ function planMarkdown(artifacts, contextSnapshot) {
     '',
     reviewChecklists,
     '',
+    '## Deterministic project-rule evaluation',
+    '',
+    'Status: **' + artifacts.plan.projectRuleEvaluation.status.toUpperCase() + '**. These rules guide planning but do not create PASS evidence.',
+    '',
+    projectRules,
+    '',
     '## Execution steps',
     '',
     steps,
@@ -199,6 +218,8 @@ function planMarkdown(artifacts, contextSnapshot) {
 
 function taskContextText(artifacts, contextSnapshot) {
   const conflicts = contextSnapshot.facts.filter((entry) => entry.status !== 'confirmed')
+  const ruleIssues = (contextSnapshot.intelligence?.evaluation?.results ?? [])
+    .filter((entry) => entry.status !== 'confirmed')
   return [
     'Requirement: ' + artifacts.requirement.initialRequirement,
     '',
@@ -213,6 +234,9 @@ function taskContextText(artifacts, contextSnapshot) {
     'Source fingerprint: ' + artifacts.context.sourceFingerprint,
     'Project facts needing attention: ' + (conflicts.length
       ? conflicts.map((entry) => entry.id + '=' + entry.status).join(', ')
+      : 'none'),
+    'Project rules needing attention: ' + (ruleIssues.length
+      ? ruleIssues.map((entry) => entry.id + '=' + entry.status).join(', ')
       : 'none')
   ].join('\n')
 }
@@ -245,7 +269,7 @@ async function recoverableTask(root, taskId, requirement) {
 
 export async function startInterview(inputPath, input, options = {}) {
   return withProjectVerificationLock(inputPath, options.projectLock, async () => {
-    const contextSnapshot = await inspectProjectContext(inputPath, options)
+    const contextSnapshot = await inspectProjectIntelligence(inputPath, options)
     const existing = await recoverableTask(inputPath, input.taskId, input.requirement?.trim())
     if (!existing) {
       await createTask(inputPath, {
@@ -290,7 +314,7 @@ export async function reviseInterview(inputPath, taskId, input, options = {}) {
 
 export async function rebindInterview(inputPath, taskId, input, options = {}) {
   return withProjectVerificationLock(inputPath, options.projectLock, async () => {
-    const contextSnapshot = await inspectProjectContext(inputPath, options)
+    const contextSnapshot = await inspectProjectIntelligence(inputPath, options)
     const rebound = await rebindInterviewContext(inputPath, taskId, {
       actor: input.actor,
       sourceBinding: contextSnapshot.sourceBinding,
@@ -365,6 +389,14 @@ async function syncFinalizedPlanToTask(root, taskId, artifacts, artifactDigests,
 export async function completeInterview(inputPath, taskId, input, options = {}) {
   return withProjectVerificationLock(inputPath, options.projectLock, async () => {
     const loaded = await loadInterview(inputPath, taskId)
+    const blockingRules = (loaded.contextSnapshot.intelligence?.evaluation?.results ?? [])
+      .filter((rule) => rule.severity === 'blocker' && rule.status !== 'confirmed' && rule.outcome !== 'not-applicable')
+    if (blockingRules.length > 0) {
+      throw new Error(
+        'Project rule conflicts or unknown blockers must be resolved and rebound before finalization: ' +
+        blockingRules.map((rule) => rule.id + '=' + rule.status).join(', ')
+      )
+    }
     const artifacts = makeArtifacts(loaded.record, loaded.contextSnapshot)
     const markdown = planMarkdown(artifacts, loaded.contextSnapshot)
     let finalized = loaded

@@ -36,17 +36,20 @@ test('adaptive scheduling is explicit and only required gates may opt into reord
       strategy: 'adaptive-failure-first',
       minimumObservations: 4,
       priorFailures: 1,
-      priorPasses: 3
+      priorPasses: 3,
+      maxParallel: 2
     },
     gates: [{
-      id: 'tests', required: true, reorderable: true, command: ['./verify'],
+      id: 'tests', required: true, reorderable: true, parallelSafe: true, resourceClass: 'unit-jvm', command: ['./verify'],
       result: { type: 'junit', reports: ['reports/junit.xml'], minimumTests: 1 }
     }]
   }))
 
   assert.equal(config.scheduling.strategy, 'adaptive-failure-first')
   assert.equal(config.scheduling.minimumObservations, 4)
+  assert.equal(config.scheduling.maxParallel, 2)
   assert.equal(config.gates[0].reorderable, true)
+  assert.equal(config.gates[0].parallelSafe, true)
 
   assert.throws(() => parseVerificationConfig(JSON.stringify({
     schemaVersion: 1,
@@ -56,6 +59,39 @@ test('adaptive scheduling is explicit and only required gates may opt into reord
       { id: 'graph', required: false, reorderable: true, command: ['./graph'], result: { type: 'observation', reports: ['reports/graph.json'] } }
     ]
   })), /only required gates may be reorderable/)
+
+  assert.throws(() => parseVerificationConfig(JSON.stringify({
+    schemaVersion: 1,
+    gates: [{
+      id: 'tests', required: true, reorderable: true, parallelSafe: true, command: ['./verify'],
+      result: { type: 'junit', reports: ['reports/junit.xml'] }
+    }]
+  })), /require an explicit resourceClass/)
+})
+
+test('gate dependencies are source-ordered, bounded, and cannot make required evidence depend on an optional observation', () => {
+  const baseGates = [
+    { id: 'compile', required: true, command: ['./compile'], result: { type: 'junit', reports: ['reports/compile.xml'] } },
+    { id: 'integration', required: true, dependsOn: ['compile'], command: ['./integration'], result: { type: 'junit', reports: ['reports/integration.xml'] } }
+  ]
+  const parsed = parseVerificationConfig(JSON.stringify({ schemaVersion: 1, gates: baseGates }))
+  assert.deepEqual(parsed.gates[1].dependsOn, ['compile'])
+
+  assert.throws(() => parseVerificationConfig(JSON.stringify({
+    schemaVersion: 1,
+    gates: [baseGates[1], baseGates[0]]
+  })), /declare dependency compile before itself/)
+  assert.throws(() => parseVerificationConfig(JSON.stringify({
+    schemaVersion: 1,
+    gates: [{ ...baseGates[0], dependsOn: ['missing'] }, baseGates[1]]
+  })), /unknown gate missing/)
+  assert.throws(() => parseVerificationConfig(JSON.stringify({
+    schemaVersion: 1,
+    gates: [
+      { id: 'advisory', required: false, command: ['./scan'], result: { type: 'observation', reports: ['reports/advisory.json'] } },
+      { ...baseGates[0], dependsOn: ['advisory'] }
+    ]
+  })), /required gate compile cannot depend on optional gate advisory/)
 })
 
 test('verification config rejects external executables, traversal, and exit-only success', () => {

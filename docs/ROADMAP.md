@@ -111,6 +111,25 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] compact bounded Pack writers aligned with the codegraph loader limit
 - [x] bounded code-context authority metadata independent of entry budget
 
+## 0.9 — Project intelligence, semantic impact, and isolated implementation
+
+- [x] strict provenance-carrying project rule contract with confirmed/unknown/conflict evaluation
+- [x] deterministic Git, knowledge-document, build, JVM, Flyway, dialect, and Gate fact collection
+- [x] blocker project rules surfaced in interview hints and enforced before plan finalization
+- [x] multi-declaration Java/Kotlin graph with import, inheritance, implementation, injection, and test provenance
+- [x] iterative SCC analysis safe beyond the JavaScript call stack
+- [x] directional dependency/dependent localization and weighted Personalized PageRank
+- [x] explicit Gate dependency ready-set scheduling
+- [x] opt-in bounded parallel batches with distinct resource classes
+- [x] provider-neutral project-owned implementation adapter contract
+- [x] detached task worktree with explicit write/network approval and unchanged-original proof
+- [x] allowed-prefix, changed-file, diff-byte, and verification-control-plane guards
+- [x] bounded repair attempts driven by structured verification failure summaries
+- [x] no automatic commit, merge, deployment, production access, or task VERIFIED transition
+- [ ] incremental source index cache measured on a large real backend
+- [ ] versioned gold impact fixture with Recall@20 >= 0.85
+- [ ] independently maintained second backend validation
+
 ## Later, only with measured demand
 
 - [ ] optional trusted-CI signature/attestation policy for organizations that need hostile-author assurance

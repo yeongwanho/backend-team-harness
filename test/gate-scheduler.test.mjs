@@ -111,3 +111,21 @@ test('controlled fixture exceeds 2x expected failure-feedback improvement withou
   assert.deepEqual(scheduled.gates.map((entry) => entry.id).sort(), gates.map((entry) => entry.id).sort())
   assert.ok(configured / optimized >= 2, { configured, optimized })
 })
+
+test('adaptive scheduling optimizes only the ready set and preserves declared dependencies', () => {
+  const compile = gate('compile')
+  const integration = { ...gate('integration'), dependsOn: ['compile'] }
+  const lint = gate('lint')
+  const gates = [compile, integration, lint]
+  const history = [
+    observation(compile, 10, 1, 100),
+    observation(integration, 10, 8, 10),
+    observation(lint, 10, 5, 20)
+  ]
+
+  const scheduled = buildGateSchedule(gates, history, adaptive)
+
+  assert.deepEqual(scheduled.gates.map((entry) => entry.id), ['lint', 'compile', 'integration'])
+  assert.ok(scheduled.gates.findIndex((entry) => entry.id === 'compile') < scheduled.gates.findIndex((entry) => entry.id === 'integration'))
+  assert.match(scheduled.decision.segments[0].reason, /dependency_constrained/)
+})

@@ -14,6 +14,16 @@ const RUN_PATH = '.backend-harness/local/runs/latest.json'
 const MAX_REPORT_BYTES = 16 * 1024 * 1024
 const MAX_AUTHORITY_ITEMS = 16
 const AUTHORITY_ITEM = /^[a-z][a-z0-9-]{0,63}$/
+const EDGE_CONTRACTS = new Map([
+  ['imports\0static-import-resolved', 1],
+  ['inherits\0source-declaration-resolved', 1.25],
+  ['implements\0source-declaration-resolved', 1.25],
+  ['injects\0source-pattern-resolved', 0.9],
+  ['tests\0convention-test-name-resolved', 0.65]
+])
+const MAX_IMPACT_DEPTH = 8
+const MAX_IMPACT_NODES = 5000
+const MAX_IMPACT_PATHS = 32
 
 function assertObject(value, label) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -97,10 +107,11 @@ function validateGraph(document) {
     if (!ids.has(edge.from) || !ids.has(edge.to)) {
       throw new Error('edges[' + index + '] references an unknown node.')
     }
-    if (edge.kind !== 'imports' || edge.provenance !== 'static-import-resolved') {
+    const weight = EDGE_CONTRACTS.get(edge.kind + '\0' + edge.provenance)
+    if (weight === undefined) {
       throw new Error('edges[' + index + '] has unsupported kind or provenance.')
     }
-    return { from: edge.from, to: edge.to }
+    return { from: edge.from, to: edge.to, kind: edge.kind, provenance: edge.provenance, weight }
   })
   return {
     nodes,
@@ -134,16 +145,102 @@ function personalization(nodes, query) {
       weights: nodes.map(() => nodes.length === 0 ? 0 : 1 / nodes.length),
       mode: 'global-fallback',
       matchedTokens: [],
-      seededNodeCount: 0
+      seededNodeCount: 0,
+      seededIndexes: []
     }
   }
   const total = raw.reduce((sum, value) => sum + value, 0)
+  const strongest = Math.max(...raw)
   return {
     weights: raw.map((value) => value / total),
     mode: 'query-personalized',
     matchedTokens,
-    seededNodeCount
+    seededNodeCount,
+    seededIndexes: raw.map((weight, index) => weight === strongest ? index : -1).filter((index) => index >= 0)
   }
+}
+
+function stronglyConnectedComponents(nodes, edges) {
+  const adjacency = new Map(nodes.map((node) => [node.id, []]))
+  const reverse = new Map(nodes.map((node) => [node.id, []]))
+  edges.forEach((edge) => {
+    adjacency.get(edge.from).push(edge.to)
+    reverse.get(edge.to).push(edge.from)
+  })
+  const visited = new Set(), finishOrder = [], components = []
+  for (const node of nodes) {
+    if (visited.has(node.id)) continue
+    visited.add(node.id)
+    const stack = [{ id: node.id, cursor: 0 }]
+    while (stack.length > 0) {
+      const frame = stack.at(-1), neighbors = adjacency.get(frame.id)
+      if (frame.cursor < neighbors.length) {
+        const next = neighbors[frame.cursor++]
+        if (!visited.has(next)) {
+          visited.add(next)
+          stack.push({ id: next, cursor: 0 })
+        }
+      } else {
+        finishOrder.push(frame.id)
+        stack.pop()
+      }
+    }
+  }
+  visited.clear()
+  for (let cursor = finishOrder.length - 1; cursor >= 0; cursor -= 1) {
+    const root = finishOrder[cursor]
+    if (visited.has(root)) continue
+    const members = [], stack = [root]
+    visited.add(root)
+    while (stack.length > 0) {
+      const id = stack.pop()
+      members.push(id)
+      for (const next of reverse.get(id)) {
+        if (!visited.has(next)) {
+          visited.add(next)
+          stack.push(next)
+        }
+      }
+    }
+    components.push(members)
+  }
+  return components
+}
+
+function reachable(seedIds, edges, direction) {
+  const adjacency = new Map()
+  for (const edge of edges) {
+    const from = direction === 'forward' ? edge.from : edge.to
+    const to = direction === 'forward' ? edge.to : edge.from
+    const list = adjacency.get(from) ?? []
+    list.push(to)
+    adjacency.set(from, list)
+  }
+  const seen = new Set(seedIds)
+  let frontier = [...seedIds]
+  let depth = 0
+  let truncated = false
+  while (frontier.length > 0 && depth < MAX_IMPACT_DEPTH) {
+    const next = []
+    for (const id of frontier) {
+      for (const target of adjacency.get(id) ?? []) {
+        if (seen.has(target)) continue
+        if (seen.size >= MAX_IMPACT_NODES) {
+          truncated = true
+          break
+        }
+        seen.add(target)
+        next.push(target)
+      }
+      if (truncated) break
+    }
+    frontier = next
+    depth += 1
+    if (truncated) break
+  }
+  if (frontier.length > 0) truncated = true
+  seedIds.forEach((id) => seen.delete(id))
+  return { ids: seen, depth, truncated }
 }
 
 function pageRank(nodes, edges, teleport) {
@@ -155,8 +252,8 @@ function pageRank(nodes, edges, teleport) {
   for (const edge of edges) {
     const from = indexes.get(edge.from)
     const to = indexes.get(edge.to)
-    adjacency[from].set(to, (adjacency[from].get(to) ?? 0) + 1)
-    adjacency[to].set(from, (adjacency[to].get(from) ?? 0) + 0.5)
+    adjacency[from].set(to, (adjacency[from].get(to) ?? 0) + edge.weight)
+    adjacency[to].set(from, (adjacency[to].get(from) ?? 0) + edge.weight * 0.5)
   }
   const outgoingWeights = adjacency.map((links) => {
     let total = 0
@@ -220,25 +317,47 @@ export function rankCodeContext(document, query, options = {}) {
   const finalScores = seed.mode === 'query-personalized'
     ? ranked.scores.map((score, index) => 0.4 * score + 0.6 * seed.weights[index])
     : ranked.scores
+  const provenanceByNode = new Map(graph.nodes.map((node) => [node.id, new Set(['graph-node'])]))
+  for (const edge of graph.edges) {
+    provenanceByNode.get(edge.from).add(edge.provenance)
+    provenanceByNode.get(edge.to).add(edge.provenance)
+  }
   const candidates = graph.nodes
     .map((node, index) => ({
       path: node.path,
       qualifiedName: node.qualifiedName,
       language: node.language,
       score: Number(finalScores[index].toPrecision(12)),
-      provenance: ['graph-node', 'static-import-resolved']
+      provenance: [...provenanceByNode.get(node.id)].sort(),
+      nodeId: node.id,
+      rankIndex: index
     }))
     .sort((left, right) => right.score - left.score || left.path.localeCompare(right.path))
   const entries = []
   let usedCharacters = 0
   for (const candidate of candidates) {
-    const entry = withEntryCost(candidate)
+    const { nodeId: _nodeId, rankIndex: _rankIndex, ...publicCandidate } = candidate
+    const entry = withEntryCost(publicCandidate)
     if (usedCharacters + entry.costCharacters > budgetCharacters) {
       continue
     }
     entries.push(entry)
     usedCharacters += entry.costCharacters
   }
+  const seedIds = seed.seededIndexes.map((index) => graph.nodes[index].id)
+  const dependencies = reachable(seedIds, graph.edges, 'forward')
+  const dependents = reachable(seedIds, graph.edges, 'reverse')
+  const scoreById = new Map(candidates.map((candidate) => [candidate.nodeId, candidate.score]))
+  const pathById = new Map(graph.nodes.map((node) => [node.id, node.path]))
+  function topPaths(ids) {
+    const paths = [...ids]
+      .sort((left, right) => (scoreById.get(right) ?? 0) - (scoreById.get(left) ?? 0) || pathById.get(left).localeCompare(pathById.get(right)))
+      .slice(0, MAX_IMPACT_PATHS)
+      .map((id) => pathById.get(id))
+    return { paths, omitted: Math.max(0, ids.size - paths.length) }
+  }
+  const components = stronglyConnectedComponents(graph.nodes, graph.edges)
+  const cyclicComponents = components.filter((members) => members.length > 1)
   return {
     status: 'available',
     authority: {
@@ -269,6 +388,15 @@ export function rankCodeContext(document, query, options = {}) {
       matchedTokens: seed.matchedTokens,
       seededNodeCount: seed.seededNodeCount
     },
+    impact: {
+      authority: 'advisory-structural-localization',
+      maxDepth: MAX_IMPACT_DEPTH,
+      seedPaths: seedIds.map((id) => pathById.get(id)).slice(0, MAX_IMPACT_PATHS),
+      dependencies: { count: dependencies.ids.size, truncated: dependencies.truncated, ...topPaths(dependencies.ids) },
+      dependents: { count: dependents.ids.size, truncated: dependents.truncated, ...topPaths(dependents.ids) },
+      stronglyConnectedComponents: components.length,
+      cyclicComponents: cyclicComponents.length
+    },
     budget: {
       limitCharacters: budgetCharacters,
       usedCharacters,
@@ -276,8 +404,9 @@ export function rankCodeContext(document, query, options = {}) {
     },
     entries,
     limitations: [
-      'Exact explicit Java/Kotlin imports only; this is not a call graph.',
-      'Reflection, runtime dependency injection, generated code, and SQL ownership are not resolved.',
+      'Imports and declared inheritance are exact only when their project type resolves uniquely; injection and test-name edges are source-pattern evidence.',
+      'This remains an advisory structural graph, not a compiler call graph.',
+      'Reflection, runtime dependency injection, generated code, and dynamic SQL ownership are not resolved.',
       'Ranking may guide navigation or review questions only.'
     ]
   }

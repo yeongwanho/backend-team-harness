@@ -53,13 +53,14 @@ const PACKS = Object.freeze({
     title: 'Advisory Java/Kotlin import graph',
     evidenceTier: 'REPORTED',
     purpose: 'Create a generation-stamped import graph with explicit provenance; it never changes PASS.',
-    files: ['README.md', 'run', 'run.mjs', 'graph-report.mjs'],
+    files: ['README.md', 'run', 'run.mjs', 'indexer.mjs', 'graph-report.mjs'],
     gate: {
       id: 'codegraph',
       required: false,
       command: ['./.backend-harness/packs/codegraph-advisory/run'],
       inputs: [
         './.backend-harness/packs/codegraph-advisory/run.mjs',
+        './.backend-harness/packs/codegraph-advisory/indexer.mjs',
         './.backend-harness/packs/codegraph-advisory/graph-report.mjs'
       ],
       timeoutMs: 120000,

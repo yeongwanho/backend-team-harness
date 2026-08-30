@@ -25,6 +25,8 @@ import {
 } from './runtime/interview-orchestrator.mjs'
 import { exportApprovedPlan } from './runtime/plan-export.mjs'
 import { diagnoseTaskFailure } from './runtime/failure-diagnosis.mjs'
+import { inspectProjectIntelligence } from './adapters/project-intelligence.mjs'
+import { implementationStatus, runImplementation } from './runtime/implementation-orchestrator.mjs'
 
 const VERSION = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version
 
@@ -35,6 +37,7 @@ function printHelp() {
     'Usage:',
     '  bth init [path] [--force] [--allow-unversioned]',
     '  bth doctor [path] [--json]',
+    '  bth intelligence inspect [path] [--json]',
     '  bth check [path] [--allow-network] [--json]',
     '  bth pack list [--json]',
     '  bth pack install <id> [path] [--json]',
@@ -51,6 +54,8 @@ function printHelp() {
     '  bth interview rebind <id> [path] --by <actor> [--json]',
     '  bth interview status <id> [path] [--json]',
     '  bth interview finalize <id> [path] --by <actor> [--json]',
+    '  bth implement run <id> [path] --by <actor> --allow-write [--allow-network] [--json]',
+    '  bth implement status <id> [path] [--json]',
     '  bth verify <id> [path] [--allow-network] [--json]',
     '  bth diagnose <id> [path] [--json]',
     '  bth version',
@@ -59,6 +64,7 @@ function printHelp() {
     '  init never creates the project directory, rejects symlink paths, and backs up every --force overwrite.',
     '  verify runs only project-contained executables declared in verification.json after an approved task state.',
     '  interview binds requirements, deterministic project facts, and a reviewable plan to one Git source fingerprint.',
+    '  implement runs a configured adapter only inside a detached task worktree and never applies its diff automatically.',
     '  VERIFIED requires fresh structured test reports with at least one executed test.'
   ].join('\n'))
 }
@@ -320,6 +326,31 @@ async function runDoctor(args) {
   }
 }
 
+async function runIntelligence(args) {
+  const [subcommand, ...rest] = args
+  if (subcommand !== 'inspect') {
+    throw new Error('Usage: bth intelligence inspect [path] [--json]')
+  }
+  const parsed = parseArguments(rest, { booleans: ['--json'] })
+  assertPositionalCount(parsed.positionals, 0, 1, 'bth intelligence inspect [path] [--json]')
+  const result = await inspectProjectIntelligence(parsed.positionals[0] ?? '.')
+  printResult(result, parsed.flags.has('--json'), () => {
+    const intelligence = result.intelligence
+    console.log('Project intelligence: ' + intelligence.evaluation.status.toUpperCase())
+    console.log('Source: ' + intelligence.sourceFingerprint)
+    console.log('Facts: ' + intelligence.facts.length + ', rules: ' + intelligence.rules.count)
+    for (const rule of intelligence.evaluation.results) {
+      console.log('[' + rule.status.toUpperCase() + '] ' + rule.id + ' — ' + rule.description)
+    }
+    for (const diagnostic of intelligence.rules.diagnostics) {
+      console.log('[UNKNOWN] ' + diagnostic)
+    }
+  })
+  if (result.intelligence.evaluation.blocking) {
+    process.exitCode = 1
+  }
+}
+
 async function runTask(args) {
   const [subcommand, ...rest] = args
   if (!subcommand) {
@@ -488,6 +519,48 @@ async function runDiagnose(args) {
   })
 }
 
+async function runImplement(args) {
+  const [subcommand, ...rest] = args
+  if (subcommand === 'status') {
+    const parsed = parseArguments(rest, { booleans: ['--json'] })
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth implement status <id> [path] [--json]')
+    const [id, path = '.'] = parsed.positionals
+    const result = await implementationStatus(path, id)
+    printResult(result, parsed.flags.has('--json'), () => {
+      console.log('Implementation ' + id + ': ' + result.record.status + '.')
+      console.log('Workspace: ' + result.record.workspace)
+      console.log('Attempts: ' + result.record.attempts.length)
+      console.log('Next: ' + result.record.nextAction)
+    })
+    return
+  }
+  if (subcommand === 'run') {
+    const parsed = parseArguments(rest, {
+      booleans: ['--json', '--allow-write', '--allow-network'],
+      values: ['--by']
+    })
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth implement run <id> [path] --by <actor> --allow-write [--allow-network] [--json]')
+    const actor = parsed.options.get('--by')
+    if (!actor) throw new Error('Implementation requires --by <actor>.')
+    const [id, path = '.'] = parsed.positionals
+    const result = await runImplementation(path, id, {
+      actor,
+      allowWrite: parsed.flags.has('--allow-write'),
+      allowNetwork: parsed.flags.has('--allow-network')
+    })
+    printResult(result, parsed.flags.has('--json'), () => {
+      console.log('Isolated implementation ' + result.record.status + ' for task ' + id + '.')
+      console.log('Workspace: ' + result.record.workspace)
+      console.log('Changed files: ' + result.record.changedFiles.changedEntryCount)
+      console.log('Original worktree unchanged: ' + result.record.originalWorktreeUnchanged)
+      console.log('Next: ' + result.record.nextAction)
+    })
+    if (result.record.status !== 'passed') process.exitCode = 1
+    return
+  }
+  throw new Error('Usage: bth implement <run|status> ...')
+}
+
 async function runPack(args) {
   const [subcommand, ...rest] = args
   if (subcommand === 'list') {
@@ -604,6 +677,10 @@ async function run() {
     await runDoctor(args)
     return
   }
+  if (command === 'intelligence') {
+    await runIntelligence(args)
+    return
+  }
   if (command === 'check') {
     await runCheck(args)
     return
@@ -630,6 +707,10 @@ async function run() {
   }
   if (command === 'diagnose') {
     await runDiagnose(args)
+    return
+  }
+  if (command === 'implement') {
+    await runImplement(args)
     return
   }
   throw new Error('Unknown command: ' + command)

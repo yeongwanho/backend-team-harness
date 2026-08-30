@@ -53,6 +53,8 @@ flowchart LR
 
 The interview is native BTH behavior, not a runtime bridge to another harness or an LLM. Its question catalogue and transitions are versioned in `interview-state.mjs`. It records only explicit human decisions and deterministic repository observations; it does not claim semantic code impact that no tool or person established.
 
+Project intelligence adds a strict `.backend-harness/project-rules.json` contract. Every rule source must resolve to a regular project-contained Markdown file and an existing heading; invented or symlinked policy provenance fails configuration loading. Git, build, knowledge documents, verification Gates, Flyway state, and bounded JVM source patterns become provenance-carrying facts with `confirmed`, `unknown`, or `conflict` status. Rule evaluation is deterministic; an absent or conflicting fact cannot be promoted to confirmed. Blocker rules prevent interview finalization until the source is corrected and rebound.
+
 The legacy-named `quality-gates/*.yaml` files are human review checklists. They are parsed into planning context but are not executable and have no verdict authority. Machine-enforced Gates exist only in `verification.json`.
 
 Interview persistence is under the owning task. `events.jsonl` is append-only and hash-chained, project-context snapshots are stored by digest, the four JSON artifacts are SHA-256 bound, and path/symlink/size limits match the existing task safety model. `unknown` and `conflict` answers remain the current question and fail closed. Project observations specialize the question hints but never create a human answer. `revise` changes one explicit decision; `rebind` preserves decisions while recording a fresh source and immutable context snapshot.
@@ -77,7 +79,9 @@ Finalization is crash-recoverable across the interview and task stores: finalize
 
 `verification-tool.mjs` knows result contracts, not frameworks. It resolves each project-contained executable, selects configured order or an opt-in schedule, fails fast after a required failure, and rebinds source after execution.
 
-Adaptive scheduling is deliberately narrower than test-impact analysis. Only contiguous required Gates marked `reorderable: true` can move. With Beta-smoothed failure probability `p_i` and observed mean duration `c_i`, eligible Gates are ordered by descending `p_i/c_i`, the pairwise optimum for an independent fail-fast model. A fixed or optional Gate is a hard boundary. Insufficient, missing, unsafe, or corrupt local history preserves configured order. The scheduler never removes a Gate and cannot alter evidence or verdict authority.
+Adaptive scheduling is deliberately narrower than test-impact analysis. Only contiguous required Gates marked `reorderable: true` can move, and only inside the ready set of the declared Gate dependency DAG. With Beta-smoothed failure probability `p_i` and observed mean duration `c_i`, eligible ready Gates are ordered by descending `p_i/c_i`, the pairwise optimum for the declared independent fail-fast model. A fixed or optional Gate is a hard boundary. Insufficient, missing, unsafe, or corrupt local history preserves configured order. The scheduler never removes a Gate and cannot alter evidence or verdict authority.
+
+Execution remains serial by default. A project may opt in to bounded parallel batches only when Gates declare `parallelSafe: true`, distinct `resourceClass` values, and no dependency between batch members. The selected batches and resource classes are preserved in the run record. This declaration is a project-owned trust statement; BTH cannot prove that arbitrary build tasks avoid a hidden shared cache.
 
 ### Project contract and Packs
 
@@ -142,9 +146,9 @@ Gate executables are trusted project code. A Gate declaring `network: true` is d
 
 The runner distinguishes a command deadline from leaked descendant stdio. After the direct process exits it allows a bounded drain; if a descendant still owns the pipes, BTH sends `SIGTERM`, waits a bounded grace period, escalates to `SIGKILL`, waits again, detaches stream listeners, and then finalizes output hashes. Cleanup is in a settle-guaranteeing `finally` path and the Gate fails as `process_stdio_drain_timed_out` instead of poisoning timeout history.
 
-BTH does not currently provide a source-writing tool. Pack installation, baseline update, init, and task persistence are explicit CLI mutations with collision checks/backups.
+BTH has no model-specific source-writing tool. Its optional implementation port runs only a project-owned executable after a source-bound plan is human-approved and the caller supplies a fresh write approval. The executable receives a bounded local request in a detached task worktree. Project configuration limits allowed prefixes, changed-file count, diff bytes, network declaration, timeout, and repair attempts.
 
-The planning interview may prepare work for a person or any coding agent, but BTH does not grant that actor source-write authority. Implementation remains a separate, explicit step after human plan approval.
+The original worktree is rebound before and after the run. Changes to `verification.json`, the implementation adapter, or Gate executables are classified as control-plane tampering and never verified. A failed attempt can receive only a compact prior failure summary and retry within the configured bound. Passing the isolated check produces a reviewable diff, not a merge, commit, task `VERIFIED` state, deployment, or production access. Final authority still requires integrating the diff through normal Git workflow and running `bth verify` on that source.
 
 `bth diagnose` reads the latest hash-validated failed run and returns failed Gates, failed tests, the sealed rerun argv, and advisory next actions. It does not retry automatically and cannot alter a verdict.
 
@@ -156,9 +160,9 @@ This prevents a universal Core lifecycle from conflicting with real service setu
 
 ## Advisory graph
 
-The bundled graph Pack is an import graph, not a call graph. It records generation, provenance, coverage gaps, global directed PageRank, allowed uses, and forbidden uses. Cycles are legal; no DAG assumption is made.
+The bundled graph Pack is a structural source graph, not a compiler or runtime call graph. It records multiple Java/Kotlin declarations per file, exact unique imports and declared inheritance/implementation, conservative field/constructor injection and test-name relations, route/table/role metadata, per-edge provenance, coverage gaps, weighted PageRank, allowed uses, and forbidden uses.
 
-Approved plan export may derive bounded query-personalized context from that graph. It first requires a successful graph observation in the latest sealed project run, an unchanged source fingerprint, and matching report bytes/digest. Lexical path/type matches seed Personalized PageRank; propagation follows stored exact import edges only. Selection has a hard character budget and remains `REPORTED/advisory`.
+Approved plan export may derive bounded query-personalized context from that graph. It first requires a successful graph observation in the latest sealed project run, an unchanged source fingerprint, and matching report bytes/digest. Lexical path/type matches seed Personalized PageRank; propagation uses explicit provenance weights and half-weight reverse navigation. Strongest lexical seeds also drive bounded forward dependencies and reverse dependents. Iterative SCC analysis handles deep graphs without JavaScript recursion overflow. Selection has a hard character budget and remains `REPORTED/advisory`; heuristic injection/test edges never gain verdict authority.
 
 A richer future sidecar must remain rebuildable and advisory. Compiler/bytecode/runtime provenance should outrank heuristic edges, and no graph may silently choose fewer tests for a PASS run.
 

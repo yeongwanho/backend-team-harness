@@ -9,6 +9,9 @@ export function gateSignature(gate) {
   return createHash('sha256').update(canonicalJson({
     id: gate.id,
     required: gate.required,
+    dependsOn: gate.dependsOn ?? [],
+    parallelSafe: gate.parallelSafe ?? false,
+    resourceClass: gate.resourceClass ?? 'project-build',
     network: gate.network ?? false,
     command: gate.command,
     inputs: gate.inputs ?? [],
@@ -68,12 +71,23 @@ export function buildGateSchedule(gates, history, scheduling) {
     }
     const sufficient = scheduling.strategy === 'adaptive-failure-first' && segment.length > 1 &&
       segment.every((gate) => estimates.get(gateSignature(gate)).samples >= scheduling.minimumObservations)
-    const ordered = sufficient
-      ? segment
-          .map((gate, offset) => ({ gate, offset, estimate: estimates.get(gateSignature(gate)) }))
-          .sort((left, right) => right.estimate.score - left.estimate.score || left.offset - right.offset)
-          .map((entry) => entry.gate)
-      : segment
+    const segmentIds = new Set(segment.map((gate) => gate.id))
+    const pending = segment.map((gate, offset) => ({ gate, offset, estimate: estimates.get(gateSignature(gate)) }))
+    const emitted = new Set()
+    const ordered = []
+    while (pending.length > 0) {
+      const ready = pending.filter((entry) => (entry.gate.dependsOn ?? []).every((dependency) => !segmentIds.has(dependency) || emitted.has(dependency)))
+      if (ready.length === 0) {
+        throw new Error('Verification gate dependencies cannot be scheduled without violating a fixed boundary.')
+      }
+      ready.sort((left, right) => sufficient
+        ? right.estimate.score - left.estimate.score || left.offset - right.offset
+        : left.offset - right.offset)
+      const selected = ready[0]
+      ordered.push(selected.gate)
+      emitted.add(selected.gate.id)
+      pending.splice(pending.indexOf(selected), 1)
+    }
     scheduled.push(...ordered)
     segments.push({
       start,
@@ -84,7 +98,9 @@ export function buildGateSchedule(gates, history, scheduling) {
         : segment.length < 2
           ? 'single_gate_segment'
           : sufficient
-            ? 'posterior_failure_probability_per_millisecond'
+            ? segment.some((gate) => (gate.dependsOn ?? []).some((dependency) => segmentIds.has(dependency)))
+              ? 'dependency_constrained_posterior_failure_probability_per_millisecond'
+              : 'posterior_failure_probability_per_millisecond'
             : 'minimum_observations_not_met'
     })
   }
@@ -94,6 +110,7 @@ export function buildGateSchedule(gates, history, scheduling) {
     const gateEstimate = estimates.get(gateSignature(gate))
     return {
       id: gate.id,
+      dependsOn: gate.dependsOn ?? [],
       signature: gateEstimate.signature,
       originalIndex: originalIndex.get(gate),
       finalIndex,
@@ -113,7 +130,7 @@ export function buildGateSchedule(gates, history, scheduling) {
       strategy: scheduling.strategy,
       objective: 'minimize_expected_time_to_first_required_failure_without_skipping_gates',
       applied,
-      assumptions: ['eligible-gates-are-order-independent', 'gate-failures-are-estimated-as-independent'],
+      assumptions: ['only-ready-gates-are-reordered', 'gate-failures-are-estimated-as-independent'],
       minimumObservations: scheduling.minimumObservations,
       prior: { failures: scheduling.priorFailures, passes: scheduling.priorPasses },
       originalOrder: original.map((gate) => gate.id),

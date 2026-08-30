@@ -95,6 +95,12 @@ function observedHint(question, contextSnapshot) {
     if (unresolved.length) {
       observations.push('확인이 필요한 프로젝트 사실: ' + unresolved.join(', ') + '.')
     }
+    const ruleIssues = (contextSnapshot.intelligence?.evaluation?.results ?? [])
+      .filter((entry) => entry.status !== 'confirmed')
+      .map((entry) => entry.id + '=' + entry.status)
+    if (ruleIssues.length) {
+      observations.push('해결이 필요한 프로젝트 규칙: ' + ruleIssues.join(', ') + '.')
+    }
   }
   return observations.length ? question.hint + ' 현재 프로젝트 관찰: ' + observations.join(' ') : question.hint
 }

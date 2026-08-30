@@ -49,20 +49,12 @@ export function createVerificationTool(options = {}) {
       const schedule = buildGateSchedule(loaded.config.gates, gateHistory.entries, loaded.config.scheduling)
       const gateResults = []
       const observations = []
+      const outcomes = new Map()
       const tests = emptyTestSummary()
+      const executionBatches = []
       let blocked = false
 
-      for (const gate of schedule.gates) {
-        if (blocked) {
-          gateResults.push({
-            id: gate.id,
-            required: gate.required,
-            outcome: 'skipped',
-            reason: 'required_gate_failed'
-          })
-          continue
-        }
-
+      async function executeGate(gate) {
         const executable = await resolveGateExecutable(context.root, gate.command)
         let reportSnapshot = null
         if (gate.result.type !== 'exit-code') {
@@ -89,9 +81,6 @@ export function createVerificationTool(options = {}) {
               reportSnapshot,
               { minimumTests: gate.result.minimumTests }
             )
-            if (gate.required) {
-              addTests(tests, structuredResult)
-            }
             reason ??= structuredResult.reason
           } catch (error) {
             reason ??= 'junit_parse_failed'
@@ -135,21 +124,87 @@ export function createVerificationTool(options = {}) {
         }
 
         const passed = reason === null
-        gateResults.push({
-          id: gate.id,
-          required: gate.required,
-          network: gate.network,
-          command: [executable.displayPath, ...gate.command.slice(1)],
-          outcome: passed ? 'passed' : 'failed',
-          reason,
-          evidenceTier: gate.result.type === 'junit' || gate.result.type === 'exit-code' ? 'EXECUTED' : 'REPORTED',
-          process: processResult,
-          result: structuredResult
-        })
-        observations.push({ gate, outcome: passed ? 'passed' : 'failed', durationMs: processResult.durationMs })
-        if (gate.required && !passed) {
-          blocked = true
+        return {
+          gate,
+          passed,
+          testResult: gate.required && gate.result.type === 'junit' ? structuredResult : null,
+          observation: { gate, outcome: passed ? 'passed' : 'failed', durationMs: processResult.durationMs },
+          result: {
+            id: gate.id,
+            required: gate.required,
+            network: gate.network,
+            command: [executable.displayPath, ...gate.command.slice(1)],
+            outcome: passed ? 'passed' : 'failed',
+            reason,
+            evidenceTier: gate.result.type === 'junit' || gate.result.type === 'exit-code' ? 'EXECUTED' : 'REPORTED',
+            process: processResult,
+            result: structuredResult
+          }
         }
+      }
+
+      for (let cursor = 0; cursor < schedule.gates.length;) {
+        const gate = schedule.gates[cursor]
+        if (blocked) {
+          const skipped = {
+            id: gate.id,
+            required: gate.required,
+            outcome: 'skipped',
+            reason: 'required_gate_failed'
+          }
+          gateResults.push(skipped)
+          outcomes.set(gate.id, skipped.outcome)
+          cursor += 1
+          continue
+        }
+        const failedDependency = (gate.dependsOn ?? []).find((dependency) => outcomes.get(dependency) !== 'passed')
+        if (failedDependency) {
+          const skipped = {
+            id: gate.id,
+            required: gate.required,
+            outcome: 'skipped',
+            reason: 'dependency_failed',
+            dependency: failedDependency
+          }
+          gateResults.push(skipped)
+          outcomes.set(gate.id, skipped.outcome)
+          if (gate.required) blocked = true
+          cursor += 1
+          continue
+        }
+
+        const batch = [gate]
+        const resources = new Set([gate.resourceClass])
+        if (loaded.config.scheduling.maxParallel > 1 && gate.parallelSafe) {
+          for (let next = cursor + 1; next < schedule.gates.length && batch.length < loaded.config.scheduling.maxParallel; next += 1) {
+            const candidate = schedule.gates[next]
+            if (!candidate.parallelSafe || resources.has(candidate.resourceClass)) break
+            const batchIds = new Set(batch.map((entry) => entry.id))
+            if ((candidate.dependsOn ?? []).some((dependency) => batchIds.has(dependency) || outcomes.get(dependency) !== 'passed')) break
+            batch.push(candidate)
+            resources.add(candidate.resourceClass)
+          }
+        }
+        executionBatches.push({
+          ids: batch.map((entry) => entry.id),
+          parallel: batch.length > 1,
+          resourceClasses: batch.map((entry) => entry.resourceClass)
+        })
+        // Wait for every process in a parallel batch to settle before releasing the
+        // project lock. Promise.all would reject early and could leave a sibling
+        // Gate running against the project after the caller had already returned.
+        const settled = await Promise.allSettled(batch.map(executeGate))
+        const rejected = settled.find((entry) => entry.status === 'rejected')
+        if (rejected) throw rejected.reason
+        const executed = settled.map((entry) => entry.value)
+        for (const entry of executed) {
+          gateResults.push(entry.result)
+          outcomes.set(entry.gate.id, entry.result.outcome)
+          observations.push(entry.observation)
+          if (entry.testResult) addTests(tests, entry.testResult)
+          if (entry.gate.required && !entry.passed) blocked = true
+        }
+        cursor += batch.length
       }
 
       const postSourceBinding = await sourceBinder()
@@ -200,6 +255,8 @@ export function createVerificationTool(options = {}) {
         postSourceFingerprint: postSourceBinding?.fingerprint ?? null,
         scheduling: {
           ...schedule.decision,
+          maxParallel: loaded.config.scheduling.maxParallel,
+          executionBatches,
           history: historyUpdate
         },
         tests,

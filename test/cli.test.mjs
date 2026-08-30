@@ -25,6 +25,23 @@ test('CLI help exposes the actual task and verification commands', () => {
   assert.match(result.stdout, /bth pack install/)
   assert.match(result.stdout, /bth baseline update/)
   assert.match(result.stdout, /bth interview start/)
+  assert.match(result.stdout, /bth intelligence inspect/)
+  assert.match(result.stdout, /bth implement run/)
+})
+
+test('CLI exposes deterministic project intelligence and evaluated rules', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-cli-intelligence-'))
+  await writeGradleFixture(root)
+  initializeGit(root)
+  assert.equal(runCli(['init', root]).status, 0)
+
+  const inspected = runCli(['intelligence', 'inspect', root, '--json'])
+  assert.equal(inspected.status, 0, inspected.stderr || inspected.stdout)
+  const result = JSON.parse(inspected.stdout)
+  assert.equal(result.intelligence.authority.modelGenerated, false)
+  assert.equal(result.intelligence.evaluation.blocking, false)
+  assert.ok(result.intelligence.facts.some((fact) => fact.id === 'verification.required-junit-gate.present'))
+  assert.ok(result.intelligence.evaluation.results.some((rule) => rule.id === 'required-junit-evidence'))
 })
 
 test('CLI runs the native requirement interview through PLAN_PROPOSED', async () => {

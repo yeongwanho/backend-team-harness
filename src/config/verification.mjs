@@ -7,8 +7,8 @@ import { reportGlobBase, reportPatternsMayOverlap } from '../core/report-glob.mj
 const GATE_ID = /^[a-z][a-z0-9-]{0,63}$/
 const CONFIG_KEYS = new Set(['schemaVersion', 'context', 'scheduling', 'gates'])
 const CONTEXT_KEYS = new Set(['profile', 'databaseDialect'])
-const SCHEDULING_KEYS = new Set(['strategy', 'minimumObservations', 'priorFailures', 'priorPasses'])
-const GATE_KEYS = new Set(['id', 'required', 'reorderable', 'network', 'command', 'inputs', 'timeoutMs', 'result'])
+const SCHEDULING_KEYS = new Set(['strategy', 'minimumObservations', 'priorFailures', 'priorPasses', 'maxParallel'])
+const GATE_KEYS = new Set(['id', 'required', 'reorderable', 'dependsOn', 'parallelSafe', 'resourceClass', 'network', 'command', 'inputs', 'timeoutMs', 'result'])
 const RESULT_KEYS = new Set(['type', 'reports', 'minimumTests', 'blockingSeverities'])
 const FINDING_SEVERITIES = new Set(['info', 'warning', 'error', 'low', 'medium', 'high', 'critical'])
 
@@ -65,6 +65,24 @@ function validateInputs(inputs, label) {
   return [...new Set(inputs.map((entry, index) => normalizeProjectRelativePath(entry, label + '[' + index + ']')))]
 }
 
+function validateDependencies(dependencies, label) {
+  if (dependencies === undefined) return []
+  if (!Array.isArray(dependencies) || dependencies.length > 31) {
+    throw new Error(label + ' must contain at most 31 gate ids.')
+  }
+  const normalized = []
+  for (const [index, dependency] of dependencies.entries()) {
+    if (typeof dependency !== 'string' || !GATE_ID.test(dependency)) {
+      throw new Error(label + '[' + index + '] is invalid.')
+    }
+    if (normalized.includes(dependency)) {
+      throw new Error(label + ' contains duplicate gate id ' + dependency + '.')
+    }
+    normalized.push(dependency)
+  }
+  return normalized
+}
+
 function validateContext(context, label) {
   if (context === undefined) {
     return { profile: null, databaseDialect: null }
@@ -100,7 +118,8 @@ function validateScheduling(scheduling, label) {
       strategy: 'configured',
       minimumObservations: 5,
       priorFailures: 1,
-      priorPasses: 1
+      priorPasses: 1,
+      maxParallel: 1
     }
   }
   assertPlainObject(scheduling, label)
@@ -113,7 +132,8 @@ function validateScheduling(scheduling, label) {
     strategy,
     minimumObservations: boundedPositiveInteger(scheduling.minimumObservations, 5, label + '.minimumObservations', 10_000),
     priorFailures: boundedPositiveInteger(scheduling.priorFailures, 1, label + '.priorFailures', 10_000),
-    priorPasses: boundedPositiveInteger(scheduling.priorPasses, 1, label + '.priorPasses', 10_000)
+    priorPasses: boundedPositiveInteger(scheduling.priorPasses, 1, label + '.priorPasses', 10_000),
+    maxParallel: boundedPositiveInteger(scheduling.maxParallel, 1, label + '.maxParallel', 8)
   }
 }
 
@@ -192,6 +212,18 @@ export function parseVerificationConfig(text, source = '<inline>') {
     if (gate.reorderable === true && gate.required !== true) {
       throw new Error(label + ': only required gates may be reorderable.')
     }
+    if (gate.parallelSafe !== undefined && typeof gate.parallelSafe !== 'boolean') {
+      throw new Error(label + '.parallelSafe must be boolean when provided.')
+    }
+    if (gate.parallelSafe === true && gate.reorderable !== true) {
+      throw new Error(label + ': parallelSafe gates must also be required and reorderable.')
+    }
+    if (gate.resourceClass !== undefined && (typeof gate.resourceClass !== 'string' || !/^[a-z][a-z0-9-]{0,63}$/.test(gate.resourceClass))) {
+      throw new Error(label + '.resourceClass must be a bounded identifier.')
+    }
+    if (gate.parallelSafe === true && !gate.resourceClass) {
+      throw new Error(label + ': parallelSafe gates require an explicit resourceClass.')
+    }
     if (gate.network !== undefined && typeof gate.network !== 'boolean') {
       throw new Error(label + '.network must be boolean when provided.')
     }
@@ -206,6 +238,9 @@ export function parseVerificationConfig(text, source = '<inline>') {
       id: gate.id,
       required: gate.required,
       reorderable: gate.reorderable ?? false,
+      dependsOn: validateDependencies(gate.dependsOn, label + '.dependsOn'),
+      parallelSafe: gate.parallelSafe ?? false,
+      resourceClass: gate.resourceClass ?? 'project-build',
       network: gate.network ?? false,
       command: validateCommand(gate.command, label + '.command'),
       inputs: validateInputs(gate.inputs, label + '.inputs'),
@@ -213,6 +248,25 @@ export function parseVerificationConfig(text, source = '<inline>') {
       result: validateResult(gate.result, label + '.result')
     }
   })
+
+  const gateIndex = new Map(gates.map((gate, index) => [gate.id, index]))
+  for (const [index, gate] of gates.entries()) {
+    for (const dependency of gate.dependsOn) {
+      const dependencyIndex = gateIndex.get(dependency)
+      if (dependencyIndex === undefined) {
+        throw new Error(source + ': gate ' + gate.id + ' depends on unknown gate ' + dependency + '.')
+      }
+      if (dependency === gate.id) {
+        throw new Error(source + ': gate ' + gate.id + ' cannot depend on itself.')
+      }
+      if (dependencyIndex > index) {
+        throw new Error(source + ': gate ' + gate.id + ' must declare dependency ' + dependency + ' before itself.')
+      }
+      if (gate.required && !gates[dependencyIndex].required) {
+        throw new Error(source + ': required gate ' + gate.id + ' cannot depend on optional gate ' + dependency + '.')
+      }
+    }
+  }
 
   const reportOwners = []
   for (const gate of gates) {

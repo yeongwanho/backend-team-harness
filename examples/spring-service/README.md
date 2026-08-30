@@ -5,7 +5,10 @@ This directory contains a company-free backend structure with a checked-in Gradl
 Run from this directory:
 
     node ../../src/cli.mjs doctor .
+    node ../../src/cli.mjs intelligence inspect .
     node ../../src/cli.mjs check . --allow-network
+
+`intelligence inspect` shows source-bound facts and the checked-in project-rule results. The example deliberately leaves `databaseDialect` unknown in its unit-test Gate, so the Flyway dialect rule remains a non-blocking warning until the DB Pack configures the real MySQL integration Gate. The implementation adapter is disabled by default and cannot write code until a project explicitly supplies its own reviewed wrapper and write budget.
 
 The network flag is required because Gradle Wrapper and Maven Central may be contacted on a cold machine. After the distribution and dependencies are cached, the project can choose an offline command in `verification.json`.
 

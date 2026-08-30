@@ -116,6 +116,44 @@ test('authority metadata stays bounded independently of a tiny entry budget', ()
   assert.ok(Buffer.byteLength(JSON.stringify(result)) <= 8192)
 })
 
+test('semantic edges produce directional dependencies and dependents without claiming runtime truth', () => {
+  const document = graphDocument()
+  document.graph.edges = [
+    { from: 'controller', to: 'service', kind: 'injects', provenance: 'source-pattern-resolved' },
+    { from: 'service', to: 'repository', kind: 'imports', provenance: 'static-import-resolved' }
+  ]
+
+  const result = rankCodeContext(document, 'OrdersService', { budgetCharacters: 700 })
+
+  assert.equal(result.impact.authority, 'advisory-structural-localization')
+  assert.deepEqual(result.impact.seedPaths, ['src/main/java/orders/OrdersService.java'])
+  assert.ok(result.impact.dependencies.paths.includes('src/main/java/orders/OrdersRepository.java'))
+  assert.ok(result.impact.dependents.paths.includes('src/main/java/orders/OrdersController.java'))
+  assert.ok(result.entries.find((entry) => entry.path.endsWith('OrdersService.java')).provenance.includes('source-pattern-resolved'))
+})
+
+test('SCC analysis stays iterative on a graph deeper than the JavaScript call stack', () => {
+  const size = 12_000
+  const document = graphDocument()
+  document.graph.nodes = Array.from({ length: size }, (_, index) => ({
+    id: 'n' + index,
+    path: 'src/main/java/deep/N' + index + '.java',
+    language: 'java',
+    qualifiedName: 'deep.N' + index
+  }))
+  document.graph.edges = Array.from({ length: size - 1 }, (_, index) => ({
+    from: 'n' + index,
+    to: 'n' + (index + 1),
+    kind: 'imports',
+    provenance: 'static-import-resolved'
+  }))
+
+  const result = rankCodeContext(document, 'terms absent from graph', { budgetCharacters: 64 })
+
+  assert.equal(result.impact.stronglyConnectedComponents, size)
+  assert.equal(result.impact.cyclicComponents, 0)
+})
+
 test('loader accepts only a graph digest bound to the current sealed project run', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-code-context-bound-'))
   await writeGradleFixture(root)

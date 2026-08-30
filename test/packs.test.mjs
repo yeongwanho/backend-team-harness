@@ -41,7 +41,7 @@ test('the advisory graph Pack installs safely and never replaces executed tests'
   assert.equal(graph.graph.advisory, true)
   assert.deepEqual(graph.graph.forbiddenUses, ['pass-verdict', 'test-skipping'])
   assert.equal(graph.graph.edges[0].provenance, 'static-import-resolved')
-  assert.equal(graph.graph.ranking.algorithm, 'pagerank')
+  assert.equal(graph.graph.ranking.algorithm, 'weighted-pagerank')
   assert.ok(graph.graph.nodes.every((node) => Number.isFinite(node.globalRank)))
   assert.ok(Math.abs(graph.graph.nodes.reduce((sum, node) => sum + node.globalRank, 0) - 1) < 1e-9)
   assert.equal(graphText.includes('\n  "'), false)

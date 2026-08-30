@@ -9,6 +9,12 @@ AI가 코드를 작성해도 좋고 사람이 직접 작성해도 좋습니다. 
 ```text
 개발자 또는 AI
       ↓
+.backend-harness/project-rules.json   Git·정책·코드·DB 사실의 3값 제약 검사
+      ↓
+요구사항 인터뷰 → 모순/unknown 해소 → source-bound 계획 → 사람 승인
+      ↓
+.backend-harness/implementation.json  선택적 격리 구현 어댑터 + 쓰기 예산
+      ↓
 .backend-harness/verification.json     프로젝트가 실행 방법을 소유
       ↓
 프로젝트 단위 잠금                     같은 build/report 동시 사용 차단
@@ -50,6 +56,7 @@ npm test
 
 node src/cli.mjs init /path/to/backend-project
 node src/cli.mjs doctor /path/to/backend-project
+node src/cli.mjs intelligence inspect /path/to/backend-project
 node src/cli.mjs check /path/to/backend-project
 ```
 
@@ -95,6 +102,7 @@ node src/cli.mjs check examples/spring-service --allow-network
 - 명령은 argv 배열이며 `shell: false`로 실행됩니다.
 - `inputs`는 Git에서 무시됐더라도 결과에 영향을 주는 파일을 내용 해시로 묶습니다.
 - `network: true`인 Gate는 CLI의 명시적 `--allow-network` 없이는 실행되지 않습니다.
+- `dependsOn`은 선행 Gate가 통과하기 전 실행을 막습니다. 필수 Gate가 선택적 observation에 의존하는 구성은 거절됩니다.
 - 하나 이상의 required JUnit Gate가 반드시 있어야 합니다.
 - `minimumTests`는 전체가 아니라 실제 실행된 테스트 수의 하한입니다.
 
@@ -113,11 +121,12 @@ node src/cli.mjs check examples/spring-service --allow-network
     "strategy": "adaptive-failure-first",
     "minimumObservations": 5,
     "priorFailures": 1,
-    "priorPasses": 1
+    "priorPasses": 1,
+    "maxParallel": 2
   },
   "gates": [
-    { "id": "unit", "required": true, "reorderable": true, "command": ["./gradlew", "test"], "timeoutMs": 600000, "result": { "type": "junit", "reports": ["build/test-results/test/**/*.xml"], "minimumTests": 1 } },
-    { "id": "integration", "required": true, "reorderable": true, "command": ["./gradlew", "integrationTest"], "timeoutMs": 900000, "result": { "type": "junit", "reports": ["build/test-results/integrationTest/**/*.xml"], "minimumTests": 1 } }
+    { "id": "unit", "required": true, "reorderable": true, "parallelSafe": true, "resourceClass": "unit-jvm", "command": ["./gradlew", "test"], "timeoutMs": 600000, "result": { "type": "junit", "reports": ["build/test-results/test/**/*.xml"], "minimumTests": 1 } },
+    { "id": "integration", "required": true, "reorderable": true, "dependsOn": ["unit"], "command": ["./gradlew", "integrationTest"], "timeoutMs": 900000, "result": { "type": "junit", "reports": ["build/test-results/integrationTest/**/*.xml"], "minimumTests": 1 } }
   ]
 }
 ```
@@ -125,7 +134,8 @@ node src/cli.mjs check examples/spring-service --allow-network
 순서는 Beta 평활한 실패확률 `p`를 평균 시간 `c`로 나눈 `p/c` 내림차순입니다. 단, 다음 경계는 바뀌지 않습니다.
 
 - `reorderable: true`가 없는 Gate는 이동하지 않습니다.
-- required Gate가 연속된 구간 안에서만 이동합니다. fixed/optional Gate를 건너지 않습니다.
+- required Gate가 연속된 구간 안에서만 이동하며 `dependsOn`의 ready-set을 절대 추월하지 않습니다. fixed/optional Gate도 건너지 않습니다.
+- 기본 병렬도는 1입니다. `parallelSafe: true`이고 서로 다른 `resourceClass`를 선언한 ready Gate만 `maxParallel` 한도에서 동시에 실행됩니다.
 - 관측치가 부족하거나 이력이 없거나 손상됐으면 원래 순서로 돌아갑니다.
 - PASS 경로에서는 모든 Gate가 정확히 한 번 실행됩니다. 이 기능은 테스트를 선택하거나 생략하지 않습니다.
 - 이력은 순서에만 쓰이며 결과·증거 등급·테스트 수·source fingerprint·PASS에는 영향을 주지 못합니다.
@@ -183,7 +193,7 @@ node src/cli.mjs pack install codegraph-advisory /path/to/project
 | `db-integration` | 같은 운영 dialect의 Testcontainers/Compose 통합테스트 Gate | 실행된 JUnit이므로 근거 가능 |
 | `architecture` | ArchUnit/Spring Modulith `*ArchitectureTest` Gate | 실행된 JUnit이므로 근거 가능 |
 | `contract` | Pact/SCC/OpenAPI/message contract Gate | 실행된 JUnit이므로 근거 가능 |
-| `codegraph-advisory` | 명시적 import만 연결한 Java/Kotlin 탐색 그래프 | 참고 전용, PASS 영향 없음 |
+| `codegraph-advisory` | import·상속·구현·주입·테스트 관계를 provenance와 함께 연결한 Java/Kotlin 구조 그래프 | 참고 전용, PASS 영향 없음 |
 
 설치는 기존 Gate id나 Pack 폴더를 덮어쓰지 않으며, 변경 전 `verification.json`을 로컬 backup에 보관합니다. DB·architecture·contract Pack은 프로젝트의 실제 task/profile/test를 팀이 구현해야 하며, 준비되지 않으면 fail-closed합니다. DB Pack은 Testcontainers 이미지나 의존성을 받을 수 있어 `network: true`로 설치되며 실행할 때 `--allow-network`가 필요합니다.
 
@@ -192,6 +202,17 @@ node src/cli.mjs pack install codegraph-advisory /path/to/project
 구조화된 report는 파일당 16 MiB, 한 수집 단계 전체 64 MiB로 제한되고 한 파일씩 읽어 합산됩니다. 전용 report 트리 안의 심볼릭 링크는 실행 전에 거절합니다. 번들 Pack도 compact JSON을 원자적으로 교체하며, report 디렉터리가 프로젝트 밖으로 연결되면 쓰지 않습니다. 이 경계는 대규모 결과의 메모리 폭증과 report 경로를 이용한 외부 파일 덮어쓰기를 함께 막습니다.
 
 `bth doctor`의 `healthy`는 계약 파일·실행 파일·설정이 **구조적으로 실행 준비가 됐다**는 뜻입니다. 테스트 성공을 뜻하지 않습니다. 완료 근거는 반드시 `bth check` 또는 승인된 작업의 `bth verify` 결과로 만듭니다.
+
+## 프로젝트 규칙과 모순을 먼저 확인하기
+
+`bth intelligence inspect`는 모델에게 저장소를 추측시키기 전에 Git 상태, 빌드·Wrapper, 지식 문서, Flyway 변경, DB dialect, 실행 Gate, Java/Kotlin 선언·route·entity·test 구조를 제한된 범위로 수집합니다.
+
+```bash
+node src/cli.mjs intelligence inspect /path/to/project
+node src/cli.mjs intelligence inspect /path/to/project --json
+```
+
+`.backend-harness/project-rules.json`의 규칙은 `confirmed`, `unknown`, `conflict` 세 상태로 평가됩니다. 근거가 없거나 서로 충돌하면 성공으로 올리지 않습니다. `blocker` 규칙이 해결되지 않으면 인터뷰의 계획 확정도 막히며, 각 결과에는 규칙을 정한 문서 경로·section과 실제 fact 근거가 함께 남습니다. 출처는 프로젝트 안의 일반 Markdown 파일과 실제 존재하는 제목이어야 하므로, 가짜 절 이름이나 symlink 출처는 설정 단계에서 거절됩니다. 기본 템플릿은 실행된 JUnit Gate, 기존 Flyway migration 불변성, 필수 지식 문서, 명시적 DB dialect를 검사하지만 회사별 규칙은 팀이 이 파일과 연결된 정책 문서에서 소유해야 합니다.
 
 ## DB는 어떻게 붙나
 
@@ -213,17 +234,17 @@ empty DB migration + 필요한 upgrade path
 
 ## 코드그래프의 정확한 위치
 
-현재 그래프 Pack은 Java/Kotlin 파일, 선언된 type, 명시적 import만 인덱싱합니다. 모든 edge의 provenance는 `static-import-resolved`입니다.
+현재 그래프 Pack은 Java/Kotlin 파일의 복수 type 선언을 인덱싱하고, 고유하게 해석된 import·상속·구현과 보수적인 field/constructor 주입·테스트 이름 관계를 서로 다른 provenance로 기록합니다. Controller route, JPA entity/table, source role도 node metadata에 남깁니다.
 
 포함하지 않는 것:
 
 - 이름이 같다는 이유로 추측한 method call
-- Spring runtime bean wiring
+- Spring runtime bean wiring의 실제 선택 결과
 - reflection·동적 프록시
 - SQL/table 소유권 추측
 - 그래프 기반 테스트 생략
 
-그래프 파일에는 `advisory: true`, 허용 용도(`navigation`, `review-questions`), 금지 용도(`pass-verdict`, `test-skipping`)가 함께 기록됩니다. 두 권한 목록은 각각 최대 16개의 짧은 식별자로 제한되어 작은 context budget을 우회해 응답을 부풀릴 수 없습니다. 생성 파일은 loader와 같은 16 MiB 상한을 넘으면 생성 단계에서 실패합니다.
+그래프 파일에는 `advisory: true`, 허용 용도(`navigation`, `review-questions`, `impact-localization`), 금지 용도(`pass-verdict`, `test-skipping`)가 함께 기록됩니다. edge 가중치, 방향별 의존/피의존 도달성, 반복형 SCC 분석, weighted PageRank를 사용하지만 컴파일러 call graph인 척하지 않습니다. 두 권한 목록은 각각 최대 16개의 짧은 식별자로 제한되어 작은 context budget을 우회해 응답을 부풀릴 수 없습니다. 생성 파일은 loader와 같은 16 MiB 상한을 넘으면 생성 단계에서 실패합니다.
 
 그래프 Pack이 현재 소스에 묶인 성공한 observation을 만들었다면, 승인된 계획을 내보낼 때 요구사항에 맞는 코드 위치를 제한된 예산 안에서 함께 받을 수 있습니다.
 
@@ -232,7 +253,7 @@ node src/cli.mjs task export-plan USER-17 /path/to/project \
   --context-budget 4000 --json
 ```
 
-BTH는 요구사항의 단어를 path/type과 대조하고, exact import edge 위에서 bounded Personalized PageRank를 계산합니다. 결과에는 점수뿐 아니라 사용한 문자 수, 누락된 node 수, graph 생성값, edge provenance와 알려진 한계가 들어갑니다. 그래프가 없거나 오래됐거나 run record와 digest가 다르면 계획 export는 실패하지 않고 `codeContext.status: "unavailable"`과 이유를 돌려줍니다.
+BTH는 요구사항의 단어를 path/type과 대조하고, provenance별 가중치가 있는 edge 위에서 bounded Personalized PageRank를 계산합니다. 가장 강한 lexical seed에서 dependencies와 dependents를 방향별로 펼치고 순환 컴포넌트도 표시합니다. 결과에는 점수뿐 아니라 사용한 문자 수, 누락된 node 수, graph 생성값, edge provenance와 알려진 한계가 들어갑니다. 그래프가 없거나 오래됐거나 run record와 digest가 다르면 계획 export는 실패하지 않고 `codeContext.status: "unavailable"`과 이유를 돌려줍니다.
 
 ## 테스트 수 감소 방지
 
@@ -295,14 +316,47 @@ node src/cli.mjs interview finalize USER-17 /path/to/project --by developer
 node src/cli.mjs task advance USER-17 PLAN_APPROVED /path/to/project --by reviewer --approve
 # 어떤 코딩 에이전트에도 넘길 수 있는 읽기 전용 JSON 계약
 node src/cli.mjs task export-plan USER-17 /path/to/project --json
-node src/cli.mjs task advance USER-17 IMPLEMENTING /path/to/project --by developer
-# 사람 또는 연결된 코딩 에이전트가 승인된 plan.md 범위만 구현
+# 사람 또는 외부 코딩 에이전트가 승인된 plan.md 범위만 구현하거나,
+# 아래의 선택적 격리 구현 포트를 사용
+node src/cli.mjs implement run USER-17 /path/to/project \
+  --by developer --allow-write --allow-network
+node src/cli.mjs implement status USER-17 /path/to/project
+# 격리 diff를 사람이 검토해 정상 Git 흐름으로 반영한 뒤
 node src/cli.mjs verify USER-17 /path/to/project
 # 실패했다면 sealed run record에서 Gate·테스트·재실행 명령을 설명
 node src/cli.mjs diagnose USER-17 /path/to/project
 ```
 
-BTH 자체가 모델을 내장하거나 임의로 코드를 수정하지는 않습니다. 그래서 어떤 코딩 에이전트나 사람과도 함께 쓸 수 있고, 계획·승인·검증 판정은 모델의 주장과 분리됩니다.
+BTH Core는 모델을 내장하지 않습니다. 대신 프로젝트가 신뢰하는 CLI를 선택적 구현 어댑터로 연결할 수 있습니다. 그래서 Codex·Claude Code·사내 도구·사람 중 무엇을 쓰더라도 계획·승인·검증 판정은 모델의 주장과 분리됩니다.
+
+구현 포트를 사용하려면 팀이 `.backend-harness/implementation.json`을 명시적으로 설정합니다. `adapter.command[0]`은 프로젝트에 포함된 검토 가능한 wrapper여야 하며, BTH는 각 요청 끝에 `--request <local-json>`을 추가합니다.
+
+```json
+{
+  "schemaVersion": 1,
+  "adapter": {
+    "id": "team-coding-agent",
+    "command": ["./tools/implement-with-agent"],
+    "network": true,
+    "timeoutMs": 1800000
+  },
+  "writePolicy": {
+    "allowedPrefixes": ["src/", "build.gradle.kts"],
+    "maxChangedFiles": 40,
+    "maxDiffBytes": 2097152
+  },
+  "recovery": { "maxAttempts": 2 }
+}
+```
+
+실행 조건과 경계:
+
+- source-bound 계획이 사람에게 승인됐고 원본 소스가 clean이어야 합니다.
+- 매 실행마다 `--allow-write`, 네트워크 어댑터는 `--allow-network`도 필요합니다.
+- 구현은 `.backend-harness/local/worktrees/` 아래 detached worktree에서만 진행됩니다.
+- 허용 prefix·파일 수·diff bytes를 넘긴 변경, `verification.json`, 구현 wrapper, Gate 실행 파일 변경은 실패로 분류됩니다.
+- 실패 Gate와 테스트 요약만 다음 bounded repair 요청에 들어갑니다. 최대 5회를 넘길 수 없습니다.
+- 격리 검증이 통과해도 자동 merge·commit·배포·운영 DB 접근·`VERIFIED` 전환은 하지 않습니다. 사람이 diff를 반영한 실제 소스에서 `bth verify`를 다시 실행해야 합니다.
 
 ```text
 CONTEXT_MISSING → CONTEXT_READY → PLAN_PROPOSED → PLAN_APPROVED
@@ -327,6 +381,8 @@ CONTEXT_MISSING → CONTEXT_READY → PLAN_PROPOSED → PLAN_APPROVED
 ├── tasks/<id>/runs/history/*.json
 ├── tasks/<id>/evidence/              # local, Git ignored
 ├── local/runs/{latest.json,history/}  # local, Git ignored
+├── local/worktrees/<task-run>/         # 격리 구현 작업공간
+├── local/implementation/<id>.json      # seal된 구현/복구 요약
 └── local/optimization/gate-history.json # aggregate only, Git ignored
 ```
 

@@ -178,6 +178,105 @@ test('adaptive verification reorders only opted-in gates and still executes ever
   assert.equal(new Set(executed).size, gates.length)
 })
 
+test('explicitly independent resource classes run in a bounded parallel batch', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-parallel-gates-'))
+  await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
+  for (const executable of ['verify-unit', 'verify-contract']) {
+    await writeFile(join(root, executable), '#!/bin/sh\nexit 0\n', 'utf8')
+    await chmod(join(root, executable), 0o755)
+  }
+  initializeGit(root)
+  await initProject(root)
+  await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify({
+    schemaVersion: 1,
+    scheduling: { strategy: 'configured', maxParallel: 2 },
+    gates: [
+      {
+        id: 'unit', required: true, reorderable: true, parallelSafe: true, resourceClass: 'unit-jvm', network: false,
+        command: ['./verify-unit'], inputs: [], timeoutMs: 30_000,
+        result: { type: 'junit', reports: ['.backend-harness/generated/unit.xml'], minimumTests: 1 }
+      },
+      {
+        id: 'contract', required: true, reorderable: true, parallelSafe: true, resourceClass: 'contract-jvm', network: false,
+        command: ['./verify-contract'], inputs: [], timeoutMs: 30_000,
+        result: { type: 'junit', reports: ['.backend-harness/generated/contract.xml'], minimumTests: 1 }
+      }
+    ]
+  }, null, 2) + '\n', 'utf8')
+  initializeGit(root)
+  let active = 0, maximumActive = 0
+  const processRunner = async ({ program }) => {
+    active += 1
+    maximumActive = Math.max(maximumActive, active)
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, 40))
+    const id = program.endsWith('verify-unit') ? 'unit' : 'contract'
+    await mkdir(join(root, '.backend-harness/generated'), { recursive: true })
+    await writeFile(join(root, '.backend-harness/generated/' + id + '.xml'), '<testsuite tests="1"><testcase name="' + id + '"/></testsuite>\n', 'utf8')
+    active -= 1
+    return {
+      exitCode: 0, signal: null, timedOut: false, stdioDrainTimedOut: false,
+      startedAt: '2026-08-30T00:00:00.000Z', finishedAt: '2026-08-30T00:00:00.040Z', durationMs: 40,
+      stdout: { sha256: '0'.repeat(64), bytes: 0, tail: '' }, stderr: { sha256: '0'.repeat(64), bytes: 0, tail: '' }
+    }
+  }
+
+  const result = await checkProject(root, { processRunner })
+
+  assert.equal(result.confirmed, true, JSON.stringify(result, null, 2))
+  assert.equal(maximumActive, 2)
+  assert.deepEqual(result.result.scheduling.executionBatches[0].ids, ['unit', 'contract'])
+  assert.equal(result.result.scheduling.executionBatches[0].parallel, true)
+})
+
+test('parallel Gate failure waits for sibling processes before returning', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-parallel-failure-'))
+  await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
+  for (const executable of ['verify-fails', 'verify-finishes']) {
+    await writeFile(join(root, executable), '#!/bin/sh\nexit 0\n', 'utf8')
+    await chmod(join(root, executable), 0o755)
+  }
+  initializeGit(root)
+  await initProject(root)
+  await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify({
+    schemaVersion: 1,
+    scheduling: { strategy: 'configured', maxParallel: 2 },
+    gates: [
+      {
+        id: 'fails', required: true, reorderable: true, parallelSafe: true, resourceClass: 'fast-failure',
+        command: ['./verify-fails'], result: { type: 'exit-code' }
+      },
+      {
+        id: 'finishes', required: true, reorderable: true, parallelSafe: true, resourceClass: 'slow-cleanup',
+        command: ['./verify-finishes'],
+        result: { type: 'junit', reports: ['.backend-harness/generated/finishes.xml'], minimumTests: 1 }
+      }
+    ]
+  }, null, 2) + '\n', 'utf8')
+  initializeGit(root)
+  let siblingFinished = false
+  const processRunner = async ({ program }) => {
+    if (program.endsWith('verify-fails')) {
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, 5))
+      throw new Error('synthetic process launch failure')
+    }
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, 40))
+    await mkdir(join(root, '.backend-harness/generated'), { recursive: true })
+    await writeFile(join(root, '.backend-harness/generated/finishes.xml'), '<testsuite tests="1"><testcase name="finishes"/></testsuite>\n', 'utf8')
+    siblingFinished = true
+    return {
+      exitCode: 0, signal: null, timedOut: false, stdioDrainTimedOut: false,
+      startedAt: '2026-08-30T00:00:00.000Z', finishedAt: '2026-08-30T00:00:00.040Z', durationMs: 40,
+      stdout: { sha256: '0'.repeat(64), bytes: 0, tail: '' }, stderr: { sha256: '0'.repeat(64), bytes: 0, tail: '' }
+    }
+  }
+
+  const result = await checkProject(root, { processRunner })
+
+  assert.equal(result.confirmed, false)
+  assert.match(result.failure.message, /synthetic process launch failure/)
+  assert.equal(siblingFinished, true)
+})
+
 test('leaked descendant stdio is a distinct failed Gate even when the direct process exited zero', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-stdio-leak-gate-'))
   await writeGradleFixture(root)

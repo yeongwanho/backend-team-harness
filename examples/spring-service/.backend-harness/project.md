@@ -20,3 +20,7 @@ Explain the backend service in language a new teammate can understand.
 ## Completion rule
 
 A task is complete only when its acceptance criteria and deterministic verification evidence agree.
+
+## Repository knowledge
+
+The project, architecture, and glossary documents are required inputs and must remain present.
