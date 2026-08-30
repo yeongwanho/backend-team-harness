@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { collectJUnitResults, parseJUnitXml, snapshotReportFiles } from '../src/core/junit.mjs'
@@ -78,6 +78,48 @@ test('a fresh sibling cannot hide an unchanged JUnit report', async () => {
   assert.equal(result.staleReportCount, 1)
   assert.equal(result.passed, false)
   assert.equal(result.reason, 'junit_reports_mixed_freshness')
+})
+
+test('report discovery rejects symbolic links before a Gate can follow them', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-junit-symlink-'))
+  const outside = await mkdtemp(join(tmpdir(), 'bth-junit-outside-'))
+  await mkdir(join(root, 'reports'))
+  await writeFile(join(outside, 'victim.xml'), '<testsuite/>\n', 'utf8')
+  await symlink(join(outside, 'victim.xml'), join(root, 'reports/TEST-victim.xml'))
+
+  await assert.rejects(
+    snapshotReportFiles(root, ['reports/*.xml']),
+    /symbolic link.*report/i
+  )
+})
+
+test('report discovery rejects symbolic-link directories under a report tree', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-junit-symlink-dir-'))
+  const outside = await mkdtemp(join(tmpdir(), 'bth-junit-outside-dir-'))
+  await mkdir(join(root, 'reports'))
+  await writeFile(join(outside, 'TEST-victim.xml'), '<testsuite/>\n', 'utf8')
+  await symlink(outside, join(root, 'reports/redirect'))
+
+  await assert.rejects(
+    snapshotReportFiles(root, ['reports/**/*.xml']),
+    /symbolic link.*report/i
+  )
+})
+
+test('JUnit collection enforces one aggregate report budget', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-junit-budget-'))
+  await mkdir(join(root, 'reports'))
+  const xml = '<testsuite tests="1"><testcase name="one"/></testsuite>\n'
+  await writeFile(join(root, 'reports/TEST-one.xml'), xml, 'utf8')
+  await writeFile(join(root, 'reports/TEST-two.xml'), xml, 'utf8')
+
+  await assert.rejects(
+    collectJUnitResults(root, ['reports/*.xml'], new Map(), {
+      minimumTests: 1,
+      maximumAggregateBytes: Buffer.byteLength(xml) + 1
+    }),
+    /aggregate report.*limit/i
+  )
 })
 
 test('a narrow TEST glob ignores Maven Failsafe summary metadata', async () => {

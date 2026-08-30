@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
-import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
-import { dirname, relative, resolve, sep } from 'node:path'
+import { readdir, readFile, stat } from 'node:fs/promises'
+import { relative, resolve, sep } from 'node:path'
+import { writeGraphReport } from './graph-report.mjs'
 
 const output = resolve('.backend-harness/generated/packs/codegraph-advisory/graph.json')
 const skipped = new Set(['.git', '.gradle', '.backend-harness', 'build', 'node_modules', 'out', 'target'])
@@ -124,10 +125,9 @@ for (let index = 0; index < nodes.length; index += 1) {
   nodes[index].globalRank = ranks[index]
 }
 
-await mkdir(dirname(output), { recursive: true })
-await writeFile(output, JSON.stringify({
+const document = {
   schemaVersion: 1,
-  tool: { id: 'bth-import-graph', version: '1.1.0' },
+  tool: { id: 'bth-import-graph', version: '1.2.0' },
   findings: [
     ...(unresolvedImports > 0 ? [{
       ruleId: 'graph.coverage.unresolved-imports',
@@ -176,4 +176,5 @@ await writeFile(output, JSON.stringify({
     nodes,
     edges
   }
-}, null, 2) + '\n', { encoding: 'utf8', mode: 0o600 })
+}
+await writeGraphReport(output, document)

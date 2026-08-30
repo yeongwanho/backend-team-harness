@@ -58,6 +58,25 @@ test('a fresh findings sibling cannot hide a stale earlier report', async () => 
   assert.equal(result.staleReportCount, 1)
 })
 
+test('findings collection enforces one aggregate report budget', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-findings-budget-'))
+  await mkdir(join(root, 'reports'))
+  const report = JSON.stringify({
+    schemaVersion: 1,
+    tool: { id: 'fixture', version: '1' },
+    findings: []
+  })
+  await writeFile(join(root, 'reports/one.json'), report, 'utf8')
+  await writeFile(join(root, 'reports/two.json'), report, 'utf8')
+
+  await assert.rejects(
+    collectFindingsResults(root, ['reports/*.json'], new Map(), {
+      maximumAggregateBytes: Buffer.byteLength(report) + 1
+    }),
+    /aggregate report.*limit/i
+  )
+})
+
 async function findingsProject(blocking = false) {
   const root = await mkdtemp(join(tmpdir(), 'bth-findings-project-'))
   await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')

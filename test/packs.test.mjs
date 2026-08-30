@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { chmod, lstat, mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { initProject } from '../src/init-project.mjs'
@@ -9,6 +9,7 @@ import { installPack } from '../src/packs/install.mjs'
 import { getPack } from '../src/packs/catalog.mjs'
 import { checkProject } from '../src/runtime/backend-harness.mjs'
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
+import { serializeGraphReport } from '../packs/codegraph-advisory/graph-report.mjs'
 
 async function gradleProject(prefix) {
   const root = await mkdtemp(join(tmpdir(), prefix))
@@ -36,13 +37,62 @@ test('the advisory graph Pack installs safely and never replaces executed tests'
   assert.equal(result.result.reported[0].metrics.ambiguousImports, 0)
   assert.equal(result.result.reported[0].metrics.oversizedFiles, 0)
   const graph = JSON.parse(await readFile(join(root, '.backend-harness/generated/packs/codegraph-advisory/graph.json'), 'utf8'))
+  const graphText = await readFile(join(root, '.backend-harness/generated/packs/codegraph-advisory/graph.json'), 'utf8')
   assert.equal(graph.graph.advisory, true)
   assert.deepEqual(graph.graph.forbiddenUses, ['pass-verdict', 'test-skipping'])
   assert.equal(graph.graph.edges[0].provenance, 'static-import-resolved')
   assert.equal(graph.graph.ranking.algorithm, 'pagerank')
   assert.ok(graph.graph.nodes.every((node) => Number.isFinite(node.globalRank)))
   assert.ok(Math.abs(graph.graph.nodes.reduce((sum, node) => sum + node.globalRank, 0) - 1) < 1e-9)
+  assert.equal(graphText.includes('\n  "'), false)
+  assert.ok(Buffer.byteLength(graphText) <= 16 * 1024 * 1024)
   await assert.rejects(installPack(root, 'codegraph-advisory'), /gate already exists|directory already exists/)
+})
+
+test('the advisory graph writer replaces a report symlink without touching its target', async () => {
+  const root = await gradleProject('bth-pack-graph-symlink-')
+  await mkdir(join(root, 'src/main/java/example'), { recursive: true })
+  await writeFile(join(root, 'src/main/java/example/App.java'), 'package example; class App {}\n', 'utf8')
+  const installed = await installPack(root, 'codegraph-advisory')
+  const reportDir = join(root, '.backend-harness/generated/packs/codegraph-advisory')
+  const outside = await mkdtemp(join(tmpdir(), 'bth-pack-graph-outside-'))
+  const victim = join(outside, 'victim.json')
+  const report = join(reportDir, 'graph.json')
+  await mkdir(reportDir, { recursive: true })
+  await writeFile(victim, 'ORIGINAL\n', 'utf8')
+  await symlink(victim, report)
+
+  const executed = spawnSync(process.execPath, [join(root, installed.path, 'run.mjs')], {
+    cwd: root,
+    encoding: 'utf8'
+  })
+
+  assert.equal(executed.status, 0, executed.stderr || executed.stdout)
+  assert.equal(await readFile(victim, 'utf8'), 'ORIGINAL\n')
+  assert.equal((await lstat(report)).isFile(), true)
+})
+
+test('the advisory graph serializer rejects output above its loader-compatible limit', () => {
+  assert.throws(
+    () => serializeGraphReport({ payload: 'x'.repeat(256) }, { maximumBytes: 64 }),
+    /exceeds.*64-byte safety limit/i
+  )
+})
+
+test('the advisory graph refuses a report directory symlink before creating outside output', async () => {
+  const root = await gradleProject('bth-pack-graph-dir-symlink-')
+  const installed = await installPack(root, 'codegraph-advisory')
+  const outside = await mkdtemp(join(tmpdir(), 'bth-pack-graph-dir-outside-'))
+  await mkdir(join(root, '.backend-harness/generated'), { recursive: true })
+  await symlink(outside, join(root, '.backend-harness/generated/packs'))
+
+  const executed = spawnSync(process.execPath, [join(root, installed.path, 'run.mjs')], {
+    cwd: root,
+    encoding: 'utf8'
+  })
+
+  assert.notEqual(executed.status, 0)
+  await assert.rejects(lstat(join(outside, 'codegraph-advisory')), /ENOENT/)
 })
 
 test('the advisory graph refuses to invent an edge for duplicate qualified types', async () => {
@@ -125,6 +175,16 @@ test('the Gitleaks converter discards raw secret-bearing fields', async () => {
   ].join('\n'), 'utf8')
   await chmod(fake, 0o755)
 
+  const reportDir = join(root, '.backend-harness/generated/packs/secrets-gitleaks')
+  const outside = await mkdtemp(join(tmpdir(), 'bth-pack-gitleaks-outside-'))
+  const rawVictim = join(outside, 'raw-victim.json')
+  const findingsVictim = join(outside, 'findings-victim.json')
+  await mkdir(reportDir, { recursive: true })
+  await writeFile(rawVictim, 'RAW-ORIGINAL\n', 'utf8')
+  await writeFile(findingsVictim, 'FINDINGS-ORIGINAL\n', 'utf8')
+  await symlink(rawVictim, join(reportDir, 'gitleaks-redacted.json'))
+  await symlink(findingsVictim, join(reportDir, 'findings.json'))
+
   const runner = join(root, '.backend-harness/packs/secrets-gitleaks/run')
   const executed = spawnSync(runner, [], {
     cwd: root,
@@ -132,7 +192,10 @@ test('the Gitleaks converter discards raw secret-bearing fields', async () => {
     env: { ...process.env, BTH_NODE: process.execPath, PATH: bin + ':' + process.env.PATH }
   })
   assert.equal(executed.status, 0, executed.stderr || executed.stdout)
+  assert.equal(await readFile(rawVictim, 'utf8'), 'RAW-ORIGINAL\n')
+  assert.equal(await readFile(findingsVictim, 'utf8'), 'FINDINGS-ORIGINAL\n')
   const reportText = await readFile(join(root, '.backend-harness/generated/packs/secrets-gitleaks/findings.json'), 'utf8')
+  assert.equal((await lstat(join(reportDir, 'findings.json'))).isFile(), true)
   assert.equal(reportText.includes('DO-NOT-COPY'), false)
   const report = JSON.parse(reportText)
   assert.equal(report.findings[0].severity, 'high')

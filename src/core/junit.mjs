@@ -6,6 +6,7 @@ import { XMLParser, XMLValidator } from 'fast-xml-parser'
 import { assertNoSymlinkSegments, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { buildSafeEnvironment } from './process-runner.mjs'
 import { reportGlobBase, reportGlobRegex } from './report-glob.mjs'
+import { assertReportFileBytes, createReportBudget } from './report-limits.mjs'
 
 async function filesForPattern(root, pattern) {
   const matcher = reportGlobRegex(pattern)
@@ -23,10 +24,12 @@ async function filesForPattern(root, pattern) {
       if (visited > 100_000 || matches.length > 10_000) {
         throw new Error('JUnit report discovery exceeded its safety limit.')
       }
-      if (entry.isSymbolicLink()) {
-        continue
-      }
       const path = resolve(directory, entry.name)
+      if (entry.isSymbolicLink()) {
+        throw new Error(
+          relative(root, path).split(sep).join('/') + ': symbolic link inside a structured report directory is not allowed.'
+        )
+      }
       if (entry.isDirectory()) {
         await visit(path)
       } else if (entry.isFile()) {
@@ -52,16 +55,17 @@ export async function findReportFiles(root, patterns) {
   return [...paths].sort()
 }
 
-export async function snapshotReportFiles(root, patterns) {
+export async function snapshotReportFiles(root, patterns, options = {}) {
   const snapshot = new Map()
+  const budget = createReportBudget(options)
   for (const path of await findReportFiles(root, patterns)) {
     const metadata = await stat(path)
-    if (metadata.size > 16 * 1024 * 1024) {
-      throw new Error(relative(root, path) + ': report exceeds the 16 MiB safety limit.')
-    }
+    const source = relative(root, path)
+    assertReportFileBytes(metadata.size, source)
     const content = await readFile(path)
+    budget.consume(content.length, source)
     snapshot.set(path, {
-      size: metadata.size,
+      size: content.length,
       mtimeMs: metadata.mtimeMs,
       ctimeMs: metadata.ctimeMs,
       contentSha256: createHash('sha256').update(content).digest('hex')
@@ -257,26 +261,7 @@ export function parseJUnitXml(text, source = '<inline>') {
 
 export async function collectJUnitResults(root, patterns, before = new Map(), options = {}) {
   const matched = await findReportFiles(root, patterns)
-  const fresh = []
-  const stale = []
-  const contents = new Map()
-  for (const path of matched) {
-    const metadata = await stat(path)
-    if (metadata.size > 16 * 1024 * 1024) {
-      throw new Error(relative(root, path) + ': report exceeds the 16 MiB safety limit.')
-    }
-    const content = await readFile(path, 'utf8')
-    contents.set(path, content)
-    const previous = before.get(path)
-    const contentSha256 = createHash('sha256').update(content).digest('hex')
-    const changed = !previous ||
-      previous.contentSha256 !== contentSha256 ||
-      previous.size !== metadata.size ||
-      previous.mtimeMs !== metadata.mtimeMs ||
-      previous.ctimeMs !== metadata.ctimeMs
-    ;(changed ? fresh : stale).push(path)
-  }
-
+  const budget = createReportBudget(options)
   const summary = {
     type: 'junit',
     evidenceTier: 'EXECUTED',
@@ -287,10 +272,29 @@ export async function collectJUnitResults(root, patterns, before = new Map(), op
     skipped: 0,
     failedTests: [],
     reportFiles: [],
-    staleReportCount: stale.length
+    staleReportCount: 0
   }
-  for (const path of fresh) {
-    const parsed = parseJUnitXml(contents.get(path), relative(root, path))
+  let freshCount = 0
+  for (const path of matched) {
+    const metadata = await stat(path)
+    const source = relative(root, path)
+    assertReportFileBytes(metadata.size, source)
+    const contentBuffer = await readFile(path)
+    budget.consume(contentBuffer.length, source)
+    const content = contentBuffer.toString('utf8')
+    const previous = before.get(path)
+    const contentSha256 = createHash('sha256').update(content).digest('hex')
+    const changed = !previous ||
+      previous.contentSha256 !== contentSha256 ||
+      previous.size !== contentBuffer.length ||
+      previous.mtimeMs !== metadata.mtimeMs ||
+      previous.ctimeMs !== metadata.ctimeMs
+    if (!changed) {
+      summary.staleReportCount += 1
+      continue
+    }
+    freshCount += 1
+    const parsed = parseJUnitXml(content, source)
     summary.tests += parsed.tests
     summary.executed += parsed.executed
     summary.failures += parsed.failures
@@ -302,9 +306,9 @@ export async function collectJUnitResults(root, patterns, before = new Map(), op
 
   const minimumTests = options.minimumTests ?? 1
   let reason = null
-  if (fresh.length === 0) {
+  if (freshCount === 0) {
     reason = matched.length === 0 ? 'junit_reports_missing' : 'junit_reports_stale'
-  } else if (stale.length > 0) {
+  } else if (summary.staleReportCount > 0) {
     reason = 'junit_reports_mixed_freshness'
   } else if (summary.executed < minimumTests) {
     reason = 'minimum_executed_tests_not_met'

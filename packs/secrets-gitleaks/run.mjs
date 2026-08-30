@@ -1,11 +1,13 @@
 import { createHash } from 'node:crypto'
-import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
+import { lstat, readFile, rm } from 'node:fs/promises'
 import { spawnSync } from 'node:child_process'
-import { dirname, resolve } from 'node:path'
+import { resolve } from 'node:path'
+import { prepareProjectOutputDirectory, writeFindingsReport } from './findings-report.mjs'
 
 const output = resolve('.backend-harness/generated/packs/secrets-gitleaks/findings.json')
 const raw = resolve('.backend-harness/generated/packs/secrets-gitleaks/gitleaks-redacted.json')
-await mkdir(dirname(output), { recursive: true })
+await prepareProjectOutputDirectory(output)
+await rm(raw, { force: true })
 
 const versionResult = spawnSync('gitleaks', ['version'], { encoding: 'utf8', shell: false })
 if (versionResult.error || versionResult.status !== 0) {
@@ -23,7 +25,10 @@ if (scan.error || scan.status !== 0) {
 
 let source
 try {
-  const metadata = await stat(raw)
+  const metadata = await lstat(raw)
+  if (!metadata.isFile() || metadata.isSymbolicLink()) {
+    throw new Error('gitleaks report must be a regular non-symbolic-link file.')
+  }
   if (metadata.size > 16 * 1024 * 1024) {
     throw new Error('gitleaks report exceeds the 16 MiB safety limit.')
   }
@@ -50,9 +55,9 @@ const findings = source.map((entry) => {
     fingerprint: createHash('sha256').update(fingerprintInput).digest('hex')
   }
 })
-await writeFile(output, JSON.stringify({
+await writeFindingsReport(output, {
   schemaVersion: 1,
   tool: { id: 'gitleaks', version },
   findings,
   metrics: { findings: findings.length }
-}, null, 2) + '\n', { encoding: 'utf8', mode: 0o600 })
+})

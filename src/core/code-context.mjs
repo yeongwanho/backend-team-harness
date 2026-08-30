@@ -12,6 +12,8 @@ const TOLERANCE = 1e-10
 const GRAPH_PATH = '.backend-harness/generated/packs/codegraph-advisory/graph.json'
 const RUN_PATH = '.backend-harness/local/runs/latest.json'
 const MAX_REPORT_BYTES = 16 * 1024 * 1024
+const MAX_AUTHORITY_ITEMS = 16
+const AUTHORITY_ITEM = /^[a-z][a-z0-9-]{0,63}$/
 
 function assertObject(value, label) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -30,6 +32,27 @@ function safeGraphPath(value, label) {
   return posix.normalize(normalized.replace(/^\.\//, ''))
 }
 
+function boundedAuthority(values, label, required) {
+  if (!Array.isArray(values) || values.length === 0 || values.length > MAX_AUTHORITY_ITEMS) {
+    throw new Error(label + ' must be a bounded non-empty array with at most ' + MAX_AUTHORITY_ITEMS + ' entries.')
+  }
+  const normalized = []
+  for (const value of values) {
+    if (typeof value !== 'string' || !AUTHORITY_ITEM.test(value)) {
+      throw new Error(label + ' must contain bounded authority identifiers.')
+    }
+    if (!normalized.includes(value)) {
+      normalized.push(value)
+    }
+  }
+  for (const value of required) {
+    if (!normalized.includes(value)) {
+      throw new Error(label + ' must include ' + value + '.')
+    }
+  }
+  return normalized
+}
+
 function validateGraph(document) {
   assertObject(document, 'graph document')
   if (document.schemaVersion !== 1) {
@@ -40,12 +63,8 @@ function validateGraph(document) {
   if (graph.schemaVersion !== 1 || graph.advisory !== true) {
     throw new Error('graph must be a schemaVersion 1 advisory graph.')
   }
-  if (!Array.isArray(graph.permittedUses) || !graph.permittedUses.includes('navigation')) {
-    throw new Error('graph must permit navigation.')
-  }
-  if (!Array.isArray(graph.forbiddenUses) || !graph.forbiddenUses.includes('pass-verdict') || !graph.forbiddenUses.includes('test-skipping')) {
-    throw new Error('graph must forbid PASS verdicts and test skipping.')
-  }
+  const permittedUses = boundedAuthority(graph.permittedUses, 'graph.permittedUses', ['navigation'])
+  const forbiddenUses = boundedAuthority(graph.forbiddenUses, 'graph.forbiddenUses', ['pass-verdict', 'test-skipping'])
   if (!Array.isArray(graph.nodes) || graph.nodes.length > MAX_NODES) {
     throw new Error('graph nodes exceed the safety limit.')
   }
@@ -88,8 +107,8 @@ function validateGraph(document) {
     edges,
     generatedAt: typeof graph.generatedAt === 'string' ? graph.generatedAt : null,
     generation: typeof graph.generation === 'string' ? graph.generation : null,
-    permittedUses: [...graph.permittedUses],
-    forbiddenUses: [...graph.forbiddenUses]
+    permittedUses,
+    forbiddenUses
   }
 }
 

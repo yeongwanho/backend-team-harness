@@ -106,6 +106,10 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] approved-plan export serialized with verification/report generation
 - [x] Unicode-aware, human-value-only plan localization terms
 - [x] package/CLI version synchronization from one package manifest
+- [x] fail-closed symbolic-link policy for dedicated structured-report trees
+- [x] 16 MiB per-report and 64 MiB aggregate collection bounds with sequential parsing
+- [x] compact bounded Pack writers aligned with the codegraph loader limit
+- [x] bounded code-context authority metadata independent of entry budget
 
 ## Later, only with measured demand
 

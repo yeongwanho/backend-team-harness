@@ -7,12 +7,15 @@ const PACKS = Object.freeze({
     title: 'Gitleaks secret scan',
     evidenceTier: 'REPORTED',
     purpose: 'Run a redacted working-tree secret scan and convert findings to the BTH findings contract.',
-    files: ['README.md', 'run', 'run.mjs'],
+    files: ['README.md', 'run', 'run.mjs', 'findings-report.mjs'],
     gate: {
       id: 'secrets',
       required: true,
       command: ['./.backend-harness/packs/secrets-gitleaks/run'],
-      inputs: ['./.backend-harness/packs/secrets-gitleaks/run.mjs'],
+      inputs: [
+        './.backend-harness/packs/secrets-gitleaks/run.mjs',
+        './.backend-harness/packs/secrets-gitleaks/findings-report.mjs'
+      ],
       timeoutMs: 120000,
       result: {
         type: 'findings',
@@ -50,12 +53,15 @@ const PACKS = Object.freeze({
     title: 'Advisory Java/Kotlin import graph',
     evidenceTier: 'REPORTED',
     purpose: 'Create a generation-stamped import graph with explicit provenance; it never changes PASS.',
-    files: ['README.md', 'run', 'run.mjs'],
+    files: ['README.md', 'run', 'run.mjs', 'graph-report.mjs'],
     gate: {
       id: 'codegraph',
       required: false,
       command: ['./.backend-harness/packs/codegraph-advisory/run'],
-      inputs: ['./.backend-harness/packs/codegraph-advisory/run.mjs'],
+      inputs: [
+        './.backend-harness/packs/codegraph-advisory/run.mjs',
+        './.backend-harness/packs/codegraph-advisory/graph-report.mjs'
+      ],
       timeoutMs: 120000,
       result: {
         type: 'observation',

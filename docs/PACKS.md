@@ -20,6 +20,7 @@ Acceptance:
 1. A synthetic credential produces a `high` finding and blocks verification.
 2. The BTH report contains no secret body.
 3. A missing Gitleaks binary fails closed.
+4. Raw and converted outputs cannot follow a symbolic link to overwrite an external file.
 
 ## DB — `db-integration`
 
@@ -60,7 +61,7 @@ Connect Pact, Spring Cloud Contract, OpenAPI compatibility, protobuf/schema comp
 
 The bundled graph is intentionally conservative. It indexes Java/Kotlin files/types and resolves only explicit imports to indexed project types.
 
-Each edge records `static-import-resolved`. Wildcards and external imports count as unresolved coverage gaps. Duplicate qualified type declarations make a matching import ambiguous, so the Pack reports the ambiguity and creates no edge. The output carries a deterministic `generation` hash and a non-deterministic `generatedAt` timestamp.
+Each edge records `static-import-resolved`. Wildcards and external imports count as unresolved coverage gaps. Duplicate qualified type declarations make a matching import ambiguous, so the Pack reports the ambiguity and creates no edge. The output carries a deterministic `generation` hash and a non-deterministic `generatedAt` timestamp. It is compact JSON with the same 16 MiB maximum accepted by the loader; generation fails instead of producing a report the next stage must reject. Its atomic writer replaces a final-file symbolic link without following it and rejects an output directory that resolves outside the project.
 
 The generated graph also includes a deterministic global directed PageRank for broad navigation. When an approved task is exported, BTH can compute a separate query-aware ranking with a hard character budget:
 
@@ -70,7 +71,7 @@ The generated graph also includes a deterministic global directed PageRank for b
 4. propagate only over exact stored imports, with reverse traversal at half weight;
 5. blend lexical prior and graph score, record residual/tolerance and whether the bounded iteration converged, then include only complete entries that fit the requested budget.
 
-No match falls back to global graph importance rather than inventing semantic relevance. A missing, stale, tampered, oversized, symlinked, or contract-invalid graph produces an explained `unavailable` result and never blocks plan export.
+No match falls back to global graph importance rather than inventing semantic relevance. Authority lists are bounded to 16 short identifiers each, so they cannot inflate a tiny entry budget into an unbounded payload. A missing, stale, tampered, oversized, symlinked, or contract-invalid graph produces an explained `unavailable` result and never blocks plan export.
 
 Allowed uses:
 

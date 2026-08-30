@@ -25,6 +25,8 @@ Before a result-producing Gate starts, BTH removes prior files matched by that G
 
 JUnit parsing uses a strict XML parser. DTD and ENTITY declarations, malformed XML, summary-only files without testcase elements, zero executed tests, failures, errors, and all-skipped suites fail closed.
 
+Every structured report is capped at 16 MiB and one collection pass is capped at 64 MiB across all matched files. Collection parses fresh files sequentially instead of retaining every report body. Any symbolic link encountered under a dedicated report tree fails the Gate before a collector can follow it. Bundled report writers use compact, bounded, atomic replacement and reject an output directory whose resolved path leaves the project.
+
 ## Source binding
 
 A binding contains:

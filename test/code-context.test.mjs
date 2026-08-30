@@ -95,6 +95,25 @@ test('unsafe graph contracts are rejected before ranking', () => {
   const invented = graphDocument()
   invented.graph.edges[0].provenance = 'name-guess'
   assert.throws(() => rankCodeContext(invented, 'orders', { budgetCharacters: 700 }), /provenance/)
+
+  const oversizedAuthority = graphDocument()
+  oversizedAuthority.graph.permittedUses = ['navigation', ...Array.from({ length: 32 }, (_, index) => 'extra-' + index)]
+  assert.throws(
+    () => rankCodeContext(oversizedAuthority, 'orders', { budgetCharacters: 64 }),
+    /permittedUses.*bounded/i
+  )
+})
+
+test('authority metadata stays bounded independently of a tiny entry budget', () => {
+  const document = graphDocument()
+  const identifiers = Array.from({ length: 16 }, (_, index) => 'x' + String(index).padStart(63, 'a'))
+  document.graph.permittedUses = ['navigation', ...identifiers.slice(0, 15)]
+  document.graph.forbiddenUses = ['pass-verdict', 'test-skipping', ...identifiers.slice(0, 14)]
+
+  const result = rankCodeContext(document, 'orders', { budgetCharacters: 64 })
+
+  assert.equal(result.entries.length, 0)
+  assert.ok(Buffer.byteLength(JSON.stringify(result)) <= 8192)
 })
 
 test('loader accepts only a graph digest bound to the current sealed project run', async () => {

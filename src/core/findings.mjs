@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFile, stat } from 'node:fs/promises'
 import { isAbsolute, posix, relative, sep } from 'node:path'
 import { findReportFiles } from './junit.mjs'
+import { assertReportFileBytes, createReportBudget } from './report-limits.mjs'
 
 const SEVERITIES = new Set(['info', 'warning', 'error', 'low', 'medium', 'high', 'critical'])
 
@@ -91,25 +92,7 @@ function parseReport(text, source) {
 
 export async function collectFindingsResults(root, patterns, before, options = {}) {
   const matched = await findReportFiles(root, patterns)
-  const fresh = []
-  const stale = []
-  const contents = new Map()
-  for (const path of matched) {
-    const metadata = await stat(path)
-    if (metadata.size > 16 * 1024 * 1024) {
-      throw new Error(relative(root, path) + ': findings report exceeds 16 MiB.')
-    }
-    const content = await readFile(path, 'utf8')
-    contents.set(path, content)
-    const previous = before.get(path)
-    const contentSha256 = createHash('sha256').update(content).digest('hex')
-    const changed = !previous ||
-      previous.contentSha256 !== contentSha256 ||
-      previous.size !== metadata.size ||
-      previous.mtimeMs !== metadata.mtimeMs ||
-      previous.ctimeMs !== metadata.ctimeMs
-    ;(changed ? fresh : stale).push(path)
-  }
+  const budget = createReportBudget(options)
   const blockingSeverities = new Set(options.blockingSeverities ?? [])
   const result = {
     type: options.type ?? 'findings',
@@ -119,34 +102,53 @@ export async function collectFindingsResults(root, patterns, before, options = {
     blockingCount: 0,
     reportFiles: [],
     reportDigests: [],
-    staleReportCount: stale.length,
+    staleReportCount: 0,
     tools: [],
     metrics: {}
   }
-  for (const path of fresh) {
-    const content = contents.get(path)
+  let freshReportCount = 0
+  let staleReportCount = 0
+  for (const path of matched) {
+    const metadata = await stat(path)
     const source = relative(root, path).split(sep).join('/')
-    const parsed = parseReport(content, source)
-    result.tools.push(parsed.tool)
-    result.reportFiles.push(source)
-    result.reportDigests.push({ path: source, sha256: createHash('sha256').update(content).digest('hex'), bytes: Buffer.byteLength(content) })
-    for (const [key, value] of Object.entries(parsed.metrics)) {
-      result.metrics[key] = (result.metrics[key] ?? 0) + value
-    }
-    for (const finding of parsed.findings) {
-      result.counts[finding.severity] = (result.counts[finding.severity] ?? 0) + 1
-      if (blockingSeverities.has(finding.severity)) {
-        result.blockingCount += 1
+    assertReportFileBytes(metadata.size, source)
+    const contentBuffer = await readFile(path)
+    budget.consume(contentBuffer.length, source)
+    const content = contentBuffer.toString('utf8')
+    const previous = before.get(path)
+    const contentSha256 = createHash('sha256').update(content).digest('hex')
+    const changed = !previous ||
+      previous.contentSha256 !== contentSha256 ||
+      previous.size !== contentBuffer.length ||
+      previous.mtimeMs !== metadata.mtimeMs ||
+      previous.ctimeMs !== metadata.ctimeMs
+    if (changed) {
+      freshReportCount += 1
+      const parsed = parseReport(content, source)
+      result.tools.push(parsed.tool)
+      result.reportFiles.push(source)
+      result.reportDigests.push({ path: source, sha256: contentSha256, bytes: contentBuffer.length })
+      for (const [key, value] of Object.entries(parsed.metrics)) {
+        result.metrics[key] = (result.metrics[key] ?? 0) + value
       }
-      if (result.findings.length < 100) {
-        result.findings.push(finding)
+      for (const finding of parsed.findings) {
+        result.counts[finding.severity] = (result.counts[finding.severity] ?? 0) + 1
+        if (blockingSeverities.has(finding.severity)) {
+          result.blockingCount += 1
+        }
+        if (result.findings.length < 100) {
+          result.findings.push(finding)
+        }
       }
+    } else {
+      staleReportCount += 1
     }
   }
+  result.staleReportCount = staleReportCount
   let reason = null
-  if (fresh.length === 0) {
+  if (freshReportCount === 0) {
     reason = matched.length === 0 ? 'findings_reports_missing' : 'findings_reports_stale'
-  } else if (stale.length > 0) {
+  } else if (staleReportCount > 0) {
     reason = 'findings_reports_mixed_freshness'
   } else if (result.blockingCount > 0) {
     reason = 'blocking_findings_detected'

@@ -189,6 +189,8 @@ node src/cli.mjs pack install codegraph-advisory /path/to/project
 
 0.7에서 0.8로 올릴 때 기존 Pack Gate가 기본 test와 같은 report 폴더를 쓰고 있다면 먼저 Gate별 전용 폴더로 옮겨야 합니다. Gradle은 `build/test-results/<gate>/`, Maven은 `target/bth-reports/<gate>/` 형태를 권장합니다. 0.8은 겹치는 glob과 프로젝트 루트 report를 거절하며, 실행 전 정리할 기존 report도 Git에 추적되지 않고 `.gitignore`에 포함된 파일만 허용합니다. `architecture` Pack의 두 Gradle snippet은 `*ArchitectureTest`를 기본 `test`에서 제외해 중복 실행도 막습니다.
 
+구조화된 report는 파일당 16 MiB, 한 수집 단계 전체 64 MiB로 제한되고 한 파일씩 읽어 합산됩니다. 전용 report 트리 안의 심볼릭 링크는 실행 전에 거절합니다. 번들 Pack도 compact JSON을 원자적으로 교체하며, report 디렉터리가 프로젝트 밖으로 연결되면 쓰지 않습니다. 이 경계는 대규모 결과의 메모리 폭증과 report 경로를 이용한 외부 파일 덮어쓰기를 함께 막습니다.
+
 `bth doctor`의 `healthy`는 계약 파일·실행 파일·설정이 **구조적으로 실행 준비가 됐다**는 뜻입니다. 테스트 성공을 뜻하지 않습니다. 완료 근거는 반드시 `bth check` 또는 승인된 작업의 `bth verify` 결과로 만듭니다.
 
 ## DB는 어떻게 붙나
@@ -221,7 +223,7 @@ empty DB migration + 필요한 upgrade path
 - SQL/table 소유권 추측
 - 그래프 기반 테스트 생략
 
-그래프 파일에는 `advisory: true`, 허용 용도(`navigation`, `review-questions`), 금지 용도(`pass-verdict`, `test-skipping`)가 함께 기록됩니다.
+그래프 파일에는 `advisory: true`, 허용 용도(`navigation`, `review-questions`), 금지 용도(`pass-verdict`, `test-skipping`)가 함께 기록됩니다. 두 권한 목록은 각각 최대 16개의 짧은 식별자로 제한되어 작은 context budget을 우회해 응답을 부풀릴 수 없습니다. 생성 파일은 loader와 같은 16 MiB 상한을 넘으면 생성 단계에서 실패합니다.
 
 그래프 Pack이 현재 소스에 묶인 성공한 observation을 만들었다면, 승인된 계획을 내보낼 때 요구사항에 맞는 코드 위치를 제한된 예산 안에서 함께 받을 수 있습니다.
 
