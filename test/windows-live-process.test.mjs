@@ -9,7 +9,7 @@ import { buildSafeEnvironment, runProcess } from '../src/core/process-runner.mjs
 test('real Windows command shim executes provider JSON and normalizes telemetry', { skip: process.platform !== 'win32' }, async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-win-provider-'))
   const shim = join(root, 'codex.cmd')
-  await writeFile(shim, '@echo off\r\n"' + process.execPath + '" -e "console.log(JSON.stringify({usage:{input_tokens:11,output_tokens:3}}))"\r\n')
+  await writeFile(shim, '@echo off\r\n"' + process.execPath + '" -e "console.log(JSON.stringify({type:\'turn.completed\',usage:{input_tokens:11,output_tokens:3}}))"\r\n')
   await chmod(shim, 0o755).catch(() => {})
   const env = buildSafeEnvironment({ ...process.env, PATH: root + delimiter + process.env.PATH, PATHEXT: '.CMD;.EXE;.BAT' })
   const result = await runImplementationProvider(

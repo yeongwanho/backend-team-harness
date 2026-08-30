@@ -19,10 +19,11 @@ test('comparison matrix pairs every selected task across providers and lanes', (
   assert.throws(() => buildComparisonMatrix(corpus, { taskIds: ['missing'] }), /Unknown comparison task ids/)
 })
 
-test('success at one is verification-based while historical path coverage remains a separate impact metric', () => {
+test('success at one requires independent task acceptance while historical path coverage remains separate', () => {
   const passed = scoreProviderCase(task, {
     provider: 'codex', lane: 'bth', providerCompleted: true, verificationConfirmed: true,
     attempts: 1, elapsedMs: 100, changedPaths: task.goldPaths, impactPaths: task.goldPaths,
+    acceptance: { controlsConfirmed: true, candidatePassed: true },
     ruleViolations: [], usage: { tokens: { input: 10, uncachedInput: 8, output: 5, total: 15 }, costUsd: null }
   })
   assert.equal(passed.successAt1, true)
@@ -31,6 +32,7 @@ test('success at one is verification-based while historical path coverage remain
   const incomplete = scoreProviderCase(task, {
     provider: 'codex', lane: 'direct', providerCompleted: true, verificationConfirmed: true,
     attempts: 2, elapsedMs: 120, changedPaths: ['src/a.js'], impactPaths: null,
+    acceptance: { controlsConfirmed: true, candidatePassed: true },
     ruleViolations: ['changed-protected-file'], usage: {}
   })
   assert.equal(incomplete.successAt1, false)
@@ -46,6 +48,7 @@ test('paired aggregation preserves missing telemetry instead of turning it into 
   const bth = scoreProviderCase(task, {
     provider: 'claude', lane: 'bth', providerCompleted: true, verificationConfirmed: true,
     attempts: 1, elapsedMs: 80, changedPaths: task.goldPaths, impactPaths: task.goldPaths,
+    acceptance: { controlsConfirmed: true, candidatePassed: true },
     ruleViolations: [], usage: { tokens: { total: 20 }, costUsd: 0.1, durationMs: 70 }
   })
   const direct = scoreProviderCase(task, {
@@ -60,4 +63,28 @@ test('paired aggregation preserves missing telemetry instead of turning it into 
   assert.deepEqual(comparison.direct.usage.tokens.total, { value: null, measured: 0, total: 1 })
   assert.equal(comparison.delta.meanImpactRecallAt20, null)
   assert.equal(comparison.delta.meanOutcomeRecallAt20, 1)
+})
+
+test('a green existing suite cannot establish task success and missing acceptance is not zero', () => {
+  const observation = {
+    provider: 'codex', lane: 'bth', providerCompleted: true, verificationConfirmed: true,
+    elapsedMs: 100, changedPaths: ['src/a.js']
+  }
+  const missing = scoreProviderCase(task, observation)
+  assert.equal(missing.verificationSuccessAt1, true)
+  assert.equal(missing.successAt1, null)
+  assert.deepEqual(missing.failureReasons, ['task-acceptance-not-measured'])
+  const invalid = scoreProviderCase(task, { ...observation, acceptance: { controlsConfirmed: false, candidatePassed: true } })
+  assert.equal(invalid.successAt1, null)
+  const failed = scoreProviderCase(task, { ...observation, acceptance: { controlsConfirmed: true, candidatePassed: false } })
+  assert.equal(failed.successAt1, false)
+  assert.deepEqual(failed.failureReasons, ['task-acceptance-failed'])
+  const direct = scoreProviderCase(task, { ...observation, lane: 'direct', acceptance: { controlsConfirmed: true, candidatePassed: true } })
+  const [comparison] = compareProviderLanes([missing, direct])
+  assert.equal(comparison.bth.successAt1.rate, null)
+  assert.equal(comparison.bth.successAt1.measured, 0)
+  assert.equal(comparison.delta.successAt1Rate, null)
+  const legacy = { ...direct, lane: 'bth', schemaVersion: 2 }
+  const [historical] = compareProviderLanes([legacy, direct])
+  assert.equal(historical.bth.successAt1.rate, null, 'legacy suite success must never masquerade as task acceptance')
 })

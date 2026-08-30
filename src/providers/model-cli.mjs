@@ -362,6 +362,22 @@ export function extractProviderUsage(stdoutTail) {
   return usage
 }
 
+export function providerUsageObserver(provider) {
+  let finalUsage = null
+  return {
+    onLine(line) {
+      if (typeof line !== 'string' || Buffer.byteLength(line) > 1024 * 1024) return
+      let document
+      try { document = JSON.parse(line) } catch { return }
+      const expectedType = provider === 'claude' ? 'result' : 'turn.completed'
+      if (document?.type === expectedType) finalUsage = numericUsage(document)
+    },
+    snapshot() {
+      return { scope: finalUsage === null ? 'not-measured' : 'invocation-final', values: finalUsage ?? {} }
+    }
+  }
+}
+
 function finiteUsageValue(usage, candidates) {
   for (const candidate of candidates) {
     const value = usage[candidate]
@@ -371,7 +387,7 @@ function finiteUsageValue(usage, candidates) {
 }
 
 export function normalizeProviderUsage(provider, usage = {}, fallbackDurationMs = null) {
-  const input = finiteUsageValue(usage, [
+  const reportedInput = finiteUsageValue(usage, [
     'usage.input_tokens', 'usage.inputTokens', 'input_tokens', 'inputTokens',
     'message.usage.input_tokens', 'result.usage.input_tokens'
   ])
@@ -380,23 +396,35 @@ export function normalizeProviderUsage(provider, usage = {}, fallbackDurationMs 
     'message.usage.output_tokens', 'result.usage.output_tokens'
   ])
   const cachedInput = finiteUsageValue(usage, [
-    'usage.cached_input_tokens', 'usage.cache_read_input_tokens', 'usage.cache_creation_input_tokens',
-    'cached_input_tokens', 'cache_read_input_tokens', 'cache_creation_input_tokens',
+    'usage.cached_input_tokens', 'usage.cache_read_input_tokens',
+    'cached_input_tokens', 'cache_read_input_tokens',
     'message.usage.cached_input_tokens', 'message.usage.cache_read_input_tokens',
-    'message.usage.cache_creation_input_tokens', 'result.usage.cached_input_tokens',
-    'result.usage.cache_read_input_tokens', 'result.usage.cache_creation_input_tokens'
+    'result.usage.cached_input_tokens', 'result.usage.cache_read_input_tokens'
+  ])
+  const cacheCreationInput = finiteUsageValue(usage, [
+    'usage.cache_creation_input_tokens', 'usage.cache_write_input_tokens',
+    'cache_creation_input_tokens', 'cache_write_input_tokens',
+    'message.usage.cache_creation_input_tokens', 'result.usage.cache_creation_input_tokens'
   ])
   const reasoningOutput = finiteUsageValue(usage, [
     'usage.reasoning_output_tokens', 'reasoning_output_tokens'
   ])
   const reportedTotal = finiteUsageValue(usage, ['usage.total_tokens', 'total_tokens', 'totalTokens'])
-  const knownTokenParts = [input, output].filter((value) => value !== null)
-  const total = reportedTotal ?? (knownTokenParts.length > 0 ? knownTokenParts.reduce((sum, value) => sum + value, 0) : null)
-  const uncachedInput = input !== null && cachedInput !== null ? Math.max(0, input - cachedInput) : null
+  // Anthropic input_tokens excludes both cache reads and cache creation. Codex
+  // input_tokens already includes cached input. Missing components stay unknown.
+  const input = provider === 'claude'
+    ? [reportedInput, cachedInput, cacheCreationInput].every((value) => value !== null)
+      ? reportedInput + cachedInput + cacheCreationInput
+      : null
+    : reportedInput
+  const total = reportedTotal ?? (input !== null && output !== null ? input + output : null)
+  const uncachedInput = provider === 'claude'
+    ? reportedInput
+    : input !== null && cachedInput !== null ? Math.max(0, input - cachedInput) : null
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     provider,
-    tokens: { input, uncachedInput, output, cachedInput, reasoningOutput, total },
+    tokens: { input, uncachedInput, output, cachedInput, cacheCreationInput, reasoningOutput, total },
     costUsd: finiteUsageValue(usage, ['total_cost_usd', 'cost_usd', 'costUsd', 'usage.cost_usd']),
     durationMs: finiteUsageValue(usage, ['duration_ms', 'duration_api_ms', 'durationMs']) ??
       (typeof fallbackDurationMs === 'number' && Number.isFinite(fallbackDurationMs) && fallbackDurationMs >= 0 ? fallbackDurationMs : null),
@@ -452,6 +480,7 @@ export async function runImplementationProvider(adapter, input, options = {}) {
 
 async function runResolvedProvider(adapter, input, invocation, executable, options) {
   const activity = providerActivityObserver(adapter.provider, input.cwd)
+  const usageObserver = providerUsageObserver(adapter.provider)
   const result = await (options.processRunner ?? runProcess)({
     program: invocation.program,
     args: invocation.args,
@@ -459,10 +488,15 @@ async function runResolvedProvider(adapter, input, invocation, executable, optio
     timeoutMs: adapter.timeoutMs,
     tailBytes: 64 * 1024,
     env: input.env,
-    onStdoutLine: activity.onLine
+    onStdoutLine(line) {
+      activity.onLine(line)
+      usageObserver.onLine(line)
+    }
   })
   const passed = result.exitCode === 0 && !result.signal && !result.timedOut && !result.stdioDrainTimedOut
-  const providerUsage = extractProviderUsage(result.stdout.tail)
+  // A last assistant message or a numeric fragment in a truncated result is not
+  // invocation-wide usage. Observe complete final events before tail truncation.
+  const providerUsage = usageObserver.snapshot()
   return {
     process: result,
     metadata: {
@@ -472,7 +506,7 @@ async function runResolvedProvider(adapter, input, invocation, executable, optio
       version: options.version ?? null,
       model: adapter.model,
       profile: input.profile,
-      usage: normalizeProviderUsage(adapter.provider, providerUsage, result.durationMs),
+      usage: { ...normalizeProviderUsage(adapter.provider, providerUsage.values, result.durationMs), scope: providerUsage.scope },
       activity: activity.snapshot(),
       failure: passed ? null : extractProviderFailure(adapter.provider, result.stdout.tail, result.stderr.tail)
     }

@@ -9,6 +9,7 @@ import {
   extractProviderFailure,
   extractProviderUsage,
   normalizeProviderUsage,
+  providerUsageObserver,
   probeImplementationProvider,
   resolveProviderExecutable,
   runImplementationProvider,
@@ -206,12 +207,13 @@ test('provider usage is normalized to one token, cost, time, and turn contract',
     'usage.input_tokens': 120,
     'usage.output_tokens': 34,
     'usage.cache_read_input_tokens': 50,
+    'usage.cache_creation_input_tokens': 20,
     total_cost_usd: 0.012,
     duration_ms: 900,
     num_turns: 2
   }, 1000)
   assert.deepEqual(claude.tokens, {
-    input: 120, uncachedInput: 70, output: 34, cachedInput: 50, reasoningOutput: null, total: 154
+    input: 190, uncachedInput: 120, output: 34, cachedInput: 50, cacheCreationInput: 20, reasoningOutput: null, total: 224
   })
   assert.equal(claude.costUsd, 0.012)
   assert.equal(claude.durationMs, 900)
@@ -227,6 +229,25 @@ test('provider usage is normalized to one token, cost, time, and turn contract',
   assert.equal(codex.tokens.reasoningOutput, 1)
   assert.equal(codex.durationMs, 321)
   assert.equal(codex.costUsd, null)
+
+  const missingCache = normalizeProviderUsage('claude', { 'usage.input_tokens': 12, 'usage.output_tokens': 3 })
+  assert.equal(missingCache.tokens.uncachedInput, 12)
+  assert.equal(missingCache.tokens.input, null)
+  assert.equal(missingCache.tokens.total, null)
+  assert.equal(normalizeProviderUsage('codex', { 'usage.input_tokens': 7 }).tokens.total, null)
+  assert.equal(normalizeProviderUsage('claude', { 'usage.input_tokens': 0, 'usage.cache_read_input_tokens': 0, 'usage.cache_creation_input_tokens': 0, 'usage.output_tokens': 0 }).tokens.total, 0)
+})
+
+test('only complete invocation-final usage is measured, not message usage or output fragments', () => {
+  const observer = providerUsageObserver('claude')
+  for (const line of [null, 'not JSON', 'x'.repeat(1024 * 1024 + 1), '{"type":"assistant","message":{"usage":{"input_tokens":99}}}', '"usage":{"input_tokens":99}']) observer.onLine(line)
+  assert.deepEqual(observer.snapshot(), { scope: 'not-measured', values: {} })
+  observer.onLine('{"type":"result","usage":{"input_tokens":12,"cache_read_input_tokens":5,"cache_creation_input_tokens":2,"output_tokens":3},"private":"do not retain"}')
+  assert.equal(observer.snapshot().scope, 'invocation-final')
+  assert.equal(observer.snapshot().values['usage.input_tokens'], 12)
+  observer.onLine('{"type":"result","total_cost_usd":0.1}')
+  assert.equal(observer.snapshot().values['usage.input_tokens'], undefined, 'a missing final counter cannot borrow the previous message counter')
+  assert.equal(observer.snapshot().values.total_cost_usd, 0.1)
 })
 
 test('provider failures are reduced to safe diagnostic codes instead of persisted raw output', () => {
@@ -324,9 +345,9 @@ test('Claude stream events expose bounded pre-write activity and cache-aware usa
   await writeFile(join(directory, 'src/users.js'), 'export const users = []\n', 'utf8')
   await writeFile(executable, [
     '#!/bin/sh',
-    'printf \'%s\\n\' \'{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Read","input":{"file_path":"src/users.js"}}],"usage":{"input_tokens":12,"cache_read_input_tokens":5,"output_tokens":3}}}\'',
+    'printf \'%s\\n\' \'{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Read","input":{"file_path":"src/users.js"}}],"usage":{"input_tokens":12,"cache_read_input_tokens":5,"cache_creation_input_tokens":2,"output_tokens":3}}}\'',
     'printf \'%s\\n\' \'{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Edit","input":{"file_path":"src/users.js"}}]}}\'',
-    'printf \'%s\\n\' \'{"type":"result","duration_ms":7,"num_turns":1,"total_cost_usd":0.01}\'',
+    'printf \'%s\\n\' \'{"type":"result","usage":{"input_tokens":12,"cache_read_input_tokens":5,"cache_creation_input_tokens":2,"output_tokens":3},"duration_ms":7,"num_turns":1,"total_cost_usd":0.01}\'',
     ''
   ].join('\n'), 'utf8')
   await chmod(executable, 0o755)
@@ -344,12 +365,14 @@ test('Claude stream events expose bounded pre-write activity and cache-aware usa
   )
 
   assert.equal(result.process.exitCode, 0)
-  assert.equal(result.metadata.usage.tokens.input, 12)
+  assert.equal(result.metadata.usage.tokens.input, 19)
   assert.equal(result.metadata.usage.tokens.cachedInput, 5)
-  assert.equal(result.metadata.usage.tokens.uncachedInput, 7)
+  assert.equal(result.metadata.usage.tokens.cacheCreationInput, 2)
+  assert.equal(result.metadata.usage.tokens.uncachedInput, 12)
   assert.equal(result.metadata.usage.tokens.output, 3)
-  assert.equal(result.metadata.usage.tokens.total, 15)
+  assert.equal(result.metadata.usage.tokens.total, 22)
   assert.equal(result.metadata.usage.costUsd, 0.01)
+  assert.equal(result.metadata.usage.scope, 'invocation-final')
   assert.deepEqual(result.metadata.activity.preWritePaths, ['src/users.js'])
   assert.deepEqual(result.metadata.activity.preWriteContentPaths, ['src/users.js'])
   assert.deepEqual(result.metadata.activity.preWriteDiscoveryPaths, [])

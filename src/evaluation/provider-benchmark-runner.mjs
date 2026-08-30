@@ -98,6 +98,7 @@ function combinedUsage(attempts, provider) {
       uncachedInput: token('uncachedInput'),
       output: token('output'),
       cachedInput: token('cachedInput'),
+      cacheCreationInput: token('cacheCreationInput'),
       reasoningOutput: token('reasoningOutput'),
       total: token('total')
     },

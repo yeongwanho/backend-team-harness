@@ -330,6 +330,10 @@ npm run benchmark:providers -- --execute --provider codex --lane both \
 
 provider 비교는 공개 이력을 target commit 없이 단일 합성 base commit으로 만들고 gold 경로를 provider에게 전달하지 않습니다. raw provider 출력·소스 본문은 결과에 저장하지 않고 digest, byte count, 사용량, pre-write 경로와 명령 종류 집계만 남깁니다. `--all`은 provider당 40회 호출이므로 별도의 `BTH_PROVIDER_BENCHMARK_ALL=I_UNDERSTAND_40_PROVIDER_RUNS` 승인이 추가로 필요합니다.
 
+기존 테스트 통과는 `verificationSuccessAt1`이며, 요청한 기능의 성공과 다릅니다. `successAt1`은 수정 전 코드에서는 실패하고 정답 코드에서는 통과하는 독립 회귀 테스트로 해당 구현도 확인했을 때만 인정합니다. 그 검증이 없으면 `null`이며, 전체 성공률도 미측정 항목이 남은 동안 확정하지 않습니다. schema 2 이하의 과거 `successAt1`은 기존 테스트 통과 관찰값으로만 취급합니다.
+
+사용량은 완전한 마지막 실행 결과 이벤트에서만 수집합니다. Claude의 `input_tokens`는 캐시 읽기·생성 토큰을 포함하지 않으므로 총 입력은 세 값을 합하고 `cacheCreationInput`도 별도로 기록합니다. Codex의 입력에서는 보고된 캐시 입력을 빼서 미캐시 입력을 계산합니다. 누락된 값이나 마지막 응답 한 개의 사용량을 실행 전체의 합계로 추정하지 않습니다. 정의 근거: [Anthropic prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching).
+
 ## 테스트 수 감소 방지
 
 성공한 최신 실행의 Gate별 실행 수를 하한으로 올릴 수 있습니다.

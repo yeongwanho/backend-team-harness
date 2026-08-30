@@ -34,6 +34,7 @@ function usage(value, provider) {
     uncachedInput: finiteNonNegative(tokens.uncachedInput ?? null, 'usage.tokens.uncachedInput', true),
     output: finiteNonNegative(tokens.output ?? null, 'usage.tokens.output', true),
     cachedInput: finiteNonNegative(tokens.cachedInput ?? null, 'usage.tokens.cachedInput', true),
+    cacheCreationInput: finiteNonNegative(tokens.cacheCreationInput ?? null, 'usage.tokens.cacheCreationInput', true),
     reasoningOutput: finiteNonNegative(tokens.reasoningOutput ?? null, 'usage.tokens.reasoningOutput', true),
     total: finiteNonNegative(tokens.total ?? null, 'usage.tokens.total', true)
   }
@@ -125,13 +126,21 @@ export function scoreProviderCase(task, observation) {
   if (changedPaths.length === 0) failureReasons.push('no-source-change')
   if (attempts > 1) failureReasons.push('required-retry')
   if (violations.length) failureReasons.push('rule-violation')
+  const verificationSuccessAt1 = failureReasons.length === 0
+  const acceptanceConfirmed = observation.acceptance?.controlsConfirmed === true && typeof observation.acceptance?.candidatePassed === 'boolean'
+    ? observation.acceptance.candidatePassed
+    : null
+  if (acceptanceConfirmed === null) failureReasons.push('task-acceptance-not-measured')
+  else if (!acceptanceConfirmed) failureReasons.push('task-acceptance-failed')
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     id,
     provider,
     lane,
     taskId: task.id,
-    successAt1: failureReasons.length === 0,
+    successAt1: verificationSuccessAt1 ? acceptanceConfirmed : false,
+    verificationSuccessAt1,
+    acceptanceConfirmed,
     failureReasons,
     providerCompleted,
     verificationConfirmed,
@@ -160,11 +169,25 @@ function aggregateMeasuredLocalization(cases, field) {
 export function aggregateProviderCases(cases) {
   const impactLocalization = aggregateMeasuredLocalization(cases, 'impactLocalization')
   const outcomeLocalization = aggregateMeasuredLocalization(cases, 'outcomeLocalization')
-  const successCount = cases.filter((entry) => entry.successAt1).length
+  // Schema 2's successAt1 measured only existing-suite verification. It cannot
+  // acquire a stronger meaning merely because a newer reporter reads it.
+  const measuredSuccess = cases.filter((entry) => entry.schemaVersion >= 3 && typeof entry.successAt1 === 'boolean')
+  const successCount = measuredSuccess.filter((entry) => entry.successAt1).length
   const retryCases = cases.filter((entry) => entry.retries > 0).length
   return {
     cases: cases.length,
-    successAt1: { count: successCount, rate: cases.length ? successCount / cases.length : null },
+    successAt1: {
+      count: successCount,
+      measured: measuredSuccess.length,
+      total: cases.length,
+      rate: cases.length && measuredSuccess.length === cases.length ? successCount / cases.length : null,
+      observedRate: measuredSuccess.length ? successCount / measuredSuccess.length : null
+    },
+    verificationSuccessAt1: {
+      count: cases.filter((entry) => entry.schemaVersion >= 3 ? entry.verificationSuccessAt1 : entry.successAt1).length,
+      total: cases.length
+    },
+    acceptanceCoverage: { measured: cases.filter((entry) => entry.schemaVersion >= 3 && typeof entry.acceptanceConfirmed === 'boolean').length, total: cases.length },
     ruleViolations: {
       cases: cases.filter((entry) => entry.ruleViolations.length > 0).length,
       total: cases.reduce((sum, entry) => sum + entry.ruleViolations.length, 0)
@@ -178,7 +201,7 @@ export function aggregateProviderCases(cases) {
       total: cases.reduce((sum, entry) => sum + entry.retries, 0)
     },
     usage: {
-      tokens: Object.fromEntries(['total', 'input', 'uncachedInput', 'cachedInput', 'output', 'reasoningOutput']
+      tokens: Object.fromEntries(['total', 'input', 'uncachedInput', 'cachedInput', 'cacheCreationInput', 'output', 'reasoningOutput']
         .map((field) => [field, sumMeasured(cases.map((entry) => entry.usage.tokens[field]))])),
       costUsd: sumMeasured(cases.map((entry) => entry.usage.costUsd)),
       providerDurationMs: sumMeasured(cases.map((entry) => entry.usage.durationMs))
@@ -206,7 +229,8 @@ export function compareProviderLanes(cases) {
       bth: bthAggregate,
       direct: directAggregate,
       delta: {
-        successAt1Rate: pairedTaskIds.length ? bthAggregate.successAt1.rate - directAggregate.successAt1.rate : null,
+        successAt1Rate: bthAggregate.successAt1.rate !== null && directAggregate.successAt1.rate !== null
+          ? bthAggregate.successAt1.rate - directAggregate.successAt1.rate : null,
         ruleViolationCases: bthAggregate.ruleViolations.cases - directAggregate.ruleViolations.cases,
         meanImpactRecallAt20: bthAggregate.impactLocalization.metrics && directAggregate.impactLocalization.metrics
           ? bthAggregate.impactLocalization.metrics.meanRecallAt20 - directAggregate.impactLocalization.metrics.meanRecallAt20

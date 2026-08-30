@@ -81,7 +81,8 @@ test('prepared BTH lane seals one isolated verified change and records normalize
     cleanupBthWorkspace: true
   })
 
-  assert.equal(result.score.successAt1, true, JSON.stringify(result, null, 2))
+  assert.equal(result.score.verificationSuccessAt1, true, JSON.stringify(result, null, 2))
+  assert.equal(result.score.successAt1, null)
   assert.equal(result.score.verificationConfirmed, true)
   assert.deepEqual(result.score.changedPaths, task.goldPaths)
   assert.equal(result.score.usage.tokens.total, 15)
@@ -96,7 +97,8 @@ test('prepared direct lane uses the same verification contract after provider ex
     maxAttempts: 1, timeoutMs: 30_000, maxBudgetUsd: 1
   }, { directProviderRunner: fixtureProvider })
 
-  assert.equal(result.score.successAt1, true, JSON.stringify(result, null, 2))
+  assert.equal(result.score.verificationSuccessAt1, true, JSON.stringify(result, null, 2))
+  assert.equal(result.score.successAt1, null)
   assert.deepEqual(result.score.changedPaths, task.goldPaths)
   assert.equal(result.score.ruleViolations.length, 0)
   assert.equal(result.score.impactLocalization, null)
@@ -117,7 +119,8 @@ test('prepared direct lane elapsed time includes evaluator-owned verification', 
     }
   })
 
-  assert.equal(result.score.successAt1, true, JSON.stringify(result, null, 2))
+  assert.equal(result.score.verificationSuccessAt1, true, JSON.stringify(result, null, 2))
+  assert.equal(result.score.successAt1, null)
   assert.ok(result.score.elapsedMs >= verificationDelayMs)
 })
 
