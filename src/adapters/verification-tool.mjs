@@ -23,6 +23,34 @@ function addTests(target, source) {
   target.skipped += source.skipped
 }
 
+function changedPathMatchesPrefix(path, prefix) {
+  return path === prefix || path.startsWith(prefix.endsWith('/') ? prefix : prefix + '/')
+}
+
+export function selectVerificationGates(gates, scope = { mode: 'full' }) {
+  if (scope?.mode !== 'feedback') return [...gates]
+  const changedPaths = Array.isArray(scope.changedPaths) ? scope.changedPaths : []
+  const selectedIds = new Set(gates
+    .filter((gate) => gate.feedback === true)
+    .filter((gate) => {
+      const prefixes = Array.isArray(gate.pathPrefixes) ? gate.pathPrefixes : []
+      return prefixes.length === 0 || changedPaths.some((path) => prefixes.some((prefix) => changedPathMatchesPrefix(path, prefix)))
+    })
+    .map((gate) => gate.id))
+  const byId = new Map(gates.map((gate) => [gate.id, gate]))
+  const includeDependencies = (id) => {
+    const gate = byId.get(id)
+    for (const dependency of gate?.dependsOn ?? []) {
+      if (!selectedIds.has(dependency)) {
+        selectedIds.add(dependency)
+        includeDependencies(dependency)
+      }
+    }
+  }
+  for (const id of [...selectedIds]) includeDependencies(id)
+  return gates.filter((gate) => selectedIds.has(gate.id))
+}
+
 export function createVerificationTool(options = {}) {
   const processRunner = options.processRunner ?? runProcess
   const sourceBinder = options.captureSourceBinding
@@ -37,7 +65,11 @@ export function createVerificationTool(options = {}) {
         throw new Error('Verification requires pre-run and post-run Git source binding.')
       }
       const loaded = await loadVerificationConfig(context.root)
-      const networkGate = loaded.config.gates.find((gate) => gate.network)
+      const scope = context.verificationScope?.mode === 'feedback'
+        ? { mode: 'feedback', changedPaths: context.verificationScope.changedPaths ?? [] }
+        : { mode: 'full', changedPaths: [] }
+      const scopedGates = selectVerificationGates(loaded.config.gates, scope)
+      const networkGate = scopedGates.find((gate) => gate.network)
       if (networkGate && context.approval?.network !== true) {
         throw new ToolPermissionError(
           'network_approval_required',
@@ -46,7 +78,7 @@ export function createVerificationTool(options = {}) {
       }
       const toolchain = await captureToolchain(context.root, loaded.config)
       const gateHistory = await loadGateHistory(context.root)
-      const schedule = buildGateSchedule(loaded.config.gates, gateHistory.entries, loaded.config.scheduling)
+      const schedule = buildGateSchedule(scopedGates, gateHistory.entries, loaded.config.scheduling)
       const gateResults = []
       const observations = []
       const outcomes = new Map()
@@ -213,7 +245,9 @@ export function createVerificationTool(options = {}) {
       }
       const sourceStable = postSourceBinding.fingerprint === context.sourceBinding.fingerprint
       const requiredGates = gateResults.filter((gate) => gate.required)
-      const gatesPassed = requiredGates.length > 0 && requiredGates.every((gate) => gate.outcome === 'passed') && tests.executed > 0
+      const gatesPassed = scope.mode === 'feedback'
+        ? gateResults.every((gate) => gate.outcome === 'passed')
+        : requiredGates.length > 0 && requiredGates.every((gate) => gate.outcome === 'passed') && tests.executed > 0
       const passed = gatesPassed && sourceStable
       let historyUpdate
       if (!sourceStable) {
@@ -247,9 +281,14 @@ export function createVerificationTool(options = {}) {
       return {
         adapter: 'configured-verification',
         configuration: loaded.source,
+        scope: {
+          mode: scope.mode,
+          changedPaths: scope.changedPaths.slice(0, 4096),
+          selectedGateIds: scopedGates.map((gate) => gate.id)
+        },
         evidenceTier: 'EXECUTED',
         networkPolicy: {
-          declaredNetworkGate: loaded.config.gates.some((gate) => gate.network),
+          declaredNetworkGate: scopedGates.some((gate) => gate.network),
           riskAcknowledged: context.approval?.network === true,
           egressIsolation: 'not-enforced'
         },

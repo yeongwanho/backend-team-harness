@@ -40,3 +40,23 @@ test('shareable records redact underscore-delimited environment credential names
   assert.equal(result.value.api, 'MY_API_KEY=<redacted>')
   assert.equal(result.redactionsApplied, 3)
 })
+
+test('shareable records remove auth headers, common provider tokens, email, and raw source-bearing fields', () => {
+  const result = redactForShare({
+    auth: 'Authorization: Bearer abcdefghijklmnopqrstuvwxyz012345',
+    slack: ['xo', 'xb-', '1234567890-', 'abcdefghijklmnop'].join(''),
+    openai: ['s', 'k-proj-', 'abcdefghijklmnopqrstuvwxyz012345'].join(''),
+    owner: 'developer@example.com',
+    stdoutTail: 'class Secret { String password = "raw"; }',
+    nested: { sourceText: 'private source body' }
+  })
+
+  assert.match(result.value.auth, /<redacted>/)
+  assert.doesNotMatch(result.value.auth, /abcdefghijklmnopqrstuvwxyz/)
+  assert.equal(result.value.slack, '<redacted-slack-token>')
+  assert.equal(result.value.openai, '<redacted-api-token>')
+  assert.equal(result.value.owner, '<redacted-email>')
+  assert.equal(result.value.stdoutTail, '<redacted-sensitive-content>')
+  assert.equal(result.value.nested.sourceText, '<redacted-sensitive-content>')
+  assert.ok(result.redactionsApplied >= 6)
+})

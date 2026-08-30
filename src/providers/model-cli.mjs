@@ -63,6 +63,7 @@ export function selectImplementationProfile(input = {}) {
     ? input.projectRuleReadiness
     : 'unknown'
   const adjacentCodeReady = typeof input.adjacentCodeReady === 'boolean' ? input.adjacentCodeReady : null
+  const conventionsReady = typeof input.conventionsReady === 'boolean' ? input.conventionsReady : null
   if (configured === 'auto') {
     const claims = input.claims ?? {}
     const breakingPublicApi = claims.changesPublicApi === true && claims.preservesCompatibility !== true
@@ -94,6 +95,9 @@ export function selectImplementationProfile(input = {}) {
     } else if (explicitlySmall && adjacentCodeReady === false) {
       selected = 'balanced'
       reasons.push('adjacent-code-not-confirmed-for-fast-mode')
+    } else if (explicitlySmall && conventionsReady === false) {
+      selected = 'balanced'
+      reasons.push('project-conventions-not-observed-for-fast-mode')
     } else if (explicitlySmall) {
       selected = 'fast'
       reasons.push('explicit-single-module-no-migration-compatible-change')
@@ -125,7 +129,8 @@ export function selectImplementationProfile(input = {}) {
     contextBudgetCharacters: budget,
     readiness: {
       projectRules: projectRuleReadiness,
-      adjacentCode: adjacentCodeReady === null ? 'pending' : adjacentCodeReady ? 'confirmed' : 'unknown'
+      adjacentCode: adjacentCodeReady === null ? 'pending' : adjacentCodeReady ? 'confirmed' : 'unknown',
+      discoveredConventions: conventionsReady === null ? 'pending' : conventionsReady ? 'observed' : 'unknown'
     },
     verificationStrategy: 'all-required-gates'
   }
@@ -136,7 +141,8 @@ function providerPrompt(requestPath) {
     'Open ' + requestPath + ' and implement only its approved task inside the current workspace.',
     'Before editing, follow projectConventions: read every declared rule source and relevant knowledge document, then inspect at least one adjacent production example and its matching test.',
     'Start with the ranked codeContext paths; when they are unavailable, use bounded Glob and Grep discovery inside allowedPrefixes.',
-    'Preserve the observed naming, layering, DTO/error, transaction, persistence, and test patterns even for a small CRUD change.',
+    'Use projectConventions.discovered as source-cited observations, not declared policy; preserve repeated naming, layering, DTO/error, transaction, persistence, and test patterns wherever the observations or adjacent examples show them, even for a small CRUD change.',
+    'For MySQL/JPA work, inspect cited database observations and adjacent code for query shape, indexes, transaction scope, locks, and N+1 risk; source-pattern candidates are review prompts, never proof of a query plan or runtime defect.',
     'If a declared blocking project rule is unknown, unavailable, or conflicts with the code, do not guess; stop without changing files; preserve non-blocking warnings in the implementation evidence.',
     'Obey allowedPrefixes and authority limits. Never commit, change Git refs, deploy, access production, or edit .backend-harness control files.',
     'Do not read .env files, credential stores, private keys, tokens, or unrelated user data.',
@@ -207,6 +213,45 @@ export function extractProviderUsage(stdoutTail) {
   return usage
 }
 
+function finiteUsageValue(usage, candidates) {
+  for (const candidate of candidates) {
+    const value = usage[candidate]
+    if (typeof value === 'number' && Number.isFinite(value) && value >= 0) return value
+  }
+  return null
+}
+
+export function normalizeProviderUsage(provider, usage = {}, fallbackDurationMs = null) {
+  const input = finiteUsageValue(usage, [
+    'usage.input_tokens', 'usage.inputTokens', 'input_tokens', 'inputTokens',
+    'message.usage.input_tokens', 'result.usage.input_tokens'
+  ])
+  const output = finiteUsageValue(usage, [
+    'usage.output_tokens', 'usage.outputTokens', 'output_tokens', 'outputTokens',
+    'message.usage.output_tokens', 'result.usage.output_tokens'
+  ])
+  const cachedInput = finiteUsageValue(usage, [
+    'usage.cached_input_tokens', 'usage.cache_read_input_tokens', 'usage.cache_creation_input_tokens',
+    'cached_input_tokens', 'cache_read_input_tokens', 'cache_creation_input_tokens'
+  ])
+  const reasoningOutput = finiteUsageValue(usage, [
+    'usage.reasoning_output_tokens', 'reasoning_output_tokens'
+  ])
+  const reportedTotal = finiteUsageValue(usage, ['usage.total_tokens', 'total_tokens', 'totalTokens'])
+  const knownTokenParts = [input, output].filter((value) => value !== null)
+  const total = reportedTotal ?? (knownTokenParts.length > 0 ? knownTokenParts.reduce((sum, value) => sum + value, 0) : null)
+  return {
+    schemaVersion: 1,
+    provider,
+    tokens: { input, output, cachedInput, reasoningOutput, total },
+    costUsd: finiteUsageValue(usage, ['total_cost_usd', 'cost_usd', 'costUsd', 'usage.cost_usd']),
+    durationMs: finiteUsageValue(usage, ['duration_ms', 'duration_api_ms', 'durationMs']) ??
+      (typeof fallbackDurationMs === 'number' && Number.isFinite(fallbackDurationMs) && fallbackDurationMs >= 0 ? fallbackDurationMs : null),
+    turns: finiteUsageValue(usage, ['num_turns', 'turns']),
+    providerReported: Object.fromEntries(Object.entries(usage).slice(0, 32))
+  }
+}
+
 export function extractProviderFailure(provider, stdoutTail, stderrTail = '') {
   const combined = (String(stdoutTail ?? '') + '\n' + String(stderrTail ?? '')).slice(-16_384)
   const normalized = combined.toLowerCase()
@@ -258,6 +303,7 @@ export async function runImplementationProvider(adapter, input, options = {}) {
     env: input.env
   })
   const passed = result.exitCode === 0 && !result.signal && !result.timedOut && !result.stdioDrainTimedOut
+  const providerUsage = extractProviderUsage(result.stdout.tail)
   return {
     process: result,
     metadata: {
@@ -267,7 +313,7 @@ export async function runImplementationProvider(adapter, input, options = {}) {
       version: options.version ?? null,
       model: adapter.model,
       profile: input.profile,
-      usage: extractProviderUsage(result.stdout.tail),
+      usage: normalizeProviderUsage(adapter.provider, providerUsage, result.durationMs),
       failure: passed ? null : extractProviderFailure(adapter.provider, result.stdout.tail, result.stderr.tail)
     }
   }

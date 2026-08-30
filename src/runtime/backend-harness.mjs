@@ -56,6 +56,7 @@ export async function checkProject(inputPath, options = {}) {
         root: inputPath,
         operation: { id: 'project-check', state: 'CHECKING' },
         sourceBinding,
+        verificationScope: options.verificationScope,
         approval: { network: options.allowNetwork === true, write: false }
       })
     } catch (error) {
@@ -64,7 +65,9 @@ export async function checkProject(inputPath, options = {}) {
         message: error instanceof Error ? error.message : String(error)
       }
     }
-    const confirmed = failure === null && result?.passed === true && result.tests?.executed > 0
+    const confirmed = failure === null && result?.passed === true && (
+      options.verificationScope?.mode === 'feedback' || result.tests?.executed > 0
+    )
     const run = await recordProjectRun(inputPath, {
       evidenceTier: failure === null ? 'EXECUTED' : 'CONTROL',
       confirmed,

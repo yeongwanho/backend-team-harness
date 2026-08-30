@@ -52,14 +52,36 @@ Node.js 20 이상이 필요합니다.
 ```bash
 git clone https://github.com/yeongwanho/backend-team-harness.git
 cd backend-team-harness
-npm install
+npm ci
 npm test
+npm link
 
-node src/cli.mjs init /path/to/backend-project
-node src/cli.mjs doctor /path/to/backend-project
-node src/cli.mjs intelligence inspect /path/to/backend-project
-node src/cli.mjs check /path/to/backend-project
+bth init /path/to/backend-project
+bth doctor /path/to/backend-project
+bth intelligence inspect /path/to/backend-project
+bth check /path/to/backend-project
 ```
+
+`init`이 만든 `.backend-harness/` 계약은 팀이 검토하고 Git에 커밋해야 합니다. Codex 또는 Claude를 한 번 연결한 뒤에는 긴 수동 명령 열 대신 `work`로 시작합니다.
+
+```bash
+bth implement configure codex /path/to/backend-project \
+  --mode auto --allowed-prefixes '["src/","build.gradle.kts"]'
+
+# 첫 호출: 규칙·인접 코드·영향 범위를 읽고 계획 또는 꼭 필요한 질문만 출력
+bth work "기존 응답과 호환되는 사용자 상태 조회 API를 추가한다. DB 변경은 없다." \
+  /path/to/backend-project --id USER-17 --by developer
+
+# 계획을 검토한 뒤에만: 격리 구현 → 변경 경로용 빠른 Gate → 전체 필수 Gate
+bth work "기존 응답과 호환되는 사용자 상태 조회 API를 추가한다. DB 변경은 없다." \
+  /path/to/backend-project --id USER-17 --by developer \
+  --approve --run --allow-write --acknowledge-network-risk
+
+# 통과한 후보 diff를 검토한 뒤 원본 작업 트리에 명시적으로 반영
+bth implement apply USER-17 /path/to/backend-project --by developer --allow-write
+```
+
+질문이 남으면 출력된 decision id만 `--decisions` JSON으로 다시 전달합니다. 작은 CRUD도 규칙 탐색을 생략하지 않지만, 관련 경로용 feedback Gate가 먼저 실패하면 넓은 전체 테스트를 쓰지 않고 즉시 복구합니다. 최종 성공 판정은 항상 전체 required Gate를 통과해야 합니다.
 
 실제 실행 가능한 Gradle 예제도 포함합니다.
 
@@ -258,7 +280,7 @@ empty DB migration + 필요한 upgrade path
 프로젝트 integration tests → fresh JUnit → EXECUTED
 ```
 
-현재 참조 구현은 MySQL 8.4 LTS를 기준으로 합니다. 예제는 고정된 `mysql:8.4.11` 이미지를 사용해 Flyway migration, MySQL `JSON`·`ENUM`·`utf8mb4`, 실제 JDBC 왕복, 실패·시간초과 뒤 컨테이너 정리를 검증합니다. Core는 MySQL에 종속되지 않지만, 지금 DB Pack의 첫 번째 실전 지원 경로는 MySQL입니다.
+현재 참조 구현은 MySQL 8.4 LTS를 기준으로 합니다. 예제는 고정된 `mysql:8.4.11` 이미지를 사용해 Flyway migration, MySQL `JSON`·`ENUM`·`utf8mb4`, 실제 JDBC 왕복, 실패·시간초과 뒤 컨테이너 정리를 검증합니다. 읽기 전용 intelligence는 versioned Flyway SQL에서 primary/unique/secondary 복합 인덱스 선언을 source hash와 함께 모으고, JPA의 native query, `SELECT *`, leading wildcard, bulk DML, transaction, pessimistic lock, eager to-one, fetch join/page 조합을 검토 후보로 연결합니다. 이것은 실제 MySQL metadata, `EXPLAIN ANALYZE`, 런타임 N+1을 확인한 것이 아니므로 결함 판정이 아니라 구현·리뷰 질문만 만듭니다. Core는 MySQL에 종속되지 않지만, 지금 DB Pack의 첫 번째 실전 지원 경로는 MySQL입니다.
 
 운영 DB, 배포, 실제 비밀값은 기본 기능에 없습니다. H2나 SQLite에서 SQL 문자열 하나가 통과했다고 MySQL migration이 안전하다고 주장하지 않습니다. Atlas 같은 SQL 분석기는 향후 project-owned Findings Gate로 추가할 수 있지만, 실제 MySQL 통합테스트를 대체할 수 없습니다.
 
@@ -373,10 +395,13 @@ node src/cli.mjs implement configure codex /path/to/project \
 node src/cli.mjs implement run USER-17 /path/to/project \
   --by developer --allow-write --acknowledge-network-risk
 node src/cli.mjs implement status USER-17 /path/to/project
+# 통과한 sealed candidate를 검토한 뒤 rollback 가능한 방식으로 원본에 적용
+node src/cli.mjs implement apply USER-17 /path/to/project \
+  --by developer --allow-write
 # 실패 기록·격리 worktree를 감사 영수증과 함께 폐기해야 할 때만
 node src/cli.mjs implement reset USER-17 /path/to/project \
   --by developer --discard-workspace
-# 격리 diff를 사람이 검토해 정상 Git 흐름으로 반영한 뒤
+# 적용된 diff를 사람이 검토한 뒤
 node src/cli.mjs verify USER-17 /path/to/project
 # 실제 소스 검증까지 끝난 뒤 격리 worktree만 감사 기록과 함께 정리
 node src/cli.mjs implement cleanup USER-17 /path/to/project \
@@ -389,7 +414,7 @@ Task의 context·plan·implementation authoring에는 한 명의 active writer�
 
 BTH Core는 모델을 PASS 판정기로 사용하지 않습니다. 대신 설치된 Codex CLI와 Claude Code를 내장 provider adapter로 실행하거나, 기존처럼 프로젝트가 소유하는 명령 wrapper를 연결할 수 있습니다. 어느 경로든 계획·승인·검증 판정은 모델의 주장과 분리됩니다.
 
-`implement configure`는 비활성 템플릿만 기본적으로 바꾸고, 이미 설정된 adapter는 `--force` 없이는 교체하지 않습니다. 교체 전 파일은 `.backend-harness/local/backups/`에 보관됩니다. provider는 `shell: false`로 실행되고 위험한 sandbox-bypass flag를 사용하지 않으며, 매 실행에 `--allow-write --acknowledge-network-risk`가 다시 필요합니다.
+`implement configure`는 비활성 템플릿만 기본적으로 바꾸고, 이미 설정된 adapter는 `--force` 없이는 교체하지 않습니다. 교체 전 파일은 `.backend-harness/local/backups/`에 보관됩니다. schema v1 command adapter는 계속 읽을 수 있고 `bth config migrate /path --allow-write`가 원본 backup을 남긴 뒤 schema v2 command adapter로 결정적으로 옮깁니다. provider는 `shell: false`로 실행되고 위험한 sandbox-bypass flag를 사용하지 않으며, 매 실행에 `--allow-write --acknowledge-network-risk`가 다시 필요합니다.
 
 ```json
 {
@@ -415,7 +440,7 @@ BTH Core는 모델을 PASS 판정기로 사용하지 않습니다. 대신 설치
 
 `auto`는 구조화된 interview claims와 source-bound 규칙·인접 코드 근거로 작업 강도를 정합니다. migration이 필요하거나, DB 변경인데 migration 필요 여부가 미확정이거나, 공개 API 호환성을 지키지 못하는 변경은 `deep`(12,000자/high effort)입니다. 반대로 단일 모듈·migration 없음·DB 영향 명시·API 호환성 유지가 모두 확인되고, 차단 규칙이 해결됐으며, 현재 source에 묶인 관련 코드 경로도 있을 때만 DB를 읽고 쓰거나 호환 가능한 CRUD API를 추가하는 작업을 `fast`(2,000자/low effort)로 선택합니다. 차단 규칙이나 인접 코드 근거가 미확정이면 `balanced`(6,000자/medium effort), 차단 규칙이 충돌하면 `deep`입니다. 비차단 경고의 미확정은 숨기지 않고 provider request에 유지하되 그 자체만으로 작은 작업을 느리게 만들지는 않으며, 알려진 비차단 충돌은 balanced로 올립니다. 승인된 task 본문은 fast/balanced/deep별 8,000/24,000/64,000자로 별도 제한하며, 자동 모드의 큰 작업은 deep으로 올리고 64,000자를 넘으면 작업을 나누도록 실패합니다. 모르는 작업을 가볍다고 추측하지 않습니다. 명시적 `--mode fast|balanced|deep` 설정과 64~32,768자의 code-context override도 기록됩니다.
 
-provider request에는 승인된 계획, 허용 경로·diff budget, source-bound codegraph의 제한된 상위 문맥, `projectConventions` 규칙·지식 문서·인접 코드 경로, 직전 실패 요약만 들어갑니다. 소스 본문 전체를 복사하지 않고 프로젝트 상대 경로를 전달합니다. 요청 파일 자체도 실행 전후 SHA-256으로 봉인됩니다. provider는 편집 전에 선언된 규칙·관련 지식 문서와 최소 한 개의 인접 production/test 예제를 읽고, 이름·계층·DTO/오류·트랜잭션·영속성·테스트 관례를 보존하도록 지시받습니다. 차단 규칙을 확인할 수 없거나 코드와 충돌하면 추측해 수정하지 않습니다. provider는 넓은 테스트를 직접 실행하지 않고, 수정 뒤 BTH가 기존 `verification.json`의 모든 필수 Gate를 실행합니다. 즉 `fast`는 구현 탐색과 모델 비용을 줄이지 검증을 몰래 생략하지 않습니다. provider가 보고한 token/cost 숫자는 관찰값으로만 남고 PASS 권한은 없습니다. 코드 변경이 전혀 없으면 첫 호출에서 `no-source-change`로 멈추고 Gate와 맹목적 recovery를 실행하지 않습니다. 내장 provider는 이미 로그인된 로컬 CLI 세션을 사용하며 API-key 환경변수는 의도적으로 전달하지 않습니다.
+provider request에는 승인된 계획, 허용 경로·diff budget, source-bound codegraph의 제한된 상위 문맥, `projectConventions` 규칙·지식 문서·인접 코드 경로, 직전 실패 요약만 들어갑니다. 소스 본문 전체를 복사하지 않고 프로젝트 상대 경로를 전달합니다. 요청 파일 자체도 실행 전후 SHA-256으로 봉인됩니다. provider는 편집 전에 선언된 규칙·관련 지식 문서와 최소 한 개의 인접 production/test 예제를 읽고, 이름·계층·DTO/오류·트랜잭션·영속성·테스트 관례를 보존하도록 지시받습니다. MySQL/JPA 작업에는 query shape, 인덱스 선언, transaction, lock, fetch/N+1 후보를 별도 검토하되 정적 패턴을 실제 query plan이나 runtime 결함으로 과장하지 않습니다. 차단 규칙을 확인할 수 없거나 코드와 충돌하면 추측해 수정하지 않습니다. provider 수정 뒤 BTH는 변경 경로에 맞는 feedback Gate를 먼저 실행하고, 통과했을 때만 전체 필수 Gate를 실행합니다. 최종 PASS에서 전체 Gate를 생략하지 않습니다. provider의 서로 다른 출력은 input/output/cache/reasoning/total token, USD 비용, 시간, turn의 공통 schema로 정규화하며 관찰값일 뿐 PASS 권한은 없습니다. 코드 변경이 전혀 없으면 첫 호출에서 `no-source-change`로 멈추고 Gate와 맹목적 recovery를 실행하지 않습니다. 내장 provider는 이미 로그인된 로컬 CLI 세션을 사용하며 API-key 환경변수는 의도적으로 전달하지 않습니다.
 
 `fast`가 제한하는 것은 BTH가 추가하는 task·code context와 provider effort입니다. 각 CLI가 자체적으로 붙이는 system prompt, tool schema, cache traffic까지 작아진다는 뜻은 아닙니다. 2026-08-30의 작은 합성 Java 구현 smoke에서 BTH request는 각각 약 1.6 KiB였지만 Codex는 총 input 97,449(그중 cached 82,688), Claude는 input 6 + cache creation 13,849 + cache read 80,424와 약 $0.076을 보고했습니다. 이 값은 한 환경의 관찰값이지 일반 성능 보장이 아닙니다. Claude는 `--max-budget-usd`를 전달할 수 있지만 현재 사용한 Codex CLI에는 같은 달러 상한이 없어 effort·timeout·attempt 한도로만 제한합니다. 따라서 내장 provider는 승인된 구현용이며, 짧은 질문을 항상 저비용으로 답하는 chat router는 아직 아닙니다.
 

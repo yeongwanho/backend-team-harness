@@ -93,6 +93,9 @@ test('project intelligence turns source, documents, Git changes, and Gates into 
   assert.equal(facts.get('database.flyway.modified-existing').value, false)
   assert.equal(facts.get('knowledge.documents.complete').value, true)
   assert.deepEqual(facts.get('verification.gates').value, ['tests'])
+  assert.equal(result.intelligence.conventions.status, 'observed')
+  assert.deepEqual(result.intelligence.conventions.modules, ['root'])
+  assert.ok(result.intelligence.conventions.tests.pairs.some((pair) => pair.test.endsWith('UserServiceTest.java')))
 
   assert.equal(result.intelligence.evaluation.status, 'conflict')
   assert.deepEqual(

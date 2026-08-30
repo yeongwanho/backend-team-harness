@@ -13,6 +13,8 @@ export function gateSignature(gate) {
     parallelSafe: gate.parallelSafe ?? false,
     resourceClass: gate.resourceClass ?? 'project-build',
     network: gate.network ?? false,
+    feedback: gate.feedback ?? false,
+    pathPrefixes: gate.pathPrefixes ?? [],
     command: gate.command,
     inputs: gate.inputs ?? [],
     timeoutMs: gate.timeoutMs,

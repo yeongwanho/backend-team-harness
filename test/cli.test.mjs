@@ -30,6 +30,59 @@ test('CLI help exposes the actual task and verification commands', () => {
   assert.match(result.stdout, /bth intelligence inspect/)
   assert.match(result.stdout, /bth intelligence warm-cache/)
   assert.match(result.stdout, /bth implement run/)
+  assert.match(result.stdout, /bth work <requirement>/)
+  assert.match(result.stdout, /bth implement apply <id>/)
+  assert.match(result.stdout, /bth config migrate/)
+})
+
+test('CLI JSON failures expose stable typed error codes without stack traces', () => {
+  const result = runCli(['work', '--unknown', '--json'])
+  assert.equal(result.status, 1)
+  const failure = JSON.parse(result.stderr)
+  assert.equal(failure.error.code, 'cli_unknown_option')
+  assert.equal(failure.error.details.option, '--unknown')
+  assert.doesNotMatch(result.stderr, /\n\s+at /)
+})
+
+test('legacy internal errors receive a stable command-scoped CLI error type', () => {
+  const result = runCli(['doctor', '/definitely/missing/bth-project', '--json'])
+  assert.equal(result.status, 1)
+  const failure = JSON.parse(result.stderr)
+  assert.equal(failure.error.code, 'doctor_failed')
+  assert.equal(failure.error.details, null)
+})
+
+test('CLI work command asks only missing decisions then creates and approves one plan', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-cli-work-'))
+  await writeGradleFixture(root)
+  initializeGit(root)
+  assert.equal(runCli(['init', root]).status, 0)
+
+  const missing = runCli([
+    'work', 'Improve account handling.', root,
+    '--id', 'CLI-WORK-1', '--by', 'developer', '--json'
+  ])
+  assert.equal(missing.status, 0, missing.stderr || missing.stdout)
+  assert.equal(JSON.parse(missing.stdout).status, 'needs-decisions')
+
+  const decisions = JSON.stringify({
+    modules: ['root'],
+    databaseImpact: 'read',
+    apiImpact: 'compatible'
+  })
+  const proposed = runCli([
+    'work', 'Improve account handling.', root,
+    '--id', 'CLI-WORK-1', '--by', 'developer', '--decisions', decisions, '--json'
+  ])
+  assert.equal(proposed.status, 0, proposed.stderr || proposed.stdout)
+  assert.equal(JSON.parse(proposed.stdout).status, 'plan-proposed')
+
+  const approved = runCli([
+    'work', 'Improve account handling.', root,
+    '--id', 'CLI-WORK-1', '--by', 'developer', '--decisions', decisions, '--approve', '--json'
+  ])
+  assert.equal(approved.status, 0, approved.stderr || approved.stdout)
+  assert.equal(JSON.parse(approved.stdout).status, 'plan-approved')
 })
 
 test('CLI exposes deterministic project intelligence and evaluated rules', async () => {

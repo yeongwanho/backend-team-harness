@@ -17,6 +17,20 @@ const confirmedEvaluation = {
   }]
 }
 
+const observedConventions = {
+  status: 'observed',
+  modules: ['root'],
+  layers: [{
+    role: 'controller', count: 2, packages: ['users'],
+    naming: [{ suffix: 'Controller', occurrences: 2, status: 'repeated' }],
+    examples: [{ path: 'src/main/java/users/UserController.java', contentSha256: 'a'.repeat(64), declarations: ['UserController'] }]
+  }],
+  transactions: { status: 'not-observed', roles: [], examples: [] },
+  persistence: { status: 'not-observed', roles: [], examples: [] },
+  tests: { status: 'observed', pairs: [] },
+  limitations: []
+}
+
 test('project conventions require confirmed rules and adjacent source-bound code for fast readiness', () => {
   const available = buildProjectConventions(
     confirmedEvaluation,
@@ -27,7 +41,8 @@ test('project conventions require confirmed rules and adjacent source-bound code
         { path: 'src/main/java/users/UserController.java' },
         { path: 'src/test/java/users/UserControllerTest.java' }
       ]
-    }
+    },
+    observedConventions
   )
   assert.equal(available.status, 'confirmed')
   assert.equal(projectRuleReadiness(confirmedEvaluation), 'confirmed')
@@ -37,10 +52,11 @@ test('project conventions require confirmed rules and adjacent source-bound code
     'src/test/java/users/UserControllerTest.java'
   ])
   assert.equal(available.authority.verdictAuthority, false)
+  assert.equal(available.discovered.layers[0].naming[0].status, 'repeated')
 
   const missingCode = buildProjectConventions(confirmedEvaluation, { complete: true, documents: [] }, {
     status: 'unavailable', reason: 'graph_missing', entries: []
-  })
+  }, observedConventions)
   assert.equal(missingCode.status, 'unknown')
   assert.equal(missingCode.adjacentCode.source, 'provider-bounded-discovery-required')
 })
@@ -52,7 +68,7 @@ test('project convention conflicts stay explicit and bounded', () => {
     blocking: true,
     counts: { confirmed: 0, unknown: 0, conflict: 1 },
     results: [{ ...confirmedEvaluation.results[0], severity: 'blocker', status: 'conflict', outcome: 'violated' }]
-  }, null, { status: 'available', entries: [{ path: 'src/main/java/users/UserController.java' }] })
+  }, null, { status: 'available', entries: [{ path: 'src/main/java/users/UserController.java' }] }, observedConventions)
 
   assert.equal(conflicted.status, 'conflict')
   assert.equal(conflicted.projectRules.blocking, true)

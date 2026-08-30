@@ -34,6 +34,48 @@ test('read-only intelligence inspection never creates a cache file', async () =>
   await assert.rejects(access(join(root, CACHE_PATH)))
 })
 
+test('source index observes DTO and error naming roles without declaring them policy', async () => {
+  const root = await fixture()
+  await writeFile(join(root, 'src/main/java/example/UserResponse.java'), 'package example; record UserResponse(long id) {}\n', 'utf8')
+  await writeFile(join(root, 'src/main/java/example/UserNotFoundException.java'), 'package example; class UserNotFoundException extends RuntimeException {}\n', 'utf8')
+
+  const result = await inspectProjectIntelligence(root, { useCache: false })
+
+  assert.ok(result.intelligence.code.roles.includes('dto'))
+  assert.ok(result.intelligence.code.roles.includes('error'))
+  assert.equal(result.intelligence.conventions.authority.repeatedPatternIsDeclaredPolicy, false)
+})
+
+test('source index exposes bounded MySQL and JPA review signals without claiming runtime defects', async () => {
+  const root = await fixture()
+  await writeFile(join(root, 'src/main/java/example/UserRepository.java'), [
+    'package example;',
+    'interface UserRepository {',
+    '  @Modifying',
+    '  @Query(value = "select * from users where id = ? for update", nativeQuery = true)',
+    '  Object locked(long id);',
+    '  @Query("update User u set u.active = false") void disable();',
+    '}',
+    ''
+  ].join('\n'), 'utf8')
+  await writeFile(join(root, 'src/main/java/example/OrderEntity.java'), [
+    'package example;',
+    '@Entity class OrderEntity { @ManyToOne UserEntity user; }',
+    ''
+  ].join('\n'), 'utf8')
+
+  const result = await inspectProjectIntelligence(root, { useCache: false })
+
+  assert.equal(result.intelligence.code.metrics.declaredQueries, 2)
+  assert.equal(result.intelligence.code.metrics.lockingQueries, 1)
+  assert.equal(result.intelligence.code.metrics.defaultEagerToOneAssociations, 1)
+  assert.equal(result.intelligence.conventions.database.reviewCandidates.nPlusOne, 1)
+  assert.ok(result.intelligence.conventions.database.reviewCandidates.writeQueryWithoutObservedTransaction >= 1)
+  assert.ok(result.intelligence.conventions.database.reviewCandidates.lockWithoutObservedTransaction >= 1)
+  assert.equal(result.intelligence.conventions.database.authority.queryPlanExecuted, false)
+  assert.equal(result.intelligence.conventions.database.authority.nPlusOneConfirmed, false)
+})
+
 test('an explicit warm reuses the unchanged source-bound JVM index', async () => {
   const root = await fixture()
   const fresh = await inspectProjectIntelligence(root, { useCache: false })

@@ -183,6 +183,57 @@ test('adaptive verification reorders only opted-in gates and still executes ever
   assert.equal(new Set(executed).size, gates.length)
 })
 
+test('changed-path feedback runs only matching feedback gates while full verification still runs every gate', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-feedback-gates-'))
+  await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
+  for (const executable of ['verify-orders', 'verify-all']) {
+    await writeFile(join(root, executable), '#!/bin/sh\nexit 0\n', 'utf8')
+    await chmod(join(root, executable), 0o755)
+  }
+  initializeGit(root)
+  await initProject(root)
+  await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify({
+    schemaVersion: 1,
+    gates: [
+      {
+        id: 'orders-unit', required: true, feedback: true, pathPrefixes: ['orders/src'],
+        command: ['./verify-orders'], result: { type: 'junit', reports: ['.backend-harness/generated/orders/*.xml'] }
+      },
+      {
+        id: 'complete', required: true,
+        command: ['./verify-all'], result: { type: 'junit', reports: ['.backend-harness/generated/all/*.xml'] }
+      }
+    ]
+  }, null, 2) + '\n', 'utf8')
+  initializeGit(root)
+  const executed = []
+  const processRunner = async ({ program }) => {
+    const id = program.endsWith('verify-orders') ? 'orders' : 'all'
+    executed.push(id)
+    await mkdir(join(root, '.backend-harness/generated', id), { recursive: true })
+    await writeFile(join(root, '.backend-harness/generated', id, 'TEST.xml'), '<testsuite tests="1"><testcase name="' + id + '"/></testsuite>\n', 'utf8')
+    return {
+      exitCode: 0, signal: null, timedOut: false, stdioDrainTimedOut: false,
+      startedAt: '2026-08-30T00:00:00.000Z', finishedAt: '2026-08-30T00:00:00.010Z', durationMs: 10,
+      stdout: { sha256: '0'.repeat(64), bytes: 0, tail: '' }, stderr: { sha256: '0'.repeat(64), bytes: 0, tail: '' }
+    }
+  }
+
+  const feedback = await checkProject(root, {
+    processRunner,
+    verificationScope: { mode: 'feedback', changedPaths: ['orders/src/main/java/OrderService.java'] }
+  })
+  assert.equal(feedback.confirmed, true, JSON.stringify(feedback, null, 2))
+  assert.deepEqual(feedback.result.scope.selectedGateIds, ['orders-unit'])
+  assert.deepEqual(executed, ['orders'])
+
+  executed.length = 0
+  const full = await checkProject(root, { processRunner })
+  assert.equal(full.confirmed, true, JSON.stringify(full, null, 2))
+  assert.deepEqual(full.result.scope.selectedGateIds, ['orders-unit', 'complete'])
+  assert.deepEqual(executed, ['orders', 'all'])
+})
+
 test('explicitly independent resource classes run in a bounded parallel batch', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-parallel-gates-'))
   await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')

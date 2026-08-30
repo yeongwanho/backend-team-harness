@@ -8,6 +8,7 @@ import { initProject } from '../src/init-project.mjs'
 import { installPack } from '../src/packs/install.mjs'
 import { captureConfiguredSourceBinding, checkProject, verifyTask } from '../src/runtime/backend-harness.mjs'
 import { cleanupImplementation, implementationStatus, resetImplementation, runImplementation } from '../src/runtime/implementation-orchestrator.mjs'
+import { applyImplementation } from '../src/runtime/implementation-apply.mjs'
 import { answerInterview, completeInterview, startInterview } from '../src/runtime/interview-orchestrator.mjs'
 import { advanceTask, createTask, loadTask, updateTaskPlan } from '../src/core/task-store.mjs'
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
@@ -72,6 +73,14 @@ async function approvedImplementationProject(options = {}) {
   await mkdir(join(root, 'tools'), { recursive: true })
   await rename(join(root, 'tools-implement.tmp'), join(root, 'tools/implement'))
   await chmod(join(root, 'tools/implement'), 0o755)
+  for (const [path, content] of Object.entries(options.projectFiles ?? {})) {
+    await mkdir(dirname(join(root, path)), { recursive: true })
+    await writeFile(join(root, path), content, 'utf8')
+    if ((options.executableFiles ?? []).includes(path)) await chmod(join(root, path), 0o755)
+  }
+  if (options.verificationConfig) {
+    await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify(options.verificationConfig, null, 2) + '\n', 'utf8')
+  }
   initializeGit(root, { forcePaths: ['.gitignore', '.backend-harness/.gitignore'] })
   await createTask(root, { id: 'IMPL-1', context: 'Add one generated fixture class.' })
   await advanceTask(root, 'IMPL-1', 'CONTEXT_READY', { actor: 'developer' })
@@ -894,4 +903,110 @@ test('deleting a declared verification input becomes a sealed failure instead of
   assert.equal(result.record.attempts[0].outcome, 'source-binding-failed')
   assert.equal(result.record.attempts[0].verification.failure.code, 'implementation_source_binding_failed')
   assert.match(result.record.attempts[0].verification.failure.message, /gradlew/)
+})
+
+test('a passed sealed candidate can be applied explicitly and matches complete integration evidence', async () => {
+  const root = await approvedImplementationProject()
+  await runImplementation(root, 'IMPL-1', { actor: 'developer', allowWrite: true })
+
+  const applied = await applyImplementation(root, 'IMPL-1', { actor: 'developer', allowWrite: true })
+
+  assert.equal(applied.integration.integrated, true, JSON.stringify(applied, null, 2))
+  assert.deepEqual(applied.integration.changedPaths, ['src/main/java/example/Generated.java'])
+  assert.match(applied.receiptSha256, /^[a-f0-9]{64}$/)
+  assert.equal(await readFile(join(root, 'src/main/java/example/Generated.java'), 'utf8'), 'package example; class Generated {}\n')
+})
+
+test('candidate apply refuses source drift after isolated verification', async () => {
+  const root = await approvedImplementationProject()
+  await runImplementation(root, 'IMPL-1', { actor: 'developer', allowWrite: true })
+  await writeFile(join(root, 'SOURCE-DRIFT.txt'), 'changed outside the harness\n', 'utf8')
+
+  await assert.rejects(
+    applyImplementation(root, 'IMPL-1', { actor: 'developer', allowWrite: true }),
+    (error) => error?.code === 'apply_source_changed'
+  )
+  await assert.rejects(access(join(root, 'src/main/java/example/Generated.java')), /ENOENT/)
+})
+
+test('candidate apply refuses a worktree changed after its verification seal', async () => {
+  const root = await approvedImplementationProject()
+  const implementation = await runImplementation(root, 'IMPL-1', { actor: 'developer', allowWrite: true })
+  await writeFile(join(implementation.record.workspace, 'src/main/java/example/Generated.java'), 'tampered\n', 'utf8')
+
+  await assert.rejects(
+    applyImplementation(root, 'IMPL-1', { actor: 'developer', allowWrite: true }),
+    (error) => error?.code === 'apply_candidate_changed'
+  )
+  await assert.rejects(access(join(root, 'src/main/java/example/Generated.java')), /ENOENT/)
+})
+
+test('candidate apply rolls back earlier files when a later file cannot be applied', async () => {
+  const root = await approvedImplementationProject({
+    adapterScript: [
+      '#!/bin/sh',
+      'set -eu',
+      'mkdir -p src/main/java/example',
+      'printf "package example; class Generated {}\\n" > src/main/java/example/Generated.java',
+      'printf "package example; class Second {}\\n" > src/main/java/example/Second.java',
+      ''
+    ].join('\n')
+  })
+  await runImplementation(root, 'IMPL-1', { actor: 'developer', allowWrite: true })
+
+  await assert.rejects(
+    applyImplementation(root, 'IMPL-1', {
+      actor: 'developer',
+      allowWrite: true,
+      beforeApplyEntry: (_entry, index) => {
+        if (index === 1) throw new Error('injected second-file failure')
+      }
+    }),
+    (error) => error?.code === 'apply_failed_rolled_back'
+  )
+  await assert.rejects(access(join(root, 'src/main/java/example/Generated.java')), /ENOENT/)
+  await assert.rejects(access(join(root, 'src/main/java/example/Second.java')), /ENOENT/)
+})
+
+test('implementation stops at matching feedback failure without spending the complete verification gate', async () => {
+  const feedbackScript = [
+    '#!/bin/sh',
+    'set -eu',
+    'mkdir -p .backend-harness/generated/feedback',
+    'printf "feedback\\n" >> .backend-harness/generated/executed.log',
+    'exit 9',
+    ''
+  ].join('\n')
+  const fullScript = [
+    '#!/bin/sh',
+    'set -eu',
+    'mkdir -p .backend-harness/generated/full',
+    'printf "full\\n" >> .backend-harness/generated/executed.log',
+    'printf "%s\\n" \'<testsuite tests="1"><testcase name="full"/></testsuite>\' > .backend-harness/generated/full/TEST.xml',
+    ''
+  ].join('\n')
+  const root = await approvedImplementationProject({
+    projectFiles: { 'verify-feedback': feedbackScript, 'verify-full': fullScript },
+    executableFiles: ['verify-feedback', 'verify-full'],
+    verificationConfig: {
+      schemaVersion: 1,
+      gates: [
+        {
+          id: 'changed-unit', required: true, feedback: true, pathPrefixes: ['src/main/java'],
+          command: ['./verify-feedback'], result: { type: 'junit', reports: ['.backend-harness/generated/feedback/*.xml'] }
+        },
+        {
+          id: 'complete', required: true,
+          command: ['./verify-full'], result: { type: 'junit', reports: ['.backend-harness/generated/full/*.xml'] }
+        }
+      ]
+    }
+  })
+
+  const result = await runImplementation(root, 'IMPL-1', { actor: 'developer', allowWrite: true })
+
+  assert.equal(result.record.status, 'failed')
+  assert.ok(result.record.attempts.every((attempt) => attempt.verification.failure.code === 'selected_feedback_failed'))
+  assert.ok(result.record.attempts.every((attempt) => attempt.feedback.gates.length === 1))
+  assert.equal(await readFile(join(result.record.workspace, '.backend-harness/generated/executed.log'), 'utf8'), 'feedback\nfeedback\n')
 })

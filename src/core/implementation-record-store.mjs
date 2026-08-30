@@ -128,6 +128,50 @@ export async function snapshotImplementedFiles(root, paths) {
   return files
 }
 
+export async function implementationCandidateStatus(workspace, record) {
+  if (!record || record.status !== 'passed' || record.schemaVersion !== 2) {
+    return { valid: false, reason: 'A current passed implementation record is required.', mismatches: [] }
+  }
+  if (!Array.isArray(record.implementedFiles) || record.implementedFiles.length < 1) {
+    return { valid: false, reason: 'Implementation record does not contain file-level candidate evidence.', mismatches: [] }
+  }
+  const expectedByPath = new Map(record.implementedFiles.map((entry) => [entry?.path, entry]))
+  if (expectedByPath.size !== record.implementedFiles.length || [...expectedByPath.keys()].some((path) => typeof path !== 'string')) {
+    return { valid: false, reason: 'Implementation record contains duplicate or invalid candidate paths.', mismatches: [] }
+  }
+  const expectedPaths = [...expectedByPath.keys()].sort()
+  const [current, changedPaths, headCommit] = await Promise.all([
+    snapshotImplementedFiles(workspace, expectedPaths),
+    changedPathsAgainstBase(workspace, record.baseHeadCommit),
+    runGit(workspace, ['rev-parse', 'HEAD']).then((value) => value.trim().toLowerCase())
+  ])
+  const currentByPath = new Map(current.map((entry) => [entry.path, entry]))
+  const expectedSet = new Set(expectedPaths)
+  const changedSet = new Set(changedPaths)
+  const contentMismatches = expectedPaths.filter((path) => canonicalJson(currentByPath.get(path)) !== canonicalJson(expectedByPath.get(path)))
+  const extraPaths = changedPaths.filter((path) => !expectedSet.has(path))
+  const missingPaths = expectedPaths.filter((path) => !changedSet.has(path))
+  const headChanged = headCommit !== record.baseHeadCommit
+  const mismatches = [
+    ...contentMismatches,
+    ...extraPaths.map((path) => 'extra:' + path),
+    ...missingPaths.map((path) => 'missing:' + path),
+    ...(headChanged ? ['base-head'] : [])
+  ]
+  return {
+    valid: mismatches.length === 0,
+    reason: mismatches.length === 0
+      ? 'The isolated candidate still matches its sealed file evidence and immutable base commit.'
+      : 'The isolated candidate changed after verification or no longer matches its immutable base.',
+    mismatches: mismatches.slice(0, 64),
+    mismatchCount: mismatches.length,
+    changedPaths,
+    extraPaths,
+    missingPaths,
+    headChanged
+  }
+}
+
 export async function implementationIntegrationStatus(root, record, options = {}) {
   if (!record || record.status !== 'passed') {
     return { integrated: false, reason: 'A passed implementation record is required.', mismatches: [] }

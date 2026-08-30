@@ -5,6 +5,7 @@ import { homedir, tmpdir } from 'node:os'
 import { dirname, relative, resolve } from 'node:path'
 import { loadImplementationConfig, resolveImplementationExecutable } from '../config/implementation.mjs'
 import { loadVerificationConfig, verificationExecutablePaths, verificationInputPaths } from '../config/verification.mjs'
+import { selectVerificationGates } from '../adapters/verification-tool.mjs'
 import { canonicalJson } from '../core/canonical-json.mjs'
 import {
   implementationIntegrationStatus,
@@ -174,6 +175,50 @@ async function changedPathsAgainstBase(worktree, baseCommit) {
   return [...new Set((tracked + untracked).split('\0').filter(Boolean))].sort()
 }
 
+async function candidateIntegrity(worktree, sourceBinding, baseRefsSha256, changedPaths, candidateFiles) {
+  const [files, paths, indexFlags, refsSha256] = await Promise.all([
+    snapshotImplementedFiles(worktree, changedPaths),
+    changedPathsAgainstBase(worktree, sourceBinding.headCommit),
+    suspiciousIndexFlags(worktree),
+    sharedRefsSha256(worktree)
+  ])
+  return {
+    valid: canonicalJson(candidateFiles) === canonicalJson(files) &&
+      canonicalJson(changedPaths) === canonicalJson(paths) &&
+      indexFlags.length === 0 && refsSha256 === baseRefsSha256,
+    filesChanged: canonicalJson(candidateFiles) !== canonicalJson(files),
+    inventoryChanged: canonicalJson(changedPaths) !== canonicalJson(paths),
+    indexFlags,
+    refsChanged: refsSha256 !== baseRefsSha256
+  }
+}
+
+function candidateIntegrityFailure(checked, integrity) {
+  return {
+    confirmed: false,
+    sourceFingerprint: checked.sourceFingerprint,
+    runPath: checked.runPath,
+    failure: {
+      code: integrity.refsChanged
+        ? 'verification_gate_changed_shared_refs'
+        : integrity.indexFlags.length > 0
+          ? 'verification_gate_changed_index_flags'
+          : integrity.inventoryChanged
+            ? 'verification_gate_changed_inventory'
+            : 'verification_gate_modified_candidate',
+      message: integrity.refsChanged
+        ? 'A verification Gate changed shared Git branch or tag refs.'
+        : integrity.indexFlags.length > 0
+          ? 'A verification Gate set assume-unchanged or skip-worktree index flags.'
+          : integrity.inventoryChanged
+            ? 'A verification Gate added or removed source paths; only the exact pre-Gate implementation inventory can be certified.'
+            : 'A verification Gate changed a candidate implementation path; pre-Gate implementation bytes cannot be certified.'
+    },
+    tests: checked.tests,
+    gates: checked.gates
+  }
+}
+
 async function evaluateWritePolicy(worktree, baseCommit, paths, policy) {
   const outside = paths.filter((path) => !policy.allowedPrefixes.some((prefix) => prefix.endsWith('/') ? path.startsWith(prefix) : path === prefix))
   const trackedDiff = await runGit(worktree, ['diff', '--binary', '--full-index', '--no-ext-diff', '--no-renames', baseCommit, '--'])
@@ -230,7 +275,8 @@ async function structuredImplementationContext(root, task) {
       schemaVersion: 1, status: 'unknown', blocking: false,
       counts: { confirmed: 0, unknown: 0, conflict: 0 }, results: []
     },
-    knowledge: { complete: false, documents: [] }
+    knowledge: { complete: false, documents: [] },
+    conventions: { status: 'unknown', modules: [], layers: [] }
   }
   if (!task.planArtifactSha256) return fallback
   const interview = await loadInterview(root, task.id)
@@ -242,7 +288,8 @@ async function structuredImplementationContext(root, task) {
   return {
     claims,
     projectRuleEvaluation: interview.artifacts?.plan?.projectRuleEvaluation ?? fallback.projectRuleEvaluation,
-    knowledge: interview.contextSnapshot?.intelligence?.knowledge ?? fallback.knowledge
+    knowledge: interview.contextSnapshot?.intelligence?.knowledge ?? fallback.knowledge,
+    conventions: interview.contextSnapshot?.intelligence?.conventions ?? fallback.conventions
   }
 }
 
@@ -302,7 +349,7 @@ async function implementationWorktreesRoot(root) {
   return worktreesRoot
 }
 
-async function resolveRecordedWorkspace(root, recordedPath) {
+export async function resolveRecordedWorkspace(root, recordedPath) {
   if (typeof recordedPath !== 'string' || !recordedPath) throw new Error('Recorded implementation workspace path is invalid.')
   const worktreesRoot = await implementationWorktreesRoot(root)
   const path = resolve(recordedPath)
@@ -387,6 +434,50 @@ export async function implementationStatus(inputPath, taskId) {
   return { root, path: relative(root, loaded.path).replaceAll('\\', '/'), record: loaded.record }
 }
 
+async function prepareProviderPlanning(root, task, config, sourceBinding) {
+  if (config.adapter.kind !== 'provider') {
+    return { providerTask: null, planningContext: null, profile: null, codeContext: null, projectConventions: null }
+  }
+  const providerTask = providerTaskPayload(task)
+  const planningContext = await structuredImplementationContext(root, task)
+  const profileInput = {
+    mode: config.adapter.mode,
+    contextBudgetCharacters: config.adapter.contextBudgetCharacters,
+    taskCharacters: providerTask.characters,
+    claims: planningContext.claims,
+    projectRuleReadiness: projectRuleReadiness(planningContext.projectRuleEvaluation),
+    conventionsReady: planningContext.conventions?.status === 'observed'
+  }
+  let profile = selectImplementationProfile(profileInput)
+  let codeContext = await loadBudgetedCodeContext(root, planQuery(task), {
+    budgetCharacters: profile.contextBudgetCharacters,
+    sourceFingerprint: sourceBinding.fingerprint
+  })
+  let projectConventions = buildProjectConventions(planningContext.projectRuleEvaluation, planningContext.knowledge, codeContext, planningContext.conventions)
+  if (config.adapter.mode === 'auto' && profile.selected === 'fast') {
+    profile = selectImplementationProfile({ ...profileInput, adjacentCodeReady: projectConventions.adjacentCode.status === 'confirmed' })
+    if (profile.selected !== 'fast') {
+      codeContext = await loadBudgetedCodeContext(root, planQuery(task), {
+        budgetCharacters: profile.contextBudgetCharacters,
+        sourceFingerprint: sourceBinding.fingerprint
+      })
+      projectConventions = buildProjectConventions(planningContext.projectRuleEvaluation, planningContext.knowledge, codeContext, planningContext.conventions)
+    }
+  }
+  return { providerTask, planningContext, profile, codeContext, projectConventions }
+}
+
+function assertApprovedSource(task, sourceBinding) {
+  const acceptedFingerprints = new Set([sourceBinding.fingerprint, sourceBinding.legacyFingerprint].filter(Boolean))
+  if (!sourceBinding.clean) throw new Error('Implementation requires a clean source-bound worktree. Commit or stash source changes first.')
+  if (sourceBinding.projectPath !== '.') {
+    throw new Error('Isolated implementation currently requires the harness project root to be the Git top-level. Monorepo subdirectory projects are rejected explicitly until path-scoped worktree evidence is supported.')
+  }
+  if (!acceptedFingerprints.has(task.planSourceFingerprint) || !acceptedFingerprints.has(task.approvalReceipt.sourceFingerprint)) {
+    throw new Error('Approved plan source is stale. Rebind and approve the plan against the current source.')
+  }
+}
+
 async function runUnlocked(root, taskId, options) {
   const loadedTask = await loadTask(root, taskId)
   if (!['PLAN_APPROVED', 'IMPLEMENTING'].includes(loadedTask.record.state)) {
@@ -406,50 +497,11 @@ async function runUnlocked(root, taskId, options) {
   }
 
   const sourceBinding = await captureConfiguredSourceBinding(root)
-  const providerTask = loadedConfig.config.adapter.kind === 'provider' ? providerTaskPayload(loadedTask.record) : null
-  const planningContext = loadedConfig.config.adapter.kind === 'provider'
-    ? await structuredImplementationContext(root, loadedTask.record)
-    : null
-  const profileInput = loadedConfig.config.adapter.kind === 'provider'
-    ? {
-        mode: loadedConfig.config.adapter.mode,
-        contextBudgetCharacters: loadedConfig.config.adapter.contextBudgetCharacters,
-        taskCharacters: providerTask.characters,
-        claims: planningContext.claims,
-        projectRuleReadiness: projectRuleReadiness(planningContext.projectRuleEvaluation)
-      }
-    : null
-  let profile = profileInput
-    ? selectImplementationProfile(profileInput)
-    : null
-  let codeContext = profile
-    ? await loadBudgetedCodeContext(root, planQuery(loadedTask.record), {
-        budgetCharacters: profile.contextBudgetCharacters,
-        sourceFingerprint: sourceBinding.fingerprint
-      })
-    : null
-  let projectConventions = profile
-    ? buildProjectConventions(planningContext.projectRuleEvaluation, planningContext.knowledge, codeContext)
-    : null
-  if (profileInput && loadedConfig.config.adapter.mode === 'auto' && profile.selected === 'fast' && projectConventions.adjacentCode.status !== 'confirmed') {
-    profile = selectImplementationProfile({ ...profileInput, adjacentCodeReady: false })
-    codeContext = await loadBudgetedCodeContext(root, planQuery(loadedTask.record), {
-      budgetCharacters: profile.contextBudgetCharacters,
-      sourceFingerprint: sourceBinding.fingerprint
-    })
-    projectConventions = buildProjectConventions(planningContext.projectRuleEvaluation, planningContext.knowledge, codeContext)
-  } else if (profileInput && loadedConfig.config.adapter.mode === 'auto' && profile.selected === 'fast') {
-    profile = selectImplementationProfile({ ...profileInput, adjacentCodeReady: true })
-  }
+  const { providerTask, profile, codeContext, projectConventions } = await prepareProviderPlanning(
+    root, loadedTask.record, loadedConfig.config, sourceBinding
+  )
   const baseRefsSha256 = await sharedRefsSha256(root)
-  const acceptedFingerprints = new Set([sourceBinding.fingerprint, sourceBinding.legacyFingerprint].filter(Boolean))
-  if (!sourceBinding.clean) throw new Error('Implementation requires a clean source-bound worktree. Commit or stash source changes first.')
-  if (sourceBinding.projectPath !== '.') {
-    throw new Error('Isolated implementation currently requires the harness project root to be the Git top-level. Monorepo subdirectory projects are rejected explicitly until path-scoped worktree evidence is supported.')
-  }
-  if (!acceptedFingerprints.has(loadedTask.record.planSourceFingerprint) || !acceptedFingerprints.has(loadedTask.record.approvalReceipt.sourceFingerprint)) {
-    throw new Error('Approved plan source is stale. Rebind and approve the plan against the current source.')
-  }
+  assertApprovedSource(loadedTask.record, sourceBinding)
 
   const prior = await loadImplementationRecord(root, taskId)
   if (prior.record?.baseSourceFingerprint && prior.record.baseSourceFingerprint !== sourceBinding.fingerprint) {
@@ -618,6 +670,7 @@ async function runUnlocked(root, taskId, options) {
     const adapterPassed = processPassed(processResult) && !requestChanged && !afterCapture.error && !historyChanged && !sharedRefsChanged && indexFlagChanges.length === 0 && !declaredInputsChanged && changed && protectedChanges.length === 0 && writePolicy.passed
     const policyFailure = requestChanged || Boolean(afterCapture.error) || historyChanged || sharedRefsChanged || indexFlagChanges.length > 0 || declaredInputsChanged || protectedChanges.length > 0 || (writePolicy && !writePolicy.passed)
     let candidateFiles = []
+    let feedback = null
     let attemptVerification
     let gateIntegrityFailure = false
     if (!processPassed(processResult)) {
@@ -676,39 +729,35 @@ async function runUnlocked(root, taskId, options) {
       }
     } else if (adapterPassed) {
       candidateFiles = await snapshotImplementedFiles(workspace.path, changedPaths)
-      const checked = compactVerification(await checkProject(workspace.path, { allowNetwork: options.allowNetwork === true }))
-      const postGateFiles = await snapshotImplementedFiles(workspace.path, changedPaths)
-      const postGateChangedPaths = await changedPathsAgainstBase(workspace.path, sourceBinding.headCommit)
-      const postGateIndexFlags = await suspiciousIndexFlags(workspace.path)
-      const postGateRefsChanged = await sharedRefsSha256(workspace.path) !== baseRefsSha256
-      const postGateInventoryChanged = canonicalJson(changedPaths) !== canonicalJson(postGateChangedPaths)
-      if (canonicalJson(candidateFiles) !== canonicalJson(postGateFiles) || postGateInventoryChanged || postGateIndexFlags.length > 0 || postGateRefsChanged) {
-        gateIntegrityFailure = true
-        attemptVerification = {
-          confirmed: false,
-          sourceFingerprint: checked.sourceFingerprint,
-          runPath: checked.runPath,
-          failure: {
-            code: postGateRefsChanged
-              ? 'verification_gate_changed_shared_refs'
-              : postGateIndexFlags.length > 0
-                ? 'verification_gate_changed_index_flags'
-                : postGateInventoryChanged
-                  ? 'verification_gate_changed_inventory'
-                : 'verification_gate_modified_candidate',
-            message: postGateRefsChanged
-              ? 'A verification Gate changed shared Git branch or tag refs.'
-              : postGateIndexFlags.length > 0
-                ? 'A verification Gate set assume-unchanged or skip-worktree index flags.'
-                : postGateInventoryChanged
-                  ? 'A verification Gate added or removed source paths; only the exact pre-Gate implementation inventory can be certified.'
-                : 'A verification Gate changed a candidate implementation path; pre-Gate implementation bytes cannot be certified.'
-          },
-          tests: checked.tests,
-          gates: checked.gates
+      const selectedFeedbackGates = selectVerificationGates(verificationConfig.gates, { mode: 'feedback', changedPaths })
+      if (selectedFeedbackGates.length > 0) {
+        feedback = compactVerification(await checkProject(workspace.path, {
+          allowNetwork: options.allowNetwork === true,
+          verificationScope: { mode: 'feedback', changedPaths }
+        }))
+        const feedbackIntegrity = await candidateIntegrity(workspace.path, sourceBinding, baseRefsSha256, changedPaths, candidateFiles)
+        if (!feedbackIntegrity.valid) {
+          gateIntegrityFailure = true
+          attemptVerification = candidateIntegrityFailure(feedback, feedbackIntegrity)
+        } else if (!feedback.confirmed) {
+          attemptVerification = {
+            ...feedback,
+            failure: {
+              code: 'selected_feedback_failed',
+              message: 'A changed-path feedback Gate failed before the complete required verification suite.'
+            }
+          }
         }
-      } else {
-        attemptVerification = checked
+      }
+      if (!attemptVerification) {
+        const checked = compactVerification(await checkProject(workspace.path, { allowNetwork: options.allowNetwork === true }))
+        const integrity = await candidateIntegrity(workspace.path, sourceBinding, baseRefsSha256, changedPaths, candidateFiles)
+        if (!integrity.valid) {
+          gateIntegrityFailure = true
+          attemptVerification = candidateIntegrityFailure(checked, integrity)
+        } else {
+          attemptVerification = checked
+        }
       }
     } else {
       attemptVerification = null
@@ -725,6 +774,7 @@ async function runUnlocked(root, taskId, options) {
         observedSha256: requestAfter.sha256
       },
       adapter: compactProcess(processResult),
+      feedback,
       changed,
       writePolicy,
       sourceFingerprintBefore: beforeCapture.binding?.fingerprint ?? null,
@@ -817,7 +867,7 @@ async function runUnlocked(root, taskId, options) {
     },
     updatedAt: new Date().toISOString(),
     nextAction: status === 'passed'
-      ? 'Review the isolated diff, apply it through normal team Git workflow, then run bth verify on the integrated source.'
+      ? 'Review the isolated diff, then run bth implement apply ' + taskId + ' <project> --by <actor> --allow-write and bth verify on the integrated source.'
       : 'Inspect the isolated workspace and failure evidence before another bounded implementation run.'
   })
   return { root, path: relative(root, prior.path).replaceAll('\\', '/'), record }

@@ -27,6 +27,30 @@ test('verification config accepts a project-owned command and structured JUnit r
   assert.deepEqual(config.gates[0].inputs, ['gradle.properties', '.env.test'])
   assert.equal(config.scheduling.strategy, 'configured')
   assert.equal(config.gates[0].reorderable, false)
+  assert.equal(config.gates[0].feedback, false)
+  assert.deepEqual(config.gates[0].pathPrefixes, [])
+})
+
+test('changed-path feedback gates are explicit and bounded', () => {
+  const config = parseVerificationConfig(JSON.stringify({
+    schemaVersion: 1,
+    gates: [{
+      id: 'orders-unit', required: true, feedback: true,
+      pathPrefixes: ['orders/src', 'shared/contracts'],
+      command: ['./verify-orders'],
+      result: { type: 'junit', reports: ['reports/orders/*.xml'] }
+    }]
+  }))
+  assert.equal(config.gates[0].feedback, true)
+  assert.deepEqual(config.gates[0].pathPrefixes, ['orders/src', 'shared/contracts'])
+
+  assert.throws(() => parseVerificationConfig(JSON.stringify({
+    schemaVersion: 1,
+    gates: [{
+      id: 'orders-unit', required: true, pathPrefixes: ['orders/src'], command: ['./verify-orders'],
+      result: { type: 'junit', reports: ['reports/orders/*.xml'] }
+    }]
+  })), /requires feedback: true/)
 })
 
 test('adaptive scheduling is explicit and only required gates may opt into reordering', () => {

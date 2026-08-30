@@ -11,7 +11,7 @@ const GATE_ID = /^[a-z][a-z0-9-]{0,63}$/
 const CONFIG_KEYS = new Set(['schemaVersion', 'context', 'scheduling', 'gates'])
 const CONTEXT_KEYS = new Set(['profile', 'databaseDialect'])
 const SCHEDULING_KEYS = new Set(['strategy', 'minimumObservations', 'priorFailures', 'priorPasses', 'maxParallel'])
-const GATE_KEYS = new Set(['id', 'required', 'reorderable', 'dependsOn', 'parallelSafe', 'resourceClass', 'network', 'command', 'inputs', 'timeoutMs', 'result'])
+const GATE_KEYS = new Set(['id', 'required', 'reorderable', 'dependsOn', 'parallelSafe', 'resourceClass', 'network', 'feedback', 'pathPrefixes', 'command', 'inputs', 'timeoutMs', 'result'])
 const RESULT_KEYS = new Set(['type', 'reports', 'minimumTests', 'blockingSeverities'])
 const FINDING_SEVERITIES = new Set(['info', 'warning', 'error', 'low', 'medium', 'high', 'critical'])
 
@@ -230,6 +230,12 @@ export function parseVerificationConfig(text, source = '<inline>') {
     if (gate.network !== undefined && typeof gate.network !== 'boolean') {
       throw new Error(label + '.network must be boolean when provided.')
     }
+    if (gate.feedback !== undefined && typeof gate.feedback !== 'boolean') {
+      throw new Error(label + '.feedback must be boolean when provided.')
+    }
+    if (Array.isArray(gate.pathPrefixes) && gate.pathPrefixes.length > 0 && gate.feedback !== true) {
+      throw new Error(label + '.pathPrefixes requires feedback: true.')
+    }
     if (gate.required && gate.result?.type === 'observation') {
       throw new Error(label + '.required must be false for observation results.')
     }
@@ -245,6 +251,8 @@ export function parseVerificationConfig(text, source = '<inline>') {
       parallelSafe: gate.parallelSafe ?? false,
       resourceClass: gate.resourceClass ?? 'project-build',
       network: gate.network ?? false,
+      feedback: gate.feedback ?? false,
+      pathPrefixes: validateInputs(gate.pathPrefixes, label + '.pathPrefixes'),
       command: validateCommand(gate.command, label + '.command'),
       inputs: validateInputs(gate.inputs, label + '.inputs'),
       timeoutMs,

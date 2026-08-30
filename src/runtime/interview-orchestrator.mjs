@@ -391,7 +391,8 @@ async function recoverableTask(root, taskId, requirement) {
 
 export async function startInterview(inputPath, input, options = {}) {
   return withProjectVerificationLock(inputPath, options.projectLock, async () => {
-    const contextSnapshot = interviewContextSnapshot(await inspectProjectIntelligence(inputPath, options))
+    const inspected = options.projectIntelligence ?? await inspectProjectIntelligence(inputPath, options)
+    const contextSnapshot = interviewContextSnapshot(inspected)
     const existing = await recoverableTask(inputPath, input.taskId, input.requirement?.trim())
     if (!existing) {
       await createTask(inputPath, {

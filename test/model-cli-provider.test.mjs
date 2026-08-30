@@ -7,6 +7,7 @@ import {
   buildProviderInvocation,
   extractProviderFailure,
   extractProviderUsage,
+  normalizeProviderUsage,
   probeImplementationProvider,
   resolveProviderExecutable,
   runImplementationProvider,
@@ -68,6 +69,19 @@ test('auto implementation profiles stay balanced without evidence and escalate s
   })
   assert.equal(missingAdjacentCode.selected, 'balanced')
   assert.deepEqual(missingAdjacentCode.reasons, ['adjacent-code-not-confirmed-for-fast-mode'])
+
+  const missingObservedConventions = selectImplementationProfile({
+    mode: 'auto',
+    projectRuleReadiness: 'confirmed',
+    adjacentCodeReady: true,
+    conventionsReady: false,
+    claims: {
+      changesDatabase: false, requiresMigration: false, changesPublicApi: false,
+      preservesCompatibility: true, modules: ['users'], requiredGates: ['tests']
+    }
+  })
+  assert.equal(missingObservedConventions.selected, 'balanced')
+  assert.deepEqual(missingObservedConventions.reasons, ['project-conventions-not-observed-for-fast-mode'])
 
   const conflictingConventions = selectImplementationProfile({
     mode: 'auto',
@@ -167,6 +181,33 @@ test('provider usage extraction keeps bounded numeric telemetry and discards pro
   assert.equal(recovered.total_cost_usd, 0.5)
 })
 
+test('provider usage is normalized to one token, cost, time, and turn contract', () => {
+  const claude = normalizeProviderUsage('claude', {
+    'usage.input_tokens': 120,
+    'usage.output_tokens': 34,
+    'usage.cache_read_input_tokens': 50,
+    total_cost_usd: 0.012,
+    duration_ms: 900,
+    num_turns: 2
+  }, 1000)
+  assert.deepEqual(claude.tokens, {
+    input: 120, output: 34, cachedInput: 50, reasoningOutput: null, total: 154
+  })
+  assert.equal(claude.costUsd, 0.012)
+  assert.equal(claude.durationMs, 900)
+  assert.equal(claude.turns, 2)
+
+  const codex = normalizeProviderUsage('codex', {
+    'usage.input_tokens': 7,
+    'usage.output_tokens': 2,
+    'usage.reasoning_output_tokens': 1
+  }, 321)
+  assert.equal(codex.tokens.total, 9)
+  assert.equal(codex.tokens.reasoningOutput, 1)
+  assert.equal(codex.durationMs, 321)
+  assert.equal(codex.costUsd, null)
+})
+
 test('provider failures are reduced to safe diagnostic codes instead of persisted raw output', () => {
   assert.deepEqual(
     extractProviderFailure('claude', '{"is_error":true,"result":"Not logged in · Please run /login"}'),
@@ -215,8 +256,10 @@ test('real provider runner path resolves, spawns, and extracts usage from a fixt
   )
   assert.equal(result.process.exitCode, 0)
   assert.equal(result.metadata.provider, 'codex')
-  assert.equal(result.metadata.usage['usage.input_tokens'], 7)
-  assert.equal(result.metadata.usage['usage.output_tokens'], 2)
+  assert.equal(result.metadata.usage.tokens.input, 7)
+  assert.equal(result.metadata.usage.tokens.output, 2)
+  assert.equal(result.metadata.usage.tokens.total, 9)
+  assert.equal(result.metadata.usage.providerReported['usage.input_tokens'], 7)
 })
 
 test('provider discovery resolves npm-style Windows command shims', async () => {

@@ -70,11 +70,36 @@ function parseSource(root, path, content, contentSha256) {
   if (annotations.includes('Repository')) roles.add('repository')
   if (annotations.includes('Entity')) roles.add('entity')
   if (annotations.includes('Configuration')) roles.add('configuration')
+  if (declarations.some((entry) => /(?:Request|Response|Dto)$/.test(entry.name))) roles.add('dto')
+  if (declarations.some((entry) => /(?:Exception|Error)$/.test(entry.name))) roles.add('error')
   if (/\/src\/test\/(?:java|kotlin)\//.test('/' + projectPath)) roles.add('test')
   const routes = [...content.matchAll(/@(Get|Post|Put|Delete|Patch|Request)Mapping\s*(?:\(\s*(?:value\s*=\s*|path\s*=\s*)?["']([^"']*)["'][^)]*\))?/g)]
     .map((match) => ({ method: match[1].toUpperCase(), path: match[2] ?? '' }))
   const tables = [...content.matchAll(/@Table\s*\(\s*(?:name\s*=\s*)?["']([^"']+)["']/g)].map((match) => match[1])
-  return { path: projectPath, contentSha256, language: path.endsWith('.kt') ? 'kotlin' : 'java', packageName, declarations, imports, annotations, roles: [...roles], routes, tables }
+  const toOneAssociations = [...content.matchAll(/@(ManyToOne|OneToOne)\b(?:\s*\(([^)]*)\))?/g)]
+  const persistenceSignals = {
+    declaredQueries: [...content.matchAll(/@Query\b/g)].length,
+    nativeQueries: [...content.matchAll(/nativeQuery\s*=\s*true/g)].length,
+    selectStarQueries: /@Query[\s\S]{0,2048}\bselect\s+\*/i.test(content) ? 1 : 0,
+    leadingWildcardLikes: /@Query[\s\S]{0,2048}\blike\s+(?:["']|\\["'])%/i.test(content) ? 1 : 0,
+    lockingQueries: /\bfor\s+update\b/i.test(content) ? 1 : 0,
+    pessimisticLocks: [...content.matchAll(/@Lock\s*\(\s*(?:LockModeType\.)?PESSIMISTIC_(?:READ|WRITE)/g)].length,
+    indexDeclarations: [...content.matchAll(/@Index\b/g)].length,
+    toOneAssociations: toOneAssociations.length,
+    defaultEagerToOneAssociations: toOneAssociations.filter((match) => !/fetch\s*=\s*FetchType\.LAZY/.test(match[2] ?? '')).length,
+    collectionAssociations: [...content.matchAll(/@(OneToMany|ManyToMany)\b/g)].length,
+    joinFetches: [...content.matchAll(/\bjoin\s+fetch\b/gi)].length,
+    entityGraphs: [...content.matchAll(/@(EntityGraph|NamedEntityGraph)\b/g)].length,
+    transactionalAnnotations: [...content.matchAll(/@Transactional\b/g)].length,
+    readOnlyTransactions: [...content.matchAll(/@Transactional\s*\([^)]*readOnly\s*=\s*true[^)]*\)/g)].length,
+    modifyingQueries: [...content.matchAll(/@Modifying\b/g)].length,
+    bulkDmlQueries: [...content.matchAll(/@Query[\s\S]{0,2048}["']\s*(?:update|delete)\b/gi)].length,
+    paginatedFetchJoins: /\bjoin\s+fetch\b[\s\S]{0,2048}\b(?:Page|Pageable|Slice)\b/i.test(content) ? 1 : 0
+  }
+  return {
+    path: projectPath, contentSha256, language: path.endsWith('.kt') ? 'kotlin' : 'java',
+    packageName, declarations, imports, annotations, roles: [...roles], routes, tables, persistenceSignals
+  }
 }
 
 export async function inspectJvmProject(root, options = {}) {
@@ -149,7 +174,10 @@ export async function inspectJvmProject(root, options = {}) {
       imports: parsed.reduce((sum, entry) => sum + entry.imports.length, 0),
       routes: parsed.reduce((sum, entry) => sum + entry.routes.length, 0),
       entities: parsed.filter((entry) => entry.roles.includes('entity')).length,
-      tests: parsed.filter((entry) => entry.roles.includes('test')).length
+      tests: parsed.filter((entry) => entry.roles.includes('test')).length,
+      declaredQueries: parsed.reduce((sum, entry) => sum + (entry.persistenceSignals?.declaredQueries ?? 0), 0),
+      lockingQueries: parsed.reduce((sum, entry) => sum + (entry.persistenceSignals?.lockingQueries ?? 0) + (entry.persistenceSignals?.pessimisticLocks ?? 0), 0),
+      defaultEagerToOneAssociations: parsed.reduce((sum, entry) => sum + (entry.persistenceSignals?.defaultEagerToOneAssociations ?? 0), 0)
     },
     roles,
     tables,
