@@ -132,6 +132,24 @@ function resultProcess(exitCode = 0, timedOut = false) {
   return { exitCode, signal: null, timedOut, stdioDrainTimedOut: false, durationMs: 1, stdout: { sha256: 'a'.repeat(64), bytes: 0 }, stderr: { sha256: 'b'.repeat(64), bytes: 0 } }
 }
 
+test('pytest/JUnit setup errors cannot count as reproduced behavior even when the target passes', async t => {
+  const { root, input } = await fixture()
+  t.after(() => rm(root, { recursive: true, force: true }))
+  for (const mode of ['selected-setup-error', 'unrelated-setup-error']) {
+    const result = await evaluateTaskAcceptance(input, { processRunner: async ({ cwd }) => {
+      const base = basename(cwd) === 'base'
+      const selected = base ? mode === 'selected-setup-error' ? '<error/>' : '<failure/>' : ''
+      const unrelated = base && mode === 'unrelated-setup-error' ? '<testcase classname="Environment" name="setup"><error/></testcase>' : ''
+      await mkdir(join(cwd, 'reports'), { recursive: true })
+      await writeFile(join(cwd, acceptance.reports[0]), '<testsuite><testcase classname="Acceptance" name="requiredBehavior">' + selected + '</testcase>' + unrelated + '</testsuite>')
+      return resultProcess(base ? 1 : 0)
+    } })
+    assert.equal(result.controls.target.passed, true)
+    assert.equal(result.controls.base.regressionReproduced, false, mode)
+    assert.equal(result.controlsConfirmed, false, mode)
+  }
+})
+
 test('compiler exits, absent/skipped/duplicate cases, and source mutation cannot validate controls', async () => {
   const { input } = await fixture()
   for (const mode of ['missing', 'skipped', 'duplicate', 'mutated', 'timeout', 'unrelated-failure', 'malformed']) {

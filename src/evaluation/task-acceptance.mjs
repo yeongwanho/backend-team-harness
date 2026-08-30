@@ -136,7 +136,7 @@ async function runOracle(root, oracle, testFiles, timeoutMs, processRunner) {
   return {
     sourceStable, process: compactProcess(execution), reports, cases,
     passed: sourceStable && processFinished && execution.exitCode === 0 && casesExecuted && cases.every((entry) => entry.outcome === 'passed') && failures === 0 && errors === 0,
-    regressionReproduced: sourceStable && processFinished && execution.exitCode !== 0 && casesExecuted && cases.some((entry) => ['failed', 'error'].includes(entry.outcome))
+    regressionReproduced: sourceStable && processFinished && execution.exitCode !== 0 && casesExecuted && errors === 0 && cases.some((entry) => entry.outcome === 'failed')
   }
 }
 

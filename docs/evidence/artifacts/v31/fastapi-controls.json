@@ -1,0 +1,366 @@
+{
+  "schemaVersion": 1,
+  "kind": "public-base-target-behavior-controls",
+  "providerCalls": 0,
+  "sourceCommit": "52a3a137a3aff32806612794ac7039a3b8944c6e",
+  "sourceHashes": {
+    "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+    "src/evaluation/provider-benchmark-config.mjs": "fc0f14360b1d310f3026beb9446047bd076864c0a1cc45b5514c346fe7b84b4e",
+    "src/core/junit.mjs": "aa839f10fc239f0765ca8414e89e79d9649b8e3cc040531a56c1e136ca679094",
+    "scripts/acceptance-controls.mjs": "4d1eaf624452d83c3800418415287887520c6473949aefa48cfba4947479b31a"
+  },
+  "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+  "configSha256": "051c1933c4bb626d57a467ade7076246ef76e36728228b348bd4315b9db152f7",
+  "taskCount": 2,
+  "controlsConfirmed": 2,
+  "node": "v22.23.1",
+  "platform": "darwin",
+  "results": [
+    {
+      "repositoryId": "fastapi-template",
+      "taskId": "fastapi-04-constant-time-login",
+      "requirementSha256": "a1c9c7ed88925c9ffa48472fa8e479f7be8a54268d415b29229fe8d66424c995",
+      "baseSha": "7107f7e83acdf93272377ca97985dd3c51c47686",
+      "targetSha": "689d7105e12039db84bb0e0c0cc797ca086192db",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "56e13ff438566da679231fc2283c9723dc9a890109e68b407eb165b4549437d8",
+        "testFiles": [
+          {
+            "path": "backend/test/bth/run.mjs",
+            "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+          },
+          {
+            "path": "backend/test/bth/conftest.py",
+            "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+          },
+          {
+            "path": "backend/test/bth/test_auth_enumeration.py",
+            "sha256": "fb0bfb3b37c58b9aca5aa94b9471d849cb297446257a1f6080f54b8a5172e336"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 15131,
+              "stdout": {
+                "sha256": "081f5862ad55763e772300f79dd33b204120b5aef919eea741f916d68dcdefde",
+                "bytes": 6968
+              },
+              "stderr": {
+                "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "8a77b07e5a960ba42db593f3148bfe77d09d02705fdc705e293a2917129b4c9a",
+                "bytes": 5832
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_login_executes_real_password_verification",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_wrong_password_retains_same_login_response",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_correct_password_still_returns_usable_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_recovery_response_does_not_reveal_registration",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_recovery_never_sends_mail",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_login_remains_denied",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_reset_does_not_change_password",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 25983,
+              "stdout": {
+                "sha256": "e7018ee5e28c72778f3252408d913ad63a8df2076f1f620303184b7fd478da1c",
+                "bytes": 237
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "1dddddcc90824c20fbf3c6e2394d2c67b5ff88df648043d3937774f6631b422f",
+                "bytes": 1374
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_login_executes_real_password_verification",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_wrong_password_retains_same_login_response",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_correct_password_still_returns_usable_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_recovery_response_does_not_reveal_registration",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_recovery_never_sends_mail",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_login_remains_denied",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_reset_does_not_change_password",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 43659
+      }
+    },
+    {
+      "repositoryId": "fastapi-template",
+      "taskId": "fastapi-05-missing-user",
+      "requirementSha256": "0436817770a2cd033201c336db91be0261664020e3e6f6aa6f4ff1f6b2e09ef5",
+      "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+      "targetSha": "4cab9e972f5e3e32c518ec2c6e09e18455fe469a",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "0265a5d8f576c08248509d450eb0426afe57d0751d605799c6d1c5cd3f5d4ea2",
+        "testFiles": [
+          {
+            "path": "backend/test/bth/run.mjs",
+            "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+          },
+          {
+            "path": "backend/test/bth/conftest.py",
+            "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+          },
+          {
+            "path": "backend/test/bth/test_missing_user.py",
+            "sha256": "edbc8e68423f4a29c649d1c201475e602b6a9d11d762c4853f9c232b28e9e112"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 19104,
+              "stdout": {
+                "sha256": "8152a56395890a01e228f0b6c7229a98328dd8e807e183d9b5c513380140374d",
+                "bytes": 3305
+              },
+              "stderr": {
+                "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "daad6a7c672a5cd274a9b29b779dfc2430fe3c88dd1e60433026ddde05e52a01",
+                "bytes": 1863
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 15319,
+              "stdout": {
+                "sha256": "a505f36bb70221ddc3492cbe4ebecab079aaabc13254e6ad7eabf3714952a823",
+                "bytes": 826
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "aef5cd51c5f7a97516113248a5191ac2de5fc46cc9fcf76f7a53395819e01bec",
+                "bytes": 1043
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 37333
+      }
+    }
+  ]
+}

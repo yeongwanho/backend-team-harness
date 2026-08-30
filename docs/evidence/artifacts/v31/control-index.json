@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "kind": "current-oracle-control-index",
+  "protocolVersion": "fastapi-controls-v31",
+  "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+  "configSha256": "6d35b4de0483a0fdee723f1f58302f6a25367f3a397da0ddccd1f9bd2e0766bb",
+  "confirmedTasks": 10,
+  "corpusTasks": 20,
+  "repositories": [
+    "spring-petclinic",
+    "nestjs-boilerplate",
+    "fastapi-template"
+  ],
+  "providerCalls": 0,
+  "note": "Each task oracle and evaluator source hash matches current source. Batch config hashes differ only because other tasks were updated later. This is not provider implementation success.",
+  "tasks": [
+    {
+      "taskId": "spring-01-pet-association",
+      "repositoryId": "spring-petclinic",
+      "artifact": "prior-controls.json",
+      "artifactSha256": "d5f7b6ed2f98652af9b94f562fc99370f7e06a5aef0021dee4a7da58f2f63957",
+      "oracleSha256": "5822e5ed58176a23f6cb86d4d7a0a29e93ae39fce5ccb545027087746154e60d",
+      "baseSha": "88e37c15cf6fc8490b01bc3e8e2c800cec1ac272",
+      "targetSha": "676db04515ee5f289641cea6cb379dc02b40f67f",
+      "cases": 4,
+      "baseFailures": 3,
+      "targetPassed": true
+    },
+    {
+      "taskId": "spring-04-future-visit",
+      "repositoryId": "spring-petclinic",
+      "artifact": "prior-controls.json",
+      "artifactSha256": "d5f7b6ed2f98652af9b94f562fc99370f7e06a5aef0021dee4a7da58f2f63957",
+      "oracleSha256": "16df604bd275c14053cc797a747f7d56853d41b36b0b8dc69fedfad77a70754e",
+      "baseSha": "3c06fbfc1e42eb40802e0d0ca989bc9226755804",
+      "targetSha": "753d35c2f84432d88c0f3b61c9302a16069b78dd",
+      "cases": 6,
+      "baseFailures": 4,
+      "targetPassed": true
+    },
+    {
+      "taskId": "spring-06-pet-update",
+      "repositoryId": "spring-petclinic",
+      "artifact": "prior-controls.json",
+      "artifactSha256": "d5f7b6ed2f98652af9b94f562fc99370f7e06a5aef0021dee4a7da58f2f63957",
+      "oracleSha256": "662c76dcc8557ee02d185a219d497e262f58d7356663e3e2fb1e69a0d6bce683",
+      "baseSha": "6328d2c9dc8eb2c367c6a613a1ae959c994003c7",
+      "targetSha": "2aa53f929d32b0d41e0fe0391b8385eabe9a3432",
+      "cases": 4,
+      "baseFailures": 1,
+      "targetPassed": true
+    },
+    {
+      "taskId": "nest-02-file-relational-mapper",
+      "repositoryId": "nestjs-boilerplate",
+      "artifact": "prior-controls.json",
+      "artifactSha256": "d5f7b6ed2f98652af9b94f562fc99370f7e06a5aef0021dee4a7da58f2f63957",
+      "oracleSha256": "b77f7389c4f981480face8168974efd2d0dd86dbe530a7d264d4911ae50dd2fd",
+      "baseSha": "07ac5f29d3032bb173fd538c549966e7eb96dcff",
+      "targetSha": "f4703907ddc54dff7f6e81bc37f0a42e3fdd8d22",
+      "cases": 7,
+      "baseFailures": 3,
+      "targetPassed": true
+    },
+    {
+      "taskId": "nest-03-swagger-language-header",
+      "repositoryId": "nestjs-boilerplate",
+      "artifact": "prior-controls.json",
+      "artifactSha256": "d5f7b6ed2f98652af9b94f562fc99370f7e06a5aef0021dee4a7da58f2f63957",
+      "oracleSha256": "94c27b3c50ec462acd8bf62619b71973350b934fc1e79506e2011615b364fd16",
+      "baseSha": "1cb55deff983e56f45a0a70bdd2e6c5bfb90b79c",
+      "targetSha": "b5c3262e7b58e4443dd27328e4d2ced50c832204",
+      "cases": 3,
+      "baseFailures": 3,
+      "targetPassed": true
+    },
+    {
+      "taskId": "nest-06-user-email-conflict",
+      "repositoryId": "nestjs-boilerplate",
+      "artifact": "prior-controls.json",
+      "artifactSha256": "d5f7b6ed2f98652af9b94f562fc99370f7e06a5aef0021dee4a7da58f2f63957",
+      "oracleSha256": "95746f3a455f48ccb541a2184bd02b612e6438da9c597b422470c055b5778619",
+      "baseSha": "d523e2638a649817883c57971914cdeccdd04bde",
+      "targetSha": "ab530c4da7559bf2487698982799920a4d10e345",
+      "cases": 7,
+      "baseFailures": 3,
+      "targetPassed": true
+    },
+    {
+      "taskId": "fastapi-04-constant-time-login",
+      "repositoryId": "fastapi-template",
+      "artifact": "fastapi-controls.json",
+      "artifactSha256": "f9aa87ab01ea99e9a114ee9eaad2998f32f2be1232dc3a2415bc425fd5a491ce",
+      "oracleSha256": "56e13ff438566da679231fc2283c9723dc9a890109e68b407eb165b4549437d8",
+      "baseSha": "7107f7e83acdf93272377ca97985dd3c51c47686",
+      "targetSha": "689d7105e12039db84bb0e0c0cc797ca086192db",
+      "cases": 9,
+      "baseFailures": 4,
+      "targetPassed": true
+    },
+    {
+      "taskId": "fastapi-05-missing-user",
+      "repositoryId": "fastapi-template",
+      "artifact": "fastapi-controls.json",
+      "artifactSha256": "f9aa87ab01ea99e9a114ee9eaad2998f32f2be1232dc3a2415bc425fd5a491ce",
+      "oracleSha256": "0265a5d8f576c08248509d450eb0426afe57d0751d605799c6d1c5cd3f5d4ea2",
+      "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+      "targetSha": "4cab9e972f5e3e32c518ec2c6e09e18455fe469a",
+      "cases": 7,
+      "baseFailures": 1,
+      "targetPassed": true
+    },
+    {
+      "taskId": "spring-02-owner-search-whitespace",
+      "repositoryId": "spring-petclinic",
+      "artifact": "spring-controls.json",
+      "artifactSha256": "50a38f4c66ed4f6a4e2de8c0de364f4d2737a5f22faeb2cb23fac2132ef733ae",
+      "oracleSha256": "87525dcf64a069cf490c2b47ef23fdc1c29600461e6a85d50eaf56b72013d194",
+      "baseSha": "0f6e8614047bd74cf6223b4d8a858d2ed2824f8a",
+      "targetSha": "bb37aad8c332264723817d855e8b3b96b7c392bc",
+      "cases": 6,
+      "baseFailures": 2,
+      "targetPassed": true
+    },
+    {
+      "taskId": "spring-05-binder-id-protection",
+      "repositoryId": "spring-petclinic",
+      "artifact": "spring-controls.json",
+      "artifactSha256": "50a38f4c66ed4f6a4e2de8c0de364f4d2737a5f22faeb2cb23fac2132ef733ae",
+      "oracleSha256": "4286c93013e34c652095c4fe2e7fdc564bc0fbb851f1bf78f5292e63ca1e7528",
+      "baseSha": "f1e0e22b883e185e680d44b264fb73a8efcff8b9",
+      "targetSha": "c7ee170434ec3e369fdc9201290ba2ea4c92b557",
+      "cases": 5,
+      "baseFailures": 3,
+      "targetPassed": true
+    }
+  ]
+}

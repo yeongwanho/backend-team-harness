@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "ref": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+      "lockSha256": "c27a6c9636dc203d1151f96f9d6733a4f52986fb43a079c6d354e5a389148b68",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1515,
+      "sourceStable": true,
+      "policy": "public pinned wheels only; no build, no project install, no Python download; cache preparation only"
+    },
+    {
+      "ref": "7107f7e83acdf93272377ca97985dd3c51c47686",
+      "lockSha256": "23d84712ba614d2701df1c0589d093431b9eba739564d49bd8d49e5aa2f66e84",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 249,
+      "sourceStable": true,
+      "policy": "public pinned wheels only; no build, no project install, no Python download; cache preparation only"
+    }
+  ]
+}

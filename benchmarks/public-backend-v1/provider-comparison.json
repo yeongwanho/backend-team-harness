@@ -28,13 +28,17 @@
           "id": "spring-02-owner-search-whitespace",
           "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "compatible" },
           "acceptance": {
-            "kind": "target-tests",
-            "testPaths": ["src/test/java/org/springframework/samples/petclinic/owner/OwnerControllerTests.java"],
-            "command": ["./mvnw", "-q", "-o", "-Dtest=OwnerControllerTests#processFindFormIgnoresSurroundingWhitespace+processFindFormWithWhitespaceOnlyLastNameReturnsAllOwners", "test"],
-            "reports": ["target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.OwnerControllerTests.xml"],
+            "kind": "fixture-tests",
+            "files": [{ "path": "src/test/java/org/springframework/samples/petclinic/owner/OwnerSearchAcceptanceTests.java", "fixture": "fixtures/spring/OwnerSearchAcceptanceTests.java", "sha256": "f53fd6ad54a2ae1351487f8ae0ef2317c974b133c5baedcd5a95783d5ee2965b" }],
+            "command": ["./mvnw", "-q", "-o", "-Dtest=OwnerSearchAcceptanceTests", "test"],
+            "reports": ["target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests.xml"],
             "cases": [
-              { "className": "org.springframework.samples.petclinic.owner.OwnerControllerTests", "name": "processFindFormIgnoresSurroundingWhitespace" },
-              { "className": "org.springframework.samples.petclinic.owner.OwnerControllerTests", "name": "processFindFormWithWhitespaceOnlyLastNameReturnsAllOwners" }
+              { "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests", "name": "surroundingWhitespaceFindsSameOwner" },
+              { "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests", "name": "whitespaceOnlyUsesUnfilteredSearch" },
+              { "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests", "name": "emptyOrMissingNameStillListsOwners" },
+              { "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests", "name": "ordinaryNameKeepsIdentity" },
+              { "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests", "name": "internalWhitespaceAndCaseAreNotRewritten" },
+              { "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests", "name": "unmatchedNameStaysAValidationResult" }
             ]
           }
         },
@@ -62,7 +66,7 @@
           "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" },
           "acceptance": {
             "kind": "fixture-tests",
-            "files": [{ "path": "src/test/java/org/springframework/samples/petclinic/owner/BinderAcceptanceTests.java", "fixture": "fixtures/spring/BinderAcceptanceTests.java", "sha256": "00654a24c40c52f55626c1c8465f253575fcc8122af61291282aaa654d434f86" }],
+            "files": [{ "path": "src/test/java/org/springframework/samples/petclinic/owner/BinderAcceptanceTests.java", "fixture": "fixtures/spring/BinderAcceptanceTests.java", "sha256": "8dac1241b8571304540145191626941b215157c9f4a241289aaa934e26f06639" }],
             "command": ["./mvnw", "-q", "-o", "-Dtest=BinderAcceptanceTests", "test"],
             "reports": ["target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.BinderAcceptanceTests.xml"],
             "cases": [
@@ -357,8 +361,148 @@
         { "id": "fastapi-01-database-url", "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "none" } },
         { "id": "fastapi-02-cors", "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "none" } },
         { "id": "fastapi-03-created-at", "decisions": { "modules": ["root"], "databaseImpact": "schema", "apiImpact": "compatible" } },
-        { "id": "fastapi-04-constant-time-login", "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "compatible" } },
-        { "id": "fastapi-05-missing-user", "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "compatible" } },
+        {
+          "id": "fastapi-04-constant-time-login",
+          "decisions": {
+            "modules": [
+              "root"
+            ],
+            "databaseImpact": "read",
+            "apiImpact": "compatible"
+          },
+          "acceptance": {
+            "kind": "fixture-tests",
+            "files": [
+              {
+                "path": "backend/test/bth/run.mjs",
+                "fixture": "fixtures/fastapi/run.mjs",
+                "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+              },
+              {
+                "path": "backend/test/bth/conftest.py",
+                "fixture": "fixtures/fastapi/conftest.py",
+                "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+              },
+              {
+                "path": "backend/test/bth/test_auth_enumeration.py",
+                "fixture": "fixtures/fastapi/test_auth_enumeration.py",
+                "sha256": "fb0bfb3b37c58b9aca5aa94b9471d849cb297446257a1f6080f54b8a5172e336"
+              }
+            ],
+            "command": [
+              "node",
+              "backend/test/bth/run.mjs"
+            ],
+            "reports": [
+              "backend/.cache/bth-junit.xml"
+            ],
+            "cases": [
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_login_executes_real_password_verification"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_wrong_password_retains_same_login_response"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_correct_password_still_returns_usable_token"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_recovery_response_does_not_reveal_registration"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_recovery_never_sends_mail"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_token_for_absent_user_matches_invalid_token"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_existing_user_changes_password_and_preserves_login"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_login_remains_denied"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_reset_does_not_change_password"
+              }
+            ]
+          }
+        },
+        {
+          "id": "fastapi-05-missing-user",
+          "decisions": {
+            "modules": [
+              "root"
+            ],
+            "databaseImpact": "read",
+            "apiImpact": "compatible"
+          },
+          "acceptance": {
+            "kind": "fixture-tests",
+            "files": [
+              {
+                "path": "backend/test/bth/run.mjs",
+                "fixture": "fixtures/fastapi/run.mjs",
+                "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+              },
+              {
+                "path": "backend/test/bth/conftest.py",
+                "fixture": "fixtures/fastapi/conftest.py",
+                "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+              },
+              {
+                "path": "backend/test/bth/test_missing_user.py",
+                "fixture": "fixtures/fastapi/test_missing_user.py",
+                "sha256": "edbc8e68423f4a29c649d1c201475e602b6a9d11d762c4853f9c232b28e9e112"
+              }
+            ],
+            "command": [
+              "node",
+              "backend/test/bth/run.mjs"
+            ],
+            "reports": [
+              "backend/.cache/bth-junit.xml"
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation"
+              }
+            ]
+          }
+        },
         { "id": "fastapi-06-delete-self", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } }
       ]
     }

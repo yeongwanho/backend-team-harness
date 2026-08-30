@@ -7,6 +7,12 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/evaluation/task-acceptance.mjs',
+    from: "casesExecuted && errors === 0 && cases.some((entry) => entry.outcome === 'failed')",
+    to: "casesExecuted && cases.some((entry) => ['failed', 'error'].includes(entry.outcome))",
+    test: 'test/task-acceptance.test.mjs'
+  },
+  {
     file: 'src/core/jest-module-resolution.mjs',
     from: 'overrides.some(key => key in jest)',
     to: 'false',

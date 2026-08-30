@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "protocolVersion": "fastapi-controls-v31",
+  "baseCommit": "52a3a137a3aff32806612794ac7039a3b8944c6e",
+  "sourceHashes": {
+    "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+    "scripts/acceptance-controls.mjs": "4d1eaf624452d83c3800418415287887520c6473949aefa48cfba4947479b31a",
+    "scripts/benchmark-provider-comparison.mjs": "9be591310e326837e834faced00c93ed497c4af0c456885da7f7bdaf266745b1",
+    "scripts/mutation-smoke.mjs": "59a671980c8c7b47f1592922697d3050cf1760f682b08d48c1914d93a2f4ce75",
+    "test/task-acceptance.test.mjs": "e5f4dd9e75a0687a96b8da62e84109d37141403b13794b23d296680cda11ad22",
+    "test/fastapi-oracle-contract.test.mjs": "c46e418b73aa2104022c92563ccf6bd3a93434e7cc80fbd1ae8bda4f258b7120",
+    "test/spring-oracle-contract.test.mjs": "69707b43c458a148bdc650bff37a905ad083f0c22b7c4aad5613300f7c1cf8bf",
+    "benchmarks/public-backend-v1/provider-comparison.json": "6d35b4de0483a0fdee723f1f58302f6a25367f3a397da0ddccd1f9bd2e0766bb",
+    "benchmarks/public-backend-v1/fixtures/fastapi/run.mjs": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44",
+    "benchmarks/public-backend-v1/fixtures/fastapi/conftest.py": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80",
+    "benchmarks/public-backend-v1/fixtures/fastapi/test_auth_enumeration.py": "fb0bfb3b37c58b9aca5aa94b9471d849cb297446257a1f6080f54b8a5172e336",
+    "benchmarks/public-backend-v1/fixtures/fastapi/test_missing_user.py": "edbc8e68423f4a29c649d1c201475e602b6a9d11d762c4853f9c232b28e9e112",
+    "benchmarks/public-backend-v1/fixtures/spring/OwnerSearchAcceptanceTests.java": "f53fd6ad54a2ae1351487f8ae0ef2317c974b133c5baedcd5a95783d5ee2965b",
+    "benchmarks/public-backend-v1/fixtures/spring/BinderAcceptanceTests.java": "8dac1241b8571304540145191626941b215157c9f4a241289aaa934e26f06639"
+  },
+  "node": "v22.23.1",
+  "platform": "darwin",
+  "providerCalls": 0,
+  "coverage": {
+    "command": "./node_modules/.bin/c8 --all --include=src/**/*.mjs --check-coverage --lines 88 --branches 77 --functions 90 --reporter=text node --test --test-concurrency=2 test/*.test.mjs",
+    "exitCode": 0,
+    "tests": 482,
+    "passed": 478,
+    "failed": 0,
+    "skipped": 4,
+    "percentages": {
+      "statements": 90.66,
+      "branches": 81.3,
+      "functions": 98.85,
+      "lines": 90.66
+    },
+    "note": "Product source unchanged after this run; final Java formatting and fixture hashes were additionally checked by the live Spring controls and nine configuration-contract tests."
+  },
+  "mutation": {
+    "command": "node scripts/mutation-smoke.mjs",
+    "exitCode": 0,
+    "killed": 23,
+    "scope": "23 hand-selected mutants, not whole-codebase mutation coverage"
+  },
+  "syntax": {
+    "command": "node scripts/check-syntax.mjs; node --check test/spring-oracle-contract.test.mjs; node --check benchmarks/public-backend-v1/fixtures/fastapi/run.mjs",
+    "exitCode": 0
+  },
+  "contracts": {
+    "command": "node --test test/spring-oracle-contract.test.mjs test/fastapi-oracle-contract.test.mjs test/provider-benchmark-config.test.mjs",
+    "passed": 9,
+    "failed": 0,
+    "exitCode": 0
+  },
+  "install": {
+    "command": "node scripts/install-smoke.mjs",
+    "exitCode": 0,
+    "version": "0.9.0"
+  },
+  "docs": {
+    "command": "node --test test/docs-contract.test.mjs",
+    "passed": 1,
+    "exitCode": 0
+  },
+  "failingFirst": {
+    "setupError": "New test failed with the old error-accepting predicate; passed after enforcing explicit failure with no JUnit errors.",
+    "fastapiConfig": "New fixture configuration contract initially failed because independent controls were absent.",
+    "springConfig": "New fixture contract rejected the previous target-tests configuration."
+  },
+  "skipped": [
+    "Product real MySQL DB E2E",
+    "Product real Maven/Gradle pack E2E",
+    "Real Windows provider shim",
+    "Real Windows descendant termination"
+  ],
+  "cleanup": {
+    "commands": [
+      "docker ps -a --filter label=bth.fastapi.oracle",
+      "docker network ls --filter label=bth.fastapi.oracle"
+    ],
+    "remainingContainers": 0,
+    "remainingNetworks": 0,
+    "scope": "Only task-labeled public synthetic resources; no prune or unrelated resource removal. Offline wheel cache retained."
+  },
+  "limits": [
+    "No provider implementation success or performance improvement measured",
+    "No OS egress isolation; Docker 20.10.17 loopback publication is not a security boundary",
+    "Only FastAPI oracle behavior, not complete bth work execution",
+    "Actual Windows and company repositories not exercised",
+    "No external model review"
+  ],
+  "logs": [
+    {
+      "name": "bth-v31-oracle-red.log",
+      "sha256": "5f9028910d7d0bc5853768255652c35d86245020053abf3c7de37288d71565f3"
+    },
+    {
+      "name": "bth-v31-oracle-green.log",
+      "sha256": "f203b82544ed949ed7bd9d245a0feed64eccd6c7bb37676fd1b7a81fdb7c8f26"
+    },
+    {
+      "name": "bth-v31-fixture-red.log",
+      "sha256": "f7c88a54161cbaea3edb84de69c9f57c065829bd4acd4013f45edf18b1a55082"
+    },
+    {
+      "name": "bth-v31-spring-contract-red.log",
+      "sha256": "4a3fc907eefa533ac10f1afd6bd3769af4559cb41bb17c7b1cd50bd54577081a"
+    },
+    {
+      "name": "bth-v31-oracle-contracts-formatted.log",
+      "sha256": "86a1d974d305303a89ba26488c998c40fbb282f36aefb14f8dc3a662fc422981"
+    },
+    {
+      "name": "bth-v31-coverage-final.log",
+      "sha256": "667956e8b59c3f9c7444601543f59725652b05a622111b3961fba2a855e9304d"
+    },
+    {
+      "name": "bth-v31-coverage-bounded.log",
+      "sha256": "e2cc241842acbefcd9fc39a1a1748dd3f781ec28533aad5ff7e9d7f032eb3edf"
+    },
+    {
+      "name": "bth-v31-mutation-final.log",
+      "sha256": "341aa441859a971765794d4d5e1a670bff594c6e5ab6e8e93bb3df3bd4a15103"
+    },
+    {
+      "name": "bth-v31-syntax-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "bth-v31-docs-final.log",
+      "sha256": "db22ab924e724d72b016bdde0c129a8f71a6ee20e08e509dfbad0b62227c4e3c"
+    },
+    {
+      "name": "bth-v31-install-package-final.log",
+      "sha256": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989"
+    },
+    {
+      "name": "bth-v31-fastapi-controls-first.log",
+      "sha256": "835b9cff6d2de62c6a0a0403e2f3055312336d015ec40901f1380c48fce2a973"
+    },
+    {
+      "name": "bth-v31-fastapi-controls-second.log",
+      "sha256": "6b2f80e288c3ede1c58af014159a2f6f9bb810a710cedc462a8e3894df06f87c"
+    },
+    {
+      "name": "bth-v31-fastapi-controls-third.log",
+      "sha256": "f911953fdea19e769f1d179db0078f83456d7088cca31ba23f5f67d51ad2f1c7"
+    },
+    {
+      "name": "bth-v31-fastapi-controls-final.log",
+      "sha256": "e05b68772185420421e58d752413524ad9c722dd7e8af27edf1a8e47bd5d6444"
+    },
+    {
+      "name": "bth-v31-prior-controls-final.log",
+      "sha256": "ccb8aabfb5b2c828d782538c8b9835f87cb73f6ea351eeac2145bbead69ebcab"
+    },
+    {
+      "name": "bth-v31-spring-assertion-controls.log",
+      "sha256": "ee24814dc8581ff01153d2de280a676b6e87dcb65876c1f21a5b9cba1db35265"
+    },
+    {
+      "name": "bth-v31-spring-assertion-controls-final.log",
+      "sha256": "0f1e027a3b66335e08314188b0677806430c88d25e15b27944ac72225e454cd0"
+    },
+    {
+      "name": "bth-v31-spring-diagnostic.log",
+      "sha256": "f6c322c071099753b717d206fc97eaf83199d9f6da2a1e45db6aa79caf82b7d5"
+    }
+  ]
+}

@@ -97,11 +97,14 @@ class BinderAcceptanceTests {
 
 	@Test
 	void visitRequestRejectsDirectAndNestedIdsButBindsDescription() throws Exception {
-		mvc.perform(post("/owners/1/pets/2/visits/new").param("id", "999")
-			.param("pets[0].id", "888")
-			.param("pets[0].type.id", "777")
-			.param("date", LocalDate.now().plusDays(2).toString())
-			.param("description", "Routine visit")).andExpect(status().is3xxRedirection());
+		var response = assertDoesNotThrow(() -> {
+			return mvc.perform(post("/owners/1/pets/2/visits/new").param("id", "999")
+				.param("pets[0].id", "888")
+				.param("pets[0].type.id", "777")
+				.param("date", LocalDate.now().plusDays(2).toString())
+				.param("description", "Routine visit"));
+		}, "A valid visit request must still complete when injected IDs are ignored");
+		response.andExpect(status().is3xxRedirection());
 		assertEquals(1, owner.getId());
 		assertEquals(2, pet.getId());
 		assertEquals(3, cat.getId());

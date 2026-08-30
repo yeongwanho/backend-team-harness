@@ -1,0 +1,486 @@
+{
+  "schemaVersion": 1,
+  "providerCalls": 0,
+  "rounds": [
+    {
+      "round": "first",
+      "sourceCommit": "52a3a137a3aff32806612794ac7039a3b8944c6e",
+      "sourceHashes": {
+        "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+        "src/evaluation/provider-benchmark-config.mjs": "fc0f14360b1d310f3026beb9446047bd076864c0a1cc45b5514c346fe7b84b4e",
+        "src/core/junit.mjs": "aa839f10fc239f0765ca8414e89e79d9649b8e3cc040531a56c1e136ca679094",
+        "scripts/acceptance-controls.mjs": "4d1eaf624452d83c3800418415287887520c6473949aefa48cfba4947479b31a"
+      },
+      "configSha256": "6efd520b0a2a1989f980f596023627233fac7017aeef35d0b81cf7fa2da24e64",
+      "controlsConfirmed": 0,
+      "taskCount": 2,
+      "results": [
+        {
+          "taskId": "fastapi-05-missing-user",
+          "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+          "targetSha": "4cab9e972f5e3e32c518ec2c6e09e18455fe469a",
+          "controlsConfirmed": false,
+          "reason": "oracle-controls-not-confirmed",
+          "oracleSha256": "129f13ef1bec6651dc3aceeb4ad24559e388d8ba08e3fcca4da65d3c1b8658c1",
+          "testFiles": [
+            {
+              "path": "backend/test/bth/run.mjs",
+              "sha256": "5904c7d0449e55e929ebb223576a1ee585079c530e1e1b8f451c3f6e53110db1"
+            },
+            {
+              "path": "backend/test/bth/conftest.py",
+              "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+            },
+            {
+              "path": "backend/test/bth/test_missing_user.py",
+              "sha256": "edbc8e68423f4a29c649d1c201475e602b6a9d11d762c4853f9c232b28e9e112"
+            }
+          ],
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 521,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "0fd0ed34a6cfe3001afc9a615e2757486211d93504bcce9c6f5b92f7ff642a33",
+                  "bytes": 766
+                }
+              },
+              "caseCounts": {
+                "passed": 0,
+                "failed": 0,
+                "error": 0,
+                "missing": 7
+              }
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 264,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "357ebff2d4ba04e6487818b21ded668e2cf005d84694378bbb66e31f9d09ea86",
+                  "bytes": 766
+                }
+              },
+              "caseCounts": {
+                "passed": 0,
+                "failed": 0,
+                "error": 0,
+                "missing": 7
+              }
+            }
+          }
+        },
+        {
+          "taskId": "fastapi-04-constant-time-login",
+          "baseSha": "7107f7e83acdf93272377ca97985dd3c51c47686",
+          "targetSha": "689d7105e12039db84bb0e0c0cc797ca086192db",
+          "controlsConfirmed": false,
+          "reason": "oracle-controls-not-confirmed",
+          "oracleSha256": "4c673db327e5fbeeb147e7462f225195838b30355685515870a148a434c34d47",
+          "testFiles": [
+            {
+              "path": "backend/test/bth/run.mjs",
+              "sha256": "5904c7d0449e55e929ebb223576a1ee585079c530e1e1b8f451c3f6e53110db1"
+            },
+            {
+              "path": "backend/test/bth/conftest.py",
+              "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+            },
+            {
+              "path": "backend/test/bth/test_auth_enumeration.py",
+              "sha256": "1c1ce249207fe5f3edb2291f4269dcf8d8c7b1c0d4fa92be13e9e92986c602ae"
+            }
+          ],
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 256,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "28b4234e825929e53901bdb5823b07e0cc2d8b08ec6a22e6a0ea27fd2dd81361",
+                  "bytes": 766
+                }
+              },
+              "caseCounts": {
+                "passed": 0,
+                "failed": 0,
+                "error": 0,
+                "missing": 7
+              }
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 259,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "6a8ca530865dda19092e1e77d6f3569fbeb65bc620f1b0f9efa094a83874d244",
+                  "bytes": 761
+                }
+              },
+              "caseCounts": {
+                "passed": 0,
+                "failed": 0,
+                "error": 0,
+                "missing": 7
+              }
+            }
+          }
+        }
+      ],
+      "diagnosis": "Offline pinned wheels were absent. No executed behavior cases; not a regression."
+    },
+    {
+      "round": "second",
+      "sourceCommit": "52a3a137a3aff32806612794ac7039a3b8944c6e",
+      "sourceHashes": {
+        "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+        "src/evaluation/provider-benchmark-config.mjs": "fc0f14360b1d310f3026beb9446047bd076864c0a1cc45b5514c346fe7b84b4e",
+        "src/core/junit.mjs": "aa839f10fc239f0765ca8414e89e79d9649b8e3cc040531a56c1e136ca679094",
+        "scripts/acceptance-controls.mjs": "4d1eaf624452d83c3800418415287887520c6473949aefa48cfba4947479b31a"
+      },
+      "configSha256": "6efd520b0a2a1989f980f596023627233fac7017aeef35d0b81cf7fa2da24e64",
+      "controlsConfirmed": 0,
+      "taskCount": 2,
+      "results": [
+        {
+          "taskId": "fastapi-05-missing-user",
+          "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+          "targetSha": "4cab9e972f5e3e32c518ec2c6e09e18455fe469a",
+          "controlsConfirmed": false,
+          "reason": "oracle-controls-not-confirmed",
+          "oracleSha256": "129f13ef1bec6651dc3aceeb4ad24559e388d8ba08e3fcca4da65d3c1b8658c1",
+          "testFiles": [
+            {
+              "path": "backend/test/bth/run.mjs",
+              "sha256": "5904c7d0449e55e929ebb223576a1ee585079c530e1e1b8f451c3f6e53110db1"
+            },
+            {
+              "path": "backend/test/bth/conftest.py",
+              "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+            },
+            {
+              "path": "backend/test/bth/test_missing_user.py",
+              "sha256": "edbc8e68423f4a29c649d1c201475e602b6a9d11d762c4853f9c232b28e9e112"
+            }
+          ],
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 4045,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "0e11bdbb0dee2652e90f953bc87adc32cc5327adb2a3397141c755c8224f8fb3",
+                  "bytes": 272
+                }
+              },
+              "caseCounts": {
+                "passed": 0,
+                "failed": 0,
+                "error": 0,
+                "missing": 7
+              }
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 6257,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "0e11bdbb0dee2652e90f953bc87adc32cc5327adb2a3397141c755c8224f8fb3",
+                  "bytes": 272
+                }
+              },
+              "caseCounts": {
+                "passed": 0,
+                "failed": 0,
+                "error": 0,
+                "missing": 7
+              }
+            }
+          }
+        },
+        {
+          "taskId": "fastapi-04-constant-time-login",
+          "baseSha": "7107f7e83acdf93272377ca97985dd3c51c47686",
+          "targetSha": "689d7105e12039db84bb0e0c0cc797ca086192db",
+          "controlsConfirmed": false,
+          "reason": "oracle-controls-not-confirmed",
+          "oracleSha256": "4c673db327e5fbeeb147e7462f225195838b30355685515870a148a434c34d47",
+          "testFiles": [
+            {
+              "path": "backend/test/bth/run.mjs",
+              "sha256": "5904c7d0449e55e929ebb223576a1ee585079c530e1e1b8f451c3f6e53110db1"
+            },
+            {
+              "path": "backend/test/bth/conftest.py",
+              "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+            },
+            {
+              "path": "backend/test/bth/test_auth_enumeration.py",
+              "sha256": "1c1ce249207fe5f3edb2291f4269dcf8d8c7b1c0d4fa92be13e9e92986c602ae"
+            }
+          ],
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 6263,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "0e11bdbb0dee2652e90f953bc87adc32cc5327adb2a3397141c755c8224f8fb3",
+                  "bytes": 272
+                }
+              },
+              "caseCounts": {
+                "passed": 0,
+                "failed": 0,
+                "error": 0,
+                "missing": 7
+              }
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 5399,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "0e11bdbb0dee2652e90f953bc87adc32cc5327adb2a3397141c755c8224f8fb3",
+                  "bytes": 272
+                }
+              },
+              "caseCounts": {
+                "passed": 0,
+                "failed": 0,
+                "error": 0,
+                "missing": 7
+              }
+            }
+          }
+        }
+      ],
+      "diagnosis": "Offline preparation passed; Docker 20.10.17 internal network did not publish the required loopback port. Not a regression."
+    },
+    {
+      "round": "third",
+      "sourceCommit": "52a3a137a3aff32806612794ac7039a3b8944c6e",
+      "sourceHashes": {
+        "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+        "src/evaluation/provider-benchmark-config.mjs": "fc0f14360b1d310f3026beb9446047bd076864c0a1cc45b5514c346fe7b84b4e",
+        "src/core/junit.mjs": "aa839f10fc239f0765ca8414e89e79d9649b8e3cc040531a56c1e136ca679094",
+        "scripts/acceptance-controls.mjs": "4d1eaf624452d83c3800418415287887520c6473949aefa48cfba4947479b31a"
+      },
+      "configSha256": "107d044f462cbadc85f1d134300a8329cc81f071e4499d92e2f7cb7d69952ef5",
+      "controlsConfirmed": 2,
+      "taskCount": 2,
+      "results": [
+        {
+          "taskId": "fastapi-05-missing-user",
+          "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+          "targetSha": "4cab9e972f5e3e32c518ec2c6e09e18455fe469a",
+          "controlsConfirmed": true,
+          "reason": "candidate-not-provided",
+          "oracleSha256": "0265a5d8f576c08248509d450eb0426afe57d0751d605799c6d1c5cd3f5d4ea2",
+          "testFiles": [
+            {
+              "path": "backend/test/bth/run.mjs",
+              "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+            },
+            {
+              "path": "backend/test/bth/conftest.py",
+              "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+            },
+            {
+              "path": "backend/test/bth/test_missing_user.py",
+              "sha256": "edbc8e68423f4a29c649d1c201475e602b6a9d11d762c4853f9c232b28e9e112"
+            }
+          ],
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 11323,
+                "stdout": {
+                  "sha256": "0692cbfe119923e64cb21d95522e9b6064609d34bbdf9bf7dd53d30652d3d0ba",
+                  "bytes": 3305
+                },
+                "stderr": {
+                  "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                  "bytes": 355
+                }
+              },
+              "caseCounts": {
+                "passed": 6,
+                "failed": 1,
+                "error": 0,
+                "missing": 0
+              }
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 0,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 10434,
+                "stdout": {
+                  "sha256": "1986c6f267e470de1b052cdb1f90c7993578e6c40e07109f68c7197a831345ee",
+                  "bytes": 826
+                },
+                "stderr": {
+                  "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                  "bytes": 355
+                }
+              },
+              "caseCounts": {
+                "passed": 7,
+                "failed": 0,
+                "error": 0,
+                "missing": 0
+              }
+            }
+          }
+        },
+        {
+          "taskId": "fastapi-04-constant-time-login",
+          "baseSha": "7107f7e83acdf93272377ca97985dd3c51c47686",
+          "targetSha": "689d7105e12039db84bb0e0c0cc797ca086192db",
+          "controlsConfirmed": true,
+          "reason": "candidate-not-provided",
+          "oracleSha256": "e6f4348492493e5ce9a3dbf76d6fb495a759fa0418dce1d360c9da706eb4fe40",
+          "testFiles": [
+            {
+              "path": "backend/test/bth/run.mjs",
+              "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+            },
+            {
+              "path": "backend/test/bth/conftest.py",
+              "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+            },
+            {
+              "path": "backend/test/bth/test_auth_enumeration.py",
+              "sha256": "1c1ce249207fe5f3edb2291f4269dcf8d8c7b1c0d4fa92be13e9e92986c602ae"
+            }
+          ],
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 10491,
+                "stdout": {
+                  "sha256": "3ffff42fa15d450fff7349a543a4d2beebb9952a0fd0f1c38a9c0f170f98a4b7",
+                  "bytes": 6968
+                },
+                "stderr": {
+                  "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                  "bytes": 355
+                }
+              },
+              "caseCounts": {
+                "passed": 3,
+                "failed": 4,
+                "error": 0,
+                "missing": 0
+              }
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 0,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 10853,
+                "stdout": {
+                  "sha256": "2977f23ec14cae2d3901ce8835cdf4e3b1039cc078962a08961d885562941373",
+                  "bytes": 237
+                },
+                "stderr": {
+                  "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                  "bytes": 355
+                }
+              },
+              "caseCounts": {
+                "passed": 7,
+                "failed": 0,
+                "error": 0,
+                "missing": 0
+              }
+            }
+          }
+        }
+      ],
+      "diagnosis": "Dedicated bridge with loopback publishing: both controls confirmed with the initial seven-case authentication suite. Final suite adds two inactive-user checks."
+    }
+  ]
+}
