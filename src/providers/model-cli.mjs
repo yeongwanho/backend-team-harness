@@ -59,6 +59,10 @@ export function selectImplementationProfile(input = {}) {
   if (!Number.isSafeInteger(taskCharacters) || taskCharacters < 0) throw new Error('Implementation task size is invalid.')
   let selected = configured
   const reasons = []
+  const projectRuleReadiness = ['confirmed', 'unknown', 'conflict'].includes(input.projectRuleReadiness)
+    ? input.projectRuleReadiness
+    : 'unknown'
+  const adjacentCodeReady = typeof input.adjacentCodeReady === 'boolean' ? input.adjacentCodeReady : null
   if (configured === 'auto') {
     const claims = input.claims ?? {}
     const breakingPublicApi = claims.changesPublicApi === true && claims.preservesCompatibility !== true
@@ -81,6 +85,15 @@ export function selectImplementationProfile(input = {}) {
               ? 'public-api-compatibility-risk'
               : 'database-migration-impact-unknown'
       )
+    } else if (projectRuleReadiness === 'conflict') {
+      selected = 'deep'
+      reasons.push('project-rule-conflict')
+    } else if (explicitlySmall && projectRuleReadiness !== 'confirmed') {
+      selected = 'balanced'
+      reasons.push('project-rules-not-confirmed-for-fast-mode')
+    } else if (explicitlySmall && adjacentCodeReady === false) {
+      selected = 'balanced'
+      reasons.push('adjacent-code-not-confirmed-for-fast-mode')
     } else if (explicitlySmall) {
       selected = 'fast'
       reasons.push('explicit-single-module-no-migration-compatible-change')
@@ -110,6 +123,10 @@ export function selectImplementationProfile(input = {}) {
     taskCharacters,
     taskBudgetCharacters: defaults.taskBudgetCharacters,
     contextBudgetCharacters: budget,
+    readiness: {
+      projectRules: projectRuleReadiness,
+      adjacentCode: adjacentCodeReady === null ? 'pending' : adjacentCodeReady ? 'confirmed' : 'unknown'
+    },
     verificationStrategy: 'all-required-gates'
   }
 }
@@ -117,7 +134,10 @@ export function selectImplementationProfile(input = {}) {
 function providerPrompt(requestPath) {
   return [
     'Open ' + requestPath + ' and implement only its approved task inside the current workspace.',
-    'Start with the ranked codeContext paths. Read additional files only when the task requires them.',
+    'Before editing, follow projectConventions: read every declared rule source and relevant knowledge document, then inspect at least one adjacent production example and its matching test.',
+    'Start with the ranked codeContext paths; when they are unavailable, use bounded Glob and Grep discovery inside allowedPrefixes.',
+    'Preserve the observed naming, layering, DTO/error, transaction, persistence, and test patterns even for a small CRUD change.',
+    'If a declared blocking project rule is unknown, unavailable, or conflicts with the code, do not guess; stop without changing files; preserve non-blocking warnings in the implementation evidence.',
     'Obey allowedPrefixes and authority limits. Never commit, change Git refs, deploy, access production, or edit .backend-harness control files.',
     'Do not read .env files, credential stores, private keys, tokens, or unrelated user data.',
     'Do not run the broad verification suite; Backend Team Harness runs every declared Gate after your edit.',

@@ -150,7 +150,7 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 
 - [x] explicit Codex CLI and Claude Code provider configuration with legacy command-adapter compatibility
 - [x] PATH resolution, version probe, filtered environment, `shell: false`, and no dangerous sandbox-bypass flags
-- [x] deterministic fast/balanced/deep context and effort profiles with conservative auto fallback, compatible single-module CRUD fast path, and no-change one-attempt stop
+- [x] deterministic fast/balanced/deep context and effort profiles with rule-aware conservative fallback, source-bound adjacent-code evidence for automatic fast CRUD, and no-change one-attempt stop
 - [x] source-bound bounded code context, approved plan, write policy, authority limits, and compact recovery request
 - [x] detached-worktree implementation followed by the unchanged complete verification Gate contract
 - [x] bounded numeric token/cost telemetry recorded as advisory evidence only

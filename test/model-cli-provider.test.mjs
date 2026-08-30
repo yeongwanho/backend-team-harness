@@ -21,6 +21,8 @@ test('auto implementation profiles stay balanced without evidence and escalate s
 
   const small = selectImplementationProfile({
     mode: 'auto',
+    projectRuleReadiness: 'confirmed',
+    adjacentCodeReady: true,
     claims: {
       changesDatabase: false, requiresMigration: false, changesPublicApi: false,
       preservesCompatibility: true, modules: ['users'], requiredGates: ['tests']
@@ -32,6 +34,8 @@ test('auto implementation profiles stay balanced without evidence and escalate s
 
   const compatibleCrud = selectImplementationProfile({
     mode: 'auto',
+    projectRuleReadiness: 'confirmed',
+    adjacentCodeReady: true,
     claims: {
       changesDatabase: true, requiresMigration: false,
       changesPublicApi: true, preservesCompatibility: true,
@@ -40,6 +44,42 @@ test('auto implementation profiles stay balanced without evidence and escalate s
   })
   assert.equal(compatibleCrud.selected, 'fast')
   assert.deepEqual(compatibleCrud.reasons, ['explicit-single-module-no-migration-compatible-change'])
+
+  const unresolvedConventions = selectImplementationProfile({
+    mode: 'auto',
+    projectRuleReadiness: 'unknown',
+    adjacentCodeReady: true,
+    claims: {
+      changesDatabase: false, requiresMigration: false, changesPublicApi: false,
+      preservesCompatibility: true, modules: ['users'], requiredGates: ['tests']
+    }
+  })
+  assert.equal(unresolvedConventions.selected, 'balanced')
+  assert.deepEqual(unresolvedConventions.reasons, ['project-rules-not-confirmed-for-fast-mode'])
+
+  const missingAdjacentCode = selectImplementationProfile({
+    mode: 'auto',
+    projectRuleReadiness: 'confirmed',
+    adjacentCodeReady: false,
+    claims: {
+      changesDatabase: false, requiresMigration: false, changesPublicApi: false,
+      preservesCompatibility: true, modules: ['users'], requiredGates: ['tests']
+    }
+  })
+  assert.equal(missingAdjacentCode.selected, 'balanced')
+  assert.deepEqual(missingAdjacentCode.reasons, ['adjacent-code-not-confirmed-for-fast-mode'])
+
+  const conflictingConventions = selectImplementationProfile({
+    mode: 'auto',
+    projectRuleReadiness: 'conflict',
+    adjacentCodeReady: true,
+    claims: {
+      changesDatabase: false, requiresMigration: false, changesPublicApi: false,
+      preservesCompatibility: true, modules: ['users'], requiredGates: ['tests']
+    }
+  })
+  assert.equal(conflictingConventions.selected, 'deep')
+  assert.deepEqual(conflictingConventions.reasons, ['project-rule-conflict'])
 
   const breakingApi = selectImplementationProfile({
     mode: 'auto',
@@ -79,6 +119,9 @@ test('provider argv uses non-interactive bounded modes without dangerous bypass 
   assert.equal(codex.args.some((entry) => entry.includes('dangerously-bypass')), false)
   assert.ok(codex.args.includes('model_reasoning_effort=medium'))
   assert.match(codex.args.at(-1), /ranked codeContext paths/)
+  assert.match(codex.args.at(-1), /projectConventions/)
+  assert.match(codex.args.at(-1), /naming, layering, DTO\/error, transaction, persistence, and test patterns/)
+  assert.match(codex.args.at(-1), /do not guess/)
 
   const claude = buildProviderInvocation({ provider: 'claude', model: 'sonnet', maxBudgetUsd: 1.5 }, executable, './request.json', profile)
   assert.ok(claude.args.includes('acceptEdits'))

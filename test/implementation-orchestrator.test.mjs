@@ -5,8 +5,10 @@ import { access, chmod, copyFile, mkdir, mkdtemp, readFile, rename, writeFile } 
 import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, relative } from 'node:path'
 import { initProject } from '../src/init-project.mjs'
-import { captureConfiguredSourceBinding, verifyTask } from '../src/runtime/backend-harness.mjs'
+import { installPack } from '../src/packs/install.mjs'
+import { captureConfiguredSourceBinding, checkProject, verifyTask } from '../src/runtime/backend-harness.mjs'
 import { cleanupImplementation, implementationStatus, resetImplementation, runImplementation } from '../src/runtime/implementation-orchestrator.mjs'
+import { answerInterview, completeInterview, startInterview } from '../src/runtime/interview-orchestrator.mjs'
 import { advanceTask, createTask, loadTask, updateTaskPlan } from '../src/core/task-store.mjs'
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
 
@@ -80,6 +82,57 @@ async function approvedImplementationProject(options = {}) {
   await advanceTask(root, 'IMPL-1', 'PLAN_PROPOSED', { actor: 'developer' })
   await advanceTask(root, 'IMPL-1', 'PLAN_APPROVED', {
     actor: 'reviewer', approved: true, currentSourceFingerprint: source.fingerprint
+  })
+  return root
+}
+
+async function approvedRuleAwareFastProject() {
+  const root = await mkdtemp(join(tmpdir(), 'bth-rule-aware-fast-'))
+  await writeGradleFixture(root)
+  await mkdir(join(root, 'src/main/java/orders'), { recursive: true })
+  await mkdir(join(root, 'src/test/java/orders'), { recursive: true })
+  await writeFile(join(root, 'src/main/java/orders/OrdersController.java'), [
+    'package orders;',
+    'class OrdersController { private final OrdersService service = new OrdersService(); }',
+    ''
+  ].join('\n'), 'utf8')
+  await writeFile(join(root, 'src/main/java/orders/OrdersService.java'), 'package orders; class OrdersService {}\n', 'utf8')
+  await writeFile(join(root, 'src/test/java/orders/OrdersControllerTest.java'), 'package orders; class OrdersControllerTest {}\n', 'utf8')
+  initializeGit(root)
+  await initProject(root)
+  await installPack(root, 'codegraph-advisory')
+  await writeFile(join(root, '.backend-harness/implementation.json'), JSON.stringify({
+    schemaVersion: 2,
+    adapter: {
+      kind: 'provider', provider: 'codex', network: true, timeoutMs: 30_000,
+      model: null, mode: 'auto', contextBudgetCharacters: null, maxBudgetUsd: null
+    },
+    writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 64 * 1024 },
+    recovery: { maxAttempts: 2 }
+  }, null, 2) + '\n', 'utf8')
+  initializeGit(root, { forcePaths: ['.gitignore', '.backend-harness/.gitignore'] })
+  const checked = await checkProject(root)
+  assert.equal(checked.confirmed, true, JSON.stringify(checked, null, 2))
+
+  await startInterview(root, {
+    taskId: 'FAST-1', title: 'Add compatible order lookup',
+    requirement: 'Add one compatible order lookup behavior.', actor: 'developer'
+  })
+  for (const answer of [
+    { questionId: 'acceptance', text: 'Existing id returns the existing response and missing id returns 404.' },
+    { questionId: 'scope', text: 'Only the orders module and its tests may change.', claims: { changesPublicApi: false, modules: ['orders'] } },
+    { questionId: 'data', text: 'No schema or stored-data change.', claims: { changesDatabase: false, requiresMigration: false } },
+    { questionId: 'verification', text: 'Run every required project Gate.', claims: { requiredGates: ['tests'] } },
+    { questionId: 'constraints', text: 'Preserve all existing contracts.', claims: { preservesCompatibility: true } }
+  ]) {
+    await answerInterview(root, 'FAST-1', { ...answer, actor: 'developer' })
+  }
+  await completeInterview(root, 'FAST-1', { actor: 'developer' })
+  const source = await captureConfiguredSourceBinding(root)
+  const task = await loadTask(root, 'FAST-1')
+  await advanceTask(root, 'FAST-1', 'PLAN_APPROVED', {
+    actor: 'reviewer', approved: true, currentSourceFingerprint: source.fingerprint,
+    currentPlanArtifactSha256: task.record.planArtifactSha256
   })
   return root
 }
@@ -161,9 +214,55 @@ test('built-in provider receives a bounded approved request and produces a fully
   assert.deepEqual(capturedRequest.implementation.allowedPrefixes, ['src/'])
   assert.equal(capturedRequest.authority.deployment, false)
   assert.equal(capturedRequest.codeContext.budget.limitCharacters, 6000)
+  assert.equal(capturedRequest.projectConventions.schemaVersion, 1)
+  assert.equal(capturedRequest.projectConventions.status, 'unknown')
+  assert.equal(capturedRequest.projectConventions.projectRules.status, 'unknown')
+  assert.deepEqual(capturedRequest.projectConventions.adjacentCode.paths, [])
+  assert.equal(capturedRequest.projectConventions.requiredBeforeEdit.inspectAdjacentProductionAndTests, true)
+  assert.equal(capturedRequest.projectConventions.authority.verdictAuthority, false)
   assert.equal(result.record.attempts[0].invocation.usage['usage.input_tokens'], 100)
   assert.equal(result.record.attempts[0].request.unchanged, true)
   assert.match(result.record.attempts[0].request.sha256, /^[a-f0-9]{64}$/)
+})
+
+test('automatic fast implementation requires confirmed project rules and adjacent source-bound code', async () => {
+  const root = await approvedRuleAwareFastProject()
+  let capturedRequest
+  const result = await runImplementation(root, 'FAST-1', {
+    actor: 'developer', allowWrite: true, allowNetwork: true,
+    providerProbe: async () => ({ available: true, version: 'codex-fixture 1.0' }),
+    providerRunner: async (_adapter, input) => {
+      capturedRequest = JSON.parse(await readFile(join(input.cwd, input.requestPath), 'utf8'))
+      await writeFile(
+        join(input.cwd, 'src/main/java/orders/OrderLookup.java'),
+        'package orders; class OrderLookup {}\n',
+        'utf8'
+      )
+      return {
+        process: {
+          exitCode: 0, signal: null, timedOut: false, stdioDrainTimedOut: false,
+          startedAt: '2026-08-31T00:00:00.000Z', finishedAt: '2026-08-31T00:00:01.000Z', durationMs: 1000,
+          stdout: { sha256: 'a'.repeat(64), bytes: 0, tail: '' },
+          stderr: { sha256: 'b'.repeat(64), bytes: 0, tail: '' }
+        },
+        metadata: { kind: 'provider', provider: 'codex', version: 'fixture', profile: input.profile, usage: {} }
+      }
+    }
+  })
+
+  assert.equal(result.record.status, 'passed', JSON.stringify(result.record, null, 2))
+  assert.equal(result.record.provider.profile.selected, 'fast', JSON.stringify({
+    profile: result.record.provider.profile,
+    conventions: capturedRequest.projectConventions,
+    codeContext: capturedRequest.codeContext
+  }, null, 2))
+  assert.equal(result.record.provider.profile.readiness.projectRules, 'confirmed')
+  assert.equal(result.record.provider.profile.readiness.adjacentCode, 'confirmed')
+  assert.equal(capturedRequest.projectConventions.status, 'confirmed')
+  assert.equal(capturedRequest.projectConventions.projectRules.status, 'unknown')
+  assert.equal(capturedRequest.projectConventions.projectRules.readiness, 'confirmed')
+  assert.ok(capturedRequest.projectConventions.adjacentCode.paths.some((path) => path.endsWith('OrdersController.java')))
+  assert.equal(capturedRequest.implementation.profile.verificationStrategy, 'all-required-gates')
 })
 
 test('an unavailable built-in provider fails before creating implementation state or changing the task', async () => {

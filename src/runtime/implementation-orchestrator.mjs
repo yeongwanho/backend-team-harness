@@ -20,6 +20,7 @@ import { advanceTask, loadTask, recordImplementationLifecycle } from '../core/ta
 import { assertTaskId } from '../core/task-state.mjs'
 import { loadInterview } from '../core/interview-store.mjs'
 import { loadBudgetedCodeContext } from '../core/code-context.mjs'
+import { buildProjectConventions, projectRuleReadiness } from '../core/project-conventions.mjs'
 import { assertNoSymlinkSegments, assertRelativeChild, resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { captureConfiguredSourceBinding, checkProject } from './backend-harness.mjs'
 import {
@@ -222,15 +223,27 @@ function providerTaskPayload(task) {
   return { payload, characters }
 }
 
-async function structuredImplementationClaims(root, task) {
-  if (!task.planArtifactSha256) return {}
+async function structuredImplementationContext(root, task) {
+  const fallback = {
+    claims: {},
+    projectRuleEvaluation: {
+      schemaVersion: 1, status: 'unknown', blocking: false,
+      counts: { confirmed: 0, unknown: 0, conflict: 0 }, results: []
+    },
+    knowledge: { complete: false, documents: [] }
+  }
+  if (!task.planArtifactSha256) return fallback
   const interview = await loadInterview(root, task.id)
   const claims = {}
   for (const answer of interview.record.answers ?? []) Object.assign(claims, answer.claims ?? {})
   if (!Array.isArray(claims.requiredGates) && Array.isArray(interview.artifacts?.plan?.declaredRequiredGates)) {
     claims.requiredGates = [...interview.artifacts.plan.declaredRequiredGates]
   }
-  return claims
+  return {
+    claims,
+    projectRuleEvaluation: interview.artifacts?.plan?.projectRuleEvaluation ?? fallback.projectRuleEvaluation,
+    knowledge: interview.contextSnapshot?.intelligence?.knowledge ?? fallback.knowledge
+  }
 }
 
 async function workspaceHead(worktree) {
@@ -394,20 +407,40 @@ async function runUnlocked(root, taskId, options) {
 
   const sourceBinding = await captureConfiguredSourceBinding(root)
   const providerTask = loadedConfig.config.adapter.kind === 'provider' ? providerTaskPayload(loadedTask.record) : null
-  const profile = loadedConfig.config.adapter.kind === 'provider'
-    ? selectImplementationProfile({
+  const planningContext = loadedConfig.config.adapter.kind === 'provider'
+    ? await structuredImplementationContext(root, loadedTask.record)
+    : null
+  const profileInput = loadedConfig.config.adapter.kind === 'provider'
+    ? {
         mode: loadedConfig.config.adapter.mode,
         contextBudgetCharacters: loadedConfig.config.adapter.contextBudgetCharacters,
         taskCharacters: providerTask.characters,
-        claims: await structuredImplementationClaims(root, loadedTask.record)
-      })
+        claims: planningContext.claims,
+        projectRuleReadiness: projectRuleReadiness(planningContext.projectRuleEvaluation)
+      }
     : null
-  const codeContext = profile
+  let profile = profileInput
+    ? selectImplementationProfile(profileInput)
+    : null
+  let codeContext = profile
     ? await loadBudgetedCodeContext(root, planQuery(loadedTask.record), {
         budgetCharacters: profile.contextBudgetCharacters,
         sourceFingerprint: sourceBinding.fingerprint
       })
     : null
+  let projectConventions = profile
+    ? buildProjectConventions(planningContext.projectRuleEvaluation, planningContext.knowledge, codeContext)
+    : null
+  if (profileInput && loadedConfig.config.adapter.mode === 'auto' && profile.selected === 'fast' && projectConventions.adjacentCode.status !== 'confirmed') {
+    profile = selectImplementationProfile({ ...profileInput, adjacentCodeReady: false })
+    codeContext = await loadBudgetedCodeContext(root, planQuery(loadedTask.record), {
+      budgetCharacters: profile.contextBudgetCharacters,
+      sourceFingerprint: sourceBinding.fingerprint
+    })
+    projectConventions = buildProjectConventions(planningContext.projectRuleEvaluation, planningContext.knowledge, codeContext)
+  } else if (profileInput && loadedConfig.config.adapter.mode === 'auto' && profile.selected === 'fast') {
+    profile = selectImplementationProfile({ ...profileInput, adjacentCodeReady: true })
+  }
   const baseRefsSha256 = await sharedRefsSha256(root)
   const acceptedFingerprints = new Set([sourceBinding.fingerprint, sourceBinding.legacyFingerprint].filter(Boolean))
   if (!sourceBinding.clean) throw new Error('Implementation requires a clean source-bound worktree. Commit or stash source changes first.')
@@ -532,6 +565,7 @@ async function runUnlocked(root, taskId, options) {
             maxDiffBytes: loadedConfig.config.writePolicy.maxDiffBytes
           },
           codeContext,
+          projectConventions,
           authority: {
             workspaceOnly: true,
             deployment: false,
