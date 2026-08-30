@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "sourceParentCommit": "f10bb39b8677564c4f4d04f6144b0e78991ca9de",
+  "host": {
+    "platform": "darwin",
+    "node": "v22.23.1",
+    "arch": "arm64"
+  },
+  "sourceHashes": {
+    "src/core/lexical-retrieval.mjs": "ef339eeb118a5f577bed4a39f787b2bf580f66b59fb80adf7e57d8e75d5424d3",
+    "src/core/code-context.mjs": "ed33494ea6afc30f179b9ea43b9088a1ce2cb6442a550f9fab8d8afbd0a8657b",
+    "packs/codegraph-advisory/indexer.mjs": "1dbec525a93632c86371d236c19a4871e692dabba320bf3b50b0791d5ed5bd21",
+    "scripts/benchmark-retrieval-query.mjs": "ba049f21c3705b2258b0085ad8ae5cc628fad815f38cf3cde7801c4a39effb8d",
+    "scripts/benchmark-lexical-retrieval.mjs": "87867ef5cdcef2bc342b010676200d37990bcbba3f452bd08560a6eb23e70396",
+    "scripts/mutation-smoke.mjs": "b805f003fbc41f7c9c613d6fd814d9d07ad795becb61df90120af5c2c934d2ac",
+    "test/lexical-retrieval.test.mjs": "62dbdd1f9e8594a32fa823f6db4f1cc56d6162712da0c7036aaf6add6012f410",
+    "test/code-context.test.mjs": "f14a6f9c56a631dac18d4813cc686bc7d810ad9596032c52cf38d8971581e23b",
+    "test/harness-v1-cli.test.mjs": "20e3499125acfbd042eafa0b1c263cde7eabb1c8064a41acc5048690fa90e311"
+  },
+  "coverage": {
+    "command": "npm run test:coverage",
+    "exitCode": 0,
+    "tests": 449,
+    "passed": 445,
+    "failed": 0,
+    "skipped": 4,
+    "line": 90.51,
+    "branch": 80.73,
+    "function": 98.82,
+    "newLexicalModule": {
+      "line": 100,
+      "branch": 100,
+      "function": 100
+    },
+    "logSha256": "da5a8ae8ee600f88142db32525a760ca371aa2bb1d0ca9fcce990e4f73941539"
+  },
+  "mutation": {
+    "command": "node scripts/mutation-smoke.mjs",
+    "exitCode": 0,
+    "killed": 16,
+    "scope": "16 targeted mutants, not whole-program mutation score",
+    "logSha256": "b5130039ea7e26689c5de66affd08c4fd5b3b1e1869f3810d60740eab85f5335",
+    "initialEquivalentMutant": {
+      "logSha256": "6129b15d111b5125989339ec19e6f3bd1c3e3b79b36e3ac5667359f8c07cc4ed",
+      "verdict": "survived-equivalent-delimiter-replacement",
+      "action": "replaced mutation with actual acronym split regression; production code unchanged"
+    }
+  },
+  "syntax": {
+    "command": "node scripts/check-syntax.mjs",
+    "exitCode": 0
+  },
+  "installation": {
+    "command": "node scripts/install-smoke.mjs",
+    "exitCode": 0,
+    "output": "Installed package smoke passed for backend-team-harness@0.9.0",
+    "logSha256": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989"
+  },
+  "failingFirst": {
+    "tests": 2,
+    "passed": 0,
+    "failed": 2,
+    "logSha256": "046f3fad8893fd5cbcf630e6c96d9f4d9e0f492fb6df864697d5de36c04f1a15",
+    "after": {
+      "codeContextTests": 17,
+      "lexicalTests": 8,
+      "failures": 0
+    }
+  },
+  "contextProbe": {
+    "mode": "fast",
+    "provider": "non-model-stub",
+    "providerModelCalls": 0,
+    "sourceBase": "07ac5f29d3032bb173fd538c549966e7eb96dcff",
+    "requestMeasurement": "compact JSON UTF-8 bytes",
+    "beforeBytes": 18632,
+    "afterBytes": 18632,
+    "beforeRequestSha256": "246b23b37fe26ab4e6adba32439b8082266a728aea20d68515289bb4976e5848",
+    "afterRequestSha256": "246b23b37fe26ab4e6adba32439b8082266a728aea20d68515289bb4976e5848",
+    "unchanged": {
+      "approvedTask": true,
+      "rules": true,
+      "authority": true,
+      "entries": true,
+      "requiredBeforeEdit": true
+    },
+    "probeScriptSha256": "0f8498ce776efd45ecf7849bfacd8f599a468b71e959563350138c4b3646e0f3",
+    "executionNote": "Temporary public clone, isolated candidate, stubbed preparation/provider, no model or actual project tests, cleanup through owned-workspace reset."
+  },
+  "limitations": [
+    "Actual Windows provider execution/termination, MySQL E2E, and actual Maven/Gradle opt-in tests skipped.",
+    "Lexical performance ran before the full QA processes; microbenchmark is not full retrieval or implementation throughput.",
+    "No actual provider call, retry repair, additional independent task, or completion-rate advantage established this turn.",
+    "Fielded candidate rejected; narrower candidate has .env filename and nDCG regressions and two zero-recall tasks.",
+    "Twenty public tasks are a known regression corpus; independent unseen evaluation and direct Codex/Claude comparison remain incomplete."
+  ]
+}

@@ -56,6 +56,29 @@ test('query-aware PageRank keeps the lexical entry point and exact graph neighbo
   assert.deepEqual(result.authority.forbiddenUses, ['pass-verdict', 'test-skipping'])
 })
 
+test('file identity outranks an unrelated file that only imports the requested declaration', () => {
+  const document = graphDocument()
+  document.graph.nodes = [
+    { id: 'importer', path: 'src/alpha/AllPolicies.java', language: 'java', qualifiedName: 'alpha.AllPolicies', searchTerms: ['RefundPolicy'] },
+    { id: 'owner', path: 'src/payments/RefundPolicy.java', language: 'java', qualifiedName: 'payments.RefundPolicy', searchTerms: ['RefundPolicy'] }
+  ]
+  document.graph.edges = []
+  const result = rankCodeContext(document, 'RefundPolicy', { budgetCharacters: 700 })
+  assert.equal(result.entries[0].path, 'src/payments/RefundPolicy.java')
+})
+
+test('natural-language words can locate snake_case declarations without a global fallback', () => {
+  const document = graphDocument()
+  document.graph.nodes = [
+    { id: 'audit', path: 'src/audit.py', language: 'python', qualifiedName: 'src.audit#write_audit' },
+    { id: 'lookup', path: 'src/lookup.py', language: 'python', qualifiedName: 'src.lookup#read_account_by_id' }
+  ]
+  document.graph.edges = []
+  const result = rankCodeContext(document, 'read account by id', { budgetCharacters: 700 })
+  assert.equal(result.query.mode, 'query-personalized')
+  assert.equal(result.entries[0].path, 'src/lookup.py')
+})
+
 test('a selected production entry co-selects its convention-resolved test before unrelated nodes', () => {
   const document = graphDocument()
   document.graph.nodes.push({

@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { isAbsolute, posix } from 'node:path'
 import { resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { canonicalJson } from './canonical-json.mjs'
+import { personalizeCodeNodes as personalization } from './lexical-retrieval.mjs'
 
 const MAX_NODES = 100_000
 const MAX_EDGES = 500_000
@@ -26,11 +27,6 @@ const MAX_IMPACT_DEPTH = 8
 const MAX_IMPACT_NODES = 5000
 const MAX_IMPACT_PATHS = 32
 const SEARCH_TERM = /^[A-Za-z_$][A-Za-z0-9_$]{1,127}$/
-const STOP_TERMS = new Set(['add', 'and', 'are', 'expose', 'for', 'from', 'in', 'into', 'not', 'only', 'the', 'then', 'this', 'through', 'to', 'use', 'used', 'with'])
-const BACKEND_TERM_ALIASES = new Map([
-  ['configuration', 'config'],
-  ['documentation', 'document']
-])
 
 function assertObject(value, label) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -136,61 +132,6 @@ function validateGraph(document) {
   }
 }
 
-function lexicalTerms(value) {
-  const expanded = String(value)
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .toLowerCase()
-  const parts = expanded.match(/[\p{L}\p{N}_$]{2,}/gu) ?? []
-  const compact = String(value).toLowerCase().match(/[\p{L}\p{N}_$]{4,}/gu) ?? []
-  const expandedParts = [...parts, ...compact].flatMap((token) => {
-    const values = [token]
-    const alias = BACKEND_TERM_ALIASES.get(token)
-    if (alias) values.push(alias)
-    if (token.length > 4 && token.endsWith('ies')) values.push(token.slice(0, -3) + 'y')
-    else if (token.length > 3 && token.endsWith('s') && !token.endsWith('ss')) values.push(token.slice(0, -1))
-    return values
-  })
-  return [...new Set(expandedParts.filter((token) => !STOP_TERMS.has(token)))].slice(0, 64)
-}
-
-function personalization(nodes, query) {
-  const queryTerms = lexicalTerms(query)
-  const compactQueryTerms = String(query).toLowerCase().match(/[\p{L}\p{N}_$]{4,}/gu) ?? []
-  const nodeTerms = nodes.map((node) => new Set(lexicalTerms(node.path + ' ' + node.qualifiedName + ' ' + node.searchTerms.join(' '))))
-  const documentFrequency = new Map()
-  for (const token of queryTerms) documentFrequency.set(token, nodeTerms.filter((terms) => terms.has(token)).length)
-  const raw = nodeTerms.map((terms) => {
-    return queryTerms.reduce((weight, token) => {
-      if (!terms.has(token)) return weight
-      return weight + Math.log((nodes.length + 1) / ((documentFrequency.get(token) ?? 0) + 1)) + 1
-    }, 0)
-  })
-  const matchedTokens = queryTerms.filter((token) => nodeTerms.some((terms) => terms.has(token)))
-  const seededNodeCount = raw.filter((weight) => weight > 0).length
-  if (seededNodeCount === 0) {
-    return {
-      weights: nodes.map(() => nodes.length === 0 ? 0 : 1 / nodes.length),
-      mode: 'global-fallback',
-      matchedTokens: [],
-      seededNodeCount: 0,
-      seededIndexes: []
-    }
-  }
-  const total = raw.reduce((sum, value) => sum + value, 0)
-  const exactIndexes = nodeTerms
-    .map((terms, index) => compactQueryTerms.some((token) => terms.has(token)) ? index : -1)
-    .filter((index) => index >= 0)
-  const strongest = Math.max(...raw)
-  return {
-    weights: raw.map((value) => value / total),
-    mode: 'query-personalized',
-    matchedTokens,
-    seededNodeCount,
-    seededIndexes: exactIndexes.length > 0
-      ? exactIndexes
-      : raw.map((weight, index) => weight === strongest ? index : -1).filter((index) => index >= 0)
-  }
-}
 
 function stronglyConnectedComponents(nodes, edges) {
   const adjacency = new Map(nodes.map((node) => [node.id, []]))
@@ -428,6 +369,7 @@ export function rankCodeContext(document, query, options = {}) {
       damping: DAMPING,
       reverseEdgeWeight: 0.5,
       lexicalPriorBlend: seed.mode === 'query-personalized' ? 0.6 : 0,
+      lexicalPrior: seed.lexical,
       testPairCoSelection: true,
       maxIterations: MAX_ITERATIONS,
       iterations: ranked.iterations,

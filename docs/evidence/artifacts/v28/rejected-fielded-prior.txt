@@ -1,0 +1,89 @@
+import { posix } from 'node:path'
+
+const STOP_TERMS = new Set(['add', 'and', 'are', 'expose', 'for', 'from', 'in', 'into', 'not', 'only', 'the', 'then', 'this', 'through', 'to', 'use', 'used', 'with'])
+const ALIASES = new Map([['configuration', 'config'], ['documentation', 'document']])
+const FIELD_WEIGHTS = [2, 1, 1]
+const K1 = 1.2
+const B = 0.75
+const MAX_TEXT = 64 * 1024
+const MAX_TERMS = 64
+
+export function tokenizeRetrievalText(value) {
+  const text = typeof value === 'string' ? value.slice(0, MAX_TEXT) : ''
+  const expanded = text.replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_$]+/g, ' ').toLowerCase()
+  const parts = expanded.match(/[\p{L}\p{N}]{2,}/gu) ?? []
+  const compact = text.toLowerCase().match(/[\p{L}\p{N}_$]{4,}/gu) ?? []
+  const result = new Set()
+  for (const token of [...parts, ...compact]) {
+    const variants = [token]
+    if (ALIASES.has(token)) variants.push(ALIASES.get(token))
+    if (token.length > 4 && token.endsWith('ies')) variants.push(token.slice(0, -3) + 'y')
+    else if (token.length > 3 && token.endsWith('s') && !token.endsWith('ss')) variants.push(token.slice(0, -1))
+    for (const variant of variants) {
+      if (!STOP_TERMS.has(variant)) result.add(variant)
+      if (result.size === MAX_TERMS) return [...result]
+    }
+  }
+  return [...result]
+}
+
+// Adapt BM25F's field normalization -> weighted pseudo-frequency -> saturation
+// to bounded, deduplicated graph metadata. This is not source-body semantics.
+// Fixed parameters are not trained on task/gold paths; PageRank remains separate.
+export function personalizeCodeNodes(nodes, query) {
+  const queryTerms = tokenizeRetrievalText(query)
+  const querySet = new Set(queryTerms)
+  const compactQuery = new Set((typeof query === 'string' ? query.slice(0, MAX_TEXT).toLowerCase().match(/[\p{L}\p{N}_$]{4,}/gu) : []) ?? [])
+  const frequency = new Map(queryTerms.map(term => [term, 0]))
+  const fieldTotals = [0, 0, 0]
+  const records = nodes.map(node => {
+    const declaration = node.qualifiedName.split(/[.#]/).at(-1)
+    const fields = [
+      tokenizeRetrievalText(posix.basename(node.path) + ' ' + declaration),
+      tokenizeRetrievalText(posix.dirname(node.path)),
+      tokenizeRetrievalText((node.searchTerms ?? []).join(' '))
+    ]
+    const matches = new Map()
+    let exactMatch = false
+    for (let field = 0; field < fields.length; field += 1) {
+      fieldTotals[field] += fields[field].length
+      for (const term of fields[field]) {
+        if (compactQuery.has(term)) exactMatch = true
+        if (querySet.has(term)) matches.set(term, (matches.get(term) ?? 0) | (1 << field))
+      }
+    }
+    for (const term of matches.keys()) frequency.set(term, frequency.get(term) + 1)
+    // Retain only matches and lengths, not every node's complete term sets.
+    return { lengths: fields.map(field => field.length), matches, exactMatch }
+  })
+  const averages = fieldTotals.map(total => nodes.length ? total / nodes.length : 0)
+  const raw = records.map(record => {
+    let score = 0
+    for (const [term, mask] of record.matches) {
+      let pseudoFrequency = 0
+      for (let field = 0; field < FIELD_WEIGHTS.length; field += 1) {
+        if (mask & (1 << field)) {
+          pseudoFrequency += FIELD_WEIGHTS[field] / (1 - B + B * record.lengths[field] / (averages[field] || 1))
+        }
+      }
+      const df = frequency.get(term)
+      const idf = Math.log1p((nodes.length - df + 0.5) / (df + 0.5))
+      score += idf * pseudoFrequency / (K1 + pseudoFrequency)
+    }
+    return score
+  })
+  const total = raw.reduce((sum, score) => sum + score, 0)
+  const matchedTokens = queryTerms.filter(term => frequency.get(term) > 0)
+  let strongest = 0
+  for (const score of raw) strongest = Math.max(strongest, score)
+  const exactIndexes = records.flatMap((record, index) => record.exactMatch ? [index] : [])
+  return {
+    weights: raw.map(score => total > 0 ? score / total : 1 / nodes.length),
+    mode: total > 0 ? 'query-personalized' : 'global-fallback',
+    matchedTokens,
+    seededNodeCount: raw.filter(score => score > 0).length,
+    seededIndexes: total === 0 ? [] : exactIndexes.length ? exactIndexes : raw.flatMap((score, index) => score === strongest ? [index] : []),
+    lexical: { id: 'bounded-fielded-bm25-prior', fields: { identity: 2, directory: 1, searchTerms: 1 }, k1: K1, b: B, terms: 'deduplicated-per-field', maximumTermsPerField: MAX_TERMS }
+  }
+}

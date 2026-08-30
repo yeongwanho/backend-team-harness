@@ -99,6 +99,8 @@ async function main() {
   const config = await loadProviderBenchmarkConfig(resolve('benchmarks/public-backend-v1/provider-comparison.json'), corpus)
   const sourceCommit = await git(['rev-parse', 'HEAD'], process.cwd())
   const sourceFiles = [
+    'src/core/code-context.mjs', 'src/core/lexical-retrieval.mjs',
+    'packs/codegraph-advisory/indexer.mjs',
     'src/core/retrieval-query.mjs', 'src/runtime/implementation-orchestrator.mjs',
     'src/runtime/plan-export.mjs', 'scripts/benchmark-retrieval-query.mjs',
     'src/core/migration-discovery.mjs', 'src/core/work-draft.mjs', 'src/core/interview-state.mjs',

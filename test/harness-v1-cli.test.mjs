@@ -84,6 +84,7 @@ test('approved plan export includes source-bound budgeted codegraph context when
   assert.equal(exported.status, 0, exported.stderr || exported.stdout)
   const contract = JSON.parse(exported.stdout)
   assert.equal(contract.codeContext.status, 'available')
+  assert.equal(contract.codeContext.algorithm.lexicalPrior.id, 'bounded-binary-idf-identifier-prior')
   assert.equal(contract.codeContext.entries[0].path, 'src/main/java/orders/OrdersController.java')
   assert.ok(contract.codeContext.budget.usedCharacters <= 700)
   assert.equal(contract.codeContext.authority.advisory, true)

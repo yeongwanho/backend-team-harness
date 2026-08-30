@@ -7,6 +7,18 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/core/lexical-retrieval.mjs',
+    from: ".replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')",
+    to: ".replace(/([A-Z]+)([A-Z][a-z])/g, '$1$2')",
+    test: 'test/lexical-retrieval.test.mjs'
+  },
+  {
+    file: 'src/core/lexical-retrieval.mjs',
+    from: 'record.ownedIdentifiers?.has(term) ? 2 : 1',
+    to: 'record.ownedIdentifiers?.has(term) ? 1 : 1',
+    test: 'test/lexical-retrieval.test.mjs'
+  },
+  {
     file: 'src/core/implementation-verification.mjs',
     from: "structuredReason: code(gate.result?.reason ?? gate.structuredReason),",
     to: 'structuredReason: null,',

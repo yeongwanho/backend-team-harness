@@ -17,6 +17,7 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Changed
 
+- Code-context retrieval splits snake_case/acronyms, distinguishes explicitly named identifier ownership, and retains only query matches in memory. The known 20-task comparison improves on average but still has per-task losses; no end-to-end provider speed claim is made. See `docs/evidence/identifier-retrieval-v28.md`.
 - Generated Jest verification rejects unknown assertion states, contradictory counts, interrupted/runtime-error suites and stale raw JSON. It preserves skipped/todo results, omits failure-message bodies, bounds conversion and refuses linked report paths. The exact generated runner is exercised by the Nest controls.
 - Provider implementation now preserves observed adjacent project conventions even on small CRUD work.
 - Shared records redact additional provider tokens, auth/cookie material, email addresses, and raw source-bearing fields.

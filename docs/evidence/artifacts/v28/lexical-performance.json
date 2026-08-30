@@ -1,0 +1,221 @@
+{
+  "schemaVersion": 1,
+  "kind": "lexical-prior-only-synthetic-microbenchmark",
+  "baselineSha": "f10bb39b8677564c4f4d04f6144b0e78991ca9de",
+  "baselineSourceSha256": "efdedf723dc042ce8964f65ff950824a7e2ce4457e18836a44e8d09c81e34ca3",
+  "sourceHashes": {
+    "src/core/lexical-retrieval.mjs": "ef339eeb118a5f577bed4a39f787b2bf580f66b59fb80adf7e57d8e75d5424d3",
+    "src/core/code-context.mjs": "ed33494ea6afc30f179b9ea43b9088a1ce2cb6442a550f9fab8d8afbd0a8657b",
+    "scripts/benchmark-lexical-retrieval.mjs": "87867ef5cdcef2bc342b010676200d37990bcbba3f452bd08560a6eb23e70396"
+  },
+  "nodeVersion": "v22.23.1",
+  "platform": "darwin",
+  "arch": "arm64",
+  "outputEquivalence": true,
+  "cases": [
+    {
+      "variant": "legacy",
+      "nodes": 10000,
+      "queryId": "empty",
+      "iterations": 3,
+      "timesMs": [
+        422.39675,
+        423.6015,
+        404.52475000000004
+      ],
+      "medianMs": 422.39675,
+      "processPeakRssKiB": 178256,
+      "mode": "global-fallback",
+      "seededNodeCount": 0,
+      "weightsSha256": "3c69653f8de5e8b302d2aebb7ddad48ad9590b11c8fc8b03a73942f87e25d6b0",
+      "matchesSha256": "84dcbab147b88852cb0cbf1869f2dd962c2816a12da67cc89ffce8de941920af"
+    },
+    {
+      "variant": "candidate",
+      "nodes": 10000,
+      "queryId": "empty",
+      "iterations": 3,
+      "timesMs": [
+        0.8124579999999924,
+        0.3920829999999853,
+        0.2675000000000125
+      ],
+      "medianMs": 0.3920829999999853,
+      "processPeakRssKiB": 106384,
+      "mode": "global-fallback",
+      "seededNodeCount": 0,
+      "weightsSha256": "3c69653f8de5e8b302d2aebb7ddad48ad9590b11c8fc8b03a73942f87e25d6b0",
+      "matchesSha256": "84dcbab147b88852cb0cbf1869f2dd962c2816a12da67cc89ffce8de941920af"
+    },
+    {
+      "variant": "legacy",
+      "nodes": 10000,
+      "queryId": "matching",
+      "iterations": 3,
+      "timesMs": [
+        475.9192079999999,
+        417.8684579999999,
+        409.79654200000004
+      ],
+      "medianMs": 417.8684579999999,
+      "processPeakRssKiB": 178384,
+      "mode": "query-personalized",
+      "seededNodeCount": 10000,
+      "weightsSha256": "3c69653f8de5e8b302d2aebb7ddad48ad9590b11c8fc8b03a73942f87e25d6b0",
+      "matchesSha256": "87d332921a21426b0c99bfc4ec3ee6e1345d19534d8076feae45275e44fc992c"
+    },
+    {
+      "variant": "candidate",
+      "nodes": 10000,
+      "queryId": "matching",
+      "iterations": 3,
+      "timesMs": [
+        205.123083,
+        212.48358399999995,
+        228.4843749999999
+      ],
+      "medianMs": 212.48358399999995,
+      "processPeakRssKiB": 127552,
+      "mode": "query-personalized",
+      "seededNodeCount": 10000,
+      "weightsSha256": "3c69653f8de5e8b302d2aebb7ddad48ad9590b11c8fc8b03a73942f87e25d6b0",
+      "matchesSha256": "87d332921a21426b0c99bfc4ec3ee6e1345d19534d8076feae45275e44fc992c"
+    },
+    {
+      "variant": "legacy",
+      "nodes": 10000,
+      "queryId": "absent",
+      "iterations": 3,
+      "timesMs": [
+        437.1387920000001,
+        419.72116600000004,
+        513.2182090000001
+      ],
+      "medianMs": 437.1387920000001,
+      "processPeakRssKiB": 178240,
+      "mode": "global-fallback",
+      "seededNodeCount": 0,
+      "weightsSha256": "3c69653f8de5e8b302d2aebb7ddad48ad9590b11c8fc8b03a73942f87e25d6b0",
+      "matchesSha256": "84dcbab147b88852cb0cbf1869f2dd962c2816a12da67cc89ffce8de941920af"
+    },
+    {
+      "variant": "candidate",
+      "nodes": 10000,
+      "queryId": "absent",
+      "iterations": 3,
+      "timesMs": [
+        214.43216700000005,
+        213.89416700000004,
+        211.47529199999997
+      ],
+      "medianMs": 213.89416700000004,
+      "processPeakRssKiB": 122912,
+      "mode": "global-fallback",
+      "seededNodeCount": 0,
+      "weightsSha256": "3c69653f8de5e8b302d2aebb7ddad48ad9590b11c8fc8b03a73942f87e25d6b0",
+      "matchesSha256": "84dcbab147b88852cb0cbf1869f2dd962c2816a12da67cc89ffce8de941920af"
+    },
+    {
+      "variant": "legacy",
+      "nodes": 100000,
+      "queryId": "empty",
+      "iterations": 3,
+      "timesMs": [
+        5097.807958,
+        4832.4735,
+        4767.655583
+      ],
+      "medianMs": 4832.4735,
+      "processPeakRssKiB": 819632,
+      "mode": "global-fallback",
+      "seededNodeCount": 0,
+      "weightsSha256": "e4f236aa66feea7307be5e3ab9d273d029843c6e75ed0a43cc84a13ff2222e23",
+      "matchesSha256": "84dcbab147b88852cb0cbf1869f2dd962c2816a12da67cc89ffce8de941920af"
+    },
+    {
+      "variant": "candidate",
+      "nodes": 100000,
+      "queryId": "empty",
+      "iterations": 3,
+      "timesMs": [
+        2.203166999999894,
+        1.2266669999999067,
+        1.5372919999999795
+      ],
+      "medianMs": 1.5372919999999795,
+      "processPeakRssKiB": 528864,
+      "mode": "global-fallback",
+      "seededNodeCount": 0,
+      "weightsSha256": "e4f236aa66feea7307be5e3ab9d273d029843c6e75ed0a43cc84a13ff2222e23",
+      "matchesSha256": "84dcbab147b88852cb0cbf1869f2dd962c2816a12da67cc89ffce8de941920af"
+    },
+    {
+      "variant": "legacy",
+      "nodes": 100000,
+      "queryId": "matching",
+      "iterations": 3,
+      "timesMs": [
+        4703.603959,
+        4721.549917,
+        4748.789624999999
+      ],
+      "medianMs": 4721.549917,
+      "processPeakRssKiB": 834784,
+      "mode": "query-personalized",
+      "seededNodeCount": 100000,
+      "weightsSha256": "e4f236aa66feea7307be5e3ab9d273d029843c6e75ed0a43cc84a13ff2222e23",
+      "matchesSha256": "a67e34a5a48d89a749bf0ce61d95a9a93fc25c8873498bec62359ec94d504cc7"
+    },
+    {
+      "variant": "candidate",
+      "nodes": 100000,
+      "queryId": "matching",
+      "iterations": 3,
+      "timesMs": [
+        2273.2371669999998,
+        2364.2484160000004,
+        2407.6335419999996
+      ],
+      "medianMs": 2364.2484160000004,
+      "processPeakRssKiB": 579616,
+      "mode": "query-personalized",
+      "seededNodeCount": 100000,
+      "weightsSha256": "e4f236aa66feea7307be5e3ab9d273d029843c6e75ed0a43cc84a13ff2222e23",
+      "matchesSha256": "a67e34a5a48d89a749bf0ce61d95a9a93fc25c8873498bec62359ec94d504cc7"
+    },
+    {
+      "variant": "legacy",
+      "nodes": 100000,
+      "queryId": "absent",
+      "iterations": 3,
+      "timesMs": [
+        4533.1987500000005,
+        4598.896917,
+        4528.872208999999
+      ],
+      "medianMs": 4533.1987500000005,
+      "processPeakRssKiB": 822704,
+      "mode": "global-fallback",
+      "seededNodeCount": 0,
+      "weightsSha256": "e4f236aa66feea7307be5e3ab9d273d029843c6e75ed0a43cc84a13ff2222e23",
+      "matchesSha256": "84dcbab147b88852cb0cbf1869f2dd962c2816a12da67cc89ffce8de941920af"
+    },
+    {
+      "variant": "candidate",
+      "nodes": 100000,
+      "queryId": "absent",
+      "iterations": 3,
+      "timesMs": [
+        2341.6798750000003,
+        2316.9885829999994,
+        2332.864875000001
+      ],
+      "medianMs": 2332.864875000001,
+      "processPeakRssKiB": 548528,
+      "mode": "global-fallback",
+      "seededNodeCount": 0,
+      "weightsSha256": "e4f236aa66feea7307be5e3ab9d273d029843c6e75ed0a43cc84a13ff2222e23",
+      "matchesSha256": "84dcbab147b88852cb0cbf1869f2dd962c2816a12da67cc89ffce8de941920af"
+    }
+  ]
+}
