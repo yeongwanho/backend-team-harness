@@ -41,7 +41,7 @@ export function createVerificationTool(options = {}) {
       if (networkGate && context.approval?.network !== true) {
         throw new ToolPermissionError(
           'network_approval_required',
-          'Gate ' + networkGate.id + ' may use the network. Re-run with explicit network approval.'
+          'Gate ' + networkGate.id + ' may use the network. Re-run with --acknowledge-network-risk; BTH does not isolate operating-system egress.'
         )
       }
       const toolchain = await captureToolchain(context.root, loaded.config)
@@ -248,6 +248,11 @@ export function createVerificationTool(options = {}) {
         adapter: 'configured-verification',
         configuration: loaded.source,
         evidenceTier: 'EXECUTED',
+        networkPolicy: {
+          declaredNetworkGate: loaded.config.gates.some((gate) => gate.network),
+          riskAcknowledged: context.approval?.network === true,
+          egressIsolation: 'not-enforced'
+        },
         toolchain,
         passed,
         reason: !sourceStable ? 'source_changed_during_run' : gatesPassed ? null : 'required_gate_failed',

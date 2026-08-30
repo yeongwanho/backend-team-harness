@@ -20,7 +20,7 @@ This change removes repeated directory walks from `doctor`, shares one bounded p
 
 ## Large backend benchmark
 
-Measured 2026-08-30 on Apple M1 Pro, 32 GiB RAM, Node v22.23.1. The input was a temporary local clone of `api-doctorvice-care-server` plus its copied harness contract. The original company checkout was read only. The fixture contained 1,551 Java/Kotlin files and 3,031,509 indexed source bytes. Each timing is 15 independent CLI processes; the table reports the median.
+Measured 2026-08-30 on Apple M1 Pro, 32 GiB RAM, Node v22.23.1. The input was a temporary local clone of a private backend repository plus its copied harness contract. The original company checkout was read only. The fixture contained 1,551 Java/Kotlin files and 3,031,509 indexed source bytes. Each timing is 15 independent CLI processes; the table reports the median.
 
 | Operation | Baseline `a26642a` | Current | Reduction | Speedup |
 |---|---:|---:|---:|---:|

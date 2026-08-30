@@ -1,8 +1,9 @@
 import { isAbsolute, relative, sep } from 'node:path'
 import { doctorProject } from '../doctor.mjs'
-import { loadVerificationConfig, verificationExecutablePaths, verificationInputPaths } from '../config/verification.mjs'
+import { defaultVerificationConfig, loadVerificationConfig, parseVerificationConfig, verificationExecutablePaths, verificationInputPaths } from '../config/verification.mjs'
 import { loadQualityGates } from '../config/quality-gates.mjs'
 import { captureSourceBinding } from '../core/source-binding.mjs'
+import { JVM_BUILD_DISCOVERY } from '../core/jvm-build-discovery.mjs'
 import { PROJECT_MANIFEST, scanProjectManifest } from '../core/project-manifest.mjs'
 import { resolveReadableRoot } from '../fs-safety.mjs'
 
@@ -39,10 +40,48 @@ export async function captureProjectContextSourceBinding(inputPath, verification
 export async function inspectProjectContext(inputPath, options = {}) {
   const root = await resolveReadableRoot(inputPath)
   const manifest = options.manifest ?? (options.doctor ? null : await scanProjectManifest(root, options.manifestOptions))
-  const doctor = options.doctor ?? await doctorProject(root, { manifest })
-  const verification = options.verification ?? await loadVerificationConfig(root, { allowInferred: false })
+  const doctorOptions = { manifest, processRunner: options.processRunner }
+  if (Object.hasOwn(options, 'javaRuntimeMajor')) doctorOptions.javaRuntimeMajor = options.javaRuntimeMajor
+  const doctor = options.doctor ?? await doctorProject(root, doctorOptions)
+  let verification = options.verification
+  let verificationStatus = 'configured'
+  const verificationDiagnostics = []
+  if (!verification) {
+    try {
+      verification = await loadVerificationConfig(root, { allowInferred: false })
+    } catch (error) {
+      verificationStatus = 'missing'
+      verificationDiagnostics.push(error instanceof Error ? error.message : String(error))
+      const inferred = await defaultVerificationConfig(root, manifest ? {
+        manifest,
+        detection: doctor[JVM_BUILD_DISCOVERY]
+      } : {})
+      if (inferred) {
+        verification = {
+          source: 'inferred-jvm-default',
+          config: parseVerificationConfig(JSON.stringify(inferred), 'inferred-jvm-default')
+        }
+      } else {
+        verification = {
+          source: null,
+          config: {
+            schemaVersion: 1,
+            context: { profile: null, databaseDialect: null },
+            scheduling: { strategy: 'configured', minimumObservations: 5, priorFailures: 1, priorPasses: 1, maxParallel: 1 },
+            gates: []
+          }
+        }
+      }
+    }
+  }
   const policies = options.policies ?? await loadQualityGates(doctor.root)
-  const sourceBinding = options.sourceBinding ?? await captureProjectContextSourceBinding(root, verification)
+  const inferredInputs = verification.config.gates.length > 0 ? verificationInputPaths(verification.config) : []
+  const sourceBinding = options.sourceBinding ?? await captureSourceBinding(root, {
+    explicitPaths: verificationStatus === 'configured'
+      ? inferredInputs
+      : [],
+    allowSymlinkPaths: verificationStatus === 'configured' && verification.config.gates.length > 0 ? verificationExecutablePaths(verification.config) : []
+  })
   const build = checkById(doctor, 'build-file')
   const wrapper = checkById(doctor, 'build-wrapper')
   const main = checkById(doctor, 'main-source')
@@ -51,9 +90,9 @@ export async function inspectProjectContext(inputPath, options = {}) {
   const contract = checkById(doctor, 'shared-contract')
   const quality = checkById(doctor, 'quality-gate-schema')
   const verificationCheck = checkById(doctor, 'verification-config')
-  const verificationSource = verification.source
+  const verificationSource = verificationStatus === 'configured' && verification.source
     ? portable(isAbsolute(verification.source) ? relative(doctor.root, verification.source) : verification.source)
-    : '.backend-harness/verification.json'
+    : null
 
   const facts = [
     fact('git.source', 'confirmed', 'The interview is bound to one Git source fingerprint.', {
@@ -102,7 +141,10 @@ export async function inspectProjectContext(inputPath, options = {}) {
     structuralReadiness: doctor.healthy,
     facts,
     verification: {
+      status: verificationStatus,
       path: verificationSource,
+      inferredFromSource: verificationStatus === 'missing' && verification.source === 'inferred-jvm-default',
+      diagnostics: verificationDiagnostics,
       context: verification.config.context,
       gates: verification.config.gates.map((gate) => ({
         id: gate.id,
@@ -125,7 +167,7 @@ export async function inspectProjectContext(inputPath, options = {}) {
       '.backend-harness/glossary.md',
       '.backend-harness/quality-gates/',
       verificationSource
-    ]
+    ].filter(Boolean)
   }
   if (manifest) {
     Object.defineProperty(result, PROJECT_MANIFEST, { value: manifest })

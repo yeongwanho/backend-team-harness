@@ -8,6 +8,7 @@ import { initProject } from '../src/init-project.mjs'
 async function backendProject(prefix) {
   const root = await mkdtemp(join(tmpdir(), prefix))
   await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
+  await writeFile(join(root, 'gradlew'), '#!/bin/sh\n', 'utf8')
   return root
 }
 

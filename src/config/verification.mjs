@@ -4,6 +4,8 @@ import { isAbsolute, posix, relative } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { projectExecutableForPlatform } from '../core/platform.mjs'
 import { reportGlobBase, reportPatternsMayOverlap } from '../core/report-glob.mjs'
+import { inspectJvmBuild } from '../core/jvm-build-discovery.mjs'
+import { scanProjectManifest } from '../core/project-manifest.mjs'
 
 const GATE_ID = /^[a-z][a-z0-9-]{0,63}$/
 const CONFIG_KEYS = new Set(['schemaVersion', 'context', 'scheduling', 'gates'])
@@ -310,20 +312,18 @@ export function verificationInputPaths(config, options = {}) {
   ])].sort()
 }
 
-async function regularFile(root, path) {
-  const target = await resolveSafeProjectPath(root, path)
-  const stat = await statPath(target)
-  return Boolean(stat?.isFile() && !stat.isSymbolicLink())
-}
-
-export async function defaultVerificationConfig(root) {
-  if (await regularFile(root, 'build.gradle') || await regularFile(root, 'build.gradle.kts')) {
-    const inputs = []
-    for (const path of ['gradle/wrapper/gradle-wrapper.properties', 'gradle/wrapper/gradle-wrapper.jar', 'gradle.properties']) {
-      if (await regularFile(root, path)) {
-        inputs.push(path)
-      }
-    }
+export async function defaultVerificationConfig(root, options = {}) {
+  const manifest = options.manifest ?? await scanProjectManifest(root, {
+    maxDepth: 12,
+    maxEntries: 100_000,
+    onLimit: 'throw',
+    onReadError: 'throw'
+  })
+  const detection = options.detection ?? await inspectJvmBuild(root, manifest, {
+    inspectRuntime: false
+  })
+  if (!detection.canGenerateVerification) return null
+  if (detection.system === 'gradle') {
     return {
       schemaVersion: 1,
       context: { profile: 'test', databaseDialect: null },
@@ -331,23 +331,17 @@ export async function defaultVerificationConfig(root) {
         id: 'tests',
         required: true,
         command: ['./gradlew', 'test', '--offline', '--no-daemon', '--console=plain', '--rerun-tasks'],
-        inputs,
+        inputs: detection.buildInputs,
         timeoutMs: 600000,
         result: {
           type: 'junit',
-          reports: ['build/test-results/test/**/*.xml'],
+          reports: detection.reportPatterns,
           minimumTests: 1
         }
       }]
     }
   }
-  if (await regularFile(root, 'pom.xml')) {
-    const inputs = []
-    for (const path of ['.mvn/wrapper/maven-wrapper.properties', '.mvn/wrapper/maven-wrapper.jar', '.mvn/maven.config']) {
-      if (await regularFile(root, path)) {
-        inputs.push(path)
-      }
-    }
+  if (detection.system === 'maven') {
     return {
       schemaVersion: 1,
       context: { profile: 'test', databaseDialect: null },
@@ -355,11 +349,11 @@ export async function defaultVerificationConfig(root) {
         id: 'tests',
         required: true,
         command: ['./mvnw', '-o', '-B', 'verify'],
-        inputs,
+        inputs: detection.buildInputs,
         timeoutMs: 600000,
         result: {
           type: 'junit',
-          reports: ['target/surefire-reports/TEST-*.xml', 'target/failsafe-reports/TEST-*.xml'],
+          reports: detection.reportPatterns,
           minimumTests: 1
         }
       }]

@@ -21,10 +21,32 @@ test('auto implementation profiles stay balanced without evidence and escalate s
 
   const small = selectImplementationProfile({
     mode: 'auto',
-    claims: { changesDatabase: false, requiresMigration: false, changesPublicApi: false, modules: ['users'] }
+    claims: {
+      changesDatabase: false, requiresMigration: false, changesPublicApi: false,
+      preservesCompatibility: true, modules: ['users'], requiredGates: ['tests']
+    }
   })
   assert.equal(small.selected, 'fast')
   assert.equal(small.effort, 'low')
+  assert.equal(small.verificationStrategy, 'all-required-gates')
+
+  const compatibleCrud = selectImplementationProfile({
+    mode: 'auto',
+    claims: {
+      changesDatabase: true, requiresMigration: false,
+      changesPublicApi: true, preservesCompatibility: true,
+      modules: ['users'], requiredGates: ['tests']
+    }
+  })
+  assert.equal(compatibleCrud.selected, 'fast')
+  assert.deepEqual(compatibleCrud.reasons, ['explicit-single-module-no-migration-compatible-change'])
+
+  const breakingApi = selectImplementationProfile({
+    mode: 'auto',
+    claims: { changesDatabase: false, requiresMigration: false, changesPublicApi: true, preservesCompatibility: false, modules: ['users'] }
+  })
+  assert.equal(breakingApi.selected, 'deep')
+  assert.deepEqual(breakingApi.reasons, ['public-api-compatibility-risk'])
 
   const risky = selectImplementationProfile({ mode: 'auto', claims: { requiresMigration: true } })
   assert.equal(risky.selected, 'deep')

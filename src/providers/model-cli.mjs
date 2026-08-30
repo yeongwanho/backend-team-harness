@@ -61,15 +61,29 @@ export function selectImplementationProfile(input = {}) {
   const reasons = []
   if (configured === 'auto') {
     const claims = input.claims ?? {}
-    const highRisk = claims.changesDatabase === true || claims.requiresMigration === true || claims.changesPublicApi === true
-    const explicitlySmall = claims.changesDatabase === false && claims.requiresMigration === false &&
-      claims.changesPublicApi === false && Array.isArray(claims.modules) && claims.modules.length === 1
+    const breakingPublicApi = claims.changesPublicApi === true && claims.preservesCompatibility !== true
+    const ambiguousDatabaseChange = claims.changesDatabase === true && claims.requiresMigration !== false
+    const highRisk = claims.requiresMigration === true || breakingPublicApi || ambiguousDatabaseChange
+    const explicitlySmall = typeof claims.changesDatabase === 'boolean' &&
+      claims.requiresMigration === false &&
+      (claims.changesPublicApi !== true || claims.preservesCompatibility === true) &&
+      claims.preservesCompatibility === true &&
+      Array.isArray(claims.modules) && claims.modules.length === 1 &&
+      Array.isArray(claims.requiredGates) && claims.requiredGates.length > 0
     if (highRisk || taskCharacters > PROFILE_DEFAULTS.balanced.taskBudgetCharacters) {
       selected = 'deep'
-      reasons.push(highRisk ? 'structured-db-migration-or-public-api-risk' : 'large-approved-task-requires-deep-budget')
+      reasons.push(
+        taskCharacters > PROFILE_DEFAULTS.balanced.taskBudgetCharacters
+          ? 'large-approved-task-requires-deep-budget'
+          : claims.requiresMigration === true
+            ? 'schema-migration-risk'
+            : breakingPublicApi
+              ? 'public-api-compatibility-risk'
+              : 'database-migration-impact-unknown'
+      )
     } else if (explicitlySmall) {
       selected = 'fast'
-      reasons.push('explicit-single-module-no-db-no-public-api-change')
+      reasons.push('explicit-single-module-no-migration-compatible-change')
     } else {
       selected = 'balanced'
       reasons.push('insufficient-structured-evidence-for-fast-mode')
@@ -95,7 +109,8 @@ export function selectImplementationProfile(input = {}) {
     effort: defaults.effort,
     taskCharacters,
     taskBudgetCharacters: defaults.taskBudgetCharacters,
-    contextBudgetCharacters: budget
+    contextBudgetCharacters: budget,
+    verificationStrategy: 'all-required-gates'
   }
 }
 

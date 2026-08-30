@@ -147,6 +147,13 @@ test('a symlinked build wrapper is rejected before the external script runs', as
   await writeFile(join(root, '.gitignore'), 'build/\n', 'utf8')
   initializeGit(root)
   await initProject(root)
+  await writeFile(join(root, '.backend-harness/verification.json'), JSON.stringify({
+    schemaVersion: 1,
+    gates: [{
+      id: 'tests', required: true, command: ['./gradlew'],
+      result: { type: 'junit', reports: ['build/test-results/test/**/*.xml'], minimumTests: 1 }
+    }]
+  }, null, 2) + '\n', 'utf8')
   await createTask(root, {
     id: 'SYMLINK-1',
     context: 'Synthetic requirement',

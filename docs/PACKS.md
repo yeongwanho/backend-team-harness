@@ -26,7 +26,7 @@ Acceptance:
 
 This Pack deliberately installs a failing recipe until the project defines its lifecycle.
 
-The generated Gate declares `network: true` because dependency resolution and Testcontainers/Compose image pulls may need network access. Run it with `--allow-network` only after reviewing the project-owned lifecycle. The flag records approval; it does not enforce an OS network boundary.
+The generated Gate declares `network: true` because dependency resolution and Testcontainers/Compose image pulls may need network access. Run it with `--acknowledge-network-risk` only after reviewing the project-owned lifecycle. The flag records acknowledged risk; it does not enforce an OS network boundary.
 
 Gradle expects an `integrationTest` task. Maven expects a `db-integration` profile executed by Failsafe and honors the generated dedicated report directory. Adapt the generated Gate rather than building another lifecycle inside BTH.
 

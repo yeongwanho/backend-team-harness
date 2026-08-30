@@ -233,6 +233,48 @@ test('a non-retryable built-in provider failure stops after one attempt', async 
   assert.equal(result.record.verification.failure.providerFailure.code, 'not-authenticated')
 })
 
+test('a no-change provider result stops once without running Gates or blind recovery', async () => {
+  const root = await approvedImplementationProject({
+    providerConfig: {
+      schemaVersion: 2,
+      adapter: {
+        kind: 'provider', provider: 'codex', network: true, timeoutMs: 30_000,
+        model: null, mode: 'fast', contextBudgetCharacters: 256, maxBudgetUsd: null
+      },
+      writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 64 * 1024 },
+      recovery: { maxAttempts: 2 }
+    }
+  })
+  let calls = 0
+  const providerRunner = async (_adapter, input) => {
+    calls += 1
+    return {
+      process: {
+        exitCode: 0, signal: null, timedOut: false, stdioDrainTimedOut: false,
+        startedAt: '2026-08-30T00:00:00.000Z', finishedAt: '2026-08-30T00:00:01.000Z', durationMs: 1000,
+        stdout: { sha256: 'a'.repeat(64), bytes: 0, tail: '' },
+        stderr: { sha256: 'b'.repeat(64), bytes: 0, tail: '' }
+      },
+      metadata: { kind: 'provider', provider: 'codex', version: 'fixture', profile: input.profile, usage: {} }
+    }
+  }
+
+  const result = await runImplementation(root, 'IMPL-1', {
+    actor: 'developer', allowWrite: true, allowNetwork: true,
+    providerProbe: async () => ({ available: true, version: 'codex-fixture 1.0' }),
+    providerRunner
+  })
+
+  assert.equal(result.record.status, 'failed')
+  assert.equal(calls, 1)
+  assert.equal(result.record.attempts.length, 1)
+  assert.equal(result.record.attempts[0].outcome, 'no-source-change')
+  assert.equal(result.record.verification.failure.code, 'implementation_no_source_change')
+  assert.equal(result.record.verification.tests, null)
+  assert.deepEqual(result.record.verification.gates, [])
+  await assert.rejects(access(join(result.record.workspace, 'build/test-results/test/TEST-fixture.xml')), /ENOENT/)
+})
+
 test('a built-in provider cannot edit harness control files even when its prefix policy permits them', async () => {
   const root = await approvedImplementationProject({
     providerConfig: {
@@ -316,7 +358,7 @@ test('implementation refuses source writes without a fresh explicit write approv
   await writeFile(join(root, '.backend-harness/implementation.json'), JSON.stringify(config, null, 2) + '\n', 'utf8')
   await assert.rejects(
     runImplementation(root, 'IMPL-1', { actor: 'developer', allowWrite: true }),
-    /--allow-network/
+    /--acknowledge-network-risk/
   )
 })
 

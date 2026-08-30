@@ -3,7 +3,9 @@ import { access, readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { loadQualityGates } from './config/quality-gates.mjs'
 import { loadVerificationConfig, resolveGateExecutable } from './config/verification.mjs'
+import { inspectJvmBuild, JVM_BUILD_DISCOVERY } from './core/jvm-build-discovery.mjs'
 import { scanProjectManifest } from './core/project-manifest.mjs'
+import { reportGlobRegex } from './core/report-glob.mjs'
 import { resolveReadableRoot, statPath } from './fs-safety.mjs'
 
 async function regularFile(root, path) {
@@ -101,6 +103,9 @@ export async function doctorProject(inputPath = '.', options = {}) {
     throw new Error('Project manifest belongs to a different root.')
   }
   const checks = []
+  const detectionOptions = { processRunner: options.processRunner }
+  if (Object.hasOwn(options, 'javaRuntimeMajor')) detectionOptions.javaRuntimeMajor = options.javaRuntimeMajor
+  const detection = await inspectJvmBuild(root, manifest, detectionOptions)
 
   const builds = await inspectBuildFiles(root, manifest)
   const buildStatus = builds.valid.length > 0 ? 'pass' : builds.invalid.length > 0 ? 'fail' : 'warn'
@@ -113,6 +118,27 @@ export async function doctorProject(inputPath = '.', options = {}) {
         ? 'Gradle/Maven build candidates exist but are not recognizable files.'
         : 'No JVM build definition found; a valid project-declared verification contract may still be used.',
     builds
+  ))
+
+  checks.push(check(
+    'build-metadata',
+    detection.status === 'confirmed' ? 'pass' : detection.status === 'conflict' ? 'fail' : 'warn',
+    detection.status === 'confirmed'
+      ? 'Build system, modules, framework hints, and report locations were detected from repository files.'
+      : detection.status === 'conflict'
+        ? 'Build metadata is conflicting or contains unrecognized build definitions.'
+        : 'Build metadata could not be identified confidently.',
+    {
+      status: detection.status,
+      system: detection.system,
+      build: detection.label,
+      framework: detection.framework,
+      buildFiles: detection.buildFiles,
+      invalidBuildFiles: detection.invalidBuildFiles,
+      productionModules: detection.productionModules,
+      testModules: detection.testModules,
+      diagnostics: detection.diagnostics
+    }
   ))
 
   const wrapperCandidates = ['gradlew', 'gradlew.bat', 'mvnw', 'mvnw.cmd']
@@ -129,6 +155,29 @@ export async function doctorProject(inputPath = '.', options = {}) {
       ? 'An executable build-wrapper file is available.'
       : 'No JVM build wrapper found; project-owned verification executables are checked separately.',
     { files: wrappers }
+  ))
+
+  const compatibilityStatus = detection.compatibility.status === 'conflict'
+    ? 'fail'
+    : detection.status === 'confirmed' && detection.compatibility.status === 'confirmed'
+      ? 'pass'
+      : 'warn'
+  checks.push(check(
+    'jvm-toolchain',
+    compatibilityStatus,
+    detection.compatibility.reason,
+    {
+      system: detection.system,
+      gradleVersion: detection.system === 'gradle' ? detection.wrapper.version : null,
+      mavenVersion: detection.system === 'maven' ? detection.wrapper.version : null,
+      javaRuntimeMajor: detection.compatibility.javaRuntimeMajor,
+      minimumJavaVersion: detection.compatibility.minimumJavaVersion,
+      minimumGradleVersion: detection.compatibility.minimumGradleVersion,
+      maximumGradleVersion: detection.compatibility.maximumGradleVersion,
+      declaredJavaVersions: detection.declaredJavaVersions,
+      compatibilitySource: detection.compatibility.source,
+      compatibilityCheckedAsOf: detection.compatibility.checkedAsOf
+    }
   ))
 
   const productionSources = matchingFiles(
@@ -232,11 +281,55 @@ export async function doctorProject(inputPath = '.', options = {}) {
     }
   ))
 
-  return {
+  const junitReports = verification?.config.gates
+    .filter((gate) => gate.required && gate.result.type === 'junit')
+    .flatMap((gate) => gate.result.reports) ?? []
+  const uncoveredTestModules = detection.testModules.filter((module) => {
+    const prefix = module === '.' ? '' : module + '/'
+    const candidates = detection.system === 'gradle'
+      ? [prefix + 'build/test-results/test/TEST-bth-sample.xml']
+      : detection.system === 'maven'
+        ? [prefix + 'target/surefire-reports/TEST-bth-sample.xml', prefix + 'target/failsafe-reports/TEST-bth-sample.xml']
+        : []
+    return candidates.length > 0 && !candidates.some((candidate) => junitReports.some((pattern) => reportGlobRegex(pattern).test(candidate)))
+  })
+  const coverageApplicable = ['gradle', 'maven'].includes(detection.system) && detection.testModules.length > 0
+  const coverageStatus = !coverageApplicable
+    ? 'warn'
+    : verificationDiagnostics.length > 0 || uncoveredTestModules.length > 0
+      ? 'fail'
+      : 'pass'
+  checks.push(check(
+    'verification-coverage',
+    coverageStatus,
+    !coverageApplicable
+      ? 'No conventional JVM test module was detected, so generated JUnit coverage cannot be proven.'
+      : uncoveredTestModules.length > 0
+        ? 'Required JUnit report patterns do not cover every detected test module.'
+        : 'Required JUnit report patterns cover every detected test module.',
+    {
+      system: detection.system,
+      testModules: detection.testModules,
+      uncoveredTestModules,
+      reports: junitReports
+    }
+  ))
+
+  const failures = checks.filter((entry) => entry.status === 'fail')
+  const criticalUnknowns = checks.filter((entry) => entry.status === 'warn' && (
+    entry.id === 'jvm-toolchain' && detection.status === 'confirmed' ||
+    entry.id === 'verification-coverage' && coverageApplicable
+  ))
+  const readiness = failures.length > 0 ? 'blocked' : criticalUnknowns.length > 0 ? 'unknown' : 'ready'
+
+  const result = {
     schemaVersion: 1,
     scope: 'structural-readiness',
     root,
-    healthy: checks.every((entry) => entry.status !== 'fail'),
+    readiness,
+    healthy: readiness === 'ready',
     checks
   }
+  Object.defineProperty(result, JVM_BUILD_DISCOVERY, { value: detection })
+  return result
 }

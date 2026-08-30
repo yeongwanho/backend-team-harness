@@ -71,6 +71,6 @@ Raw build output is not copied into evidence or JSON CLI output. Interactive fai
 
 ## Reproduction
 
-The authoritative proof remains re-execution. `rerun` in the record contains the CLI argv, including `--allow-network` when a declared Gate needed it. A second machine should compare verdict, source fingerprint, executed counts, Gate outcomes, and tool versions—not timestamps, durations, or output hashes that may legitimately differ.
+The authoritative proof remains re-execution. `rerun` in the record contains the CLI argv, including `--acknowledge-network-risk` when a declared Gate needed it. This acknowledges risk but does not claim operating-system egress isolation. A second machine should compare verdict, source fingerprint, executed counts, Gate outcomes, and tool versions—not timestamps, durations, or output hashes that may legitimately differ.
 
 Adaptive order may also legitimately differ when the two machines have different local aggregate histories. Reviewers should compare the recorded schedule and confirm that Gate identities, segment constraints, and PASS-path completeness are preserved.

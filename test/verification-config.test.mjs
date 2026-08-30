@@ -127,6 +127,7 @@ test('Maven default uses verify and ingests Surefire plus Failsafe reports', asy
   await writeFile(join(root, 'pom.xml'), '<project></project>\n', 'utf8')
   await writeFile(join(root, '.mvn/wrapper/maven-wrapper.properties'), 'distributionUrl=maven.zip\n', 'utf8')
   await writeFile(join(root, '.mvn/wrapper/maven-wrapper.jar'), 'wrapper', 'utf8')
+  await writeFile(join(root, 'mvnw'), '#!/bin/sh\n', 'utf8')
 
   const config = await defaultVerificationConfig(root)
 
@@ -136,18 +137,52 @@ test('Maven default uses verify and ingests Surefire plus Failsafe reports', asy
     'target/failsafe-reports/TEST-*.xml'
   ])
   assert.deepEqual(config.gates[0].inputs, [
+    '.mvn/wrapper/maven-wrapper.jar',
     '.mvn/wrapper/maven-wrapper.properties',
-    '.mvn/wrapper/maven-wrapper.jar'
+    'pom.xml'
   ])
+})
+
+test('Maven multi-module default binds each module build and report directory', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-maven-multimodule-'))
+  await mkdir(join(root, '.mvn/wrapper'), { recursive: true })
+  await mkdir(join(root, 'api/src/test/java/example'), { recursive: true })
+  await mkdir(join(root, 'domain/src/test/java/example'), { recursive: true })
+  await writeFile(join(root, 'pom.xml'), '<project><modules><module>api</module><module>domain</module></modules></project>\n', 'utf8')
+  await writeFile(join(root, 'api/pom.xml'), '<project></project>\n', 'utf8')
+  await writeFile(join(root, 'domain/pom.xml'), '<project></project>\n', 'utf8')
+  await writeFile(join(root, 'api/src/test/java/example/ApiTest.java'), 'class ApiTest {}\n', 'utf8')
+  await writeFile(join(root, 'domain/src/test/java/example/DomainTest.java'), 'class DomainTest {}\n', 'utf8')
+  await writeFile(join(root, '.mvn/wrapper/maven-wrapper.properties'), 'distributionUrl=maven.zip\n', 'utf8')
+  await writeFile(join(root, 'mvnw'), '#!/bin/sh\n', 'utf8')
+
+  const config = await defaultVerificationConfig(root)
+
+  assert.deepEqual(config.gates[0].result.reports, [
+    'api/target/surefire-reports/TEST-*.xml',
+    'api/target/failsafe-reports/TEST-*.xml',
+    'domain/target/surefire-reports/TEST-*.xml',
+    'domain/target/failsafe-reports/TEST-*.xml'
+  ])
+  assert.ok(config.gates[0].inputs.includes('api/pom.xml'))
+  assert.ok(config.gates[0].inputs.includes('domain/pom.xml'))
 })
 
 test('Gradle default reads only the unit-test task report directory', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-gradle-default-'))
   await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
+  await writeFile(join(root, 'gradlew'), '#!/bin/sh\n', 'utf8')
 
   const config = await defaultVerificationConfig(root)
 
   assert.deepEqual(config.gates[0].result.reports, ['build/test-results/test/**/*.xml'])
+})
+
+test('default verification is not invented when a project-owned build wrapper is absent', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-no-wrapper-default-'))
+  await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
+
+  assert.equal(await defaultVerificationConfig(root), null)
 })
 
 test('findings can block while observations must remain optional', () => {

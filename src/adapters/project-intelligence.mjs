@@ -270,10 +270,16 @@ export async function inspectProjectIntelligence(inputPath, options = {}) {
   const projectFacts = mergeProjectFacts(builtInFacts, projectFactContract.facts)
   const facts = [...builtInFacts, ...projectFacts]
   const evaluation = evaluateProjectRules(facts, ruleContract.rules)
+  const overallStatus = evaluation.blocking
+    ? 'conflict'
+    : context.structuralReadiness && context.verification.status === 'configured'
+      ? evaluation.status
+      : 'unknown'
   const result = {
     ...context,
     intelligence: {
       schemaVersion: 1,
+      overallStatus,
       sourceFingerprint: context.sourceBinding.fingerprint,
       authority: {
         deterministic: true,

@@ -109,7 +109,12 @@ test('a network-declared gate requires explicit approval', async () => {
 
   const allowed = await checkProject(root, { allowNetwork: true })
   assert.equal(allowed.confirmed, true)
-  assert.deepEqual(allowed.run.record.rerun, ['bth', 'check', '.', '--allow-network'])
+  assert.deepEqual(allowed.run.record.rerun, ['bth', 'check', '.', '--acknowledge-network-risk'])
+  assert.deepEqual(allowed.run.record.networkPolicy, {
+    declaredNetworkGate: true,
+    riskAcknowledged: true,
+    egressIsolation: 'not-enforced'
+  })
 })
 
 test('adaptive verification reorders only opted-in gates and still executes every gate on PASS', async () => {

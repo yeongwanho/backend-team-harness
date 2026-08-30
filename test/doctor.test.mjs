@@ -8,6 +8,7 @@ import { initProject } from '../src/init-project.mjs'
 
 async function preparedProject(prefix = 'bth-doctor-') {
   const root = await mkdtemp(join(tmpdir(), prefix))
+  await mkdir(join(root, 'gradle/wrapper'), { recursive: true })
   await mkdir(join(root, 'src/main/java/example'), { recursive: true })
   await mkdir(join(root, 'src/test/java/example'), { recursive: true })
   await mkdir(join(root, 'src/main/resources/db/migration'), { recursive: true })
@@ -15,6 +16,7 @@ async function preparedProject(prefix = 'bth-doctor-') {
   await writeFile(join(root, 'src/test/java/example/AppTest.java'), 'class AppTest {}\n', 'utf8')
   await writeFile(join(root, 'src/main/resources/db/migration/V1__init.sql'), 'select 1;\n', 'utf8')
   await writeFile(join(root, 'build.gradle.kts'), 'plugins { java }\n', 'utf8')
+  await writeFile(join(root, 'gradle/wrapper/gradle-wrapper.properties'), 'distributionUrl=https\\://services.gradle.org/distributions/gradle-8.14-bin.zip\n', 'utf8')
   await writeFile(join(root, 'gradlew'), '#!/bin/sh\n', 'utf8')
   await chmod(join(root, 'gradlew'), 0o755)
   await initProject(root)
@@ -27,7 +29,7 @@ test('doctor accepts content-bearing JVM backend foundations', async () => {
 
   assert.equal(result.healthy, true)
   assert.equal(result.scope, 'structural-readiness')
-  assert.equal(result.checks.every((entry) => entry.status === 'pass'), true)
+  assert.equal(result.checks.filter((entry) => entry.status === 'fail').length, 0)
 })
 
 test('doctor blocks a repository without a shared contract or verification config', async () => {

@@ -61,7 +61,7 @@ async function atomicWrite(target, content) {
 
 function createRunRecord(taskId, input, rerun, projectRoot) {
   const rerunCommand = input.result?.gates?.some((gate) => gate.network)
-    ? [...rerun, '--allow-network']
+    ? [...rerun, '--acknowledge-network-risk']
     : rerun
   const base = {
     schemaVersion: 2,
@@ -72,6 +72,11 @@ function createRunRecord(taskId, input, rerun, projectRoot) {
     source: input.sourceBinding,
     configuration: input.result?.configuration ?? null,
     toolchain: input.result?.toolchain ?? null,
+    networkPolicy: input.result?.networkPolicy ?? {
+      declaredNetworkGate: false,
+      riskAcknowledged: false,
+      egressIsolation: 'not-enforced'
+    },
     verificationReason: input.result?.reason ?? null,
     sourceStable: input.result?.sourceStable ?? null,
     postSourceFingerprint: input.result?.postSourceFingerprint ?? null,

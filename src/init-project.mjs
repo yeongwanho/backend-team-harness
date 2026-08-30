@@ -3,6 +3,8 @@ import { dirname, join, relative, resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { sharedTemplates } from './templates.mjs'
 import { defaultVerificationConfig } from './config/verification.mjs'
+import { inspectJvmBuild } from './core/jvm-build-discovery.mjs'
+import { scanProjectManifest } from './core/project-manifest.mjs'
 import {
   assertNoSymlinkSegments,
   resolveExistingProjectRoot,
@@ -39,13 +41,29 @@ export async function initProject(inputPath = '.', options = {}) {
   const backups = []
   const backupStamp = timestampForPath(options.now?.() ?? new Date()) + '-' + (options.backupSuffix ?? randomUUID().slice(0, 8))
   const writes = []
-  const detectedVerification = await defaultVerificationConfig(root)
+  const manifest = await scanProjectManifest(root, {
+    maxDepth: 12,
+    maxEntries: 100_000,
+    onLimit: 'throw',
+    onReadError: 'throw'
+  })
+  const detection = await inspectJvmBuild(root, manifest, { inspectRuntime: false })
+  const detectedVerification = await defaultVerificationConfig(root, { manifest, detection })
+  const detectedTemplates = sharedTemplates.map((template) => {
+    if (template.path !== '.backend-harness/project.md') return template
+    return {
+      ...template,
+      content: template.content
+        .replace('framework: unknown', 'framework: ' + detection.framework)
+        .replace('build: unknown', 'build: ' + detection.label)
+    }
+  })
   const templates = detectedVerification
-    ? [...sharedTemplates, {
+    ? [...detectedTemplates, {
         path: '.backend-harness/verification.json',
         content: JSON.stringify(detectedVerification, null, 2) + '\n'
       }]
-    : sharedTemplates
+    : detectedTemplates
 
   for (const template of templates) {
     const target = await resolveSafeProjectPath(root, template.path)
@@ -92,5 +110,21 @@ export async function initProject(inputPath = '.', options = {}) {
     }
   }
 
-  return { root, created, updated, skipped, backups }
+  return {
+    root,
+    created,
+    updated,
+    skipped,
+    backups,
+    detection: {
+      status: detection.status,
+      system: detection.system,
+      build: detection.label,
+      framework: detection.framework,
+      productionModules: detection.productionModules,
+      testModules: detection.testModules,
+      wrapper: detection.wrapper,
+      diagnostics: detection.diagnostics
+    }
+  }
 }

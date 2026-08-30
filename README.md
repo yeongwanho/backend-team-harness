@@ -65,10 +65,10 @@ node src/cli.mjs check /path/to/backend-project
 
 ```bash
 node src/cli.mjs doctor examples/spring-service
-node src/cli.mjs check examples/spring-service --allow-network
+node src/cli.mjs check examples/spring-service --acknowledge-network-risk
 ```
 
-`--allow-network`는 cold machine에서 Gradle Wrapper와 공개 의존성을 내려받는 프로젝트 Gate에 대한 명시적 승인입니다. 이것은 실행 의도를 확인하는 **승인 latch**이지 운영체제 방화벽이나 sandbox가 아닙니다. 프로젝트 실행 파일 자체가 악의적이면 선언 없이도 네트워크를 시도할 수 있으므로, 낯선 저장소는 Gate를 먼저 검토해야 합니다.
+`--acknowledge-network-risk`는 cold machine에서 Gradle Wrapper와 공개 의존성을 내려받을 수 있는 프로젝트 Gate의 위험을 사용자가 확인했다는 기록입니다. 이것은 실행 의도를 확인하는 **위험 승인 latch**이지 운영체제 방화벽이나 sandbox가 아닙니다. 프로젝트 실행 파일 자체가 악의적이면 선언 없이도 네트워크를 시도할 수 있으므로, 낯선 저장소는 Gate를 먼저 검토해야 합니다. 예전 `--allow-network` 이름은 호환 목적으로만 허용되며 경고를 출력합니다.
 
 ## 프로젝트 실행 계약
 
@@ -102,14 +102,14 @@ node src/cli.mjs check examples/spring-service --allow-network
 - `command[0]`은 프로젝트 안의 일반 실행 파일이어야 합니다.
 - 명령은 argv 배열이며 `shell: false`로 실행됩니다.
 - `inputs`는 Git에서 무시됐더라도 결과에 영향을 주는 파일을 내용 해시로 묶습니다.
-- `network: true`인 Gate는 CLI의 명시적 `--allow-network` 없이는 실행되지 않습니다.
+- `network: true`인 Gate는 CLI의 명시적 `--acknowledge-network-risk` 없이는 실행되지 않습니다.
 - `dependsOn`은 선행 Gate가 통과하기 전 실행을 막습니다. 필수 Gate가 선택적 observation에 의존하는 구성은 거절됩니다.
 - 하나 이상의 required JUnit Gate가 반드시 있어야 합니다.
 - `minimumTests`는 전체가 아니라 실제 실행된 테스트 수의 하한입니다.
 
 역사적인 경로명인 `.backend-harness/quality-gates/*.yaml`은 **사람이 계획·리뷰 때 확인할 체크리스트**입니다. `required: true`는 계획에서 반드시 다뤄야 한다는 뜻이지 자동 실행됐다는 뜻이 아닙니다. PASS를 차단하거나 만드는 실행 권한은 오직 `verification.json`에 선언된 Gate에 있습니다.
 
-자동 생성되는 JVM 기본값은 기존 캐시만 쓰는 `--offline` 모드입니다. 새 PC에서 의존성을 받아야 한다면 팀이 설정에서 `--offline`을 제거하고 `network: true`를 선언한 뒤, 해당 실행에만 `--allow-network`를 줍니다.
+자동 생성되는 JVM 기본값은 기존 캐시만 쓰는 `--offline` 모드입니다. 새 PC에서 의존성을 받아야 한다면 팀이 설정에서 `--offline`을 제거하고 `network: true`를 선언한 뒤, 해당 실행에만 `--acknowledge-network-risk`를 줍니다.
 
 ### 실패를 더 빨리 보여 주는 선택적 순서 최적화
 
@@ -196,7 +196,7 @@ node src/cli.mjs pack install codegraph-advisory /path/to/project
 | `contract` | Pact/SCC/OpenAPI/message contract Gate | 실행된 JUnit이므로 근거 가능 |
 | `codegraph-advisory` | import·상속·구현·주입·테스트 관계를 provenance와 함께 연결한 Java/Kotlin 구조 그래프 | 참고 전용, PASS 영향 없음 |
 
-설치는 기존 Gate id나 Pack 폴더를 덮어쓰지 않으며, 변경 전 `verification.json`을 로컬 backup에 보관합니다. DB·architecture·contract Pack은 프로젝트의 실제 task/profile/test를 팀이 구현해야 하며, 준비되지 않으면 fail-closed합니다. DB Pack은 Testcontainers 이미지나 의존성을 받을 수 있어 `network: true`로 설치되며 실행할 때 `--allow-network`가 필요합니다.
+설치는 기존 Gate id나 Pack 폴더를 덮어쓰지 않으며, 변경 전 `verification.json`을 로컬 backup에 보관합니다. DB·architecture·contract Pack은 프로젝트의 실제 task/profile/test를 팀이 구현해야 하며, 준비되지 않으면 fail-closed합니다. DB Pack은 Testcontainers 이미지나 의존성을 받을 수 있어 `network: true`로 설치되며 실행할 때 `--acknowledge-network-risk`가 필요합니다.
 
 0.7에서 0.8로 올릴 때 기존 Pack Gate가 기본 test와 같은 report 폴더를 쓰고 있다면 먼저 Gate별 전용 폴더로 옮겨야 합니다. Gradle은 `build/test-results/<gate>/`, Maven은 `target/bth-reports/<gate>/` 형태를 권장합니다. 0.8은 겹치는 glob과 프로젝트 루트 report를 거절하며, 실행 전 정리할 기존 report도 Git에 추적되지 않고 `.gitignore`에 포함된 파일만 허용합니다. `architecture` Pack의 두 Gradle snippet은 `*ArchitectureTest`를 기본 `test`에서 제외해 중복 실행도 막습니다.
 
@@ -338,6 +338,8 @@ node src/cli.mjs interview rebind USER-17 /path/to/project --by developer
 node src/cli.mjs interview finalize USER-17 /path/to/project --by developer
 ```
 
+`bth intelligence inspect /path --no-cache`는 `.backend-harness/verification.json`이나 초기화된 계약이 전혀 없어도 Git 저장소를 수정하지 않고 실행됩니다. 이때 추론한 Gate는 설명용일 뿐 `verification.status: missing`, `overallStatus: unknown`으로 남으며 PASS 권한을 갖지 않습니다. `bth init`은 실제 Gradle/Maven 정의, Spring Boot 단서, wrapper 버전, 모듈별 `src/test` 위치를 읽어 프로젝트 문서와 JUnit report 패턴을 생성합니다. `doctor`는 활성 Java와 Gradle wrapper의 공식 런타임 호환성, 모든 테스트 모듈의 report coverage를 함께 검사하며 모르는 상태를 `healthy`로 승격하지 않습니다.
+
 인터뷰 시작 시 BTH는 Git 지문, 빌드 정의, 소스·테스트 수, Flyway, DB dialect, 품질 정책, `verification.json` Gate를 읽기 전용으로 수집합니다. 파일별 JVM 색인은 `bth intelligence inspect`에서 볼 수 있고, 장기 보관 인터뷰 스냅샷에는 크기 폭증을 막기 위해 파일 목록 대신 집계·누락 수만 남깁니다. 질문은 완료 조건·변경 범위·DB 영향·검증·제약의 다섯 가지이며, 한 번에 현재 질문 하나만 답할 수 있습니다. 질문의 힌트는 감지한 MySQL/Flyway/Gate 사실을 보여 주지만 답을 대신 채우지는 않습니다. 확정되지 않은 답은 `--status unknown` 또는 `--status conflict`로 남길 수 있지만 해결 전에는 계획을 확정하지 못합니다. `--claims`를 사용하면 DB 변경/migration, 포함·제외 모듈, 필수 Gate, 공개 API 호환성처럼 명시된 조합만 Core가 검사합니다. 자연어 의미를 추측하지 않으며, 후보 해소는 후보 내용과 현재 context snapshot의 SHA-256, actor·사유·시간에 묶입니다. `rebind`로 context가 바뀌면 같은 문장으로 보이는 후보도 다시 검토해야 합니다.
 
 `finalize`는 다음 파일을 만듭니다.
@@ -369,7 +371,7 @@ node src/cli.mjs implement configure codex /path/to/project \
   --mode auto --allowed-prefixes '["src/","pom.xml"]'
 # 승인된 plan.md 범위만 격리 worktree에서 구현
 node src/cli.mjs implement run USER-17 /path/to/project \
-  --by developer --allow-write --allow-network
+  --by developer --allow-write --acknowledge-network-risk
 node src/cli.mjs implement status USER-17 /path/to/project
 # 실패 기록·격리 worktree를 감사 영수증과 함께 폐기해야 할 때만
 node src/cli.mjs implement reset USER-17 /path/to/project \
@@ -387,7 +389,7 @@ Task의 context·plan·implementation authoring에는 한 명의 active writer�
 
 BTH Core는 모델을 PASS 판정기로 사용하지 않습니다. 대신 설치된 Codex CLI와 Claude Code를 내장 provider adapter로 실행하거나, 기존처럼 프로젝트가 소유하는 명령 wrapper를 연결할 수 있습니다. 어느 경로든 계획·승인·검증 판정은 모델의 주장과 분리됩니다.
 
-`implement configure`는 비활성 템플릿만 기본적으로 바꾸고, 이미 설정된 adapter는 `--force` 없이는 교체하지 않습니다. 교체 전 파일은 `.backend-harness/local/backups/`에 보관됩니다. provider는 `shell: false`로 실행되고 위험한 sandbox-bypass flag를 사용하지 않으며, 매 실행에 `--allow-write --allow-network`가 다시 필요합니다.
+`implement configure`는 비활성 템플릿만 기본적으로 바꾸고, 이미 설정된 adapter는 `--force` 없이는 교체하지 않습니다. 교체 전 파일은 `.backend-harness/local/backups/`에 보관됩니다. provider는 `shell: false`로 실행되고 위험한 sandbox-bypass flag를 사용하지 않으며, 매 실행에 `--allow-write --acknowledge-network-risk`가 다시 필요합니다.
 
 ```json
 {
@@ -411,9 +413,9 @@ BTH Core는 모델을 PASS 판정기로 사용하지 않습니다. 대신 설치
 }
 ```
 
-`auto`는 구조화된 interview claims가 DB·migration·공개 API 변경을 명시하면 `deep`(12,000자/high effort), 단일 모듈이며 DB·공개 API 변경이 없다고 모두 명시하면 `fast`(2,000자/low effort), 그 밖에는 `balanced`(6,000자/medium effort)를 선택합니다. 승인된 task 본문은 fast/balanced/deep별 8,000/24,000/64,000자로 별도 제한하며, 자동 모드의 큰 작업은 deep으로 올리고 64,000자를 넘으면 작업을 나누도록 실패합니다. 모르는 작업을 가볍다고 추측하지 않습니다. 명시적 `--mode fast|balanced|deep` 설정과 64~32,768자의 code-context override도 기록됩니다.
+`auto`는 구조화된 interview claims로 작업 강도를 정합니다. migration이 필요하거나, DB 변경인데 migration 필요 여부가 미확정이거나, 공개 API 호환성을 지키지 못하는 변경은 `deep`(12,000자/high effort)입니다. 반대로 단일 모듈·migration 없음·DB 영향 명시·API 호환성 유지가 모두 확인되면 DB를 읽고 쓰거나 호환 가능한 CRUD API를 추가해도 `fast`(2,000자/low effort)입니다. 그 밖에는 `balanced`(6,000자/medium effort)를 선택합니다. 승인된 task 본문은 fast/balanced/deep별 8,000/24,000/64,000자로 별도 제한하며, 자동 모드의 큰 작업은 deep으로 올리고 64,000자를 넘으면 작업을 나누도록 실패합니다. 모르는 작업을 가볍다고 추측하지 않습니다. 명시적 `--mode fast|balanced|deep` 설정과 64~32,768자의 code-context override도 기록됩니다.
 
-provider request에는 승인된 계획, 허용 경로·diff budget, source-bound codegraph의 제한된 상위 문맥, 직전 실패 요약만 들어갑니다. 요청 파일 자체도 실행 전후 SHA-256으로 봉인됩니다. provider는 관련 경로부터 읽고 넓은 테스트는 실행하지 않도록 지시받으며, 수정 뒤 BTH가 기존 `verification.json`의 모든 필수 Gate를 실행합니다. provider가 보고한 token/cost 숫자는 관찰값으로만 남고 PASS 권한은 없습니다. 코드 변경이 전혀 없으면 `no-source-change`로 실패하며 전체 Gate를 성공한 척 실행하지 않습니다. 내장 provider는 이미 로그인된 로컬 CLI 세션을 사용하며 API-key 환경변수는 의도적으로 전달하지 않습니다.
+provider request에는 승인된 계획, 허용 경로·diff budget, source-bound codegraph의 제한된 상위 문맥, 직전 실패 요약만 들어갑니다. 요청 파일 자체도 실행 전후 SHA-256으로 봉인됩니다. provider는 관련 경로부터 읽고 넓은 테스트는 실행하지 않도록 지시받으며, 수정 뒤 BTH가 기존 `verification.json`의 모든 필수 Gate를 실행합니다. 즉 `fast`는 구현 탐색과 모델 비용을 줄이지 검증을 몰래 생략하지 않습니다. provider가 보고한 token/cost 숫자는 관찰값으로만 남고 PASS 권한은 없습니다. 코드 변경이 전혀 없으면 첫 호출에서 `no-source-change`로 멈추고 Gate와 맹목적 recovery를 실행하지 않습니다. 내장 provider는 이미 로그인된 로컬 CLI 세션을 사용하며 API-key 환경변수는 의도적으로 전달하지 않습니다.
 
 `fast`가 제한하는 것은 BTH가 추가하는 task·code context와 provider effort입니다. 각 CLI가 자체적으로 붙이는 system prompt, tool schema, cache traffic까지 작아진다는 뜻은 아닙니다. 2026-08-30의 작은 합성 Java 구현 smoke에서 BTH request는 각각 약 1.6 KiB였지만 Codex는 총 input 97,449(그중 cached 82,688), Claude는 input 6 + cache creation 13,849 + cache read 80,424와 약 $0.076을 보고했습니다. 이 값은 한 환경의 관찰값이지 일반 성능 보장이 아닙니다. Claude는 `--max-budget-usd`를 전달할 수 있지만 현재 사용한 Codex CLI에는 같은 달러 상한이 없어 effort·timeout·attempt 한도로만 제한합니다. 따라서 내장 provider는 승인된 구현용이며, 짧은 질문을 항상 저비용으로 답하는 chat router는 아직 아닙니다.
 
@@ -422,13 +424,13 @@ provider request에는 승인된 계획, 허용 경로·diff budget, source-boun
 실행 조건과 경계:
 
 - source-bound 계획이 사람에게 승인됐고 원본 소스가 clean이어야 합니다.
-- 매 실행마다 `--allow-write`, 네트워크 어댑터는 `--allow-network`도 필요합니다.
+- 매 실행마다 `--allow-write`, 네트워크 어댑터는 `--acknowledge-network-risk`도 필요합니다.
 - 구현은 `~/.local/state/backend-team-harness/worktrees/`의 현재 사용자 전용(0700·소유자 확인) 루트에 만든 detached worktree에서만 진행됩니다. Git worktree 등록 때문에 원본 저장소의 `.git/worktrees` 메타데이터는 바뀌지만 bound source 파일은 바꾸지 않습니다.
 - 현재 격리 구현은 harness 프로젝트 루트와 Git 최상위가 같은 저장소만 받습니다. monorepo 하위 서비스는 경로를 잘못 인증하지 않고 명시적으로 거절하며, project-scoped worktree 증거는 로드맵 항목입니다.
 - 허용 prefix·파일 수·diff bytes를 넘긴 변경, `verification.json`, 구현 wrapper, Gate 실행 파일 변경은 실패로 분류됩니다.
 - 어댑터가 격리 `HEAD`를 commit/reset으로 움직이거나 공유 branch/tag ref, assume-unchanged, skip-worktree를 바꿔도 해당 시도는 실패합니다. 소스 diff는 immutable base commit과 비교합니다.
 - 실패 Gate와 테스트 요약만 다음 bounded repair 요청에 들어갑니다. 최대 5회를 넘길 수 없습니다. 단, Gate가 후보 파일·전체 변경 경로·공유 ref·숨김 index flag를 바꾸면 작업공간 신뢰가 깨진 것으로 보아 자동 repair를 중단하고 reset을 요구합니다.
-- 로그인 실패, 비용 한도 초과, rate limit, 설치된 CLI와 argv의 비호환처럼 같은 입력을 즉시 반복해도 해결되지 않는 provider 오류는 한 번만 기록하고 중단합니다. 일반 provider 실패와 실제 Gate 실패만 남은 recovery budget 안에서 재시도합니다.
+- 로그인 실패, 비용 한도 초과, rate limit, 설치된 CLI와 argv의 비호환, 소스 변경 없음처럼 같은 입력을 즉시 반복해도 해결되지 않는 결과는 한 번만 기록하고 중단합니다. 일반 provider 실패와 실제 Gate 실패만 남은 recovery budget 안에서 재시도합니다.
 - 실패 횟수를 소진했거나 오래된 구현 기록을 폐기할 때는 `implement reset --by ... --discard-workspace`가 worktree를 제거하고 원본 sealed record와 별도 sealed reset receipt를 보관합니다.
 - 통합 후 task가 `VERIFIED` 또는 `DONE`이면 `implement cleanup --by ... --discard-workspace`가 격리 worktree를 제거하되 passed record와 이전 seal 연결은 유지합니다.
 - 격리 검증이 통과해도 자동 merge·commit·배포·운영 DB 접근·`VERIFIED` 전환은 하지 않습니다. 사람이 diff를 반영해야 하며, isolated task의 `bth verify`는 상태가 `VERIFY_FAILED`여도 격리 결과의 전체 Git 변경 경로·일반 파일 내용·삭제·실행 비트·선언 입력이 실제 소스와 정확히 일치할 때만 시작합니다. 인증 목록 밖의 추가 변경과 symlink 구현은 거절됩니다.

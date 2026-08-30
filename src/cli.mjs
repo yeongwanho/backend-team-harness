@@ -43,7 +43,7 @@ function printHelp() {
     '  bth doctor [path] [--json]',
     '  bth intelligence inspect [path] [--no-cache] [--json]',
     '  bth intelligence warm-cache [path] [--json]',
-    '  bth check [path] [--allow-network] [--json]',
+    '  bth check [path] [--acknowledge-network-risk] [--json]',
     '  bth pack list [--json]',
     '  bth pack install <id> [path] [--json]',
     '  bth baseline update [path] [--json]',
@@ -63,11 +63,11 @@ function printHelp() {
     '  bth interview finalize <id> [path] --by <actor> [--json]',
     '  bth implement configure <codex|claude> [path] [--mode <auto|fast|balanced|deep>] [--allowed-prefixes <json>] [--force] [--json]',
     '  bth implement providers [path] [--json]',
-    '  bth implement run <id> [path] --by <actor> --allow-write [--allow-network] [--json]',
+    '  bth implement run <id> [path] --by <actor> --allow-write [--acknowledge-network-risk] [--json]',
     '  bth implement status <id> [path] [--json]',
     '  bth implement reset <id> [path] --by <actor> --discard-workspace [--json]',
     '  bth implement cleanup <id> [path] --by <actor> --discard-workspace [--json]',
-    '  bth verify <id> [path] [--allow-network] [--json]',
+    '  bth verify <id> [path] [--acknowledge-network-risk] [--json]',
     '  bth diagnose <id> [path] [--json]',
     '  bth version',
     '',
@@ -76,8 +76,16 @@ function printHelp() {
     '  verify runs only project-contained executables declared in verification.json after an approved task state.',
     '  interview binds requirements, deterministic project facts, and a reviewable plan to one Git source fingerprint.',
     '  implement runs a configured adapter only inside a detached task worktree and never applies its diff automatically.',
+    '  acknowledge-network-risk permits a declared network-capable command; it does not enforce operating-system egress isolation.',
     '  VERIFIED requires fresh structured test reports with at least one executed test.'
   ].join('\n'))
+}
+
+function acknowledgedNetworkRisk(parsed) {
+  if (parsed.flags.has('--allow-network')) {
+    console.error('Warning: --allow-network is deprecated because BTH does not isolate egress. Use --acknowledge-network-risk.')
+  }
+  return parsed.flags.has('--acknowledge-network-risk') || parsed.flags.has('--allow-network')
 }
 
 function printInterviewProgress(result) {
@@ -383,6 +391,14 @@ async function runInit(args) {
     ', preserved: ' + result.skipped.length +
     ', backups: ' + result.backups.length
   )
+  console.log(
+    'Detected: build=' + result.detection.build +
+    ', framework=' + result.detection.framework +
+    ', test-modules=' + result.detection.testModules.length
+  )
+  for (const diagnostic of result.detection.diagnostics) {
+    console.log('[UNKNOWN] ' + diagnostic)
+  }
 }
 
 async function runDoctor(args) {
@@ -429,8 +445,9 @@ async function runIntelligence(args) {
   })
   printResult(result, parsed.flags.has('--json'), () => {
     const intelligence = result.intelligence
-    console.log('Project intelligence: ' + intelligence.evaluation.status.toUpperCase())
+    console.log('Project intelligence: ' + intelligence.overallStatus.toUpperCase())
     console.log('Source: ' + intelligence.sourceFingerprint)
+    console.log('Harness contract: ' + result.verification.status.toUpperCase() + (result.verification.inferredFromSource ? ' (read-only inference only)' : ''))
     console.log('JVM cache: ' + intelligence.code.cache.status.toUpperCase())
     console.log('Facts: ' + intelligence.facts.length + ' (' + intelligence.projectFacts.count + ' project-owned), rules: ' + intelligence.rules.count)
     for (const rule of intelligence.evaluation.results) {
@@ -440,6 +457,9 @@ async function runIntelligence(args) {
       console.log('[UNKNOWN] ' + diagnostic)
     }
     for (const diagnostic of intelligence.projectFacts.diagnostics) {
+      console.log('[UNKNOWN] ' + diagnostic)
+    }
+    for (const diagnostic of result.verification.diagnostics) {
       console.log('[UNKNOWN] ' + diagnostic)
     }
   })
@@ -720,17 +740,17 @@ async function runImplement(args) {
   }
   if (subcommand === 'run') {
     const parsed = parseArguments(rest, {
-      booleans: ['--json', '--allow-write', '--allow-network'],
+      booleans: ['--json', '--allow-write', '--acknowledge-network-risk', '--allow-network'],
       values: ['--by']
     })
-    assertPositionalCount(parsed.positionals, 1, 2, 'bth implement run <id> [path] --by <actor> --allow-write [--allow-network] [--json]')
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth implement run <id> [path] --by <actor> --allow-write [--acknowledge-network-risk] [--json]')
     const actor = parsed.options.get('--by')
     if (!actor) throw new Error('Implementation requires --by <actor>.')
     const [id, path = '.'] = parsed.positionals
     const result = await runImplementation(path, id, {
       actor,
       allowWrite: parsed.flags.has('--allow-write'),
-      allowNetwork: parsed.flags.has('--allow-network')
+      allowNetwork: acknowledgedNetworkRisk(parsed)
     })
     printResult(result, parsed.flags.has('--json'), () => {
       console.log('Isolated implementation ' + result.record.status + ' for task ' + id + '.')
@@ -836,10 +856,10 @@ async function runBaseline(args) {
 }
 
 async function runVerify(args) {
-  const parsed = parseArguments(args, { booleans: ['--json', '--allow-network'] })
-  assertPositionalCount(parsed.positionals, 1, 2, 'bth verify <id> [path] [--allow-network] [--json]')
+  const parsed = parseArguments(args, { booleans: ['--json', '--acknowledge-network-risk', '--allow-network'] })
+  assertPositionalCount(parsed.positionals, 1, 2, 'bth verify <id> [path] [--acknowledge-network-risk] [--json]')
   const [id, path = '.'] = parsed.positionals
-  const result = await verifyTask(path, id, { allowNetwork: parsed.flags.has('--allow-network') })
+  const result = await verifyTask(path, id, { allowNetwork: acknowledgedNetworkRisk(parsed) })
   printResult(result, parsed.flags.has('--json'), () => {
     console.log('Verification ' + (result.confirmed ? 'confirmed' : 'failed') + ' for task ' + id + '.')
     console.log('Task state: ' + result.task.state)
@@ -862,9 +882,9 @@ async function runVerify(args) {
 }
 
 async function runCheck(args) {
-  const parsed = parseArguments(args, { booleans: ['--json', '--allow-network'] })
-  assertPositionalCount(parsed.positionals, 0, 1, 'bth check [path] [--allow-network] [--json]')
-  const result = await checkProject(parsed.positionals[0] ?? '.', { allowNetwork: parsed.flags.has('--allow-network') })
+  const parsed = parseArguments(args, { booleans: ['--json', '--acknowledge-network-risk', '--allow-network'] })
+  assertPositionalCount(parsed.positionals, 0, 1, 'bth check [path] [--acknowledge-network-risk] [--json]')
+  const result = await checkProject(parsed.positionals[0] ?? '.', { allowNetwork: acknowledgedNetworkRisk(parsed) })
   printResult(result, parsed.flags.has('--json'), () => {
     console.log('Project verification ' + (result.confirmed ? 'passed.' : 'failed.'))
     console.log('Source: ' + result.sourceBinding.fingerprint)

@@ -227,6 +227,9 @@ async function structuredImplementationClaims(root, task) {
   const interview = await loadInterview(root, task.id)
   const claims = {}
   for (const answer of interview.record.answers ?? []) Object.assign(claims, answer.claims ?? {})
+  if (!Array.isArray(claims.requiredGates) && Array.isArray(interview.artifacts?.plan?.declaredRequiredGates)) {
+    claims.requiredGates = [...interview.artifacts.plan.declaredRequiredGates]
+  }
   return claims
 }
 
@@ -380,7 +383,7 @@ async function runUnlocked(root, taskId, options) {
   const loadedConfig = await loadImplementationConfig(root)
   const sourceVerificationConfig = (await loadVerificationConfig(root)).config
   if (!loadedConfig.config.adapter) throw new Error('Implementation adapter is disabled. Configure .backend-harness/implementation.json first.')
-  if (loadedConfig.config.adapter.network && options.allowNetwork !== true) throw new Error('Implementation adapter declares network access; pass --allow-network explicitly.')
+  if (loadedConfig.config.adapter.network && options.allowNetwork !== true) throw new Error('Implementation adapter may use the network; pass --acknowledge-network-risk explicitly. BTH does not isolate operating-system egress.')
   if (options.allowWrite !== true) throw new Error('Implementation changes require explicit --allow-write approval.')
   const providerProbe = loadedConfig.config.adapter.kind === 'provider'
     ? await (options.providerProbe ?? probeImplementationProvider)(loadedConfig.config.adapter.provider, { cwd: root })
@@ -512,6 +515,7 @@ async function runUnlocked(root, taskId, options) {
       ? {
           schemaVersion: 1,
           task,
+          // Legacy schema v1 keeps its exact public field name for project-owned adapters.
           authority: { workspaceOnly: true, deployment: false, productionDatabase: false, networkApproved: options.allowNetwork === true },
           attempt,
           recovery: recoveryInput(verification)
@@ -528,7 +532,13 @@ async function runUnlocked(root, taskId, options) {
             maxDiffBytes: loadedConfig.config.writePolicy.maxDiffBytes
           },
           codeContext,
-          authority: { workspaceOnly: true, deployment: false, productionDatabase: false, networkApproved: options.allowNetwork === true },
+          authority: {
+            workspaceOnly: true,
+            deployment: false,
+            productionDatabase: false,
+            networkRiskAcknowledged: options.allowNetwork === true,
+            egressIsolation: 'not-enforced'
+          },
           attempt,
           recovery: recoveryInput(verification)
         }
@@ -618,6 +628,18 @@ async function runUnlocked(root, taskId, options) {
           tests: null,
           gates: []
         }
+    } else if (!changed) {
+      attemptVerification = {
+        confirmed: false,
+        sourceFingerprint: after?.fingerprint ?? null,
+        runPath: null,
+        failure: {
+          code: 'implementation_no_source_change',
+          message: 'The implementation provider completed without a source change. BTH stopped without running Gates or spending a blind recovery attempt.'
+        },
+        tests: null,
+        gates: []
+      }
     } else if (adapterPassed) {
       candidateFiles = await snapshotImplementedFiles(workspace.path, changedPaths)
       const checked = compactVerification(await checkProject(workspace.path, { allowNetwork: options.allowNetwork === true }))
@@ -696,7 +718,7 @@ async function runUnlocked(root, taskId, options) {
               : 'verification-failed',
       verification: attemptVerification
     })
-    if (gateIntegrityFailure || providerFailureIsNonRetryable(adapterRun)) break
+    if (attempts.at(-1)?.outcome === 'no-source-change' || gateIntegrityFailure || providerFailureIsNonRetryable(adapterRun)) break
     if (attemptVerification?.confirmed) {
       status = 'passed'
       certifiedImplementedFiles = candidateFiles

@@ -123,7 +123,7 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] explicit Gate dependency ready-set scheduling
 - [x] opt-in bounded parallel batches with distinct resource classes
 - [x] provider-neutral project-owned implementation adapter contract
-- [x] external detached task worktree with explicit write/network approval and bound-source breach evidence
+- [x] external detached task worktree with explicit write approval, explicit network-risk acknowledgement, and bound-source breach evidence
 - [x] allowed-prefix, changed-file, diff-byte, and verification-control-plane guards
 - [x] bounded repair attempts driven by structured verification failure summaries
 - [x] immutable-base diff detection even when an adapter commits, plus file-level integration proof before verify
@@ -150,7 +150,7 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 
 - [x] explicit Codex CLI and Claude Code provider configuration with legacy command-adapter compatibility
 - [x] PATH resolution, version probe, filtered environment, `shell: false`, and no dangerous sandbox-bypass flags
-- [x] deterministic fast/balanced/deep context and effort profiles with conservative auto fallback
+- [x] deterministic fast/balanced/deep context and effort profiles with conservative auto fallback, compatible single-module CRUD fast path, and no-change one-attempt stop
 - [x] source-bound bounded code context, approved plan, write policy, authority limits, and compact recovery request
 - [x] detached-worktree implementation followed by the unchanged complete verification Gate contract
 - [x] bounded numeric token/cost telemetry recorded as advisory evidence only
@@ -168,6 +168,7 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [ ] starter recipes for non-JVM backends, driven by measured team demand
 - [ ] runtime coverage-to-test observation index
 - [ ] runtime SQL/table observation index
+- [ ] team-declared per-module Gate activation with conservative cross-module fallback and measured no-false-skip evidence
 - [ ] richer compiler/bytecode graph sidecar with per-edge provenance
 - [ ] conservative test recommendations displayed as advisory only
 - [ ] CI adapter that reuses the exact `verification.json`
