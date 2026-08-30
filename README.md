@@ -216,7 +216,7 @@ node src/cli.mjs pack install codegraph-advisory /path/to/project
 | `db-integration` | 같은 운영 dialect의 Testcontainers/Compose 통합테스트 Gate | 실행된 JUnit이므로 근거 가능 |
 | `architecture` | ArchUnit/Spring Modulith `*ArchitectureTest` Gate | 실행된 JUnit이므로 근거 가능 |
 | `contract` | Pact/SCC/OpenAPI/message contract Gate | 실행된 JUnit이므로 근거 가능 |
-| `codegraph-advisory` | import·상속·구현·주입·테스트 관계를 provenance와 함께 연결한 Java/Kotlin 구조 그래프 | 참고 전용, PASS 영향 없음 |
+| `codegraph-advisory` | JVM·TypeScript/JavaScript·Python의 보수적 정적 관계와 SQL·설정·템플릿의 경로 전용 artifact를 연결한 구조 그래프 | 참고 전용, PASS 영향 없음 |
 
 설치는 기존 Gate id나 Pack 폴더를 덮어쓰지 않으며, 변경 전 `verification.json`을 로컬 backup에 보관합니다. DB·architecture·contract Pack은 프로젝트의 실제 task/profile/test를 팀이 구현해야 하며, 준비되지 않으면 fail-closed합니다. DB Pack은 Testcontainers 이미지나 의존성을 받을 수 있어 `network: true`로 설치되며 실행할 때 `--acknowledge-network-risk`가 필요합니다.
 
@@ -307,7 +307,7 @@ node src/cli.mjs task export-plan USER-17 /path/to/project \
 
 BTH는 요구사항의 단어를 path/type과 대조하고, provenance별 가중치가 있는 edge 위에서 bounded Personalized PageRank를 계산합니다. 가장 강한 lexical seed에서 dependencies와 dependents를 방향별로 펼치고 순환 컴포넌트도 표시합니다. 결과에는 점수뿐 아니라 사용한 문자 수, 누락된 node 수, graph 생성값, edge provenance와 알려진 한계가 들어갑니다. 그래프가 없거나 오래됐거나 run record와 digest가 다르면 계획 export는 실패하지 않고 `codeContext.status: "unavailable"`과 이유를 돌려줍니다.
 
-순위 회귀는 50개 node, 4개 요구사항, 20개 distractor가 있는 versioned synthetic gold fixture에서 같은 API로 측정합니다. 현재 Recall@5와 Recall@20은 모두 `1.0`입니다. 이 수치는 알고리즘 변경으로 기본 탐색 품질이 무너지는 것을 잡는 합성 회귀 근거이며, 회사 코드나 다른 프레임워크에서의 정확도 주장이 아닙니다.
+합성 순위 회귀는 50개 node, 4개 요구사항, 20개 distractor가 있는 versioned fixture에서 같은 API로 측정하며 현재 Recall@5와 Recall@20은 모두 `1.0`입니다. 별도로 `npm run benchmark:public -- --allow-network`는 Spring Petclinic, NestJS Boilerplate, Full Stack FastAPI Template의 고정 commit 20개를 clone하고 각 실제 변경 파일을 gold로 검증합니다. 현재 공개 corpus 관찰값은 mean Recall@5 `0.3682`, Recall@20 `0.7075`, nDCG@20 `0.4908`, Recall@20=0 작업 `0개`입니다. 이는 **변경 파일 위치 찾기**의 재현 가능한 관찰일 뿐 구현 성공률이나 회사 저장소 정확도 주장이 아닙니다. 원본 코드·artifact 본문은 evidence에 저장하지 않습니다.
 
 ## 테스트 수 감소 방지
 

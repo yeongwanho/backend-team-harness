@@ -24,6 +24,12 @@ const EDGE_CONTRACTS = new Map([
 const MAX_IMPACT_DEPTH = 8
 const MAX_IMPACT_NODES = 5000
 const MAX_IMPACT_PATHS = 32
+const SEARCH_TERM = /^[A-Za-z_$][A-Za-z0-9_$]{1,127}$/
+const STOP_TERMS = new Set(['add', 'and', 'are', 'expose', 'for', 'from', 'in', 'into', 'not', 'only', 'the', 'then', 'this', 'through', 'to', 'use', 'used', 'with'])
+const BACKEND_TERM_ALIASES = new Map([
+  ['configuration', 'config'],
+  ['documentation', 'document']
+])
 
 function assertObject(value, label) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -95,12 +101,18 @@ function validateGraph(document) {
     if (typeof node.qualifiedName !== 'string' || !node.qualifiedName || node.qualifiedName.length > 1024) {
       throw new Error('nodes[' + index + '].qualifiedName is invalid.')
     }
-    if (!['java', 'kotlin'].includes(node.language)) {
+    if (!['java', 'kotlin', 'typescript', 'javascript', 'python', 'artifact'].includes(node.language)) {
       throw new Error('nodes[' + index + '].language is invalid.')
     }
+    const searchTerms = node.searchTerms === undefined
+      ? []
+      : Array.isArray(node.searchTerms) && node.searchTerms.length <= 128 && node.searchTerms.every((term) => typeof term === 'string' && SEARCH_TERM.test(term))
+        ? [...new Set(node.searchTerms)]
+        : null
+    if (searchTerms === null) throw new Error('nodes[' + index + '].searchTerms is invalid.')
     ids.add(node.id)
     paths.add(path)
-    return { id: node.id, path, language: node.language, qualifiedName: node.qualifiedName }
+    return { id: node.id, path, language: node.language, qualifiedName: node.qualifiedName, searchTerms }
   })
   const edges = graph.edges.map((edge, index) => {
     assertObject(edge, 'edges[' + index + ']')
@@ -129,15 +141,28 @@ function lexicalTerms(value) {
     .toLowerCase()
   const parts = expanded.match(/[\p{L}\p{N}_$]{2,}/gu) ?? []
   const compact = String(value).toLowerCase().match(/[\p{L}\p{N}_$]{4,}/gu) ?? []
-  return [...new Set([...parts, ...compact])].slice(0, 64)
+  const expandedParts = [...parts, ...compact].flatMap((token) => {
+    const values = [token]
+    const alias = BACKEND_TERM_ALIASES.get(token)
+    if (alias) values.push(alias)
+    if (token.length > 4 && token.endsWith('ies')) values.push(token.slice(0, -3) + 'y')
+    else if (token.length > 3 && token.endsWith('s') && !token.endsWith('ss')) values.push(token.slice(0, -1))
+    return values
+  })
+  return [...new Set(expandedParts.filter((token) => !STOP_TERMS.has(token)))].slice(0, 64)
 }
 
 function personalization(nodes, query) {
   const queryTerms = lexicalTerms(query)
   const compactQueryTerms = String(query).toLowerCase().match(/[\p{L}\p{N}_$]{4,}/gu) ?? []
-  const nodeTerms = nodes.map((node) => new Set(lexicalTerms(node.path + ' ' + node.qualifiedName)))
+  const nodeTerms = nodes.map((node) => new Set(lexicalTerms(node.path + ' ' + node.qualifiedName + ' ' + node.searchTerms.join(' '))))
+  const documentFrequency = new Map()
+  for (const token of queryTerms) documentFrequency.set(token, nodeTerms.filter((terms) => terms.has(token)).length)
   const raw = nodeTerms.map((terms) => {
-    return queryTerms.reduce((weight, token) => weight + (terms.has(token) ? 1 : 0), 0)
+    return queryTerms.reduce((weight, token) => {
+      if (!terms.has(token)) return weight
+      return weight + Math.log((nodes.length + 1) / ((documentFrequency.get(token) ?? 0) + 1)) + 1
+    }, 0)
   })
   const matchedTokens = queryTerms.filter((token) => nodeTerms.some((terms) => terms.has(token)))
   const seededNodeCount = raw.filter((weight) => weight > 0).length

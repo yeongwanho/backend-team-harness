@@ -10,6 +10,7 @@ import { getPack } from '../src/packs/catalog.mjs'
 import { checkProject } from '../src/runtime/backend-harness.mjs'
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
 import { serializeGraphReport } from '../packs/codegraph-advisory/graph-report.mjs'
+import { indexProjectGraph } from '../packs/codegraph-advisory/indexer.mjs'
 
 async function gradleProject(prefix) {
   const root = await mkdtemp(join(tmpdir(), prefix))
@@ -47,6 +48,76 @@ test('the advisory graph Pack installs safely and never replaces executed tests'
   assert.equal(graphText.includes('\n  "'), false)
   assert.ok(Buffer.byteLength(graphText) <= 16 * 1024 * 1024)
   await assert.rejects(installPack(root, 'codegraph-advisory'), /gate already exists|directory already exists/)
+})
+
+test('the advisory graph resolves only unique static TypeScript and Python module imports', async () => {
+  const root = await gradleProject('bth-pack-polyglot-graph-')
+  await mkdir(join(root, 'src/orders'), { recursive: true })
+  await mkdir(join(root, 'backend/app/api'), { recursive: true })
+  await mkdir(join(root, 'backend/app/services'), { recursive: true })
+  await writeFile(join(root, 'src/orders/orders.service.ts'), 'export class OrdersService {}\n', 'utf8')
+  await writeFile(join(root, 'src/orders/orders.controller.ts'), [
+    "import { OrdersService } from './orders.service'",
+    'export class OrdersController {}',
+    ''
+  ].join('\n'), 'utf8')
+  await writeFile(join(root, 'backend/app/services/orders.py'), 'class OrdersService:\n    pass\n', 'utf8')
+  await writeFile(join(root, 'backend/app/api/orders.py'), [
+    'from app.services.orders import OrdersService',
+    '',
+    'async def list_orders():',
+    '    return []',
+    ''
+  ].join('\n'), 'utf8')
+  await installPack(root, 'codegraph-advisory')
+
+  const result = await checkProject(root)
+  assert.equal(result.confirmed, true, JSON.stringify(result.result, null, 2))
+  const graph = JSON.parse(await readFile(join(root, '.backend-harness/generated/packs/codegraph-advisory/graph.json'), 'utf8'))
+  assert.equal(graph.metrics['language.typescript'], 2)
+  assert.equal(graph.metrics['language.python'], 2)
+  const byPath = new Map(graph.graph.nodes.map((node) => [node.path, node]))
+  const edges = new Set(graph.graph.edges.map((edge) => {
+    const from = graph.graph.nodes.find((node) => node.id === edge.from).path
+    const to = graph.graph.nodes.find((node) => node.id === edge.to).path
+    return from + ' -> ' + to
+  }))
+  assert.ok(edges.has('src/orders/orders.controller.ts -> src/orders/orders.service.ts'))
+  assert.ok(edges.has('backend/app/api/orders.py -> backend/app/services/orders.py'))
+  assert.equal(byPath.get('src/orders/orders.controller.ts').language, 'typescript')
+  assert.equal(byPath.get('backend/app/api/orders.py').language, 'python')
+})
+
+test('artifact nodes expose paths without reading secret-bearing artifact bodies', async () => {
+  const root = await gradleProject('bth-pack-artifact-graph-')
+  await mkdir(join(root, '.agents'), { recursive: true })
+  await writeFile(join(root, '.agents', 'SKILL.md'), 'SHOULD_NOT_BE_INDEXED')
+  await writeFile(join(root, '.env'), 'BTH_SECRET_BODY_MARKER=never-index-this')
+
+  const report = await indexProjectGraph(root)
+  const artifact = report.graph.nodes.find((node) => node.path === '.env')
+  assert.ok(artifact)
+  assert.equal(artifact.language, 'artifact')
+  assert.ok(artifact.qualifiedName)
+  assert.equal(JSON.stringify(artifact).includes('BTH_SECRET_BODY_MARKER'), false)
+  assert.equal(report.graph.nodes.some((node) => node.path.startsWith('.agents/')), false)
+})
+
+test('the polyglot graph leaves ambiguous alias suffixes unresolved', async () => {
+  const root = await gradleProject('bth-pack-polyglot-ambiguous-')
+  await mkdir(join(root, 'src/a'), { recursive: true })
+  await mkdir(join(root, 'src/b'), { recursive: true })
+  await mkdir(join(root, 'src/use'), { recursive: true })
+  await writeFile(join(root, 'src/a/shared.ts'), 'export class Shared {}\n', 'utf8')
+  await writeFile(join(root, 'src/b/shared.ts'), 'export class Shared {}\n', 'utf8')
+  await writeFile(join(root, 'src/use/consumer.ts'), "import { Shared } from '@/shared'\n", 'utf8')
+  await installPack(root, 'codegraph-advisory')
+
+  const result = await checkProject(root)
+  const graph = JSON.parse(await readFile(join(root, '.backend-harness/generated/packs/codegraph-advisory/graph.json'), 'utf8'))
+  assert.equal(result.confirmed, true)
+  assert.equal(graph.metrics.ambiguousImports, 1)
+  assert.equal(graph.graph.edges.length, 0)
 })
 
 test('the advisory graph writer replaces a report symlink without touching its target', async () => {

@@ -74,7 +74,8 @@ A checkbox counts only when a real CLI path and an acceptance test exist. Extern
 - [x] hard context budget, provenance, limitations, and explained unavailable fallback
 - [ ] measure real failure-feedback latency and Gate correlation on two independently maintained backends
 - [x] benchmark code localization on a versioned synthetic gold fixture using Recall@5 and Recall@20
-- [ ] benchmark real-project gold regions and downstream completion
+- [x] benchmark source-bound localization on 20 pinned historical tasks from three independently maintained public backends
+- [ ] benchmark downstream completion against direct Codex/Claude on the same public tasks
 
 ## 0.8 — Independent hardening and portable team evidence
 

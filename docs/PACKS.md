@@ -59,7 +59,7 @@ Connect Pact, Spring Cloud Contract, OpenAPI compatibility, protobuf/schema comp
 
 ## Graph — `codegraph-advisory`
 
-The bundled graph is intentionally conservative. It indexes Java/Kotlin files/types and resolves only explicit imports to indexed project types.
+The bundled graph is intentionally conservative. It indexes Java/Kotlin, TypeScript/JavaScript, and Python source files. It resolves JVM types and unique static project-module imports; ambiguous aliases remain unresolved. SQL, configuration, template, and Markdown files are represented by path-only artifact nodes so migration and configuration changes can be localized without copying their bodies into graph evidence. In particular, `.env` contents are never read.
 
 Each edge records `static-import-resolved`. Wildcards and external imports count as unresolved coverage gaps. Duplicate qualified type declarations make a matching import ambiguous, so the Pack reports the ambiguity and creates no edge. The output carries a deterministic `generation` hash and a non-deterministic `generatedAt` timestamp. It is compact JSON with the same 16 MiB maximum accepted by the loader; generation fails instead of producing a report the next stage must reject. Its atomic writer replaces a final-file symbolic link without following it and rejects an output directory that resolves outside the project.
 
@@ -67,7 +67,7 @@ The generated graph also includes a deterministic global directed PageRank for b
 
 1. verify that the graph digest and byte count match a successful observation in the latest sealed run;
 2. require that run and the current project have the same source fingerprint;
-3. seed nodes whose path or qualified type name matches bounded requirement terms;
+3. seed nodes whose path, qualified declaration, or bounded declaration/import terms match normalized requirement terms;
 4. propagate only over exact stored imports, with reverse traversal at half weight;
 5. blend lexical prior and graph score, record residual/tolerance and whether the bounded iteration converged, then include only complete entries that fit the requested budget.
 

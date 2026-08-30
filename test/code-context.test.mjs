@@ -64,6 +64,31 @@ test('no lexical match uses a deterministic global fallback instead of inventing
   assert.equal(first.query.matchedTokens.length, 0)
 })
 
+test('requirement action verbs do not outrank a backend documentation concept', () => {
+  const document = graphDocument()
+  document.graph.nodes = [
+    {
+      id: 'main', path: 'src/main.ts', language: 'typescript', qualifiedName: 'src.main#bootstrap',
+      searchTerms: ['DocumentBuilder', 'SwaggerModule']
+    },
+    {
+      id: 'user', path: 'src/users/domain/user.ts', language: 'typescript', qualifiedName: 'src.users.domain.user#User',
+      searchTerms: ['Expose', 'SwaggerModule']
+    }
+  ]
+  document.graph.edges = []
+
+  const result = rankCodeContext(
+    document,
+    'Expose the global request header in generated Swagger documentation.',
+    { budgetCharacters: 700 }
+  )
+
+  assert.equal(result.entries[0].path, 'src/main.ts')
+  assert.ok(result.query.matchedTokens.includes('document'))
+  assert.equal(result.query.matchedTokens.includes('expose'), false)
+})
+
 test('PageRank convergence telemetry distinguishes an exact fixed point from an iteration cap', () => {
   const fixedPoint = graphDocument()
   fixedPoint.graph.nodes = fixedPoint.graph.nodes.slice(0, 2)
@@ -103,6 +128,18 @@ test('unsafe graph contracts are rejected before ranking', () => {
     () => rankCodeContext(oversizedAuthority, 'orders', { budgetCharacters: 64 }),
     /permittedUses.*bounded/i
   )
+})
+
+test('graph contract accepts supported backend languages without changing edge authority', () => {
+  const document = graphDocument()
+  document.graph.nodes[0].language = 'typescript'
+  document.graph.nodes[1].language = 'javascript'
+  document.graph.nodes[2].language = 'python'
+
+  const result = rankCodeContext(document, 'OrdersController', { budgetCharacters: 700 })
+
+  assert.deepEqual(result.entries.slice(0, 3).map((entry) => entry.language).sort(), ['javascript', 'python', 'typescript'])
+  assert.ok(result.entries.every((entry) => entry.provenance.includes('static-import-resolved') || entry.path.endsWith('AuditClock.java')))
 })
 
 test('authority metadata stays bounded independently of a tiny entry budget', () => {

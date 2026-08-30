@@ -1,18 +1,31 @@
 import { availableParallelism } from 'node:os'
 import { createHash } from 'node:crypto'
 import { lstat, readdir, readFile, stat } from 'node:fs/promises'
-import { relative, resolve, sep } from 'node:path'
+import { posix, relative, resolve, sep } from 'node:path'
 
-const SKIPPED = new Set(['.git', '.gradle', '.backend-harness', 'build', 'node_modules', 'out', 'target'])
+const SKIPPED = new Set(['.git', '.gradle', '.backend-harness', '.agents', '.claude', '.codex', '.idea', '.vscode', 'build', 'node_modules', 'out', 'target'])
 const MAX_ENTRIES = 500_000
 const MAX_FILES = 100_000
 const MAX_FILE_BYTES = 2 * 1024 * 1024
 const MAX_SOURCE_BYTES = 256 * 1024 * 1024
 const MAX_EDGES = 500_000
 const EDGE_WEIGHTS = Object.freeze({ imports: 1, inherits: 1.25, implements: 1.25, injects: 0.9, tests: 0.65 })
+const SOURCE_FILE = /\.(?:java|kt|ts|tsx|js|jsx|mjs|cjs|py)$/
+const ARTIFACT_FILE = /(?:\.(?:sql|properties|html|hbs|json|ya?ml|toml|md|ejs\.t)|(?:^|\/)\.env)$/
+const INDEXED_FILE = new RegExp(SOURCE_FILE.source + '|' + ARTIFACT_FILE.source)
+const JVM_FILE = /\.(?:java|kt)$/
+const LANGUAGE_BY_EXTENSION = Object.freeze({
+  java: 'java', kt: 'kotlin', ts: 'typescript', tsx: 'typescript',
+  js: 'javascript', jsx: 'javascript', mjs: 'javascript', cjs: 'javascript', py: 'python'
+})
 
 function portable(path) {
   return path.split(sep).join('/')
+}
+
+function boundedSearchTerms(values) {
+  return [...new Set(values.flatMap((value) => String(value).match(/[A-Za-z_$][A-Za-z0-9_$]{1,127}/g) ?? []))]
+    .slice(0, 128)
 }
 
 async function discover(root) {
@@ -26,7 +39,7 @@ async function discover(root) {
       if (SKIPPED.has(entry.name)) continue
       const path = resolve(directory, entry.name)
       if (entry.isSymbolicLink()) {
-        const sourceLink = /\.(?:java|kt)$/.test(entry.name)
+        const sourceLink = INDEXED_FILE.test(entry.name)
         let directoryLink = false
         if (!sourceLink) {
           try { directoryLink = (await stat(path)).isDirectory() } catch {}
@@ -35,7 +48,7 @@ async function discover(root) {
         continue
       }
       if (entry.isDirectory()) await visit(path)
-      else if (entry.isFile() && /\.(?:java|kt)$/.test(entry.name)) {
+      else if (entry.isFile() && INDEXED_FILE.test(portable(relative(root, path)))) {
         if (files.length >= MAX_FILES) throw new Error('Codegraph safety limit exceeded (' + MAX_ENTRIES + ' entries or ' + MAX_FILES + ' source files).')
         files.push(path)
       }
@@ -107,7 +120,46 @@ function sourceDeclarations(content, packageName) {
   })
 }
 
-function parseSource(root, path, content) {
+function sourceLanguage(path) {
+  return LANGUAGE_BY_EXTENSION[path.split('.').at(-1).toLowerCase()] ?? 'artifact'
+}
+
+function moduleQualifiedName(projectPath, declaredName = '') {
+  const withoutExtension = projectPath.replace(/\.[^.\/]+$/, '')
+  const moduleName = (withoutExtension || projectPath).split('/').join('.')
+  return declaredName ? moduleName + '#' + declaredName : moduleName
+}
+
+function commonNode(root, path, declarations, roles, moduleImports = [], searchTerms = []) {
+  const projectPath = portable(relative(root, path))
+  const basename = path.split(sep).at(-1)
+  const fallbackName = basename.replace(/\.[^.]+$/, '') || basename.replace(/^\.+/, '') || 'artifact'
+  const declaredTypes = declarations.length
+    ? declarations.map((entry) => entry.qualifiedName)
+    : [moduleQualifiedName(projectPath, fallbackName)]
+  return {
+    id: createHash('sha256').update(projectPath).digest('hex').slice(0, 20),
+    path: projectPath,
+    language: sourceLanguage(path),
+    packageName: '',
+    qualifiedName: declaredTypes[0],
+    declaredTypes,
+    declarations,
+    imports: [],
+    moduleImports,
+    searchTerms: boundedSearchTerms(searchTerms),
+    injectionTypes: [],
+    roles,
+    routes: [],
+    tables: []
+  }
+}
+
+function testRole(projectPath) {
+  return /(?:^|\/)(?:test|tests|__tests__|src\/test)(?:\/|$)|(?:\.spec|\.test)\.[^.]+$|(?:^|\/)test_[^/]+\.py$|_test\.py$/.test(projectPath)
+}
+
+function parseJvmSource(root, path, content) {
   const projectPath = portable(relative(root, path))
   const packageName = content.match(/^\s*package\s+([A-Za-z_][\w.]*)\s*;?/m)?.[1] ?? ''
   const declarations = sourceDeclarations(content, packageName)
@@ -135,8 +187,112 @@ function parseSource(root, path, content) {
     id: createHash('sha256').update(projectPath).digest('hex').slice(0, 20), path: projectPath,
     language: path.endsWith('.kt') ? 'kotlin' : 'java', packageName,
     qualifiedName: declarations[0].qualifiedName, declaredTypes: declarations.map((entry) => entry.qualifiedName),
-    declarations, imports, injectionTypes: [...injectionTypes], roles, routes, tables
+    declarations, imports, moduleImports: [], injectionTypes: [...injectionTypes], roles, routes, tables,
+    searchTerms: boundedSearchTerms([
+      ...declarations.map((entry) => entry.name), ...imports, ...annotations, ...roles,
+      ...routes.flatMap((route) => [route.method, route.path]), ...tables
+    ])
   }
+}
+
+function parseEcmaSource(root, path, content) {
+  const projectPath = portable(relative(root, path))
+  const declarations = [...content.matchAll(/\b(class|interface|type|enum|function)\s+([A-Za-z_$][\w$]*)/g)]
+    .slice(0, 64)
+    .map((match) => ({ kind: match[1], name: match[2], qualifiedName: moduleQualifiedName(projectPath, match[2]), relations: [] }))
+  const moduleImports = [
+    ...content.matchAll(/^\s*(?:import|export)\s+(?:[^'"\n]*?\s+from\s+)?['"]([^'"]+)['"]/gm),
+    ...content.matchAll(/\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/g)
+  ].map((match) => match[1])
+  const importedIdentifiers = [...content.matchAll(/^\s*import\s+([^'"\n]+?)\s+from\s+['"][^'"]+['"]/gm)]
+    .flatMap((match) => match[1].match(/[A-Za-z_$][A-Za-z0-9_$]*/g) ?? [])
+  const roles = []
+  if (/(?:^|\/)controllers?(?:\/|$)|\.controller\.[^.]+$/.test(projectPath)) roles.push('controller')
+  if (/(?:^|\/)services?(?:\/|$)|\.service\.[^.]+$/.test(projectPath)) roles.push('service')
+  if (/(?:^|\/)repositories?(?:\/|$)|\.repository\.[^.]+$/.test(projectPath)) roles.push('repository')
+  if (testRole(projectPath)) roles.push('test')
+  return commonNode(root, path, declarations, roles, moduleImports, [
+    ...declarations.map((entry) => entry.name), ...importedIdentifiers,
+    ...moduleImports.flatMap((entry) => entry.split(/[^A-Za-z0-9_$]+/)), ...roles
+  ])
+}
+
+function parsePythonSource(root, path, content) {
+  const projectPath = portable(relative(root, path))
+  const declarations = [...content.matchAll(/^\s*(class|def|async\s+def)\s+([A-Za-z_][\w]*)/gm)]
+    .slice(0, 64)
+    .map((match) => ({ kind: match[1].replace(/\s+/g, '-'), name: match[2], qualifiedName: moduleQualifiedName(projectPath, match[2]), relations: [] }))
+  const moduleImports = []
+  const importedIdentifiers = []
+  for (const match of content.matchAll(/^\s*from\s+([.A-Za-z_][\w.]*)\s+import\s+([^#\n]+)/gm)) {
+    moduleImports.push(match[1])
+    importedIdentifiers.push(...(match[2].match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? []))
+  }
+  for (const match of content.matchAll(/^\s*import\s+([^#\n]+)/gm)) {
+    for (const imported of match[1].split(',')) moduleImports.push(imported.trim().split(/\s+as\s+/)[0])
+  }
+  const roles = []
+  if (/(?:^|\/)(?:api\/routes|controllers?)(?:\/|$)/.test(projectPath)) roles.push('controller')
+  if (/(?:^|\/)services?(?:\/|$)/.test(projectPath)) roles.push('service')
+  if (/(?:^|\/)(?:repositories?|crud)(?:\/|\.|$)/.test(projectPath)) roles.push('repository')
+  if (testRole(projectPath)) roles.push('test')
+  return commonNode(root, path, declarations, roles, moduleImports.filter(Boolean), [
+    ...declarations.map((entry) => entry.name), ...importedIdentifiers,
+    ...moduleImports.flatMap((entry) => entry.split(/[^A-Za-z0-9_]+/)), ...roles
+  ])
+}
+
+function parseSource(root, path, content) {
+  if (JVM_FILE.test(path)) return parseJvmSource(root, path, content)
+  if (path.endsWith('.py')) return parsePythonSource(root, path, content)
+  if (SOURCE_FILE.test(path)) return parseEcmaSource(root, path, content)
+  return commonNode(root, path, [], [], [], [])
+}
+
+function withoutSourceExtension(path) {
+  return path.replace(/\.(?:java|kt|ts|tsx|js|jsx|mjs|cjs|py)$/, '')
+}
+
+function moduleIndex(nodes) {
+  const index = new Map()
+  function add(key, node) {
+    const normalized = key.replace(/^\.\//, '').replace(/^\//, '')
+    if (!normalized) return
+    const entries = index.get(normalized) ?? []
+    if (!entries.includes(node)) entries.push(node)
+    index.set(normalized, entries)
+  }
+  for (const node of nodes) {
+    const base = withoutSourceExtension(node.path)
+    add(base, node)
+    if (base.endsWith('/index') || base.endsWith('/__init__')) add(posix.dirname(base), node)
+  }
+  return index
+}
+
+function resolveModuleImport(index, nodes, source, imported) {
+  if (typeof imported !== 'string' || !imported || imported.startsWith('node:')) return { node: null, ambiguous: false }
+  let clean = imported.trim()
+  const candidates = []
+  if (clean.startsWith('.')) {
+    if (source.language === 'python') {
+      const dots = clean.match(/^\.+/)[0].length
+      let base = posix.dirname(source.path)
+      for (let cursor = 1; cursor < dots; cursor += 1) base = posix.dirname(base)
+      clean = posix.join(base, clean.slice(dots).replaceAll('.', '/'))
+    } else {
+      clean = posix.normalize(posix.join(posix.dirname(source.path), clean))
+    }
+    candidates.push(...(index.get(clean) ?? []))
+  } else {
+    clean = clean.replace(/^@\//, '').replaceAll('.', '/')
+    candidates.push(...(index.get(clean) ?? []))
+    for (const [key, entries] of index) {
+      if (key.endsWith('/' + clean)) candidates.push(...entries)
+    }
+  }
+  const unique = [...new Set(candidates)].filter((node) => node !== source)
+  return { node: unique.length === 1 ? unique[0] : null, ambiguous: unique.length > 1 }
 }
 
 function uniqueCandidate(candidates) {
@@ -240,17 +396,21 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
   for (const path of discovered.files) {
     const metadata = await lstat(path)
     if (!metadata.isFile() || metadata.isSymbolicLink()) { discovered.skippedSymlinks += 1; continue }
-    if (metadata.size > MAX_FILE_BYTES) { oversizedFiles += 1; continue }
-    indexedBytes += metadata.size
-    if (indexedBytes > MAX_SOURCE_BYTES) throw new Error('Codegraph source input exceeded the 256 MiB safety limit.')
-    readable.push(path)
+    const readContent = SOURCE_FILE.test(path)
+    if (readContent && metadata.size > MAX_FILE_BYTES) { oversizedFiles += 1; continue }
+    if (readContent) {
+      indexedBytes += metadata.size
+      if (indexedBytes > MAX_SOURCE_BYTES) throw new Error('Codegraph source input exceeded the 256 MiB safety limit.')
+    }
+    readable.push({ path, readContent })
   }
   let actualBytes = 0
   const parallelism = options.parallelism ?? Math.min(8, Math.max(1, availableParallelism?.() ?? 4))
-  const nodes = await mapLimit(readable, parallelism, async (path) => {
-    const buffer = await readFile(path); actualBytes += buffer.length
+  const nodes = await mapLimit(readable, parallelism, async (entry) => {
+    if (!entry.readContent) return parseSource(root, entry.path, '')
+    const buffer = await readFile(entry.path); actualBytes += buffer.length
     if (buffer.length > MAX_FILE_BYTES || actualBytes > MAX_SOURCE_BYTES) throw new Error('Codegraph source changed beyond a read safety limit.')
-    return parseSource(root, path, buffer.toString('utf8'))
+    return parseSource(root, entry.path, buffer.toString('utf8'))
   })
   const qualifiedTypes = new Map(), simpleTypes = new Map()
   for (const node of nodes) for (const qualifiedName of node.declaredTypes) {
@@ -258,6 +418,7 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
     const simpleName = qualifiedName.split('.').at(-1), simple = simpleTypes.get(simpleName) ?? []; simple.push(node); simpleTypes.set(simpleName, simple)
   }
   const resolveType = resolver(qualifiedTypes, simpleTypes)
+  const modules = moduleIndex(nodes)
   const edges = [], edgeKeys = new Set()
   let unresolvedImports = 0, ambiguousImports = 0, unresolvedRelations = 0, ambiguousRelations = 0
   function edge(from, to, kind, provenance) {
@@ -268,6 +429,13 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
     edgeKeys.add(key); edges.push({ from: from.id, to: to.id, kind, provenance })
   }
   for (const node of nodes) {
+    for (const imported of node.moduleImports) {
+      const resolved = resolveModuleImport(modules, nodes, node, imported)
+      if (resolved.ambiguous) ambiguousImports += 1
+      else if (!resolved.node) unresolvedImports += 1
+      else edge(node, resolved.node, 'imports', 'static-import-resolved')
+    }
+    if (!['java', 'kotlin'].includes(node.language)) continue
     for (const imported of node.imports) {
       if (imported.endsWith('.*')) { unresolvedImports += 1; continue }
       const candidates = qualifiedTypes.get(imported) ?? qualifiedTypes.get(imported.split('.').slice(0, -1).join('.'))
@@ -302,7 +470,7 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
   const scc = stronglyConnectedComponents(nodes, edges), ranking = pageRank(nodes, edges)
   nodes.forEach((node, index) => {
     node.componentId = scc.componentByNode.get(node.id); node.globalRank = ranking.ranks[index]
-    delete node.packageName; delete node.declarations; delete node.imports; delete node.injectionTypes
+    delete node.packageName; delete node.declarations; delete node.imports; delete node.moduleImports; delete node.injectionTypes
   })
   const findings = []
   if (unresolvedImports > 0) findings.push({ ruleId: 'graph.coverage.unresolved-imports', severity: 'info', message: unresolvedImports + ' imports were intentionally left unresolved.', location: null })
@@ -316,7 +484,8 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
     duplicateTypes: [...qualifiedTypes.values()].filter((entries) => entries.length > 1).length, oversizedFiles, skippedSymlinks: discovered.skippedSymlinks,
     indexedBytes: actualBytes, rankedNodes: nodes.length, declarations: nodes.reduce((sum, node) => sum + node.declaredTypes.length, 0),
     stronglyConnectedComponents: scc.components.length, cyclicComponents: scc.components.filter((members) => members.length > 1).length,
-    ...Object.fromEntries(Object.keys(EDGE_WEIGHTS).map((kind) => ['edges.' + kind, edges.filter((edge) => edge.kind === kind).length]))
+    ...Object.fromEntries(Object.keys(EDGE_WEIGHTS).map((kind) => ['edges.' + kind, edges.filter((edge) => edge.kind === kind).length])),
+    ...Object.fromEntries(['java', 'kotlin', 'typescript', 'javascript', 'python', 'artifact'].map((language) => ['language.' + language, nodes.filter((node) => node.language === language).length]))
   }
   const generatedAt = options.generatedAt ?? new Date().toISOString()
   const generation = createHash('sha256').update(JSON.stringify(nodes) + JSON.stringify(edges)).digest('hex')

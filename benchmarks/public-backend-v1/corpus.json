@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "id": "public-backend-v1",
+  "description": "Versioned historical backend changes used as reproducible impact-localization and provider-comparison tasks. Gold paths are verified against each target commit before scoring.",
+  "repositories": [
+    {
+      "id": "spring-petclinic",
+      "language": "java",
+      "url": "https://github.com/spring-projects/spring-petclinic.git",
+      "license": "Apache-2.0",
+      "tasks": [
+        {
+          "id": "spring-01-pet-association",
+          "requirement": "Fix persisted pet ownership association and enforce the existing pet-name length rule with regression tests.",
+          "baseSha": "88e37c15cf6fc8490b01bc3e8e2c800cec1ac272",
+          "targetSha": "676db04515ee5f289641cea6cb379dc02b40f67f",
+          "goldPaths": ["src/main/java/org/springframework/samples/petclinic/owner/Owner.java", "src/main/java/org/springframework/samples/petclinic/owner/PetValidator.java", "src/test/java/org/springframework/samples/petclinic/owner/OwnerTests.java", "src/test/java/org/springframework/samples/petclinic/owner/PetValidatorTests.java"]
+        },
+        {
+          "id": "spring-02-owner-search-whitespace",
+          "requirement": "Normalize surrounding whitespace in owner last-name search and cover the behavior in the controller test.",
+          "baseSha": "0f6e8614047bd74cf6223b4d8a858d2ed2824f8a",
+          "targetSha": "bb37aad8c332264723817d855e8b3b96b7c392bc",
+          "goldPaths": ["src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java", "src/test/java/org/springframework/samples/petclinic/owner/OwnerControllerTests.java"]
+        },
+        {
+          "id": "spring-03-unique-pet-name",
+          "requirement": "Enforce unique pet names per owner across supported databases and cover controller, service, and concurrency behavior.",
+          "baseSha": "51045d1648dad955df586150c1a1a6e22ef400c2",
+          "targetSha": "e0db9b184e028d41bcb626f3cbf03a942f67e104",
+          "goldPaths": ["src/main/java/org/springframework/samples/petclinic/owner/PetController.java", "src/main/resources/db/h2/schema.sql", "src/main/resources/db/mysql/schema.sql", "src/main/resources/db/postgres/schema.sql", "src/test/java/org/springframework/samples/petclinic/PetClinicConcurrencyTests.java", "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java", "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java"]
+        },
+        {
+          "id": "spring-04-future-visit",
+          "requirement": "Reject visits dated in the future, surface a localized validation message, and add controller coverage.",
+          "baseSha": "3c06fbfc1e42eb40802e0d0ca989bc9226755804",
+          "targetSha": "753d35c2f84432d88c0f3b61c9302a16069b78dd",
+          "goldPaths": ["src/main/java/org/springframework/samples/petclinic/owner/Visit.java", "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java", "src/main/resources/messages/messages.properties", "src/main/resources/messages/messages_de.properties", "src/main/resources/messages/messages_es.properties", "src/main/resources/messages/messages_fa.properties", "src/main/resources/messages/messages_ko.properties", "src/main/resources/messages/messages_pt.properties", "src/main/resources/messages/messages_ru.properties", "src/main/resources/messages/messages_tr.properties", "src/main/resources/templates/fragments/inputField.html", "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java"]
+        },
+        {
+          "id": "spring-05-binder-allowlist",
+          "requirement": "Restrict web-data binders to the intended mutable fields for owners, pets, and visits.",
+          "baseSha": "f1e0e22b883e185e680d44b264fb73a8efcff8b9",
+          "targetSha": "c7ee170434ec3e369fdc9201290ba2ea4c92b557",
+          "goldPaths": ["src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java", "src/main/java/org/springframework/samples/petclinic/owner/PetController.java", "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java"]
+        },
+        {
+          "id": "spring-06-pet-update",
+          "requirement": "Fix pet update so changes to the existing pet name or type are persisted instead of adding another pet.",
+          "baseSha": "6328d2c9dc8eb2c367c6a613a1ae959c994003c7",
+          "targetSha": "2aa53f929d32b0d41e0fe0391b8385eabe9a3432",
+          "goldPaths": ["src/main/java/org/springframework/samples/petclinic/owner/PetController.java"]
+        },
+        {
+          "id": "spring-07-mysql-user",
+          "requirement": "Update the MySQL bootstrap user creation so it works on MySQL 8 and newer.",
+          "baseSha": "37d53152a08a5de9d225c7f25f41b77c5d8b3cae",
+          "targetSha": "8f08b38f2c8412b9298f63e79e5e830ae247cd6e",
+          "goldPaths": ["src/main/resources/db/mysql/user.sql"]
+        }
+      ]
+    },
+    {
+      "id": "nestjs-boilerplate",
+      "language": "typescript",
+      "url": "https://github.com/brocoders/nestjs-boilerplate.git",
+      "license": "MIT",
+      "tasks": [
+        {
+          "id": "nest-01-session-update-by-hash",
+          "requirement": "Add update-by-hash to the session abstraction and both persistence implementations, then use it from authentication.",
+          "baseSha": "a3aaea0e60fdbb0af3b0108d98f09cf2c8b50fe4",
+          "targetSha": "bba9827ca548ca30c98068936550b8cb94bbc1a0",
+          "goldPaths": ["src/auth/auth.service.ts", "src/session/infrastructure/persistence/document/repositories/session.repository.ts", "src/session/infrastructure/persistence/relational/repositories/session.repository.ts", "src/session/infrastructure/persistence/session.repository.ts", "src/session/session.service.ts"]
+        },
+        {
+          "id": "nest-02-file-relational-mapper",
+          "requirement": "Fix relational file mapping while preserving serializer behavior for mapped file values.",
+          "baseSha": "07ac5f29d3032bb173fd538c549966e7eb96dcff",
+          "targetSha": "f4703907ddc54dff7f6e81bc37f0a42e3fdd8d22",
+          "goldPaths": ["src/files/infrastructure/persistence/relational/repositories/file.repository.ts", "src/utils/serializer.interceptor.ts"]
+        },
+        {
+          "id": "nest-03-swagger-language-header",
+          "requirement": "Expose the global x-custom-lang request header in generated Swagger documentation.",
+          "baseSha": "1cb55deff983e56f45a0a70bdd2e6c5bfb90b79c",
+          "targetSha": "b5c3262e7b58e4443dd27328e4d2ced50c832204",
+          "goldPaths": ["src/main.ts"]
+        },
+        {
+          "id": "nest-04-document-find-update",
+          "requirement": "Correct document persistence find-and-update behavior in generated repositories and existing user/session repositories.",
+          "baseSha": "85c97e1df7132eece3779a14e7f4034e48568a18",
+          "targetSha": "9e2b0c592411883d61f7670fdf8325366e33dfcd",
+          "goldPaths": [".hygen/generate/all-db-resource/infrastructure/persistence/document/repositories/repository.ejs.t", ".hygen/generate/document-resource/infrastructure/persistence/document/repositories/repository.ejs.t", "src/session/infrastructure/persistence/document/repositories/session.repository.ts", "src/users/infrastructure/persistence/document/repositories/user.repository.ts"]
+        },
+        {
+          "id": "nest-05-auth-email-update",
+          "requirement": "Add the authenticated email-update flow, confirmation mail, DTO, localization, and end-to-end coverage.",
+          "baseSha": "48e484a14b8bc7a4b8cac6f67553038ca6a65fa8",
+          "targetSha": "9e180c985bf4730405da8acb0b7e26c96c630252",
+          "goldPaths": ["src/auth/auth.controller.ts", "src/auth/auth.service.ts", "src/auth/dto/auth-update.dto.ts", "src/i18n/en/confirm-new-email.json", "src/mail/mail-templates/confirm-new-email.hbs", "src/mail/mail.service.ts", "test/user/auth.e2e-spec.ts"]
+        },
+        {
+          "id": "nest-06-user-email-conflict",
+          "requirement": "Return the existing email-already-exists error when a user update conflicts with another account.",
+          "baseSha": "d523e2638a649817883c57971914cdeccdd04bde",
+          "targetSha": "ab530c4da7559bf2487698982799920a4d10e345",
+          "goldPaths": ["src/users/users.service.ts"]
+        },
+        {
+          "id": "nest-07-refresh-token-single-use",
+          "requirement": "Make refresh tokens single-use across authentication, session domain, relational and document persistence, migrations, and end-to-end tests.",
+          "baseSha": "ca1c3cc3e8d2f2c88f03f0cdb6210ba47c0f5476",
+          "targetSha": "0e58e0872a852eaa5e0013fd2e81a9fffe2740b1",
+          "goldPaths": ["src/auth/auth.controller.ts", "src/auth/auth.service.ts", "src/auth/strategies/types/jwt-refresh-payload.type.ts", "src/database/migrations/1700333930058-CreateUser.ts", "src/database/migrations/1709769642152-CreateUser.ts", "src/session/domain/session.ts", "src/session/infrastructure/persistence/document/entities/session.schema.ts", "src/session/infrastructure/persistence/document/mappers/session.mapper.ts", "src/session/infrastructure/persistence/document/repositories/session.repository.ts", "src/session/infrastructure/persistence/relational/entities/session.entity.ts", "src/session/infrastructure/persistence/relational/mappers/session.mapper.ts", "src/session/infrastructure/persistence/relational/repositories/session.repository.ts", "src/session/infrastructure/persistence/session.repository.ts", "src/session/session.service.ts", "test/user/auth.e2e-spec.ts"]
+        }
+      ]
+    },
+    {
+      "id": "fastapi-template",
+      "language": "python",
+      "url": "https://github.com/fastapi/full-stack-fastapi-template.git",
+      "license": "MIT",
+      "tasks": [
+        {
+          "id": "fastapi-01-database-url",
+          "requirement": "Replace separate database connection settings with one DATABASE_URL used consistently by configuration, application DB setup, Alembic, and Compose.",
+          "baseSha": "cf1548a983fd0339dd1d0533b0db495614e27f7b",
+          "targetSha": "32ab6dd022cf46a2bc2f901f746d684078843969",
+          "goldPaths": [".env", "backend/app/alembic/env.py", "backend/app/core/config.py", "backend/app/core/db.py", "compose.yml", "deployment.md"]
+        },
+        {
+          "id": "fastapi-02-cors",
+          "requirement": "Simplify CORS configuration while preserving application startup and deployment configuration behavior.",
+          "baseSha": "781b283849e602fa2c2c3562b2fe4fbd9374919d",
+          "targetSha": "d85803bf642102ecbc01ea676501106ae12a5e1d",
+          "goldPaths": ["backend/app/core/config.py", "backend/app/main.py", "compose.yml", "deployment.md"]
+        },
+        {
+          "id": "fastapi-03-created-at",
+          "requirement": "Add created_at timestamps to User and Item, migrate existing schemas, expose the field through APIs, and update generated clients.",
+          "baseSha": "2720308701fef9d22505013d4c417bfe3afb4530",
+          "targetSha": "3c1f7c4cdb67dff619898d66236cf6e09cb7c3e2",
+          "goldPaths": ["backend/app/alembic/versions/fe56fa70289e_add_created_at_to_user_and_item.py", "backend/app/api/routes/items.py", "backend/app/api/routes/users.py", "backend/app/models.py", "frontend/src/client/schemas.gen.ts", "frontend/src/client/types.gen.ts"]
+        },
+        {
+          "id": "fastapi-04-constant-time-login",
+          "requirement": "Prevent user enumeration by keeping authentication work constant-time for missing users and cover the login behavior.",
+          "baseSha": "7107f7e83acdf93272377ca97985dd3c51c47686",
+          "targetSha": "689d7105e12039db84bb0e0c0cc797ca086192db",
+          "goldPaths": ["backend/app/api/routes/login.py", "backend/app/crud.py", "backend/tests/api/routes/test_login.py"]
+        },
+        {
+          "id": "fastapi-05-missing-user",
+          "requirement": "Return the intended not-found response when an authenticated request reads a user ID that does not exist, with regression coverage.",
+          "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+          "targetSha": "4cab9e972f5e3e32c518ec2c6e09e18455fe469a",
+          "goldPaths": ["backend/app/api/routes/users.py", "backend/tests/api/routes/test_users.py"]
+        },
+        {
+          "id": "fastapi-06-delete-self",
+          "requirement": "Add a delete-current-user endpoint with dependency safeguards and test coverage.",
+          "baseSha": "d1cc75903e80dbb18261160fddf38a5eb2ad8b31",
+          "targetSha": "b81cec8ea54d3bd20af5e02cc4d5baa4fa43ac83",
+          "goldPaths": ["backend/app/api/deps.py", "backend/app/api/routes/users.py", "backend/app/tests/api/routes/test_users.py"]
+        }
+      ]
+    }
+  ]
+}
