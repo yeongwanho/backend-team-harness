@@ -23,6 +23,7 @@ import { loadInterview } from '../core/interview-store.mjs'
 import { loadBudgetedCodeContext } from '../core/code-context.mjs'
 import { inspectBoundSourceCodeContext } from '../adapters/bounded-code-context.mjs'
 import { buildProjectConventions, projectRuleReadiness } from '../core/project-conventions.mjs'
+import { selectProviderContext } from '../core/provider-context.mjs'
 import { assertNoSymlinkSegments, assertRelativeChild, resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { captureConfiguredSourceBinding, checkProject } from './backend-harness.mjs'
 import {
@@ -58,9 +59,9 @@ function runGit(root, args) {
   })
 }
 
-async function atomicJson(path, value) {
+async function atomicJson(path, value, compact = false) {
   const temporary = resolve(dirname(path), '.bth-' + randomUUID() + '.tmp')
-  const content = JSON.stringify(value, null, 2) + '\n'
+  const content = JSON.stringify(value, null, compact ? undefined : 2) + '\n'
   await writeFile(temporary, content, { encoding: 'utf8', flag: 'wx', mode: 0o600 })
   try {
     await rename(temporary, path)
@@ -481,7 +482,8 @@ async function prepareProviderPlanning(root, task, config, sourceBinding) {
       projectConventions = buildProjectConventions(planningContext.projectRuleEvaluation, planningContext.knowledge, codeContext, planningContext.conventions)
     }
   }
-  return { providerTask, planningContext, profile, codeContext, projectConventions }
+  const selectedContext = selectProviderContext(codeContext, projectConventions, profile.selected)
+  return { providerTask, planningContext, profile, ...selectedContext }
 }
 
 function assertApprovedSource(task, sourceBinding) {
@@ -645,7 +647,7 @@ async function runUnlocked(root, taskId, options) {
           attempt,
           recovery: recoveryInput(verification)
         }
-    const requestBefore = await atomicJson(requestPath, request)
+    const requestBefore = await atomicJson(requestPath, request, loadedConfig.config.adapter.kind === 'provider')
     const beforeCapture = await captureImplementationBinding(workspace.path, verificationConfig)
     const requestRelative = './' + relative(workspace.path, requestPath).replaceAll('\\', '/')
     const processEnvironment = { ...buildSafeEnvironment(), BTH_IMPLEMENTATION_REQUEST: requestPath, BTH_IMPLEMENTATION_ATTEMPT: String(attempt) }

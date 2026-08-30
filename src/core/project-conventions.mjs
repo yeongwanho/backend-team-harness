@@ -209,7 +209,7 @@ export function buildProjectConventions(evaluation, knowledge, codeContext, conv
     adjacentCode,
     discovered,
     requiredBeforeEdit: {
-      readDeclaredRuleSources: true,
+      readRelevantDeclaredRuleSources: true,
       readRelevantKnowledgeDocuments: true,
       inspectAdjacentProductionAndTests: true,
       preserveObservedConventions: true,

@@ -198,8 +198,10 @@ test('built-in provider receives a bounded approved request with on-demand adjac
     }
   })
   let capturedRequest
+  let capturedRequestText
   const providerRunner = async (_adapter, input) => {
-    capturedRequest = JSON.parse(await readFile(join(input.cwd, input.requestPath), 'utf8'))
+    capturedRequestText = await readFile(join(input.cwd, input.requestPath), 'utf8')
+    capturedRequest = JSON.parse(capturedRequestText)
     await mkdir(join(input.cwd, 'src/main/java/example'), { recursive: true })
     await writeFile(join(input.cwd, 'src/main/java/example/Generated.java'), 'package example; class Generated {}\n', 'utf8')
     return {
@@ -222,6 +224,8 @@ test('built-in provider receives a bounded approved request with on-demand adjac
   assert.equal(result.record.provider.id, 'codex')
   assert.equal(result.record.provider.profile.selected, 'balanced')
   assert.equal(capturedRequest.schemaVersion, 2)
+  assert.equal(capturedRequestText, JSON.stringify(capturedRequest) + '\n')
+  assert.equal(capturedRequest.projectConventions.providerProjection.declaredRulesPreserved, true)
   assert.equal(capturedRequest.implementation.profile.contextBudgetCharacters, 6000)
   assert.deepEqual(capturedRequest.implementation.allowedPrefixes, ['src/'])
   assert.equal(capturedRequest.authority.deployment, false)

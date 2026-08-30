@@ -1,0 +1,75 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { selectProviderContext } from '../src/core/provider-context.mjs'
+
+function fixture() {
+  const examples = Array.from({ length: 8 }, (_, index) => ({
+    path: 'src/Service' + index + '.java',
+    contentSha256: String(index).repeat(64),
+    declarations: ['Service' + index]
+  }))
+  const group = { status: 'observed', roles: ['service'], examples }
+  const codeContext = {
+    status: 'available',
+    authority: { advisory: true, forbiddenUses: ['pass-verdict', 'test-skipping'] },
+    graph: { nodes: 100 }, algorithm: { iterations: 30 }, query: { matchedTokens: ['service'] },
+    entries: [{ path: 'src/Service7.java' }, { path: 'src/Service6.java' }],
+    budget: { limitCharacters: 6000, usedCharacters: 500 },
+    provenance: { sourceFingerprint: 'a'.repeat(64) },
+    impact: {
+      authority: 'advisory-structural-localization',
+      seedPaths: examples.map((example) => example.path),
+      dependencies: { count: 10, paths: examples.map((example) => example.path), omitted: 2 },
+      dependents: { count: 0, paths: [], omitted: 0 }
+    }
+  }
+  const projectConventions = {
+    status: 'unknown',
+    projectRules: { rules: [{ id: 'security', severity: 'blocker', status: 'unknown', source: { path: 'AGENTS.md' } }] },
+    knowledgeDocuments: { paths: ['AGENTS.md'] },
+    authority: { verdictAuthority: false },
+    requiredBeforeEdit: { stopOnUnknownOrConflictingBlockingRule: true },
+    discovered: {
+      layers: [{ role: 'service', count: 8, naming: [{ suffix: 'Service' }], ...group }],
+      transactions: group, persistence: group, database: { ...group, authority: { queryPlanExecuted: false } },
+      contracts: { routes: group, tables: group },
+      tests: {
+        count: 10, omittedPairCount: 2,
+        pairs: examples.map((example, index) => ({ production: example.path, test: 'test/Service' + index + 'Test.java' }))
+      }
+    }
+  }
+  return { codeContext, projectConventions }
+}
+
+test('provider projection keeps every declared rule and ranked entry while selecting relevant examples', () => {
+  const input = fixture()
+  const before = structuredClone(input)
+  const projected = selectProviderContext(input.codeContext, input.projectConventions, 'balanced')
+  assert.deepEqual(projected.projectConventions.projectRules, input.projectConventions.projectRules)
+  assert.deepEqual(projected.projectConventions.authority, input.projectConventions.authority)
+  assert.deepEqual(projected.projectConventions.requiredBeforeEdit, input.projectConventions.requiredBeforeEdit)
+  assert.deepEqual(projected.codeContext.entries, input.codeContext.entries)
+  assert.deepEqual(projected.codeContext.provenance, input.codeContext.provenance)
+  assert.deepEqual(projected.projectConventions.discovered.layers[0].examples.map((entry) => entry.path), ['src/Service7.java', 'src/Service6.java'])
+  assert.equal(projected.projectConventions.discovered.tests.pairs[0].production, 'src/Service7.java')
+  assert.equal(projected.projectConventions.discovered.tests.omittedPairCount, 6)
+  assert.equal(projected.codeContext.impact.dependencies.omitted, 6)
+  assert.equal(projected.codeContext.algorithm, undefined)
+  assert.ok(JSON.stringify(projected).length < JSON.stringify(input).length * 0.65)
+  assert.deepEqual(input, before)
+})
+
+test('provider example budgets expand with mode without weakening authority or inventing observations', () => {
+  const input = fixture()
+  for (const [mode, examples, pairs] of [['fast', 1, 2], ['balanced', 2, 4], ['deep', 4, 8]]) {
+    const projected = selectProviderContext(input.codeContext, input.projectConventions, mode)
+    assert.equal(projected.projectConventions.discovered.layers[0].examples.length, examples)
+    assert.equal(projected.projectConventions.discovered.tests.pairs.length, pairs)
+    assert.equal(projected.projectConventions.discovered.database.authority.queryPlanExecuted, false)
+    assert.equal(projected.projectConventions.providerProjection.declaredRulesPreserved, true)
+  }
+  const unavailable = { status: 'unavailable', reason: 'graph_missing', entries: [], authority: { advisory: true } }
+  assert.deepEqual(selectProviderContext(unavailable, null, 'fast'), { codeContext: unavailable, projectConventions: null })
+  assert.throws(() => selectProviderContext(null, null, 'unknown'), /Unknown provider context mode/)
+})
