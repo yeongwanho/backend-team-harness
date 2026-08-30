@@ -27,6 +27,7 @@ import { buildProjectConventions, projectRuleReadiness } from '../core/project-c
 import { selectProviderContext } from '../core/provider-context.mjs'
 import { compactImplementationVerification as compactVerification, implementationRecoveryInput as recoveryInput } from '../core/implementation-verification.mjs'
 import { selectTaskRetrievalQuery } from '../core/retrieval-query.mjs'
+import { inspectTestAuthoringContract } from '../core/test-authoring-contract.mjs'
 import { assertNoSymlinkSegments, assertRelativeChild, resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { captureConfiguredSourceBinding, checkProject } from './backend-harness.mjs'
 import {
@@ -638,6 +639,8 @@ async function runUnlocked(root, taskId, options) {
     ? await resolveImplementationExecutable(workspace.path, loadedConfig.config.adapter.command)
     : null
   const verificationConfig = (await loadVerificationConfig(workspace.path)).config
+  const testAuthoring = loadedConfig.config.schemaVersion === 2
+    ? await inspectTestAuthoringContract(workspace.path, verificationConfig) : null
   const requestDir = await resolveSafeProjectPath(workspace.path, '.backend-harness/local/implementation')
   await mkdir(requestDir, { recursive: true, mode: 0o700 })
   const requestPath = resolve(requestDir, 'request-' + taskId + '.json')
@@ -678,6 +681,7 @@ async function runUnlocked(root, taskId, options) {
             contractPath: '.backend-harness/verification.json',
             executionOwner: 'harness',
             focusedRegressionTestsRequired: true,
+            testAuthoring,
             requiredGates: verificationConfig.gates.filter(gate => gate.required).map(gate => ({
               id: gate.id, resultType: gate.result.type, minimumExecutedTests: gate.result.minimumTests ?? null
             }))

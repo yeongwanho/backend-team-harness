@@ -159,6 +159,8 @@ test('provider argv uses non-interactive bounded modes without dangerous bypass 
   assert.match(codex.args.at(-1), /Do not run build, test, formatter, linter/)
   assert.match(codex.args.at(-1), /Writing tests is required; executing them belongs to the evaluator/)
   assert.match(codex.args.at(-1), /zero discovered or only skipped tests cannot complete/)
+  assert.match(codex.args.at(-1), /verification\.testAuthoring/)
+  assert.match(codex.args.at(-1), /nearby E2E suite may not be executed/)
   assert.match(codex.args.at(-1), /Do not add pass-only placeholders/)
 
   const claude = buildProviderInvocation({ provider: 'claude', model: 'sonnet', maxBudgetUsd: 1.5 }, executable, './request.json', profile)

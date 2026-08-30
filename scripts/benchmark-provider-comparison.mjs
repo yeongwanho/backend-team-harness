@@ -22,7 +22,7 @@ const DEFAULT_CORPUS = 'benchmarks/public-backend-v1/corpus.json'
 const DEFAULT_CONFIG = 'benchmarks/public-backend-v1/provider-comparison.json'
 const EXECUTE_ACK = 'I_UNDERSTAND_PROVIDER_COSTS'
 const ALL_ACK = 'I_UNDERSTAND_40_PROVIDER_RUNS'
-const PROTOCOL_VERSION = 'diagnostic-context-v27'
+const PROTOCOL_VERSION = 'test-authoring-v29'
 
 function parseArguments(argv) {
   const result = {

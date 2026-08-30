@@ -25,6 +25,27 @@ test('provider comparison config covers all three repositories and twenty tasks 
   assert.doesNotMatch(configText, /goldPaths|targetSha/)
 })
 
+test('new Nest acceptance tasks have exact pinned fixtures, named cases and the shared production runner', async () => {
+  const corpus = parseEvaluationCorpus(await readFile('benchmarks/public-backend-v1/corpus.json', 'utf8'))
+  const config = parseProviderBenchmarkConfig(await readFile('benchmarks/public-backend-v1/provider-comparison.json', 'utf8'), corpus)
+  const tasks = config.repositories.find(repository => repository.id === 'nestjs-boilerplate').tasks
+  for (const [id, caseCount] of [['nest-01-session-update-by-hash', 12], ['nest-03-swagger-language-header', 3], ['nest-06-user-email-conflict', 7]]) {
+    const task = tasks.find(task => task.id === id)
+    assert.ok(task.acceptance, id + ': independent acceptance is missing')
+    assert.equal(task.acceptance.kind, 'fixture-tests')
+    assert.deepEqual(task.acceptance.command, ['node', 'test/bth/run.cjs'])
+    assert.equal(task.acceptance.cases.length, caseCount)
+    const files = task.acceptance.files.map(file => file.path)
+    assert.ok(files.includes('test/bth/run.cjs'))
+    assert.ok(files.includes('test/bth/verify-jest.mjs'))
+    assert.ok(task.acceptance.cases.every(entry => files.includes(entry.className)))
+    const spec = task.acceptance.files.find(file => file.path.endsWith('.spec.ts'))
+    const declaredNames = [...(await readFile('benchmarks/public-backend-v1/' + spec.fixture, 'utf8')).matchAll(/\btest\('([^']+)'/g)].map(match => match[1])
+    assert.deepEqual(task.acceptance.cases.map(entry => entry.name), declaredNames)
+    assert.doesNotMatch(JSON.stringify(task.decisions), /fixtures|\.spec\.ts|targetSha|goldPaths/)
+  }
+})
+
 test('provider comparison config rejects missing tasks, shell-shaped fields, and traversal', async () => {
   const corpus = parseEvaluationCorpus(await readFile('benchmarks/public-backend-v1/corpus.json', 'utf8'), 'corpus')
   const valid = JSON.parse(await readFile('benchmarks/public-backend-v1/provider-comparison.json', 'utf8'))

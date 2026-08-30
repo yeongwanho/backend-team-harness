@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "checkpoint": "v29",
+  "baseCommit": "7c96c035664bef7a6d6850832258534b71236fa8",
+  "node": "v22.23.1",
+  "platform": "darwin",
+  "sourceHashes": {
+    "benchmarks/public-backend-v1/fixtures/nest/jest-session-hash.config.cjs": "a7474e42cb1cc0bba4831e31e8a99a16e7c320179d41559891df3340dafba075",
+    "benchmarks/public-backend-v1/fixtures/nest/jest-swagger-language.config.cjs": "b697d3e36123cfd6b1aeca64375e19438b806b24787fb7bbb58280d93834505d",
+    "benchmarks/public-backend-v1/fixtures/nest/jest-users-email.config.cjs": "c385deb0342efa1a15acaf1f1b4d6256d4d29bebe6c0de20b476f258d196cfcb",
+    "benchmarks/public-backend-v1/fixtures/nest/session-hash.spec.ts": "a3243da03ae35f9806efb8328eb057238d1b999701fd892834936818a31af8f7",
+    "benchmarks/public-backend-v1/fixtures/nest/swagger-language.spec.ts": "af2ce4fcbd88e6a16e10edbcdb158d212f834d9de966015740cfb789a3ae8276",
+    "benchmarks/public-backend-v1/fixtures/nest/users-email.spec.ts": "b586bce481ee96baacd37ffb6dc98eb7deb4a999668cd06c4bbb8965b59c7799",
+    "scripts/acceptance-controls.mjs": "4d1eaf624452d83c3800418415287887520c6473949aefa48cfba4947479b31a",
+    "src/core/test-authoring-contract.mjs": "1bd294d91c11afb5c8725bb922b34c311a98f029f4f022c2f0ebba2d56059645",
+    "test/acceptance-controls-script.test.mjs": "5917ab64951425bf7a9c51f41d83be2908774a276bde37fc35523885df88cb35",
+    "test/test-authoring-contract.test.mjs": "dd028a73660367ffe2321f8551c779cc5652102c097a72e28ae76bf4ab296162",
+    "benchmarks/public-backend-v1/provider-comparison.json": "64a862040c3a256f5dc70f091488a390d315677e5cb2fb435a5b8a544a5effaa",
+    "scripts/benchmark-provider-comparison.mjs": "43d6aab2163745e583d017a1c1a0b26526308872ead5c5b1ad6b924c8a686f5d",
+    "scripts/mutation-smoke.mjs": "9fecdf3002bb8dc01c81a36599b80430390597d00cf40110cfc46dd92e0ffd2d",
+    "src/providers/model-cli.mjs": "a56d0c6c44ae037f38a2276bdfa10a061770692ff6d3e3a98f255d65a6f88eff",
+    "src/runtime/implementation-orchestrator.mjs": "be34dcb8520704720d97f3aa4a6e82853095dcadbe27515cda37e5f2e8c23cdd",
+    "test/model-cli-provider.test.mjs": "ac3bc44b2dc8d2c202a0b208ff03339b8a1b9250a5dde86caebbb1f5e30e4058",
+    "test/provider-benchmark-config.test.mjs": "0100d0f13477c3a115ce91075b86007385727accef546e566479134d0212e06b",
+    "test/work-first-test.test.mjs": "2819c2d88d1ec1096855542360e2ef1b5ba2ff7285821f62e771fa514e062e6f"
+  },
+  "commands": [
+    {
+      "command": "node scripts/check-syntax.mjs",
+      "exitCode": 0,
+      "localLog": "/tmp/bth-v29-syntax.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "command": "npm run test:coverage",
+      "exitCode": 0,
+      "localLog": "/tmp/bth-v29-coverage.log",
+      "sha256": "0d58689b18a5ae58966b8761bb0bca60e3091f411f8c3bedd4133ccbe335e3f4",
+      "bytes": 113914
+    },
+    {
+      "command": "node scripts/mutation-smoke.mjs",
+      "exitCode": 0,
+      "localLog": "/tmp/bth-v29-mutation.log",
+      "sha256": "82ca2ccfccbb6ba987a1678dc72b8fb92f1510b44d616d3c8c8d9aa2d56a3f2f",
+      "bytes": 2529
+    },
+    {
+      "command": "node scripts/install-smoke.mjs",
+      "exitCode": 0,
+      "localLog": "/tmp/bth-v29-install.log",
+      "sha256": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989",
+      "bytes": 62
+    },
+    {
+      "command": "node --test test/provider-benchmark-config.test.mjs (failing first)",
+      "exitCode": 1,
+      "localLog": "/tmp/bth-v29-config-red.log",
+      "sha256": "3f02fffb3c96123548031f8f6d65d0792b5065d2d5a6e5fae20073413b70ff71",
+      "bytes": 1982
+    },
+    {
+      "command": "node --test test/test-authoring-contract.test.mjs (failing first)",
+      "exitCode": 1,
+      "localLog": "/tmp/bth-v29-test-authoring-red.log",
+      "sha256": "05b25c813c4f2c358c06cc0792684272a5c7e74eeeb93dc3e137f12ace9560cf",
+      "bytes": 1578
+    },
+    {
+      "command": "node --test test/test-authoring-contract.test.mjs test/work-first-test.test.mjs test/model-cli-provider.test.mjs",
+      "exitCode": 0,
+      "localLog": "/tmp/bth-v29-test-authoring-green.log",
+      "sha256": "ab8a60ed83703dfd38484800cf06b1be0a04f98e497a70e8d6b03f75361e57a7",
+      "bytes": 5200
+    },
+    {
+      "command": "node scripts/acceptance-controls.mjs --cache /path/to/public-mirrors --output NEW_JSON --task nest-06-user-email-conflict --task nest-03-swagger-language-header --task nest-02-file-relational-mapper --task nest-01-session-update-by-hash",
+      "exitCode": 1,
+      "localLog": "/tmp/bth-v29-final-controls.log",
+      "sha256": "55bae872429a3ba754f5dce613e32e7ee0e065ae3b629b700ad2f0125e056f63",
+      "bytes": 778
+    },
+    {
+      "command": "node --test test/docs-contract.test.mjs test/provider-benchmark-config.test.mjs test/acceptance-controls-script.test.mjs test/test-authoring-contract.test.mjs",
+      "exitCode": 0,
+      "localLog": "/tmp/bth-v29-final-contracts.log",
+      "sha256": "17e564170e69a94e9b340a93a59a4336890fd97df16b8878f1001682d95f0863",
+      "bytes": 3288
+    }
+  ],
+  "tests": {
+    "total": 458,
+    "passed": 454,
+    "failed": 0,
+    "skipped": 4,
+    "skipReasons": [
+      "real MySQL E2E not enabled",
+      "real Maven/Gradle E2E not enabled",
+      "real Windows provider execution requires Windows",
+      "real Windows process-tree timeout requires Windows"
+    ]
+  },
+  "coverage": {
+    "lines": 90.56,
+    "branches": 80.89,
+    "functions": 98.83,
+    "newTestAuthoringModule": {
+      "lines": 100,
+      "branches": 90.76,
+      "functions": 100
+    }
+  },
+  "mutation": {
+    "selectedMutants": 18,
+    "killedByAssertions": 18,
+    "wholeCodebaseMutationScore": false
+  },
+  "install": {
+    "version": "0.9.0",
+    "passed": true
+  },
+  "actualProviders": {
+    "calls": 3,
+    "codex": 3,
+    "claude": 0,
+    "initialPairSuccesses": 0,
+    "followupSuccesses": 0,
+    "estimatedCostUsd": null
+  },
+  "actualControls": {
+    "confirmed": 3,
+    "attempted": 4,
+    "unconfirmedTask": "nest-01-session-update-by-hash",
+    "failureClass": "pinned-lockfile-installation-failed-before-tests",
+    "confirmedCorpusTotal": 8,
+    "corpusTasks": 20
+  },
+  "omissions": [
+    "No claim of 20-task completion or efficiency superiority.",
+    "Session fixture compile/runtime remains unverified.",
+    "Compiler code and location are not yet propagated in automatic recovery.",
+    "No company repositories, production services, credentials, or authentication settings changed.",
+    "Followup public candidate retained for diagnosis; not applied to company/original source.",
+    "Public historical tasks are known regression cases, not held-out generalization evidence."
+  ]
+}

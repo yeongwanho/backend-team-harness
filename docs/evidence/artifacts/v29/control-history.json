@@ -1,0 +1,429 @@
+{
+  "schemaVersion": 1,
+  "notes": [
+    "Initial ENOTCACHED setup failures are not regressions.",
+    "The first Swagger proxy fixture was defective; both base and target failed. The corrected fixture is separately hashed.",
+    "Session checks never executed: both npm 10.1.0 and isolated 10.9.9 rejected the pinned lockfile for missing gcp-metadata@7.0.1."
+  ],
+  "runs": [
+    {
+      "localArtifact": "/tmp/bth-v29-controls-first.json",
+      "sha256": "99d72decf5fb2b1d07385aaf604f8dbea8b7214a39af69411615ca3905f0b8b6",
+      "configSha256": "d71f1747d8fdbc27f9f8c6e53792c48d24be023df4348f1926e92956d18f349c",
+      "sourceHashes": {
+        "src/evaluation/task-acceptance.mjs": "d5ba13a763fadf82773cec94012b75437f6d957da3af359e8364c6beaa091ee3",
+        "src/evaluation/provider-benchmark-config.mjs": "fc0f14360b1d310f3026beb9446047bd076864c0a1cc45b5514c346fe7b84b4e",
+        "src/core/junit.mjs": "aa839f10fc239f0765ca8414e89e79d9649b8e3cc040531a56c1e136ca679094",
+        "scripts/acceptance-controls.mjs": "4d1eaf624452d83c3800418415287887520c6473949aefa48cfba4947479b31a"
+      },
+      "results": [
+        {
+          "taskId": "nest-06-user-email-conflict",
+          "controlsConfirmed": false,
+          "reason": "oracle-controls-not-confirmed",
+          "oracleSha256": "95746f3a455f48ccb541a2184bd02b612e6438da9c597b422470c055b5778619",
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 5015,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "a086128e73ac7e0dde65d510a74f27f55019e2dc3c48769deb2611051d059348",
+                  "bytes": 1093
+                }
+              },
+              "cases": {
+                "missing": 7
+              },
+              "passed": false,
+              "regressionReproduced": false
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 5075,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "f54ac5fe6d9b60b9d25ae1fa1320bb5888c95a15bd56bcd24aa8aaa3a3dbce85",
+                  "bytes": 1093
+                }
+              },
+              "cases": {
+                "missing": 7
+              },
+              "passed": false,
+              "regressionReproduced": false
+            }
+          }
+        },
+        {
+          "taskId": "nest-03-swagger-language-header",
+          "controlsConfirmed": false,
+          "reason": "oracle-controls-not-confirmed",
+          "oracleSha256": "95d1ad2b8dd998fdbc00f3c72d4b0270c1407a4921690e2cf14798bb3c53ff82",
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 8659,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "dfc811074503159c562328c47f08da1df8b3ce94218ab1d276a73c4db2d7638e",
+                  "bytes": 1104
+                }
+              },
+              "cases": {
+                "missing": 3
+              },
+              "passed": false,
+              "regressionReproduced": false
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 8492,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "bc809ba254e45bd367e136c00aaaaae39b245a8de1e96b40b386f2f12fe837f3",
+                  "bytes": 1104
+                }
+              },
+              "cases": {
+                "missing": 3
+              },
+              "passed": false,
+              "regressionReproduced": false
+            }
+          }
+        },
+        {
+          "taskId": "nest-01-session-update-by-hash",
+          "controlsConfirmed": false,
+          "reason": "oracle-controls-not-confirmed",
+          "oracleSha256": "a28a8cb74b972180dc8ce7555144cc6a9a5c5008e5718b828bc476ee30388113",
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 770,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "72acd919f45bca58b227861023368f57ddccd5997819d4efe75ff7393bce3534",
+                  "bytes": 1372
+                }
+              },
+              "cases": {
+                "missing": 12
+              },
+              "passed": false,
+              "regressionReproduced": false
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 810,
+                "stdout": {
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "bytes": 0
+                },
+                "stderr": {
+                  "sha256": "fecd74cfa08dc596bc5a57c1fb7b39564ddf0ddd473d4f6e1fa38722762b7230",
+                  "bytes": 1372
+                }
+              },
+              "cases": {
+                "missing": 12
+              },
+              "passed": false,
+              "regressionReproduced": false
+            }
+          }
+        },
+        {
+          "taskId": "nest-02-file-relational-mapper",
+          "controlsConfirmed": true,
+          "reason": "candidate-not-provided",
+          "oracleSha256": "b77f7389c4f981480face8168974efd2d0dd86dbe530a7d264d4911ae50dd2fd",
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 13045,
+                "stdout": {
+                  "sha256": "44d1f69c1b8567f88e00c74101d21b7290ab0b7e602f0e8cdd2124a137a671e1",
+                  "bytes": 27
+                },
+                "stderr": {
+                  "sha256": "2186f91e711ba8548f3cffad6981442e3a1591e1dc1b5ba838ce718ec60cdad6",
+                  "bytes": 5785
+                }
+              },
+              "cases": {
+                "failed": 3,
+                "passed": 4
+              },
+              "passed": false,
+              "regressionReproduced": true
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 0,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 13320,
+                "stdout": {
+                  "sha256": "44d1f69c1b8567f88e00c74101d21b7290ab0b7e602f0e8cdd2124a137a671e1",
+                  "bytes": 27
+                },
+                "stderr": {
+                  "sha256": "3fa8e8f71f0e1b746691f545d68bee87c8632bf710a4577822c9e38a654afb37",
+                  "bytes": 2071
+                }
+              },
+              "cases": {
+                "passed": 7
+              },
+              "passed": true,
+              "regressionReproduced": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "localArtifact": "/tmp/bth-v29-controls-ready-cache.json",
+      "sha256": "615190f4c773f25fffedd73ca681ab4d9696807eb952cd2d0f73336224b8a7c7",
+      "configSha256": "d71f1747d8fdbc27f9f8c6e53792c48d24be023df4348f1926e92956d18f349c",
+      "sourceHashes": {
+        "src/evaluation/task-acceptance.mjs": "d5ba13a763fadf82773cec94012b75437f6d957da3af359e8364c6beaa091ee3",
+        "src/evaluation/provider-benchmark-config.mjs": "fc0f14360b1d310f3026beb9446047bd076864c0a1cc45b5514c346fe7b84b4e",
+        "src/core/junit.mjs": "aa839f10fc239f0765ca8414e89e79d9649b8e3cc040531a56c1e136ca679094",
+        "scripts/acceptance-controls.mjs": "4d1eaf624452d83c3800418415287887520c6473949aefa48cfba4947479b31a"
+      },
+      "results": [
+        {
+          "taskId": "nest-06-user-email-conflict",
+          "controlsConfirmed": true,
+          "reason": "candidate-not-provided",
+          "oracleSha256": "95746f3a455f48ccb541a2184bd02b612e6438da9c597b422470c055b5778619",
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 10264,
+                "stdout": {
+                  "sha256": "2553b7ff51d390965010292c65d0aaf4dbe4f093700385e01d8c8fbb6c48be4d",
+                  "bytes": 27
+                },
+                "stderr": {
+                  "sha256": "e2863729c90fce523778878acc143b568c5268f948d5dfea680599c5b0396605",
+                  "bytes": 3336
+                }
+              },
+              "cases": {
+                "failed": 3,
+                "passed": 4
+              },
+              "passed": false,
+              "regressionReproduced": true
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 0,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 9640,
+                "stdout": {
+                  "sha256": "2553b7ff51d390965010292c65d0aaf4dbe4f093700385e01d8c8fbb6c48be4d",
+                  "bytes": 27
+                },
+                "stderr": {
+                  "sha256": "f75f8c83cd3ccfd374415c3c4d818c6a2b76e4f3256112f55c02fe5a1c5a9231",
+                  "bytes": 1530
+                }
+              },
+              "cases": {
+                "passed": 7
+              },
+              "passed": true,
+              "regressionReproduced": false
+            }
+          }
+        },
+        {
+          "taskId": "nest-03-swagger-language-header",
+          "controlsConfirmed": false,
+          "reason": "oracle-controls-not-confirmed",
+          "oracleSha256": "95d1ad2b8dd998fdbc00f3c72d4b0270c1407a4921690e2cf14798bb3c53ff82",
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 41843,
+                "stdout": {
+                  "sha256": "c505666a2e2a8cd89fc2a0a32650e62ee852e85a1d58fa3096c73cb053175e19",
+                  "bytes": 27
+                },
+                "stderr": {
+                  "sha256": "a8a622b735f7f2c0f9e90ecbb3a32c8d85a2294fbe4b5b01d512e3a5f3111ac7",
+                  "bytes": 5441
+                }
+              },
+              "cases": {
+                "failed": 3
+              },
+              "passed": false,
+              "regressionReproduced": true
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 41574,
+                "stdout": {
+                  "sha256": "c505666a2e2a8cd89fc2a0a32650e62ee852e85a1d58fa3096c73cb053175e19",
+                  "bytes": 27
+                },
+                "stderr": {
+                  "sha256": "de5b87a1ff45eae72f0c2163c6c57219c0c3e5be297cc35db35a8a18cf048640",
+                  "bytes": 5440
+                }
+              },
+              "cases": {
+                "failed": 3
+              },
+              "passed": false,
+              "regressionReproduced": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "localArtifact": "/tmp/bth-v29-swagger-fixed.json",
+      "sha256": "1d769de6f5944e892e3ab30bef5fe2804eda64cc98a82e8694b081a2ae4ab028",
+      "configSha256": "64a862040c3a256f5dc70f091488a390d315677e5cb2fb435a5b8a544a5effaa",
+      "sourceHashes": {
+        "src/evaluation/task-acceptance.mjs": "d5ba13a763fadf82773cec94012b75437f6d957da3af359e8364c6beaa091ee3",
+        "src/evaluation/provider-benchmark-config.mjs": "fc0f14360b1d310f3026beb9446047bd076864c0a1cc45b5514c346fe7b84b4e",
+        "src/core/junit.mjs": "aa839f10fc239f0765ca8414e89e79d9649b8e3cc040531a56c1e136ca679094",
+        "scripts/acceptance-controls.mjs": "4d1eaf624452d83c3800418415287887520c6473949aefa48cfba4947479b31a"
+      },
+      "results": [
+        {
+          "taskId": "nest-03-swagger-language-header",
+          "controlsConfirmed": true,
+          "reason": "candidate-not-provided",
+          "oracleSha256": "94c27b3c50ec462acd8bf62619b71973350b934fc1e79506e2011615b364fd16",
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 13802,
+                "stdout": {
+                  "sha256": "a2c7b1a222ae0379c600b9315b4438e4d25e3a8a671472c3f44f1a13064c7650",
+                  "bytes": 27
+                },
+                "stderr": {
+                  "sha256": "83352afe8fc5bfa384321eb691d44f1a8384899a6143b8a6842949d119dadadb",
+                  "bytes": 4139
+                }
+              },
+              "cases": {
+                "failed": 3
+              },
+              "passed": false,
+              "regressionReproduced": true
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 0,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 12610,
+                "stdout": {
+                  "sha256": "5f189ffaf876be5015070af348e40fc8151ab4af692c6552f6c5f7099264c954",
+                  "bytes": 27
+                },
+                "stderr": {
+                  "sha256": "43e0de0c4fa468f6c5e820bd904273581cdec5ca229ea22f83317b620011209b",
+                  "bytes": 1277
+                }
+              },
+              "cases": {
+                "passed": 3
+              },
+              "passed": true,
+              "regressionReproduced": false
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

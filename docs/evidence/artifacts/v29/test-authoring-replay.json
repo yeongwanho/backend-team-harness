@@ -1,0 +1,37 @@
+{
+  "status": "observed",
+  "authority": "source-bound-test-authoring-guidance",
+  "gateId": "tests",
+  "framework": "jest",
+  "projectPath": ".",
+  "source": {
+    "path": "package.json",
+    "sha256": "4f5f95dea14b22852c154b4a0ede48121a60764679686ab2d408c8076c87b330",
+    "selector": "jest"
+  },
+  "verificationSha256": "c6d0cd767483f958d2f244ec717f263469392f02c1e8f4085df7128ccfd42d3a",
+  "runnerSources": [
+    {
+      "path": ".backend-harness/bin/verify-portable.mjs",
+      "sha256": "5a1d55b10727a4c7cf4ddfbe76a6bf5ff57cf738edc995536776fdfc18abd418"
+    },
+    {
+      "path": ".backend-harness/bin/verify-portable",
+      "sha256": "db4a7f5b0906638f52f0c8767c2d0d74e56a1ecb365d16bbf5014d001a88d357"
+    },
+    {
+      "path": ".backend-harness/bin/verify-portable.cmd",
+      "sha256": "a437553789aa5c5b5a630404746e8fac26cdc4ef9584ed4d6f086a65b7470352"
+    }
+  ],
+  "declaredDiscovery": {
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ]
+  },
+  "guidance": "Author focused tests inside this gate’s declared discovery scope, relative to projectPath. An adjacent test may belong to a different suite such as test:e2e; that script is not selected by this gate. Unlisted settings are not inferred defaults. Do not weaken or change the gate to make tests count; unknown configuration requires inspection. Only actual final test execution proves coverage."
+}

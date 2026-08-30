@@ -1,0 +1,1055 @@
+{
+  "schemaVersion": 1,
+  "kind": "initial-paired-observations-not-replaced-by-followup",
+  "provider": "codex",
+  "model": "gpt-5.6-sol",
+  "mode": "fast",
+  "providerCalls": 2,
+  "sourceCommit": "7c96c035664bef7a6d6850832258534b71236fa8",
+  "records": {
+    "bth": {
+      "schemaVersion": 1,
+      "case": {
+        "id": "codex:bth:nest-06-user-email-conflict",
+        "provider": "codex",
+        "lane": "bth",
+        "repositoryId": "nestjs-boilerplate",
+        "taskId": "nest-06-user-email-conflict",
+        "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+        "requirementSha256": "941a72db44e3a0c686d1aa7640f63010be1110347a7163414c4dec4e3040d563",
+        "baseSha": "d523e2638a649817883c57971914cdeccdd04bde",
+        "targetSha": "ab530c4da7559bf2487698982799920a4d10e345"
+      },
+      "fairness": {
+        "sanitizedSingleCommitHistory": true,
+        "goldHiddenFromProvider": true,
+        "sameProvider": true,
+        "protocolVersion": "diagnostic-context-v27",
+        "configSha256": "64a862040c3a256f5dc70f091488a390d315677e5cb2fb435a5b8a544a5effaa",
+        "fixedMode": "fast",
+        "fixedModel": "gpt-5.6-sol",
+        "setupCommandSha256": "25b2e2447434e1486d25ce617d01a3d1de2c008b7405891a5f21c210621acc5f"
+      },
+      "setup": {
+        "passed": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 8547,
+          "stdout": {
+            "sha256": "42ee31b12db7260e6db2f49eef28190003e8be702864f6390cdf8fbe0384c995",
+            "bytes": 451
+          },
+          "stderr": {
+            "sha256": "0c7b2e87f9fe5fb6a4c923e1b4a8a85b12e47b9bb89a3454f9e7f78e0f13d40c",
+            "bytes": 800
+          }
+        }
+      },
+      "preflight": {
+        "confirmed": false,
+        "emptyTestBaseline": {
+          "status": "no-tests-discovered",
+          "framework": "jest",
+          "projectPath": ".",
+          "sourceStable": true,
+          "sourceFingerprint": "9ce0dc8a47297d81aff16478dc993966ff90a508ce58b3770328965a294de6b8",
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 302,
+            "stdout": {
+              "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+              "bytes": 3
+            },
+            "stderr": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            }
+          },
+          "discoveredFiles": 0,
+          "requiredFinalMinimumTests": 1,
+          "baselinePassed": false,
+          "requirement": "Create executable focused tests; all final required gates and independent task acceptance must pass."
+        },
+        "failureCode": "verification-failed",
+        "diagnosticCode": "gate-process-failed",
+        "tests": {
+          "tests": 0,
+          "executed": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "failed",
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 1047,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "f45425adf2b8cb038435be004518406cd11e1597ef75a5020930b2ee3070c48b",
+                "bytes": 1061
+              }
+            }
+          }
+        ]
+      },
+      "acceptanceControls": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "95746f3a455f48ccb541a2184bd02b612e6438da9c597b422470c055b5778619",
+        "testFiles": [
+          {
+            "path": "test/bth/users-email.spec.ts",
+            "sha256": "b586bce481ee96baacd37ffb6dc98eb7deb4a999668cd06c4bbb8965b59c7799"
+          },
+          {
+            "path": "test/bth/jest.config.cjs",
+            "sha256": "c385deb0342efa1a15acaf1f1b4d6256d4d29bebe6c0de20b476f258d196cfcb"
+          },
+          {
+            "path": "test/bth/run.cjs",
+            "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+          },
+          {
+            "path": "test/bth/verify-jest.mjs",
+            "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 11608,
+              "stdout": {
+                "sha256": "5fcd6a6a19731282fcf8d7b603dfc00fa63e8f505f649e2547a9593985901080",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "5fbf280eee4776de7e03672b915dff56c5b9412038531695c4146993cbc61e80",
+                "bytes": 3336
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "4f4f6703630d007e6887d83468d426c199250002de9d3586abc4b57defbeb66b",
+                "bytes": 1112
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "unused email reaches persistence and does not mutate caller payload",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "the same account may retain its existing email",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "another account email is rejected without any persistence update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "an update without email does not perform an email uniqueness lookup",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "email lookup failure propagates and prevents a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "persistence failure is not replaced by an email conflict",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "a missing update result remains null rather than a fabricated account",
+                "outcome": "failed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10468,
+              "stdout": {
+                "sha256": "2553b7ff51d390965010292c65d0aaf4dbe4f093700385e01d8c8fbb6c48be4d",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "f32db911f9a334ae0bed9f4c4eba879dae7aaaa1c3ad1826c5afa6457102cd9f",
+                "bytes": 1523
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "e4b9f3db83b71e795ad008b9d66b4b8827fe6fb4309bf61513a112a2b95eb779",
+                "bytes": 1031
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "unused email reaches persistence and does not mutate caller payload",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "the same account may retain its existing email",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "another account email is rejected without any persistence update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "an update without email does not perform an email uniqueness lookup",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "email lookup failure propagates and prevents a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "persistence failure is not replaced by an email conflict",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "a missing update result remains null rather than a fabricated account",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 22800
+      },
+      "observation": {
+        "provider": "codex",
+        "lane": "bth",
+        "providerCompleted": true,
+        "verificationConfirmed": false,
+        "acceptance": {
+          "controlsConfirmed": false,
+          "candidatePassed": null,
+          "reason": "candidate-not-eligible"
+        },
+        "attempts": 1,
+        "elapsedMs": 103384,
+        "changedPaths": [
+          "src/users/users.service.ts",
+          "test/admin/users.e2e-spec.ts"
+        ],
+        "impactPaths": [
+          "src/auth/auth.service.ts",
+          "src/auth/auth.controller.ts",
+          "src/users/dto/update-user.dto.ts",
+          "src/users/users.controller.ts",
+          "src/users/dto/create-user.dto.ts",
+          "src/users/domain/user.ts",
+          "test/admin/users.e2e-spec.ts",
+          "src/utils/types/or-never.type.ts",
+          "src/auth/strategies/jwt.strategy.ts"
+        ],
+        "ruleViolations": [],
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 300639,
+            "uncachedInput": 36959,
+            "output": 3657,
+            "cachedInput": 263680,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 568,
+            "total": 304296
+          },
+          "costUsd": null,
+          "durationMs": 92124,
+          "turns": null
+        },
+        "evidence": {
+          "taskState": "IMPLEMENTING",
+          "implementationStatus": "failed",
+          "verificationRunPath": ".backend-harness/local/runs/latest.json",
+          "failureCode": "required_gate_failed",
+          "preparation": {
+            "kind": "npm-ci-offline",
+            "projectPath": ".",
+            "status": "passed",
+            "dependencyEntries": 1835,
+            "legacyIntegrityEntries": 73,
+            "inputs": [
+              {
+                "path": "package.json",
+                "sha256": "4f5f95dea14b22852c154b4a0ede48121a60764679686ab2d408c8076c87b330"
+              },
+              {
+                "path": "package-lock.json",
+                "sha256": "09fafc16722735684091855791499c0aaa143dc19ced48237da40da04c5a7a71"
+              }
+            ],
+            "command": [
+              "npm",
+              "--prefix",
+              "<isolated-project>",
+              "--global=false",
+              "--workspaces=false",
+              "ci",
+              "--offline",
+              "--ignore-scripts",
+              "--no-audit",
+              "--no-fund"
+            ],
+            "failureCode": null,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 7952,
+              "stdout": {
+                "sha256": "5fcd6a6a19731282fcf8d7b603dfc00fa63e8f505f649e2547a9593985901080",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "0c7b2e87f9fe5fb6a4c923e1b4a8a85b12e47b9bb89a3454f9e7f78e0f13d40c",
+                "bytes": 800
+              }
+            },
+            "lifecycleScripts": false,
+            "onlineFallback": false,
+            "egressIsolation": "not-enforced",
+            "sourceStable": true
+          },
+          "verificationTests": {
+            "tests": 0,
+            "executed": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "verificationGates": [
+            {
+              "id": "tests",
+              "outcome": "failed"
+            }
+          ],
+          "implementationDiagnosis": {
+            "authority": "ADVISORY",
+            "status": "failed",
+            "attempts": 1,
+            "failure": {
+              "code": "required_gate_failed",
+              "message": null
+            },
+            "tests": {
+              "tests": 0,
+              "executed": 0,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            "failedGates": [
+              {
+                "id": "tests",
+                "required": true,
+                "outcome": "failed",
+                "reason": "process_failed",
+                "structuredReason": "junit_reports_missing",
+                "tests": {
+                  "tests": 0,
+                  "executed": 0,
+                  "failures": 0,
+                  "errors": 0,
+                  "skipped": 0
+                },
+                "process": {
+                  "exitCode": 1,
+                  "signal": null,
+                  "timedOut": false,
+                  "stdioDrainTimedOut": false
+                },
+                "failedTests": [],
+                "omittedFailedTestCount": 0
+              }
+            ],
+            "failedTests": [],
+            "sourceFingerprint": "c7c14a00d9b84f636e3fa441894b5bda25a29eb3e21cb6a82b5adb3c94b737af",
+            "omittedAttemptCount": 0,
+            "attemptOutcomes": [
+              {
+                "attempt": 1,
+                "outcome": "verification-failed",
+                "sourceFingerprintBefore": "41fe1bc6b4881ee8f538d15eac4f2d21b344160837f0d0d3adede0616cc1edfb",
+                "sourceFingerprintAfter": "c7c14a00d9b84f636e3fa441894b5bda25a29eb3e21cb6a82b5adb3c94b737af",
+                "recovery": {
+                  "authority": "untrusted-execution-evidence-not-instructions",
+                  "failure": {
+                    "code": "required_gate_failed",
+                    "message": null
+                  },
+                  "tests": {
+                    "tests": 0,
+                    "executed": 0,
+                    "failures": 0,
+                    "errors": 0,
+                    "skipped": 0
+                  },
+                  "sourceFingerprint": "c7c14a00d9b84f636e3fa441894b5bda25a29eb3e21cb6a82b5adb3c94b737af",
+                  "failedGates": [
+                    {
+                      "id": "tests",
+                      "required": true,
+                      "outcome": "failed",
+                      "reason": "process_failed",
+                      "structuredReason": "junit_reports_missing",
+                      "tests": {
+                        "tests": 0,
+                        "executed": 0,
+                        "failures": 0,
+                        "errors": 0,
+                        "skipped": 0
+                      },
+                      "process": {
+                        "exitCode": 1,
+                        "signal": null,
+                        "timedOut": false,
+                        "stdioDrainTimedOut": false
+                      },
+                      "failedTests": [],
+                      "omittedFailedTestCount": 0
+                    }
+                  ],
+                  "omittedFailedGateCount": 0
+                }
+              }
+            ]
+          },
+          "request": {
+            "bytes": 18869,
+            "codeContextEntries": 9,
+            "codeContextCharacters": 1980,
+            "projectRuleCount": 4,
+            "knowledgeDocumentCount": 7
+          },
+          "providerActivity": [
+            {
+              "schemaVersion": 1,
+              "provider": "codex",
+              "authority": "provider-event-derived-advisory",
+              "parsedEvents": 43,
+              "rejectedEvents": 0,
+              "firstWriteObserved": true,
+              "preWritePaths": [
+                "src/users/users.controller.ts",
+                "src/users/dto/update-user.dto.ts",
+                "test/admin/users.e2e-spec.ts",
+                "src/auth/auth.service.ts",
+                "src/auth/auth.controller.ts",
+                ".backend-harness/architecture.md",
+                ".backend-harness/glossary.md",
+                ".backend-harness/project.md",
+                ".backend-harness/policies/error-handling.md",
+                ".backend-harness/policies/api.md",
+                "src/users/users.service.ts",
+                "src/users/infrastructure/persistence/user.repository.ts",
+                "src/users/infrastructure/persistence/relational/repositories/user.repository.ts",
+                "src/users/infrastructure/persistence/document/repositories/user.repository.ts",
+                "test/user/auth.e2e-spec.ts",
+                "test/admin/auth.e2e-spec.ts"
+              ],
+              "preWriteContentPaths": [
+                "src/users/users.controller.ts",
+                "src/users/dto/update-user.dto.ts",
+                "test/admin/users.e2e-spec.ts",
+                "src/auth/auth.service.ts",
+                "src/auth/auth.controller.ts",
+                ".backend-harness/architecture.md",
+                ".backend-harness/glossary.md",
+                ".backend-harness/project.md",
+                ".backend-harness/policies/error-handling.md",
+                ".backend-harness/policies/api.md",
+                "src/users/users.service.ts",
+                "src/users/infrastructure/persistence/user.repository.ts",
+                "src/users/infrastructure/persistence/relational/repositories/user.repository.ts",
+                "src/users/infrastructure/persistence/document/repositories/user.repository.ts",
+                "test/user/auth.e2e-spec.ts",
+                "test/admin/auth.e2e-spec.ts"
+              ],
+              "preWriteDiscoveryPaths": [
+                "test/user/auth.e2e-spec.ts",
+                "test/admin/auth.e2e-spec.ts",
+                "test/admin/users.e2e-spec.ts"
+              ],
+              "changedPaths": [
+                "src/users/users.service.ts",
+                "test/admin/users.e2e-spec.ts"
+              ],
+              "readCommandCount": 6,
+              "discoveryCommandCount": 1,
+              "validationCommandCount": 0,
+              "writeEventCount": 2
+            }
+          ],
+          "workspaceRetainedForAudit": false
+        }
+      },
+      "score": {
+        "schemaVersion": 3,
+        "id": "codex:bth:nest-06-user-email-conflict",
+        "provider": "codex",
+        "lane": "bth",
+        "taskId": "nest-06-user-email-conflict",
+        "successAt1": false,
+        "verificationSuccessAt1": false,
+        "acceptanceConfirmed": null,
+        "failureReasons": [
+          "structured-verification-not-confirmed",
+          "task-acceptance-not-measured"
+        ],
+        "providerCompleted": true,
+        "verificationConfirmed": false,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 103384,
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 300639,
+            "uncachedInput": 36959,
+            "output": 3657,
+            "cachedInput": 263680,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 568,
+            "total": 304296
+          },
+          "costUsd": null,
+          "durationMs": 92124,
+          "turns": null
+        },
+        "changedPaths": [
+          "src/users/users.service.ts",
+          "test/admin/users.e2e-spec.ts"
+        ],
+        "goldPathsChanged": [
+          "src/users/users.service.ts"
+        ],
+        "unexpectedChangedPaths": [
+          "test/admin/users.e2e-spec.ts"
+        ],
+        "changedGoldRecall": 1,
+        "ruleViolations": [],
+        "impactLocalization": {
+          "taskId": "nest-06-user-email-conflict",
+          "goldPathCount": 1,
+          "rankedPathCount": 9,
+          "recallAt5": 0,
+          "recallAt20": 0,
+          "ndcgAt20": 0
+        },
+        "outcomeLocalization": {
+          "taskId": "nest-06-user-email-conflict",
+          "goldPathCount": 1,
+          "rankedPathCount": 2,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 1
+        }
+      },
+      "totalElapsedMs": 152578,
+      "workspace": null
+    },
+    "direct": {
+      "schemaVersion": 1,
+      "case": {
+        "id": "codex:direct:nest-06-user-email-conflict",
+        "provider": "codex",
+        "lane": "direct",
+        "repositoryId": "nestjs-boilerplate",
+        "taskId": "nest-06-user-email-conflict",
+        "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+        "requirementSha256": "941a72db44e3a0c686d1aa7640f63010be1110347a7163414c4dec4e3040d563",
+        "baseSha": "d523e2638a649817883c57971914cdeccdd04bde",
+        "targetSha": "ab530c4da7559bf2487698982799920a4d10e345"
+      },
+      "fairness": {
+        "sanitizedSingleCommitHistory": true,
+        "goldHiddenFromProvider": true,
+        "sameProvider": true,
+        "protocolVersion": "diagnostic-context-v27",
+        "configSha256": "64a862040c3a256f5dc70f091488a390d315677e5cb2fb435a5b8a544a5effaa",
+        "fixedMode": "fast",
+        "fixedModel": "gpt-5.6-sol",
+        "setupCommandSha256": "25b2e2447434e1486d25ce617d01a3d1de2c008b7405891a5f21c210621acc5f"
+      },
+      "setup": {
+        "passed": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 27105,
+          "stdout": {
+            "sha256": "b3c5fb1c08d399080116cc62ee22c949e2097f14c2d438461bf0be0a40b372d8",
+            "bytes": 452
+          },
+          "stderr": {
+            "sha256": "0c7b2e87f9fe5fb6a4c923e1b4a8a85b12e47b9bb89a3454f9e7f78e0f13d40c",
+            "bytes": 800
+          }
+        }
+      },
+      "preflight": {
+        "confirmed": false,
+        "emptyTestBaseline": {
+          "status": "no-tests-discovered",
+          "framework": "jest",
+          "projectPath": ".",
+          "sourceStable": true,
+          "sourceFingerprint": "9ce0dc8a47297d81aff16478dc993966ff90a508ce58b3770328965a294de6b8",
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 303,
+            "stdout": {
+              "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+              "bytes": 3
+            },
+            "stderr": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            }
+          },
+          "discoveredFiles": 0,
+          "requiredFinalMinimumTests": 1,
+          "baselinePassed": false,
+          "requirement": "Create executable focused tests; all final required gates and independent task acceptance must pass."
+        },
+        "failureCode": "verification-failed",
+        "diagnosticCode": "gate-process-failed",
+        "tests": {
+          "tests": 0,
+          "executed": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "failed",
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 1066,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "16f62cd1f22a01916219eb6ddcbdf4feec9bb1f59c02fab27f4e5b00d42e548f",
+                "bytes": 1061
+              }
+            }
+          }
+        ]
+      },
+      "acceptanceControls": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "95746f3a455f48ccb541a2184bd02b612e6438da9c597b422470c055b5778619",
+        "testFiles": [
+          {
+            "path": "test/bth/users-email.spec.ts",
+            "sha256": "b586bce481ee96baacd37ffb6dc98eb7deb4a999668cd06c4bbb8965b59c7799"
+          },
+          {
+            "path": "test/bth/jest.config.cjs",
+            "sha256": "c385deb0342efa1a15acaf1f1b4d6256d4d29bebe6c0de20b476f258d196cfcb"
+          },
+          {
+            "path": "test/bth/run.cjs",
+            "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+          },
+          {
+            "path": "test/bth/verify-jest.mjs",
+            "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10735,
+              "stdout": {
+                "sha256": "5fcd6a6a19731282fcf8d7b603dfc00fa63e8f505f649e2547a9593985901080",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "57fe832ebab40d2f00e18b6c61db53883bed1f8f0396d28f012001ba7a0fe800",
+                "bytes": 3336
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "4f4f6703630d007e6887d83468d426c199250002de9d3586abc4b57defbeb66b",
+                "bytes": 1112
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "unused email reaches persistence and does not mutate caller payload",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "the same account may retain its existing email",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "another account email is rejected without any persistence update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "an update without email does not perform an email uniqueness lookup",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "email lookup failure propagates and prevents a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "persistence failure is not replaced by an email conflict",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "a missing update result remains null rather than a fabricated account",
+                "outcome": "failed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 11189,
+              "stdout": {
+                "sha256": "5fcd6a6a19731282fcf8d7b603dfc00fa63e8f505f649e2547a9593985901080",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "2f8a18d7bb0c046d29d591c80e4ffb1d3722c13cc4790dd834003dfe12cd9765",
+                "bytes": 1530
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "e4b9f3db83b71e795ad008b9d66b4b8827fe6fb4309bf61513a112a2b95eb779",
+                "bytes": 1031
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "unused email reaches persistence and does not mutate caller payload",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "the same account may retain its existing email",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "another account email is rejected without any persistence update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "an update without email does not perform an email uniqueness lookup",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "email lookup failure propagates and prevents a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "persistence failure is not replaced by an email conflict",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "a missing update result remains null rather than a fabricated account",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 22568
+      },
+      "observation": {
+        "provider": "codex",
+        "lane": "direct",
+        "providerCompleted": true,
+        "verificationConfirmed": false,
+        "acceptance": {
+          "controlsConfirmed": false,
+          "candidatePassed": null,
+          "reason": "candidate-not-eligible"
+        },
+        "attempts": 1,
+        "elapsedMs": 65498,
+        "changedPaths": [
+          "src/users/users.service.ts",
+          "test/admin/users.e2e-spec.ts"
+        ],
+        "impactPaths": null,
+        "ruleViolations": [],
+        "usage": {
+          "schemaVersion": 2,
+          "provider": "codex",
+          "tokens": {
+            "input": 191661,
+            "uncachedInput": 34733,
+            "output": 2685,
+            "cachedInput": 156928,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 438,
+            "total": 194346
+          },
+          "costUsd": null,
+          "durationMs": 64453,
+          "turns": null,
+          "providerReported": {
+            "usage.input_tokens": 191661,
+            "usage.cached_input_tokens": 156928,
+            "usage.cache_write_input_tokens": 0,
+            "usage.output_tokens": 2685,
+            "usage.reasoning_output_tokens": 438
+          },
+          "scope": "invocation-final"
+        },
+        "evidence": {
+          "providerFailureCode": null,
+          "verificationFailureCode": "required_gate_failed",
+          "verificationTests": {
+            "tests": 0,
+            "executed": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "verificationDiagnostic": {
+            "confirmed": false,
+            "sourceFingerprint": "5b0247833e78257c2627f54349eb049e6e06790f7edd4400ec3247ef42ec9c11",
+            "runPath": ".backend-harness/local/runs/latest.json",
+            "failure": {
+              "code": "required_gate_failed",
+              "message": null
+            },
+            "tests": {
+              "tests": 0,
+              "executed": 0,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            "gates": [
+              {
+                "id": "tests",
+                "required": true,
+                "outcome": "failed",
+                "reason": "process_failed",
+                "structuredReason": "junit_reports_missing",
+                "tests": {
+                  "tests": 0,
+                  "executed": 0,
+                  "failures": 0,
+                  "errors": 0,
+                  "skipped": 0
+                },
+                "process": {
+                  "exitCode": 1,
+                  "signal": null,
+                  "timedOut": false,
+                  "stdioDrainTimedOut": false
+                },
+                "failedTests": [],
+                "omittedFailedTestCount": 0
+              }
+            ],
+            "omittedGateCount": 0
+          },
+          "request": {
+            "promptBytes": 1853
+          },
+          "providerActivity": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "authority": "provider-event-derived-advisory",
+            "parsedEvents": 25,
+            "rejectedEvents": 0,
+            "firstWriteObserved": true,
+            "preWritePaths": [],
+            "preWriteContentPaths": [],
+            "preWriteDiscoveryPaths": [],
+            "changedPaths": [
+              "AGENTS.md",
+              "package.js",
+              "README.md"
+            ],
+            "readCommandCount": 8,
+            "discoveryCommandCount": 0,
+            "validationCommandCount": 0,
+            "writeEventCount": 3
+          },
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdout": {
+              "sha256": "47f7da43954e413f284674f6997199eb6f384e9bc9fd24944177831d6273608f",
+              "bytes": 60563
+            },
+            "stderr": {
+              "sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+              "bytes": 39
+            }
+          }
+        }
+      },
+      "score": {
+        "schemaVersion": 3,
+        "id": "codex:direct:nest-06-user-email-conflict",
+        "provider": "codex",
+        "lane": "direct",
+        "taskId": "nest-06-user-email-conflict",
+        "successAt1": false,
+        "verificationSuccessAt1": false,
+        "acceptanceConfirmed": null,
+        "failureReasons": [
+          "structured-verification-not-confirmed",
+          "task-acceptance-not-measured"
+        ],
+        "providerCompleted": true,
+        "verificationConfirmed": false,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 65498,
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 191661,
+            "uncachedInput": 34733,
+            "output": 2685,
+            "cachedInput": 156928,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 438,
+            "total": 194346
+          },
+          "costUsd": null,
+          "durationMs": 64453,
+          "turns": null
+        },
+        "changedPaths": [
+          "src/users/users.service.ts",
+          "test/admin/users.e2e-spec.ts"
+        ],
+        "goldPathsChanged": [
+          "src/users/users.service.ts"
+        ],
+        "unexpectedChangedPaths": [
+          "test/admin/users.e2e-spec.ts"
+        ],
+        "changedGoldRecall": 1,
+        "ruleViolations": [],
+        "impactLocalization": null,
+        "outcomeLocalization": {
+          "taskId": "nest-06-user-email-conflict",
+          "goldPathCount": 1,
+          "rankedPathCount": 2,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 1
+        }
+      },
+      "totalElapsedMs": 126154,
+      "workspace": null
+    }
+  }
+}

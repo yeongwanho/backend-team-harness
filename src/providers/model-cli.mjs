@@ -154,6 +154,7 @@ function providerPrompt(requestPath, profile) {
     'Obey allowedPrefixes and authority limits. Never commit, change Git refs, deploy, access production, or edit .backend-harness control files.',
     'Do not read .env files, credential stores, private keys, tokens, or unrelated user data.',
     TEST_AUTHORING_CONTRACT,
+    'Before copying an adjacent test pattern, inspect verification.testAuthoring: if observed, place tests inside that gate’s declared discovery scope; a nearby E2E suite may not be executed by the required gate. If unknown, inspect the declared test command and its configuration before choosing a test location.',
     'Read the request verification contract and its required test minimums; zero discovered or only skipped tests cannot complete the task.',
     'Do not run build, test, formatter, linter, package-manager, Docker, or database commands; Backend Team Harness owns every declared Gate after your edit.',
     'If recovery evidence is present, fix its concrete failure without widening the approved scope.'

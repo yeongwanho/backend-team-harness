@@ -99,7 +99,98 @@
       "allowedPrefixes": ["src/", "test/", ".hygen/generate/"],
       "setupCommand": ["npm", "ci", "--ignore-scripts"],
       "tasks": [
-        { "id": "nest-01-session-update-by-hash", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } },
+        {
+          "id": "nest-01-session-update-by-hash",
+          "decisions": {
+            "modules": [
+              "root"
+            ],
+            "databaseImpact": "write",
+            "apiImpact": "compatible"
+          },
+          "acceptance": {
+            "kind": "fixture-tests",
+            "files": [
+              {
+                "path": "test/bth/session-hash.spec.ts",
+                "fixture": "fixtures/nest/session-hash.spec.ts",
+                "sha256": "a3243da03ae35f9806efb8328eb057238d1b999701fd892834936818a31af8f7"
+              },
+              {
+                "path": "test/bth/jest.config.cjs",
+                "fixture": "fixtures/nest/jest-session-hash.config.cjs",
+                "sha256": "a7474e42cb1cc0bba4831e31e8a99a16e7c320179d41559891df3340dafba075"
+              },
+              {
+                "path": "test/bth/run.cjs",
+                "fixture": "fixtures/nest/run.cjs",
+                "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+              },
+              {
+                "path": "test/bth/verify-jest.mjs",
+                "fixture": "fixtures/nest/verify-jest.mjs",
+                "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+              }
+            ],
+            "command": [
+              "node",
+              "test/bth/run.cjs"
+            ],
+            "reports": [
+              "coverage/bth-junit.xml"
+            ],
+            "cases": [
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "service delegates both current ID and hash with the replacement hash"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational rotation includes ID and old hash in the update predicate"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational no-match returns null without reading an unrelated session"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational deletion after update remains null"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational update errors propagate without a read"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "document rotation uses a conditional predicate and requests the updated document"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "document no-match remains null and persistence errors propagate"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "auth signs only after conditional rotation and embeds the rotated hash"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "a failed conditional match cannot issue tokens despite plausible prior session state"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "an absent session is rejected without issuing tokens"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "auth waits for conditional persistence before signing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "conditional persistence errors and a missing user do not produce tokens"
+              }
+            ]
+          }
+        },
         {
           "id": "nest-02-file-relational-mapper",
           "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "none" },
@@ -124,10 +215,136 @@
             ]
           }
         },
-        { "id": "nest-03-swagger-language-header", "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" } },
+        {
+          "id": "nest-03-swagger-language-header",
+          "decisions": {
+            "modules": [
+              "root"
+            ],
+            "databaseImpact": "none",
+            "apiImpact": "compatible"
+          },
+          "acceptance": {
+            "kind": "fixture-tests",
+            "files": [
+              {
+                "path": "test/bth/swagger-language.spec.ts",
+                "fixture": "fixtures/nest/swagger-language.spec.ts",
+              "sha256": "af2ce4fcbd88e6a16e10edbcdb158d212f834d9de966015740cfb789a3ae8276"
+              },
+              {
+                "path": "test/bth/jest.config.cjs",
+                "fixture": "fixtures/nest/jest-swagger-language.config.cjs",
+                "sha256": "b697d3e36123cfd6b1aeca64375e19438b806b24787fb7bbb58280d93834505d"
+              },
+              {
+                "path": "test/bth/run.cjs",
+                "fixture": "fixtures/nest/run.cjs",
+                "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+              },
+              {
+                "path": "test/bth/verify-jest.mjs",
+                "fixture": "fixtures/nest/verify-jest.mjs",
+                "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+              }
+            ],
+            "command": [
+              "node",
+              "test/bth/run.cjs"
+            ],
+            "reports": [
+              "coverage/bth-junit.xml"
+            ],
+            "cases": [
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "configured language header is optional with an English example in generated operations"
+              },
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "an unset language setting falls back to x-custom-lang"
+              },
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "an empty language setting falls back to x-custom-lang"
+              }
+            ]
+          }
+        },
         { "id": "nest-04-document-find-update", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "none" } },
         { "id": "nest-05-auth-email-update", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } },
-        { "id": "nest-06-user-email-conflict", "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "compatible" } },
+        {
+          "id": "nest-06-user-email-conflict",
+          "decisions": {
+            "modules": [
+              "root"
+            ],
+            "databaseImpact": "read",
+            "apiImpact": "compatible"
+          },
+          "acceptance": {
+            "kind": "fixture-tests",
+            "files": [
+              {
+                "path": "test/bth/users-email.spec.ts",
+                "fixture": "fixtures/nest/users-email.spec.ts",
+                "sha256": "b586bce481ee96baacd37ffb6dc98eb7deb4a999668cd06c4bbb8965b59c7799"
+              },
+              {
+                "path": "test/bth/jest.config.cjs",
+                "fixture": "fixtures/nest/jest-users-email.config.cjs",
+                "sha256": "c385deb0342efa1a15acaf1f1b4d6256d4d29bebe6c0de20b476f258d196cfcb"
+              },
+              {
+                "path": "test/bth/run.cjs",
+                "fixture": "fixtures/nest/run.cjs",
+                "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+              },
+              {
+                "path": "test/bth/verify-jest.mjs",
+                "fixture": "fixtures/nest/verify-jest.mjs",
+                "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+              }
+            ],
+            "command": [
+              "node",
+              "test/bth/run.cjs"
+            ],
+            "reports": [
+              "coverage/bth-junit.xml"
+            ],
+            "cases": [
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "unused email reaches persistence and does not mutate caller payload"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "the same account may retain its existing email"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "another account email is rejected without any persistence update"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "an update without email does not perform an email uniqueness lookup"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "email lookup failure propagates and prevents a write"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "persistence failure is not replaced by an email conflict"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "a missing update result remains null rather than a fabricated account"
+              }
+            ]
+          }
+        },
         { "id": "nest-07-refresh-token-single-use", "decisions": { "modules": ["root"], "databaseImpact": "schema", "apiImpact": "compatible" } }
       ]
     },
