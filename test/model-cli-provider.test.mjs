@@ -126,6 +126,22 @@ test('auto implementation profiles stay balanced without evidence and escalate s
   )
 })
 
+test('bootstrap schema work stays deep in auto mode without slowing existing-schema CRUD', () => {
+  const input = {
+    mode: 'auto', projectRuleReadiness: 'confirmed', adjacentCodeReady: true, conventionsReady: true,
+    claims: {
+      changesDatabase: true, requiresMigration: false, preservesCompatibility: true,
+      changesPublicApi: false, modules: ['users'], requiredGates: ['tests']
+    }
+  }
+  assert.equal(selectImplementationProfile(input).selected, 'fast')
+  const bootstrap = selectImplementationProfile({ ...input, claims: { ...input.claims, bootstrapOnly: true } })
+  assert.equal(bootstrap.selected, 'deep')
+  assert.deepEqual(bootstrap.reasons, ['bootstrap-schema-risk'])
+  assert.equal(bootstrap.verificationStrategy, 'all-required-gates')
+  assert.equal(selectImplementationProfile({ ...input, mode: 'fast', claims: { ...input.claims, bootstrapOnly: true } }).selected, 'fast')
+})
+
 test('provider argv uses non-interactive bounded modes without dangerous bypass flags', () => {
   const executable = { path: '/usr/local/bin/provider' }
   const profile = selectImplementationProfile({ mode: 'balanced' })

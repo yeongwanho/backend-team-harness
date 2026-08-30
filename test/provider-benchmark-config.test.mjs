@@ -31,6 +31,11 @@ test('provider comparison config rejects missing tasks, shell-shaped fields, and
   const unknown = structuredClone(valid)
   unknown.repositories[0].shell = true
   assert.throws(() => parseProviderBenchmarkConfig(JSON.stringify(unknown), corpus), /unknown key shell/)
+  const mismatched = structuredClone(valid)
+  mismatched.repositories[0].tasks[0].decisions.schemaStrategy = 'bootstrap-only'
+  assert.throws(() => parseProviderBenchmarkConfig(JSON.stringify(mismatched), corpus), /schemaStrategy/)
+  const bootstrap = parseProviderBenchmarkConfig(JSON.stringify(valid), corpus).repositories[0].tasks.find((task) => task.id === 'spring-07-mysql-user')
+  assert.equal(bootstrap.decisions.schemaStrategy, 'bootstrap-only')
 })
 
 test('checked-in evaluator fixtures match their pinned bytes and stay outside provider input', async () => {

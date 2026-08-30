@@ -34,12 +34,15 @@ function command(value, label) {
 
 function decisions(value, label) {
   plainObject(value, label)
-  exactKeys(value, new Set(['modules', 'excludedModules', 'databaseImpact', 'apiImpact', 'acceptanceCriteria', 'constraints']), label)
+  exactKeys(value, new Set(['modules', 'excludedModules', 'databaseImpact', 'apiImpact', 'schemaStrategy', 'acceptanceCriteria', 'constraints']), label)
   if (!Array.isArray(value.modules) || value.modules.length < 1 || value.modules.length > 32) throw new Error(label + '.modules must contain 1-32 entries.')
   const modules = value.modules.map((entry, index) => safePath(entry, label + '.modules[' + index + ']'))
   const excludedModules = (value.excludedModules ?? []).map((entry, index) => safePath(entry, label + '.excludedModules[' + index + ']'))
   if (!DATABASE_IMPACTS.has(value.databaseImpact)) throw new Error(label + '.databaseImpact is invalid.')
   if (!API_IMPACTS.has(value.apiImpact)) throw new Error(label + '.apiImpact is invalid.')
+  if (value.schemaStrategy !== undefined && (value.databaseImpact !== 'schema' || !['migration', 'bootstrap-only'].includes(value.schemaStrategy))) {
+    throw new Error(label + '.schemaStrategy must be migration or bootstrap-only for schema impact.')
+  }
   for (const key of ['acceptanceCriteria', 'constraints']) {
     if (value[key] !== undefined && (typeof value[key] !== 'string' || value[key].length < 1 || value[key].length > 16_384)) {
       throw new Error(label + '.' + key + ' is invalid.')
@@ -49,6 +52,7 @@ function decisions(value, label) {
     modules,
     excludedModules,
     databaseImpact: value.databaseImpact,
+    ...(value.schemaStrategy ? { schemaStrategy: value.schemaStrategy } : {}),
     apiImpact: value.apiImpact,
     ...(value.acceptanceCriteria ? { acceptanceCriteria: value.acceptanceCriteria.trim() } : {}),
     ...(value.constraints ? { constraints: value.constraints.trim() } : {})

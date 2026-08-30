@@ -156,6 +156,7 @@ function factsFrom(context, knowledge, code, gitChanges) {
   const source = contextFact(context, 'source.production')
   const tests = contextFact(context, 'source.tests')
   const flyway = contextFact(context, 'database.flyway')
+  const migrations = contextFact(context, 'database.migrations')
   const sharedContract = contextFact(context, 'contract.shared')
   const verification = contextFact(context, 'verification.contract')
   const quality = contextFact(context, 'policy.quality-gates')
@@ -188,6 +189,9 @@ function factsFrom(context, knowledge, code, gitChanges) {
     fact('source.tests.present', factStatus(tests), (tests?.evidence?.count ?? 0) > 0, 'Conventional test-source availability.', tests?.evidence ?? {}),
     fact('database.dialect', dialect ? 'confirmed' : 'unknown', dialect ?? null, 'Declared verification database dialect.', { source: context.verification.path }),
     fact('database.flyway.present', factStatus(flyway), (flyway?.evidence?.files?.length ?? 0) > 0, 'Conventional Flyway migration availability.', flyway?.evidence ?? {}),
+    fact('database.migration.present', migrations ? factStatus(migrations) : factStatus(flyway),
+      migrations ? migrations.evidence.tools.length > 0 : (flyway?.evidence?.files?.length ?? 0) > 0,
+      'Supported migration configuration and revision patterns observed; execution remains unverified.', migrations?.evidence ?? flyway?.evidence ?? {}),
     fact('database.flyway.modified-existing', migrationChangeStatus, migrationChangeStatus === 'confirmed' ? changedMigrations.length > 0 : null, 'Whether an existing versioned migration is modified, deleted, copied, or renamed.', { source: 'git status', paths: changedMigrations.map((entry) => entry.path), truncated: gitChanges.truncated }),
     fact('database.tables', codeFactStatus, code.tables, 'Table names explicitly declared by indexed JPA @Table annotations.', codeEvidence),
     fact('contract.shared.present', factStatus(sharedContract), (sharedContract?.evidence?.missing?.length ?? 0) === 0, 'Required repository knowledge documents are present.', sharedContract?.evidence ?? {}),

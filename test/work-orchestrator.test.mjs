@@ -19,6 +19,60 @@ async function initializedProject(prefix, files = []) {
   return root
 }
 
+test('schema work asks once before creating state and records bootstrap-only without claiming upgrades', async () => {
+  const root = await initializedProject('bth-bootstrap-plan-', [{ path: 'src/main/resources/db/mysql/schema.sql', content: 'CREATE TABLE example(id int);\n' }])
+  const input = {
+    requirement: 'Add a column to the bootstrap schema.', taskId: 'BOOTSTRAP-1', actor: 'developer',
+    decisions: { modules: ['root'], databaseImpact: 'schema', apiImpact: 'none' }
+  }
+  const waiting = await runWork(root, input)
+  assert.equal(waiting.status, 'needs-decisions')
+  assert.deepEqual(waiting.questions.map((question) => question.id), ['data.schema-strategy'])
+  await assert.rejects(access(join(root, '.backend-harness/tasks/BOOTSTRAP-1')), /ENOENT/)
+  const result = await runWork(root, { ...input, decisions: { ...input.decisions, schemaStrategy: 'bootstrap-only' } })
+  assert.equal(result.status, 'plan-proposed')
+  assert.equal(result.task.approvalReceipt, null)
+  const plan = JSON.parse(await readFile(join(root, '.backend-harness/tasks/BOOTSTRAP-1/interview/plan.json'), 'utf8'))
+  assert.deepEqual(plan.structuredDecisions.data, { changesDatabase: true, requiresMigration: false, bootstrapOnly: true })
+  assert.match(plan.databaseAndData, /Upgrading existing databases is excluded and unverified/)
+  assert.match(plan.steps.find((step) => step.id === 'database').proof, /No existing-database upgrade compatibility/)
+  assert.ok(plan.declaredRequiredGates.includes('tests'))
+  assert.equal(await readFile(join(root, 'src/main/resources/db/mysql/schema.sql'), 'utf8'), 'CREATE TABLE example(id int);\n')
+})
+
+test('bootstrap-only decisions cannot waive a released migration blocker', async () => {
+  const path = 'src/main/resources/db/migration/V1__init.sql'
+  const root = await initializedProject('bth-bootstrap-blocker-', [{ path, content: 'CREATE TABLE example(id int);\n' }])
+  await writeFile(join(root, path), 'DROP TABLE example;\n')
+  const result = await runWork(root, {
+    requirement: 'Adjust the schema.', taskId: 'BOOTSTRAP-BLOCK', actor: 'developer',
+    decisions: { modules: ['root'], databaseImpact: 'schema', schemaStrategy: 'bootstrap-only', apiImpact: 'none' }
+  })
+  assert.equal(result.status, 'blocked')
+  assert.ok(result.blockers.some((rule) => rule.id === 'released-migration-immutable'))
+})
+
+test('a linked Alembic environment passes through actual work planning without a Flyway requirement', async () => {
+  const root = await initializedProject('bth-alembic-work-', [
+    { path: 'backend/alembic.ini', content: '[alembic]\nscript_location = app/alembic\n' },
+    { path: 'backend/app/alembic/env.py', content: 'from alembic import context\nraise RuntimeError("not executed")\n' },
+    { path: 'backend/app/alembic/versions/abcd_init.py', content: 'revision = "abcd"\ndef upgrade(): pass\ndef downgrade(): pass\n' }
+  ])
+  const result = await runWork(root, {
+    requirement: 'Add a nullable column with upgrade and downgrade.', taskId: 'ALEMBIC-1', actor: 'developer',
+    decisions: { modules: ['root'], databaseImpact: 'schema', apiImpact: 'compatible' }
+  })
+  assert.equal(result.status, 'plan-proposed')
+  assert.equal(result.draft.draft.schemaStrategy, 'migration')
+  const plan = JSON.parse(await readFile(join(root, '.backend-harness/tasks/ALEMBIC-1/interview/plan.json'), 'utf8'))
+  assert.equal(plan.structuredDecisions.data.requiresMigration, true)
+  assert.equal(plan.migrationMechanisms[0].kind, 'alembic')
+  assert.ok(plan.migrationMechanisms[0].configurationPaths.includes('backend/alembic.ini'))
+  assert.match(result.task.plan, /Observed migration setup \(not executed or verified\)/)
+  assert.doesNotMatch(result.task.plan, /not executed"/)
+  assert.equal(plan.contradictionResolutions.length, 0)
+})
+
 test('bth work materializes one source-bound plan and resumes it for one explicit approval', async () => {
   const root = await initializedProject('bth-work-flow-', [{
     path: 'src/main/java/example/users/UserStatusController.java',

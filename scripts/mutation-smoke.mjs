@@ -41,6 +41,18 @@ const mutations = [
     from: 'if (requirement) return requirement',
     to: 'if (false && requirement) return requirement',
     test: 'test/retrieval-query.test.mjs'
+  },
+  {
+    file: 'src/core/migration-discovery.mjs',
+    from: 'if (propertyDepth !== 0) return []',
+    to: 'if (false) return []',
+    test: 'test/migration-discovery.test.mjs'
+  },
+  {
+    file: 'src/core/migration-discovery.mjs',
+    from: "(recursive || posix.dirname(path) === directory + '/versions')",
+    to: '(true)',
+    test: 'test/migration-discovery.test.mjs'
   }
 ]
 

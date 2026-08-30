@@ -41,10 +41,11 @@ function hasDeclaredDatabaseImpact(interview, contextSnapshot) {
   }
   const answer = answerById(interview, 'data').toLowerCase()
   const explicitlyNone = /^(no |none|없음|변경 없음|영향 없음)/.test(answer)
-  const migrations = contextSnapshot.facts
-    ?.find((entry) => entry.id === 'database.flyway')
-    ?.evidence?.files ?? []
-  return !explicitlyNone || migrations.length > 0
+  if (contextSnapshot.migrations !== undefined) return !explicitlyNone
+  // Old immutable snapshots predate portable migration discovery. Preserve their
+  // renderer so replaying finalize cannot silently replace an approved artifact.
+  const legacyMigrations = contextSnapshot.facts?.find((entry) => entry.id === 'database.flyway')?.evidence?.files ?? []
+  return !explicitlyNone || legacyMigrations.length > 0
 }
 
 function executionSteps(interview, contextSnapshot, requiredGates) {
@@ -66,10 +67,15 @@ function executionSteps(interview, contextSnapshot, requiredGates) {
     }
   ]
   if (hasDeclaredDatabaseImpact(interview, contextSnapshot)) {
+    const bootstrapOnly = claimsById(interview, 'data').bootstrapOnly === true
     steps.push({
       id: 'database',
-      action: 'Apply the declared DB/data decision for ' + (contextSnapshot.verification?.context?.databaseDialect ?? 'the detected database') + ', including migration and compatibility checks.',
-      proof: 'Migration ordering, schema compatibility, and data behavior are demonstrated by the declared Gate.'
+      action: bootstrapOnly
+        ? 'Update only approved new-empty-database bootstrap scripts. Preserve released migrations and project rules; existing-database upgrades are out of scope.'
+        : 'Apply the declared DB/data decision for ' + (contextSnapshot.verification?.context?.databaseDialect ?? 'the detected database') + ', including migration and compatibility checks.',
+      proof: bootstrapOnly
+        ? 'The declared Gate demonstrates initialization of a new empty test database. No existing-database upgrade compatibility is claimed.'
+        : 'Migration ordering, schema compatibility, and data behavior are demonstrated by the declared Gate.'
     })
   }
   steps.push({
@@ -139,6 +145,15 @@ function makeArtifacts(interview, contextSnapshot) {
     allowedScope: answerById(interview, 'scope'),
     databaseAndData: answerById(interview, 'data'),
     requestedVerification: answerById(interview, 'verification'),
+    ...(claimsById(interview, 'data').requiresMigration === true && contextSnapshot.migrations?.tools?.length ? {
+      migrationMechanisms: contextSnapshot.migrations.tools.map((tool) => ({
+        kind: tool.kind, projectPath: tool.projectPath,
+        configurationPaths: tool.configurationPaths,
+        revisionPaths: tool.revisionPaths.slice(0, 8),
+        omittedRevisionPaths: Math.max(0, tool.revisionPaths.length - 8),
+        authority: 'source-pattern-observation-not-execution'
+      }))
+    } : {}),
     constraintsAndExclusions: answerById(interview, 'constraints'),
     structuredDecisions,
     contradictionResolutions: contradictions.candidates
@@ -212,6 +227,12 @@ function planMarkdown(artifacts, contextSnapshot) {
     '## Database and data impact',
     '',
     artifacts.plan.databaseAndData,
+    ...(artifacts.plan.migrationMechanisms ? [
+      '', 'Observed migration setup (not executed or verified):',
+      ...artifacts.plan.migrationMechanisms.map((tool) => '- ' + tool.kind + ': ' +
+        [...tool.configurationPaths, ...tool.revisionPaths].map((path) => '`' + path + '`').join(', ') +
+        (tool.omittedRevisionPaths ? ' (additional revisions omitted)' : ''))
+    ] : []),
     '',
     '## Task-specific verification',
     '',

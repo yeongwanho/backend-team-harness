@@ -25,6 +25,7 @@ function impactText(draft) {
   if (draft.databaseImpact === 'none') return 'No database read, write, schema, or migration impact is approved.'
   if (draft.databaseImpact === 'read') return 'Existing database state may be read; no stored-data or schema change and no migration are approved.'
   if (draft.databaseImpact === 'write') return 'Existing database records may change inside the approved behavior; no schema change or migration is approved.'
+  if (draft.schemaStrategy === 'bootstrap-only') return 'Only bootstrap scripts for new empty databases may change. Upgrading existing databases is excluded and unverified. Existing released migrations remain immutable; this decision cannot waive project rules.'
   return 'A schema change and a new append-only migration are approved; existing released migrations remain immutable.'
 }
 
@@ -59,7 +60,8 @@ function generatedAnswers(draft) {
       text: impactText(draft),
       claims: {
         changesDatabase: draft.changesDatabase,
-        requiresMigration: draft.requiresMigration
+        requiresMigration: draft.requiresMigration,
+        ...(draft.schemaStrategy === 'bootstrap-only' ? { bootstrapOnly: true } : {})
       }
     },
     {

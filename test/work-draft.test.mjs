@@ -17,6 +17,25 @@ function context(files, gates = ['tests']) {
   }
 }
 
+test('schema work asks for bootstrap versus upgrade only when no mechanism is observed', () => {
+  const input = { requirement: 'Add a nullable column.', context: context([]), decisions: { modules: ['root'], databaseImpact: 'schema', apiImpact: 'none' } }
+  const undecided = deriveWorkDraft(input)
+  assert.equal(undecided.status, 'needs-decisions')
+  assert.deepEqual(undecided.questions.map((question) => question.id), ['data.schema-strategy'])
+  const bootstrap = deriveWorkDraft({ ...input, decisions: { ...input.decisions, schemaStrategy: 'bootstrap-only' } })
+  assert.equal(bootstrap.status, 'ready-for-plan-review')
+  assert.equal(bootstrap.draft.changesDatabase, true)
+  assert.equal(bootstrap.draft.requiresMigration, false)
+  assert.equal(bootstrap.draft.schemaStrategy, 'bootstrap-only')
+  input.context.intelligence.facts = [{ id: 'database.migration.present', status: 'confirmed', value: true }]
+  const upgrade = deriveWorkDraft(input)
+  assert.equal(upgrade.status, 'ready-for-plan-review')
+  assert.equal(upgrade.draft.requiresMigration, true)
+  assert.equal(upgrade.draft.schemaStrategy, 'migration')
+  assert.throws(() => deriveWorkDraft({ ...input, decisions: { ...input.decisions, databaseImpact: 'read', schemaStrategy: 'bootstrap-only' } }), /schemaStrategy.*schema/)
+  assert.throws(() => deriveWorkDraft({ ...input, decisions: { ...input.decisions, schemaStrategy: 'skip-validation' } }), /schemaStrategy/)
+})
+
 test('a small compatible lookup receives a source-cited complete draft without fixed ceremony', () => {
   const result = deriveWorkDraft({
     requirement: 'Add a backward-compatible user status lookup API without a migration.',

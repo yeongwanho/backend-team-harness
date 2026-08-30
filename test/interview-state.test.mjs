@@ -26,6 +26,22 @@ function created() {
   }, { at: '2026-08-30T00:00:00.000Z' })
 }
 
+test('confirmed portable migration evidence replaces the Flyway-only assumption without hiding unknowns', () => {
+  const record = { answers: [{ questionId: 'data', claims: { changesDatabase: true, requiresMigration: true } }] }
+  const context = (status, value) => ({ intelligence: { facts: [
+    { id: 'database.flyway.present', status: 'confirmed', value: false },
+    { id: 'database.migration.present', status, value }
+  ] } })
+  assert.equal(interviewContradictions(record, context('confirmed', true)).unresolved.length, 0)
+  for (const [status, value] of [['unknown', true], ['confirmed', false], ['conflict', true]]) {
+    assert.ok(interviewContradictions(record, context(status, value)).unresolved.some((entry) => entry.id === 'migration-required-without-configured-mechanism'))
+  }
+  const legacy = interviewContradictions(record, { intelligence: { facts: [{ id: 'database.flyway.present', status: 'confirmed', value: false }] } })
+  assert.equal(legacy.unresolved[0].summary, 'The interview requires a migration but the project facts do not show a Flyway migration mechanism.')
+  const inconsistent = { answers: [{ questionId: 'data', claims: { changesDatabase: true, requiresMigration: true, bootstrapOnly: true } }] }
+  assert.ok(interviewContradictions(inconsistent, context('confirmed', true)).unresolved.some((entry) => entry.id === 'bootstrap-with-incompatible-data-claims'))
+})
+
 test('interview asks one stable question at a time', () => {
   let record = created()
   assert.equal(currentInterviewQuestion(record).id, 'acceptance')

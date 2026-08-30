@@ -68,7 +68,7 @@ export function selectImplementationProfile(input = {}) {
     const claims = input.claims ?? {}
     const breakingPublicApi = claims.changesPublicApi === true && claims.preservesCompatibility !== true
     const ambiguousDatabaseChange = claims.changesDatabase === true && claims.requiresMigration !== false
-    const highRisk = claims.requiresMigration === true || breakingPublicApi || ambiguousDatabaseChange
+    const highRisk = claims.requiresMigration === true || claims.bootstrapOnly === true || breakingPublicApi || ambiguousDatabaseChange
     const explicitlySmall = typeof claims.changesDatabase === 'boolean' &&
       claims.requiresMigration === false &&
       (claims.changesPublicApi !== true || claims.preservesCompatibility === true) &&
@@ -82,9 +82,11 @@ export function selectImplementationProfile(input = {}) {
           ? 'large-approved-task-requires-deep-budget'
           : claims.requiresMigration === true
             ? 'schema-migration-risk'
-            : breakingPublicApi
-              ? 'public-api-compatibility-risk'
-              : 'database-migration-impact-unknown'
+            : claims.bootstrapOnly === true
+              ? 'bootstrap-schema-risk'
+              : breakingPublicApi
+                ? 'public-api-compatibility-risk'
+                : 'database-migration-impact-unknown'
       )
     } else if (projectRuleReadiness === 'conflict') {
       selected = 'deep'

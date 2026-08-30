@@ -5,6 +5,7 @@ import { loadQualityGates } from '../config/quality-gates.mjs'
 import { captureSourceBinding } from '../core/source-binding.mjs'
 import { JVM_BUILD_DISCOVERY } from '../core/jvm-build-discovery.mjs'
 import { PROJECT_MANIFEST, scanProjectManifest } from '../core/project-manifest.mjs'
+import { inspectMigrationMechanisms } from '../core/migration-discovery.mjs'
 import { resolveReadableRoot } from '../fs-safety.mjs'
 
 function portable(path) {
@@ -90,6 +91,12 @@ export async function inspectProjectContext(inputPath, options = {}) {
   const contract = checkById(doctor, 'shared-contract')
   const quality = checkById(doctor, 'quality-gate-schema')
   const verificationCheck = checkById(doctor, 'verification-config')
+  const migrations = await inspectMigrationMechanisms(root, manifest ?? await scanProjectManifest(root))
+  if (flyway.status === 'pass' && flyway.details?.files?.length) {
+    migrations.tools.unshift({ kind: 'flyway', projectPath: '.', configurationPaths: [], revisionPaths: flyway.details.files })
+    migrations.status = 'observed'
+  }
+  if (flyway.status === 'fail') migrations.complete = false
   const verificationSource = verificationStatus === 'configured' && verification.source
     ? portable(isAbsolute(verification.source) ? relative(doctor.root, verification.source) : verification.source)
     : null
@@ -123,6 +130,8 @@ export async function inspectProjectContext(inputPath, options = {}) {
       duplicates: flyway.details?.duplicates ?? [],
       truncated: flyway.details?.truncated === true
     }),
+    fact('database.migrations', migrations.complete ? 'confirmed' : 'unknown',
+      'Supported migration source/configuration patterns; not proof of execution.', migrations),
     fact('contract.shared', factStatus(contract), contract.message, {
       missing: contract.details?.missing ?? []
     }),
@@ -139,6 +148,7 @@ export async function inspectProjectContext(inputPath, options = {}) {
     schemaVersion: 1,
     sourceBinding,
     structuralReadiness: doctor.healthy,
+    migrations,
     facts,
     verification: {
       status: verificationStatus,

@@ -1,5 +1,6 @@
 const DATABASE_IMPACTS = new Set(['none', 'read', 'write', 'schema'])
 const API_IMPACTS = new Set(['none', 'compatible', 'breaking'])
+const SCHEMA_STRATEGIES = new Set(['migration', 'bootstrap-only'])
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$/
 const MAX_DECISION_ITEMS = 32
 
@@ -32,7 +33,7 @@ function normalizeDecisions(value = {}) {
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype) {
     throw new Error('Work decisions must be a JSON object.')
   }
-  const allowed = new Set(['modules', 'excludedModules', 'databaseImpact', 'apiImpact', 'acceptanceCriteria', 'constraints'])
+  const allowed = new Set(['modules', 'excludedModules', 'databaseImpact', 'apiImpact', 'schemaStrategy', 'acceptanceCriteria', 'constraints'])
   for (const key of Object.keys(value)) {
     if (!allowed.has(key)) throw new Error('Unknown work decision: ' + key)
   }
@@ -44,6 +45,9 @@ function normalizeDecisions(value = {}) {
   if (value.apiImpact !== undefined && !API_IMPACTS.has(value.apiImpact)) {
     throw new Error('apiImpact must be none, compatible, or breaking.')
   }
+  if (value.schemaStrategy !== undefined && !SCHEMA_STRATEGIES.has(value.schemaStrategy)) {
+    throw new Error('schemaStrategy must be migration or bootstrap-only.')
+  }
   const acceptanceCriteria = value.acceptanceCriteria === undefined
     ? undefined
     : boundedRequirement(value.acceptanceCriteria)
@@ -54,6 +58,7 @@ function normalizeDecisions(value = {}) {
     modules,
     excludedModules,
     databaseImpact: value.databaseImpact,
+    schemaStrategy: value.schemaStrategy,
     apiImpact: value.apiImpact,
     acceptanceCriteria,
     constraints
@@ -158,6 +163,13 @@ export function deriveWorkDraft(input) {
     : inferModule(requirement, codeFiles)
   const databaseImpact = decisions.databaseImpact ?? inferDatabaseImpact(requirement)
   const apiImpact = decisions.apiImpact ?? inferApiImpact(requirement)
+  if (decisions.schemaStrategy !== undefined && databaseImpact !== null && databaseImpact !== 'schema') {
+    throw new Error('schemaStrategy is valid only for schema database impact.')
+  }
+  const migrationFact = context.intelligence?.facts?.find((fact) => fact.id === 'database.migration.present') ??
+    context.intelligence?.facts?.find((fact) => fact.id === 'database.flyway.present')
+  const migrationObserved = migrationFact?.status === 'confirmed' && migrationFact.value === true
+  const schemaStrategy = databaseImpact === 'schema' ? decisions.schemaStrategy ?? (migrationObserved ? 'migration' : null) : null
   const questions = []
   if (!moduleInference.modules?.length) {
     questions.push(question('scope.modules', 'Which project modules or source prefixes may change?'))
@@ -165,12 +177,15 @@ export function deriveWorkDraft(input) {
   if (!databaseImpact) {
     questions.push(question('data.impact', 'What database impact is allowed?', ['none', 'read', 'write', 'schema']))
   }
+  if (databaseImpact === 'schema' && !schemaStrategy) {
+    questions.push(question('data.schema-strategy', 'Is this an upgrade of existing databases, or initialization of new empty databases only?', ['migration', 'bootstrap-only']))
+  }
   if (!apiImpact) {
     questions.push(question('api.impact', 'What public API compatibility boundary applies?', ['none', 'compatible', 'breaking']))
   }
   const changesPublicApi = apiImpact === null ? null : apiImpact !== 'none'
   const preservesCompatibility = apiImpact === null ? null : apiImpact !== 'breaking'
-  const requiresMigration = databaseImpact === null ? null : databaseImpact === 'schema'
+  const requiresMigration = databaseImpact === null || (databaseImpact === 'schema' && !schemaStrategy) ? null : databaseImpact === 'schema' && schemaStrategy === 'migration'
   const changesDatabase = databaseImpact === null ? null : ['write', 'schema'].includes(databaseImpact)
   const draft = {
     requirement,
@@ -178,6 +193,7 @@ export function deriveWorkDraft(input) {
     modules: moduleInference.modules,
     excludedModules: decisions.excludedModules,
     databaseImpact,
+    schemaStrategy,
     changesDatabase,
     requiresMigration,
     apiImpact,

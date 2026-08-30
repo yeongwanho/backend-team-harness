@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "platform": "darwin",
+  "arch": "arm64",
+  "node": "v22.23.1",
+  "tests": {
+    "total": 403,
+    "passed": 399,
+    "failed": 0,
+    "skipped": 4
+  },
+  "coverage": {
+    "lines": 90.21,
+    "branches": 79.4,
+    "functions": 98.77
+  },
+  "mutation": {
+    "targeted": 8,
+    "killed": 8,
+    "repositoryWide": false
+  },
+  "installedPackageSmoke": true,
+  "syntaxCheck": true,
+  "diffCheck": true,
+  "sourceHashes": {
+    "benchmarks/public-backend-v1/provider-comparison.json": "12cd545851e6ad7949c002ed06b9f8fa0ea326f74319b99751100cb6772ef48e",
+    "scripts/benchmark-retrieval-query.mjs": "9f7ee1d29c0ee33ba16b514448aab78224c426589996674d17e45ba117968ad9",
+    "scripts/mutation-smoke.mjs": "c0662cafaf1763eed0c8142a49221991132ee48e83e7924de5262bd449433191",
+    "src/adapters/project-context.mjs": "18e2966e4322205dc58d8fa8a8de607d6b8a12910bade8fdd64f8587081cdc02",
+    "src/adapters/project-intelligence.mjs": "25bcfc332ee775507bd57ee2adf27eb719016e3f7b423c7f62085b2153a69b4f",
+    "src/core/interview-state.mjs": "46408f5126220d1959b4538c0e2484553e0259b11f9005a55f072b2be4c9496c",
+    "src/core/migration-discovery.mjs": "185dec8611dc1c98904e8d8a26a046c77694ad0dc27ec0a7f3f240e7118ada20",
+    "src/core/work-draft.mjs": "9b8a582086bbd8b3c835a4afe1f9c9575d1ee14cfc131b545854dcd3d88b1859",
+    "src/evaluation/provider-benchmark-config.mjs": "c6343d3c50ad499f3fca647d44eb20ec275aca456eda561463878fc0b5ce51e3",
+    "src/providers/model-cli.mjs": "2034e191971d3d3093ae0feee78efbb23eec18bea8fcb7dbc1b7d6bb27bd19c6",
+    "src/runtime/interview-orchestrator.mjs": "d0884a3aa996ab9a4b1ef7f9266db131652f51c21a3975f6b517bd3d78a470b9",
+    "src/runtime/work-orchestrator.mjs": "b4c27678975bce4a571960a43e80e41d9edbb6e54661b7b24b401e1ee4ec57e9",
+    "test/interview-orchestrator.test.mjs": "72559d78b3db6c8294e1c7d74410d843702bfc73d132c8a8592b0747325efd14",
+    "test/interview-state.test.mjs": "c9ef53ec9297fbe49c72e3c70f6571adf879d59f6aad6ee9d9b16da3040c7c7d",
+    "test/migration-discovery.test.mjs": "78286b42051ff2dd28c2814ff11f87d9f7e39f30fd0f4d7d5c993091d3489552",
+    "test/model-cli-provider.test.mjs": "c18e6edc6ede8c27fe7574fef71599906583a920bc314c6db35eee15d0411a2b",
+    "test/project-intelligence.test.mjs": "cbe17c142a6d03be948509138648e0d3324d89d9fb7d4c1a1c72a9d05f027e20",
+    "test/provider-benchmark-config.test.mjs": "fe360ebc8ec75d9b85162afd6648465df84723fcc689b30867ddb8287ee74af9",
+    "test/work-draft.test.mjs": "f20be57493b028ed336a766049902f3acacdecbac9028fb04099fc0feb1809fe",
+    "test/work-orchestrator.test.mjs": "ef8f49aba38913818b0f191d30fafe4cc14ccbd1367dbc14c752d2d5ec703196"
+  },
+  "logDigests": [
+    {
+      "path": "/tmp/bth-db-v23-release-coverage.log",
+      "sha256": "782bb6b72cb07dad213784c10504ee2d5adcc4a1f697c2be0ab9f836a518ac12",
+      "bytes": 100022
+    },
+    {
+      "path": "/tmp/bth-db-v23-final-mutation.log",
+      "sha256": "57b95208ef63927b3e2a7349b0aa5383a28a8325f7dc51cf8a35aff53a8d06dc",
+      "bytes": 1137
+    },
+    {
+      "path": "/tmp/bth-db-v23-release-install.log",
+      "sha256": "ea781ddfffe003a1a189e0e8327a14fe17665304b3356e6fdb1bfe15551967fe",
+      "bytes": 139
+    },
+    {
+      "path": "/tmp/bth-db-v23-red.log",
+      "sha256": "07ed33949ace44ed222517cb6e448a1f4a800fc3393e455592dfc177508144e6",
+      "bytes": 2159
+    },
+    {
+      "path": "/tmp/bth-db-v23-no-impact-red.log",
+      "sha256": "48c5e7c96f3384aad34954ca206ecfe85477590e69fd62260b9756774d945a52",
+      "bytes": 1046
+    },
+    {
+      "path": "/tmp/bth-db-v23-nested-red.log",
+      "sha256": "3e3cbe34ab9a43541a66e896b723e5c7574a2c6e69c139346b1cd0d16c38219d",
+      "bytes": 5573
+    },
+    {
+      "path": "/tmp/bth-db-v23-profile-red.log",
+      "sha256": "bcbc5e4dc80732ea9d90ebf4fc2f57f4b2781804c36bd55a8721636694544d2b",
+      "bytes": 3990
+    }
+  ],
+  "notes": [
+    "No provider or database executed for v23",
+    "Full suite skips are not passes",
+    "Logs are machine-local; source hashes and summaries persist"
+  ]
+}

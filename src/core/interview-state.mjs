@@ -41,11 +41,11 @@ const ANSWER_STATUSES = new Set(['answered', 'unknown', 'conflict'])
 const CLAIM_KEYS_BY_QUESTION = Object.freeze({
   acceptance: new Set(),
   scope: new Set(['changesPublicApi', 'modules', 'excludedModules']),
-  data: new Set(['changesDatabase', 'requiresMigration']),
+  data: new Set(['changesDatabase', 'requiresMigration', 'bootstrapOnly']),
   verification: new Set(['requiredGates']),
   constraints: new Set(['preservesCompatibility'])
 })
-const BOOLEAN_CLAIMS = new Set(['changesPublicApi', 'changesDatabase', 'requiresMigration', 'preservesCompatibility'])
+const BOOLEAN_CLAIMS = new Set(['changesPublicApi', 'changesDatabase', 'requiresMigration', 'bootstrapOnly', 'preservesCompatibility'])
 const ARRAY_CLAIMS = new Set(['modules', 'excludedModules', 'requiredGates'])
 const CLAIM_VALUE = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$/
 
@@ -106,6 +106,11 @@ export function deriveInterviewContradictions(record, contextSnapshot = null) {
   const verification = answers.get('verification')?.claims ?? {}
   const constraints = answers.get('constraints')?.claims ?? {}
   const candidates = []
+  if (data.bootstrapOnly === true && (data.requiresMigration === true || data.changesDatabase !== true)) {
+    candidates.push(contradiction('bootstrap-with-incompatible-data-claims',
+      'Bootstrap-only changes require declared database impact and cannot also claim an existing-database migration.',
+      ['data'], [], { bootstrapOnly: true, requiresMigration: data.requiresMigration ?? null, changesDatabase: data.changesDatabase ?? null }))
+  }
 
   if (data.changesDatabase === false && data.requiresMigration === true) {
     candidates.push(contradiction(
@@ -140,14 +145,17 @@ export function deriveInterviewContradictions(record, contextSnapshot = null) {
     ))
   }
 
-  const flyway = factFrom(contextSnapshot, 'database.flyway.present')
-  if (data.requiresMigration === true && !(flyway?.status === 'confirmed' && flyway.value === true)) {
+  const portableMigration = factFrom(contextSnapshot, 'database.migration.present')
+  const migration = portableMigration ?? factFrom(contextSnapshot, 'database.flyway.present')
+  if (data.requiresMigration === true && !(migration?.status === 'confirmed' && migration.value === true)) {
     candidates.push(contradiction(
       'migration-required-without-configured-mechanism',
-      'The interview requires a migration but the project facts do not show a Flyway migration mechanism.',
+      portableMigration
+        ? 'The interview requires a migration but no supported migration configuration and revisions have been confirmed. Configure and verify the project mechanism; do not assume Flyway.'
+        : 'The interview requires a migration but the project facts do not show a Flyway migration mechanism.',
       ['data'],
-      ['database.flyway.present'],
-      { observedStatus: flyway?.status ?? 'missing', observedValue: flyway?.value ?? null }
+      [migration?.id ?? 'database.flyway.present'],
+      { observedStatus: migration?.status ?? 'missing', observedValue: migration?.value ?? null }
     ))
   }
 
@@ -204,14 +212,13 @@ function observedHint(question, contextSnapshot) {
   const observations = []
   if (question.id === 'data') {
     const dialect = contextSnapshot.verification?.context?.databaseDialect
-    const migrations = contextSnapshot.facts
-      ?.find((entry) => entry.id === 'database.flyway')
-      ?.evidence?.files ?? []
+    const migrations = contextSnapshot.migrations?.tools?.flatMap((tool) => tool.revisionPaths) ?? contextSnapshot.facts
+      ?.find((entry) => entry.id === 'database.flyway')?.evidence?.files ?? []
     if (dialect) {
       observations.push('감지된 DB: ' + dialect + '.')
     }
     if (migrations.length) {
-      observations.push('감지된 migration: ' + migrations.join(', ') + '.')
+      observations.push('감지된 migration(실행 검증 아님): ' + migrations.slice(0, 8).join(', ') + (migrations.length > 8 ? ' 외 추가 파일' : '') + '.')
     }
   }
   if (question.id === 'verification') {

@@ -85,6 +85,8 @@ bth implement apply USER-17 /path/to/backend-project --by developer --allow-writ
 
 질문이 남으면 출력된 decision id만 `--decisions` JSON으로 다시 전달합니다. 작은 CRUD도 규칙 탐색을 생략하지 않지만, 관련 경로용 feedback Gate가 먼저 실패하면 넓은 전체 테스트를 쓰지 않고 즉시 복구합니다. 최종 성공 판정은 항상 전체 required Gate를 통과해야 합니다.
 
+DB 구조를 바꾸는데 기존 변경 이력이 확인되지 않으면, **기존 DB를 업그레이드할지 / 새 빈 DB의 초기화 코드만 바꿀지** 먼저 묻습니다. `--decisions` JSON의 `schemaStrategy`에 `migration` 또는 `bootstrap-only`를 넣습니다. 초기화만 선택해도 승인·프로젝트 규칙·테스트는 생략하지 않으며, 기존 데이터의 업그레이드가 검증됐다고 기록하지 않습니다.
+
 실제 실행 가능한 Gradle 예제도 포함합니다.
 
 ```bash
@@ -339,6 +341,8 @@ provider 비교는 공개 이력을 target commit 없이 단일 합성 base comm
 반려동물 연결 과제도 고정 모델·빠른 모드로 실제 비교했습니다. 둘 다 구현과 독립 검증을 통과했지만, BTH는 **146.3초·286,654토큰**, 직접 Codex는 **144.6초·283,135토큰**으로 효율 우위를 확인하지 못했습니다. 단일·순차 실행이라 캐시와 순서의 영향도 남습니다. 현재 실제 Codex 비교는 서로 다른 2개 과제뿐이며, 검색 품질과 불필요한 문맥을 계속 개선해야 합니다. [같은 조건의 실제 비교와 한계](docs/evidence/fast-comparison-v22.md).
 
 이후 검색어에 검증·운영 문장이 섞이는 문제를 고쳤습니다. 계획과 규칙은 그대로 전달하고, 코드 검색에는 인터뷰의 원래 요구사항을 사용합니다. 같은 **2,000자 제공 제한**에서 16개 과제의 파일 탐색 Recall@20은 **0.3741 → 0.4126**으로 개선됐지만 일부 순위는 내려갔고, 나머지 4개는 DB 변경 절차 설정이 없어 계획이 막혔습니다. 토큰·시간 감소는 아직 입증하지 않았습니다. [개선·퇴보·미완료를 함께 기록한 결과](docs/evidence/retrieval-query-v22.md).
+
+그 4개의 중단 원인도 수정했습니다. TypeORM·Alembic 설정과 연결된 변경 파일을 읽기 전용으로 확인하고, 새 DB 초기화와 기존 DB 업그레이드를 나눠 **20/20개 계획을 생성**했습니다. 이것은 구현·DB 테스트 성공이 아닙니다. 2,000자 제한의 전체 20개 탐색 Recall@20은 **0.4365**이고, 실제 기능별 독립 검증은 여전히 **3/20개**입니다. [DB 계획 수정·지원 범위·남은 검증](docs/evidence/database-planning-v23.md).
 
 사용량은 완전한 마지막 실행 결과 이벤트에서만 수집합니다. Claude의 `input_tokens`는 캐시 읽기·생성 토큰을 포함하지 않으므로 총 입력은 세 값을 합하고 `cacheCreationInput`도 별도로 기록합니다. Codex의 입력에서는 보고된 캐시 입력을 빼서 미캐시 입력을 계산합니다. 누락된 값이나 마지막 응답 한 개의 사용량을 실행 전체의 합계로 추정하지 않습니다. 정의 근거: [Anthropic prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching).
 

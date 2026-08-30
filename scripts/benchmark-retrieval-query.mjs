@@ -81,6 +81,11 @@ async function evaluateTask(root, mirror, repository, repositoryConfig, task) {
     .filter((value) => typeof value === 'string').join('\n').slice(0, 64 * 1024)
   return {
     ...common, evaluated: true,
+    planning: {
+      schemaStrategy: planned.draft?.draft?.schemaStrategy ?? null,
+      dataClaims: interview.artifacts.plan.structuredDecisions.data,
+      migrations: interview.contextSnapshot.migrations ?? null
+    },
     graph: { generation: graph.graph.generation, nodes: graph.metrics.nodes, edges: graph.metrics.edges },
     legacy: ranking(graph, task, legacy),
     requirementOnly: ranking(graph, task, task.requirement),
@@ -95,7 +100,10 @@ async function main() {
   const sourceCommit = await git(['rev-parse', 'HEAD'], process.cwd())
   const sourceFiles = [
     'src/core/retrieval-query.mjs', 'src/runtime/implementation-orchestrator.mjs',
-    'src/runtime/plan-export.mjs', 'scripts/benchmark-retrieval-query.mjs'
+    'src/runtime/plan-export.mjs', 'scripts/benchmark-retrieval-query.mjs',
+    'src/core/migration-discovery.mjs', 'src/core/work-draft.mjs', 'src/core/interview-state.mjs',
+    'src/adapters/project-context.mjs', 'src/adapters/project-intelligence.mjs',
+    'src/runtime/work-orchestrator.mjs', 'src/runtime/interview-orchestrator.mjs'
   ]
   const sourceHashes = Object.fromEntries(await Promise.all(sourceFiles.map(async (path) => [path, sha256(await readFile(path))])))
   const scratch = await mkdtemp(join(tmpdir(), 'bth-query-control-'))

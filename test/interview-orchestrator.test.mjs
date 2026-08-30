@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { initProject } from '../src/init-project.mjs'
 import { loadTask } from '../src/core/task-store.mjs'
+import { inspectProjectIntelligence } from '../src/adapters/project-intelligence.mjs'
 import {
   answerInterview,
   completeInterview,
@@ -81,6 +82,34 @@ test('native interview materializes a source-bound PLAN_PROPOSED task', async ()
 
   const retried = await completeInterview(root, 'USER-17', { actor: 'developer' })
   assert.equal(retried.task.revision, task.record.revision)
+})
+
+test('existing migrations do not add a database step when the interview explicitly declares no DB impact', async () => {
+  const root = await initializedProject('bth-interview-no-db-impact-')
+  await mkdir(join(root, 'src/main/resources/db/migration'), { recursive: true })
+  await writeFile(join(root, 'src/main/resources/db/migration/V1__init.sql'), 'CREATE TABLE fixture(id int);\n')
+  await startInterview(root, { taskId: 'NO-DB-1', requirement: 'Change only display formatting.', actor: 'developer' })
+  await answerAll(root, 'NO-DB-1')
+  const result = await completeInterview(root, 'NO-DB-1', { actor: 'developer' })
+  assert.equal(result.artifacts.plan.steps.some((step) => step.id === 'database'), false)
+  assert.ok(result.artifacts.plan.declaredRequiredGates.includes('tests'))
+})
+
+test('legacy snapshots keep their original plan renderer and can finalize idempotently', async () => {
+  const root = await initializedProject('bth-interview-legacy-render-')
+  await mkdir(join(root, 'src/main/resources/db/migration'), { recursive: true })
+  await writeFile(join(root, 'src/main/resources/db/migration/V1__init.sql'), 'CREATE TABLE fixture(id int);\n')
+  const legacy = await inspectProjectIntelligence(root)
+  delete legacy.migrations
+  legacy.facts = legacy.facts.filter((fact) => fact.id !== 'database.migrations')
+  legacy.intelligence.facts = legacy.intelligence.facts.filter((fact) => fact.id !== 'database.migration.present')
+  await startInterview(root, { taskId: 'LEGACY-RENDER', requirement: 'Change display formatting.', actor: 'developer' }, { projectIntelligence: legacy })
+  await answerAll(root, 'LEGACY-RENDER')
+  const first = await completeInterview(root, 'LEGACY-RENDER', { actor: 'developer' })
+  assert.equal(first.artifacts.plan.steps.some((step) => step.id === 'database'), true)
+  const second = await completeInterview(root, 'LEGACY-RENDER', { actor: 'developer' })
+  assert.deepEqual(second.record.artifactDigests, first.record.artifactDigests)
+  assert.equal(second.task.revision, first.task.revision)
 })
 
 test('interview surfaces deterministic project-rule conflicts and blocks finalization', async () => {

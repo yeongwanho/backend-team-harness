@@ -1,0 +1,3540 @@
+{
+  "schemaVersion": 1,
+  "evaluation": "same-graph-budget-plan-query-control",
+  "authority": "static-advisory-not-implementation-success",
+  "sourceCommit": "3567b0b209188482646bcbeff037d2fa49e80c40",
+  "sourceHashes": {
+    "src/core/retrieval-query.mjs": "b7d31b2df0bf824b4669aec0ff41e27a69164f38d1d4b5e1ae1a52ad33891c0c",
+    "src/runtime/implementation-orchestrator.mjs": "652b27d9f4b5178c2b3de212421e29200dd10ef51de6be7db7a6784868ae3fff",
+    "src/runtime/plan-export.mjs": "3899be50363b8705224df2cef0bef75639977d070803a5f72a61acdf721b8119",
+    "scripts/benchmark-retrieval-query.mjs": "9f7ee1d29c0ee33ba16b514448aab78224c426589996674d17e45ba117968ad9",
+    "src/core/migration-discovery.mjs": "185dec8611dc1c98904e8d8a26a046c77694ad0dc27ec0a7f3f240e7118ada20",
+    "src/core/work-draft.mjs": "9b8a582086bbd8b3c835a4afe1f9c9575d1ee14cfc131b545854dcd3d88b1859",
+    "src/core/interview-state.mjs": "46408f5126220d1959b4538c0e2484553e0259b11f9005a55f072b2be4c9496c",
+    "src/adapters/project-context.mjs": "18e2966e4322205dc58d8fa8a8de607d6b8a12910bade8fdd64f8587081cdc02",
+    "src/adapters/project-intelligence.mjs": "25bcfc332ee775507bd57ee2adf27eb719016e3f7b423c7f62085b2153a69b4f",
+    "src/runtime/work-orchestrator.mjs": "b4c27678975bce4a571960a43e80e41d9edbb6e54661b7b24b401e1ee4ec57e9",
+    "src/runtime/interview-orchestrator.mjs": "d0884a3aa996ab9a4b1ef7f9266db131652f51c21a3975f6b517bd3d78a470b9"
+  },
+  "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+  "configSha256": "12cd545851e6ad7949c002ed06b9f8fa0ea326f74319b99751100cb6772ef48e",
+  "budgetCharacters": 2000,
+  "durationMs": 46687,
+  "taskCount": 20,
+  "evaluatedCount": 20,
+  "aggregate": {
+    "legacy": {
+      "taskCount": 20,
+      "meanRecallAt5": 0.2648809523809524,
+      "meanRecallAt20": 0.34404761904761905,
+      "meanNdcgAt20": 0.2897773106676448,
+      "zeroRecallAt20Tasks": [
+        "fastapi-05-missing-user",
+        "fastapi-06-delete-self",
+        "nest-03-swagger-language-header",
+        "nest-06-user-email-conflict",
+        "spring-07-mysql-user"
+      ]
+    },
+    "requirementOnly": {
+      "taskCount": 20,
+      "meanRecallAt5": 0.3682142857142857,
+      "meanRecallAt20": 0.43654761904761913,
+      "meanNdcgAt20": 0.3767480721594029,
+      "zeroRecallAt20Tasks": [
+        "fastapi-05-missing-user",
+        "fastapi-06-delete-self",
+        "nest-03-swagger-language-header",
+        "nest-06-user-email-conflict"
+      ]
+    },
+    "selected": {
+      "taskCount": 20,
+      "meanRecallAt5": 0.3682142857142857,
+      "meanRecallAt20": 0.43654761904761913,
+      "meanNdcgAt20": 0.3767480721594029,
+      "zeroRecallAt20Tasks": [
+        "fastapi-05-missing-user",
+        "fastapi-06-delete-self",
+        "nest-03-swagger-language-header",
+        "nest-06-user-email-conflict"
+      ]
+    }
+  },
+  "tasks": [
+    {
+      "repositoryId": "spring-petclinic",
+      "taskId": "spring-01-pet-association",
+      "requirementSha256": "e7c52525cc266de34cde23b1132ff70eea2a073ff8d9d51175453532eb2f9c87",
+      "baseSha": "88e37c15cf6fc8490b01bc3e8e2c800cec1ac272",
+      "targetSha": "676db04515ee5f289641cea6cb379dc02b40f67f",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": true,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "not-observed",
+          "complete": true,
+          "tools": [],
+          "sources": [],
+          "diagnostics": [],
+          "inspectedBytes": 0,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "6e42082075b792ddada454afa74be1d329db4ddc726f68669892f0926917a613",
+        "nodes": 94,
+        "edges": 103
+      },
+      "legacy": {
+        "taskId": "spring-01-pet-association",
+        "goldPathCount": 4,
+        "rankedPathCount": 7,
+        "recallAt5": 0,
+        "recallAt20": 0.25,
+        "ndcgAt20": 0.13905617951077562,
+        "querySha256": "78fe0230dedf8914202568bde9955d5757c63d8ec23b2866d2a3e5dac86b859c",
+        "queryCharacters": 6793,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1998,
+          "omittedNodes": 87
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/OwnerControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetValidatorTests.java",
+          "k8s/db.yml"
+        ],
+        "matchedTokens": [
+          "owner",
+          "pet",
+          "name",
+          "of",
+          "field",
+          "validation",
+          "tests",
+          "test",
+          "is",
+          "change",
+          "root",
+          "api",
+          "or",
+          "client",
+          "database",
+          "data"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "spring-01-pet-association",
+        "goldPathCount": 4,
+        "rankedPathCount": 6,
+        "recallAt5": 0.75,
+        "recallAt20": 0.75,
+        "ndcgAt20": 0.592512031964586,
+        "querySha256": "e7c52525cc266de34cde23b1132ff70eea2a073ff8d9d51175453532eb2f9c87",
+        "queryCharacters": 199,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1892,
+          "omittedNodes": 88
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetValidatorTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetValidator.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Pet.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Owner.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java"
+        ],
+        "matchedTokens": [
+          "owner",
+          "pet",
+          "name",
+          "of",
+          "field",
+          "validation",
+          "tests",
+          "test"
+        ]
+      },
+      "selected": {
+        "taskId": "spring-01-pet-association",
+        "goldPathCount": 4,
+        "rankedPathCount": 6,
+        "recallAt5": 0.75,
+        "recallAt20": 0.75,
+        "ndcgAt20": 0.592512031964586,
+        "querySha256": "e7c52525cc266de34cde23b1132ff70eea2a073ff8d9d51175453532eb2f9c87",
+        "queryCharacters": 199,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1892,
+          "omittedNodes": 88
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetValidatorTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetValidator.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Pet.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Owner.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java"
+        ],
+        "matchedTokens": [
+          "owner",
+          "pet",
+          "name",
+          "of",
+          "field",
+          "validation",
+          "tests",
+          "test"
+        ]
+      }
+    },
+    {
+      "repositoryId": "spring-petclinic",
+      "taskId": "spring-02-owner-search-whitespace",
+      "requirementSha256": "da8f4d1379a8d99fc25cdec81a342d2f4a2136b921147c1e7d05f4075ae3dc2f",
+      "baseSha": "0f6e8614047bd74cf6223b4d8a858d2ed2824f8a",
+      "targetSha": "bb37aad8c332264723817d855e8b3b96b7c392bc",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": false,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "not-observed",
+          "complete": true,
+          "tools": [],
+          "sources": [],
+          "diagnostics": [],
+          "inspectedBytes": 0,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "42abd3f7fbe60b59095b4e9110b5f84bb3bcb5a9aa815a1ae3039756e688e62a",
+        "nodes": 94,
+        "edges": 103
+      },
+      "legacy": {
+        "taskId": "spring-02-owner-search-whitespace",
+        "goldPathCount": 2,
+        "rankedPathCount": 6,
+        "recallAt5": 1,
+        "recallAt20": 1,
+        "ndcgAt20": 0.6934264036172708,
+        "querySha256": "0af59683472675a02ba9657734e5e8414d92851b9b4980aa47f9489c715653ba",
+        "queryCharacters": 6066,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1911,
+          "omittedNodes": 88
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/OwnerControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Owner.java",
+          "src/test/java/org/springframework/samples/petclinic/system/CrashControllerIntegrationTests.java",
+          "src/main/java/org/springframework/samples/petclinic/system/CrashController.java"
+        ],
+        "matchedTokens": [
+          "owner",
+          "name",
+          "controller",
+          "test",
+          "is",
+          "change",
+          "root",
+          "api",
+          "or",
+          "client",
+          "database",
+          "data",
+          "schema",
+          "constraints",
+          "constraint",
+          "source"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "spring-02-owner-search-whitespace",
+        "goldPathCount": 2,
+        "rankedPathCount": 6,
+        "recallAt5": 1,
+        "recallAt20": 1,
+        "ndcgAt20": 0.5706417189553201,
+        "querySha256": "da8f4d1379a8d99fc25cdec81a342d2f4a2136b921147c1e7d05f4075ae3dc2f",
+        "queryCharacters": 105,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1872,
+          "omittedNodes": 88
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/OwnerControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java",
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java"
+        ],
+        "matchedTokens": [
+          "owner",
+          "name",
+          "controller",
+          "test"
+        ]
+      },
+      "selected": {
+        "taskId": "spring-02-owner-search-whitespace",
+        "goldPathCount": 2,
+        "rankedPathCount": 6,
+        "recallAt5": 1,
+        "recallAt20": 1,
+        "ndcgAt20": 0.5706417189553201,
+        "querySha256": "da8f4d1379a8d99fc25cdec81a342d2f4a2136b921147c1e7d05f4075ae3dc2f",
+        "queryCharacters": 105,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1872,
+          "omittedNodes": 88
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/OwnerControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java",
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java"
+        ],
+        "matchedTokens": [
+          "owner",
+          "name",
+          "controller",
+          "test"
+        ]
+      }
+    },
+    {
+      "repositoryId": "spring-petclinic",
+      "taskId": "spring-03-unique-pet-name",
+      "requirementSha256": "2f3916e93e92690e2791fc60d79e6e38aab347bed230cece845255eec61d2a2d",
+      "baseSha": "51045d1648dad955df586150c1a1a6e22ef400c2",
+      "targetSha": "e0db9b184e028d41bcb626f3cbf03a942f67e104",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": "bootstrap-only",
+        "dataClaims": {
+          "changesDatabase": true,
+          "requiresMigration": false,
+          "bootstrapOnly": true
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "not-observed",
+          "complete": true,
+          "tools": [],
+          "sources": [],
+          "diagnostics": [],
+          "inspectedBytes": 0,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "dacd5e3ca16fe7a9f4086787346132580ec88b763c9c7908e21f5f3df8ae1c95",
+        "nodes": 91,
+        "edges": 99
+      },
+      "legacy": {
+        "taskId": "spring-03-unique-pet-name",
+        "goldPathCount": 7,
+        "rankedPathCount": 6,
+        "recallAt5": 0.42857142857142855,
+        "recallAt20": 0.42857142857142855,
+        "ndcgAt20": 0.49959580689988364,
+        "querySha256": "67b068b03cf6c7119dbdb8d49ce25875f00bf0a3de57f780bd5c40f02be50215",
+        "queryCharacters": 6674,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1878,
+          "omittedNodes": 85
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/OwnerControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java"
+        ],
+        "matchedTokens": [
+          "pet",
+          "name",
+          "owner",
+          "database",
+          "controller",
+          "service",
+          "is",
+          "change",
+          "root",
+          "api",
+          "or",
+          "client",
+          "data",
+          "new",
+          "empty"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "spring-03-unique-pet-name",
+        "goldPathCount": 7,
+        "rankedPathCount": 6,
+        "recallAt5": 0.42857142857142855,
+        "recallAt20": 0.42857142857142855,
+        "ndcgAt20": 0.49959580689988364,
+        "querySha256": "2f3916e93e92690e2791fc60d79e6e38aab347bed230cece845255eec61d2a2d",
+        "queryCharacters": 118,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1901,
+          "omittedNodes": 85
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Pet.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetType.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java"
+        ],
+        "matchedTokens": [
+          "pet",
+          "name",
+          "owner",
+          "database",
+          "controller",
+          "service"
+        ]
+      },
+      "selected": {
+        "taskId": "spring-03-unique-pet-name",
+        "goldPathCount": 7,
+        "rankedPathCount": 6,
+        "recallAt5": 0.42857142857142855,
+        "recallAt20": 0.42857142857142855,
+        "ndcgAt20": 0.49959580689988364,
+        "querySha256": "2f3916e93e92690e2791fc60d79e6e38aab347bed230cece845255eec61d2a2d",
+        "queryCharacters": 118,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1901,
+          "omittedNodes": 85
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Pet.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetType.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java"
+        ],
+        "matchedTokens": [
+          "pet",
+          "name",
+          "owner",
+          "database",
+          "controller",
+          "service"
+        ]
+      }
+    },
+    {
+      "repositoryId": "spring-petclinic",
+      "taskId": "spring-04-future-visit",
+      "requirementSha256": "b24d45e6d00787b1edea2a1dfd0d73402b476ea0669a27418f67b35bcbc6f617",
+      "baseSha": "3c06fbfc1e42eb40802e0d0ca989bc9226755804",
+      "targetSha": "753d35c2f84432d88c0f3b61c9302a16069b78dd",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": false,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "not-observed",
+          "complete": true,
+          "tools": [],
+          "sources": [],
+          "diagnostics": [],
+          "inspectedBytes": 0,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "2d22b6566f3902a2e3ae8deb9df5c266cf00a7dd4c4674027f073bab51781364",
+        "nodes": 90,
+        "edges": 98
+      },
+      "legacy": {
+        "taskId": "spring-04-future-visit",
+        "goldPathCount": 12,
+        "rankedPathCount": 6,
+        "recallAt5": 0.25,
+        "recallAt20": 0.25,
+        "ndcgAt20": 0.37910366363936815,
+        "querySha256": "d35569620ebd4403a7542ba4c880a49a23305808a9e98bec9f46d5558ac3efc1",
+        "queryCharacters": 6453,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1893,
+          "omittedNodes": 84
+        },
+        "paths": [
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/model/NamedEntity.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Owner.java"
+        ],
+        "matchedTokens": [
+          "new",
+          "visit",
+          "date",
+          "or",
+          "validation",
+          "message",
+          "visits",
+          "form",
+          "controller",
+          "is",
+          "change",
+          "root",
+          "api",
+          "client",
+          "database",
+          "data",
+          "schema",
+          "constraints",
+          "constraint"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "spring-04-future-visit",
+        "goldPathCount": 12,
+        "rankedPathCount": 6,
+        "recallAt5": 0.25,
+        "recallAt20": 0.25,
+        "ndcgAt20": 0.41842496774457966,
+        "querySha256": "b24d45e6d00787b1edea2a1dfd0d73402b476ea0669a27418f67b35bcbc6f617",
+        "queryCharacters": 196,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1889,
+          "omittedNodes": 84
+        },
+        "paths": [
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java"
+        ],
+        "matchedTokens": [
+          "new",
+          "visit",
+          "date",
+          "or",
+          "validation",
+          "message",
+          "visits",
+          "form",
+          "controller"
+        ]
+      },
+      "selected": {
+        "taskId": "spring-04-future-visit",
+        "goldPathCount": 12,
+        "rankedPathCount": 6,
+        "recallAt5": 0.25,
+        "recallAt20": 0.25,
+        "ndcgAt20": 0.41842496774457966,
+        "querySha256": "b24d45e6d00787b1edea2a1dfd0d73402b476ea0669a27418f67b35bcbc6f617",
+        "queryCharacters": 196,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1889,
+          "omittedNodes": 84
+        },
+        "paths": [
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java"
+        ],
+        "matchedTokens": [
+          "new",
+          "visit",
+          "date",
+          "or",
+          "validation",
+          "message",
+          "visits",
+          "form",
+          "controller"
+        ]
+      }
+    },
+    {
+      "repositoryId": "spring-petclinic",
+      "taskId": "spring-05-binder-id-protection",
+      "requirementSha256": "08ffced3a99ae6a8d5f9197b70fc482ef9e1793cea47b6c45f41a726f68922fd",
+      "baseSha": "f1e0e22b883e185e680d44b264fb73a8efcff8b9",
+      "targetSha": "c7ee170434ec3e369fdc9201290ba2ea4c92b557",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": false,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "not-observed",
+          "complete": true,
+          "tools": [],
+          "sources": [],
+          "diagnostics": [],
+          "inspectedBytes": 0,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "649fca5f570c9085ee4692e791f51187fbd2de8545a494fdf08108688720e3e3",
+        "nodes": 90,
+        "edges": 98
+      },
+      "legacy": {
+        "taskId": "spring-05-binder-id-protection",
+        "goldPathCount": 3,
+        "rankedPathCount": 6,
+        "recallAt5": 0.3333333333333333,
+        "recallAt20": 0.6666666666666666,
+        "ndcgAt20": 0.6364391809889587,
+        "querySha256": "c1d02b8014bbeccb4b1883de442de8fd6b62b1a4b78d36408adce9eed0685bd5",
+        "queryCharacters": 6213,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1907,
+          "omittedNodes": 84
+        },
+        "paths": [
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Owner.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java"
+        ],
+        "matchedTokens": [
+          "binding",
+          "nested",
+          "field",
+          "owners",
+          "owner",
+          "pets",
+          "pet",
+          "visits",
+          "visit",
+          "mutable",
+          "validation",
+          "is",
+          "change",
+          "root",
+          "api",
+          "or",
+          "client",
+          "database",
+          "data",
+          "schema",
+          "constraints",
+          "constraint"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "spring-05-binder-id-protection",
+        "goldPathCount": 3,
+        "rankedPathCount": 6,
+        "recallAt5": 0.6666666666666666,
+        "recallAt20": 0.6666666666666666,
+        "ndcgAt20": 0.7039180890341347,
+        "querySha256": "08ffced3a99ae6a8d5f9197b70fc482ef9e1793cea47b6c45f41a726f68922fd",
+        "queryCharacters": 148,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1894,
+          "omittedNodes": 84
+        },
+        "paths": [
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Pet.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java"
+        ],
+        "matchedTokens": [
+          "binding",
+          "nested",
+          "field",
+          "owners",
+          "owner",
+          "pets",
+          "pet",
+          "visits",
+          "visit",
+          "mutable",
+          "validation"
+        ]
+      },
+      "selected": {
+        "taskId": "spring-05-binder-id-protection",
+        "goldPathCount": 3,
+        "rankedPathCount": 6,
+        "recallAt5": 0.6666666666666666,
+        "recallAt20": 0.6666666666666666,
+        "ndcgAt20": 0.7039180890341347,
+        "querySha256": "08ffced3a99ae6a8d5f9197b70fc482ef9e1793cea47b6c45f41a726f68922fd",
+        "queryCharacters": 148,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1894,
+          "omittedNodes": 84
+        },
+        "paths": [
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Pet.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java"
+        ],
+        "matchedTokens": [
+          "binding",
+          "nested",
+          "field",
+          "owners",
+          "owner",
+          "pets",
+          "pet",
+          "visits",
+          "visit",
+          "mutable",
+          "validation"
+        ]
+      }
+    },
+    {
+      "repositoryId": "spring-petclinic",
+      "taskId": "spring-06-pet-update",
+      "requirementSha256": "68ddc1556c11a5541ba6180a616fd548ecb8619619262edbe14a94fda412f953",
+      "baseSha": "6328d2c9dc8eb2c367c6a613a1ae959c994003c7",
+      "targetSha": "2aa53f929d32b0d41e0fe0391b8385eabe9a3432",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": true,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "not-observed",
+          "complete": true,
+          "tools": [],
+          "sources": [],
+          "diagnostics": [],
+          "inspectedBytes": 0,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "749b33a8d95715ba3c4c2151c22cbe100e3bbc2e1ea2dbf37f1424d55da78c64",
+        "nodes": 85,
+        "edges": 94
+      },
+      "legacy": {
+        "taskId": "spring-06-pet-update",
+        "goldPathCount": 1,
+        "rankedPathCount": 6,
+        "recallAt5": 1,
+        "recallAt20": 1,
+        "ndcgAt20": 0.43067655807339306,
+        "querySha256": "ec0692e7e93b72dd364fd7c2abbe2e77fc628345a4b89ad7324b8abf94cc131d",
+        "queryCharacters": 6813,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1887,
+          "omittedNodes": 79
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Pet.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/OwnerControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java"
+        ],
+        "matchedTokens": [
+          "pet",
+          "update",
+          "date",
+          "type",
+          "that",
+          "of",
+          "owner",
+          "is",
+          "root",
+          "api",
+          "or",
+          "client",
+          "database",
+          "data",
+          "schema",
+          "constraints"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "spring-06-pet-update",
+        "goldPathCount": 1,
+        "rankedPathCount": 6,
+        "recallAt5": 1,
+        "recallAt20": 1,
+        "ndcgAt20": 0.43067655807339306,
+        "querySha256": "68ddc1556c11a5541ba6180a616fd548ecb8619619262edbe14a94fda412f953",
+        "queryCharacters": 203,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1895,
+          "omittedNodes": 79
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Pet.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetType.java",
+          "src/test/java/org/springframework/samples/petclinic/system/CrashControllerTests.java"
+        ],
+        "matchedTokens": [
+          "pet",
+          "update",
+          "date",
+          "type",
+          "that",
+          "of",
+          "owner"
+        ]
+      },
+      "selected": {
+        "taskId": "spring-06-pet-update",
+        "goldPathCount": 1,
+        "rankedPathCount": 6,
+        "recallAt5": 1,
+        "recallAt20": 1,
+        "ndcgAt20": 0.43067655807339306,
+        "querySha256": "68ddc1556c11a5541ba6180a616fd548ecb8619619262edbe14a94fda412f953",
+        "queryCharacters": 203,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1895,
+          "omittedNodes": 79
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Pet.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetType.java",
+          "src/test/java/org/springframework/samples/petclinic/system/CrashControllerTests.java"
+        ],
+        "matchedTokens": [
+          "pet",
+          "update",
+          "date",
+          "type",
+          "that",
+          "of",
+          "owner"
+        ]
+      }
+    },
+    {
+      "repositoryId": "spring-petclinic",
+      "taskId": "spring-07-mysql-user",
+      "requirementSha256": "f48f44969c5c42fbf0018c4d5a504f6bff85efe3453b60fb9ed11bb91ea93d92",
+      "baseSha": "37d53152a08a5de9d225c7f25f41b77c5d8b3cae",
+      "targetSha": "8f08b38f2c8412b9298f63e79e5e830ae247cd6e",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": "bootstrap-only",
+        "dataClaims": {
+          "changesDatabase": true,
+          "requiresMigration": false,
+          "bootstrapOnly": true
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "not-observed",
+          "complete": true,
+          "tools": [],
+          "sources": [],
+          "diagnostics": [],
+          "inspectedBytes": 0,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "5998df48498e06c5c1c877c9d725d78d50ff167b809c8bde068790123e0affb2",
+        "nodes": 92,
+        "edges": 98
+      },
+      "legacy": {
+        "taskId": "spring-07-mysql-user",
+        "goldPathCount": 1,
+        "rankedPathCount": 6,
+        "recallAt5": 0,
+        "recallAt20": 0,
+        "ndcgAt20": 0,
+        "querySha256": "278688577ec1b0d51680ff527ce49e4554a893901de20325332cab9c7f895b98",
+        "queryCharacters": 6698,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1895,
+          "omittedNodes": 86
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/owner/OwnerControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java",
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/main/java/org/springframework/samples/petclinic/model/Person.java",
+          "src/main/java/org/springframework/samples/petclinic/model/NamedEntity.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Owner.java"
+        ],
+        "matchedTokens": [
+          "my",
+          "sql",
+          "user",
+          "creation",
+          "database",
+          "is",
+          "change",
+          "root",
+          "api",
+          "data",
+          "new",
+          "empty",
+          "constraints",
+          "constraint"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "spring-07-mysql-user",
+        "goldPathCount": 1,
+        "rankedPathCount": 8,
+        "recallAt5": 1,
+        "recallAt20": 1,
+        "ndcgAt20": 0.6309297535714575,
+        "querySha256": "f48f44969c5c42fbf0018c4d5a504f6bff85efe3453b60fb9ed11bb91ea93d92",
+        "queryCharacters": 169,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1981,
+          "omittedNodes": 84
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/MySqlIntegrationTests.java",
+          "src/main/resources/db/mysql/user.sql",
+          "src/test/java/org/springframework/samples/petclinic/MysqlTestApplication.java",
+          "src/main/resources/db/mysql/data.sql",
+          "src/main/resources/db/mysql/schema.sql",
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/main/resources/db/h2/data.sql"
+        ],
+        "matchedTokens": [
+          "my",
+          "sql",
+          "user",
+          "creation",
+          "database",
+          "mysql"
+        ]
+      },
+      "selected": {
+        "taskId": "spring-07-mysql-user",
+        "goldPathCount": 1,
+        "rankedPathCount": 8,
+        "recallAt5": 1,
+        "recallAt20": 1,
+        "ndcgAt20": 0.6309297535714575,
+        "querySha256": "f48f44969c5c42fbf0018c4d5a504f6bff85efe3453b60fb9ed11bb91ea93d92",
+        "queryCharacters": 169,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1981,
+          "omittedNodes": 84
+        },
+        "paths": [
+          "src/test/java/org/springframework/samples/petclinic/MySqlIntegrationTests.java",
+          "src/main/resources/db/mysql/user.sql",
+          "src/test/java/org/springframework/samples/petclinic/MysqlTestApplication.java",
+          "src/main/resources/db/mysql/data.sql",
+          "src/main/resources/db/mysql/schema.sql",
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/main/resources/db/h2/data.sql"
+        ],
+        "matchedTokens": [
+          "my",
+          "sql",
+          "user",
+          "creation",
+          "database",
+          "mysql"
+        ]
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-01-session-update-by-hash",
+      "requirementSha256": "f43ab885965fb78f90245dc5dfb44c2e11c42230151c0a635388d623dce58d8c",
+      "baseSha": "a3aaea0e60fdbb0af3b0108d98f09cf2c8b50fe4",
+      "targetSha": "bba9827ca548ca30c98068936550b8cb94bbc1a0",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": true,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "observed",
+          "complete": true,
+          "tools": [
+            {
+              "kind": "typeorm",
+              "projectPath": ".",
+              "configurationPaths": [
+                "package.json",
+                "src/database/data-source.ts"
+              ],
+              "revisionPaths": [
+                "src/database/migrations/1715028537217-CreateUser.ts"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "path": "package.json",
+              "sha256": "cffeeae84ba5dec8082b6bfc4c32965e0a2f584e37f1a3ecaa959fafc266f865"
+            },
+            {
+              "path": "src/database/data-source.ts",
+              "sha256": "a5691d60254737cd04dbfad8a23d1df02c723844dd0e0116a1c6a2ff37575003"
+            },
+            {
+              "path": "src/database/migrations/1715028537217-CreateUser.ts",
+              "sha256": "72f0c3e0aedbebbb970fef550cd36d4c1ca85ccba8c1a373d929ea5df7c68dc8"
+            }
+          ],
+          "diagnostics": [],
+          "inspectedBytes": 13422,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "c88781224192bda520636399d164a5d14ce9cb2f647acfec35395a4dbcd79702",
+        "nodes": 436,
+        "edges": 435
+      },
+      "legacy": {
+        "taskId": "nest-01-session-update-by-hash",
+        "goldPathCount": 5,
+        "rankedPathCount": 9,
+        "recallAt5": 0.2,
+        "recallAt20": 0.2,
+        "ndcgAt20": 0.3391602052736161,
+        "querySha256": "47b68d98d769194a744fad09a3701ca51a3f223ab8b1a880731735612be2de9f",
+        "queryCharacters": 7175,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1976,
+          "omittedNodes": 427
+        },
+        "paths": [
+          "src/auth/auth.service.ts",
+          "src/users/domain/user.ts",
+          "src/app.module.ts",
+          "src/config/config.type.ts",
+          "src/files/domain/file.ts",
+          "src/auth/auth.controller.ts",
+          "src/files/infrastructure/uploader/s3-presigned/files.module.ts",
+          "src/files/infrastructure/uploader/s3/files.module.ts",
+          "src/social/tokens.ts"
+        ],
+        "matchedTokens": [
+          "session",
+          "refresh",
+          "relational",
+          "document",
+          "persistence",
+          "update",
+          "or",
+          "tokens",
+          "token",
+          "is",
+          "observable",
+          "module",
+          "api",
+          "client",
+          "database",
+          "data"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "nest-01-session-update-by-hash",
+        "goldPathCount": 5,
+        "rankedPathCount": 8,
+        "recallAt5": 0.2,
+        "recallAt20": 0.4,
+        "ndcgAt20": 0.4599715079731103,
+        "querySha256": "f43ab885965fb78f90245dc5dfb44c2e11c42230151c0a635388d623dce58d8c",
+        "queryCharacters": 264,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1961,
+          "omittedNodes": 428
+        },
+        "paths": [
+          "src/auth/auth.service.ts",
+          "src/auth/auth.controller.ts",
+          "src/users/infrastructure/persistence/relational/entities/user.entity.ts",
+          "src/session/session.module.ts",
+          "src/users/domain/user.ts",
+          "src/session/infrastructure/persistence/document/repositories/session.repository.ts",
+          "src/auth/strategies/jwt-refresh.strategy.ts",
+          "src/users/users.service.ts"
+        ],
+        "matchedTokens": [
+          "session",
+          "refresh",
+          "relational",
+          "document",
+          "persistence",
+          "update",
+          "or",
+          "tokens",
+          "token"
+        ]
+      },
+      "selected": {
+        "taskId": "nest-01-session-update-by-hash",
+        "goldPathCount": 5,
+        "rankedPathCount": 8,
+        "recallAt5": 0.2,
+        "recallAt20": 0.4,
+        "ndcgAt20": 0.4599715079731103,
+        "querySha256": "f43ab885965fb78f90245dc5dfb44c2e11c42230151c0a635388d623dce58d8c",
+        "queryCharacters": 264,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1961,
+          "omittedNodes": 428
+        },
+        "paths": [
+          "src/auth/auth.service.ts",
+          "src/auth/auth.controller.ts",
+          "src/users/infrastructure/persistence/relational/entities/user.entity.ts",
+          "src/session/session.module.ts",
+          "src/users/domain/user.ts",
+          "src/session/infrastructure/persistence/document/repositories/session.repository.ts",
+          "src/auth/strategies/jwt-refresh.strategy.ts",
+          "src/users/users.service.ts"
+        ],
+        "matchedTokens": [
+          "session",
+          "refresh",
+          "relational",
+          "document",
+          "persistence",
+          "update",
+          "or",
+          "tokens",
+          "token"
+        ]
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-02-file-relational-mapper",
+      "requirementSha256": "938b4e21c4530cefa9044a6f379a7c43fda08b7ac4b14ec8e20d7a69fe0c4d16",
+      "baseSha": "07ac5f29d3032bb173fd538c549966e7eb96dcff",
+      "targetSha": "f4703907ddc54dff7f6e81bc37f0a42e3fdd8d22",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": false,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "observed",
+          "complete": true,
+          "tools": [
+            {
+              "kind": "typeorm",
+              "projectPath": ".",
+              "configurationPaths": [
+                "package.json",
+                "src/database/data-source.ts"
+              ],
+              "revisionPaths": [
+                "src/database/migrations/1715028537217-CreateUser.ts"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "path": "package.json",
+              "sha256": "97c6abe5f0dd85b75c2ec7aa5b4c602667a2eda277c7f39f554985664e39fb4f"
+            },
+            {
+              "path": "src/database/data-source.ts",
+              "sha256": "a5691d60254737cd04dbfad8a23d1df02c723844dd0e0116a1c6a2ff37575003"
+            },
+            {
+              "path": "src/database/migrations/1715028537217-CreateUser.ts",
+              "sha256": "72f0c3e0aedbebbb970fef550cd36d4c1ca85ccba8c1a373d929ea5df7c68dc8"
+            }
+          ],
+          "diagnostics": [],
+          "inspectedBytes": 13472,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "7665dcedf2a6f447664ab2474f8b23c242a5c13dd3bcd7ac79bca346ec2afa62",
+        "nodes": 436,
+        "edges": 437
+      },
+      "legacy": {
+        "taskId": "nest-02-file-relational-mapper",
+        "goldPathCount": 2,
+        "rankedPathCount": 8,
+        "recallAt5": 0.5,
+        "recallAt20": 0.5,
+        "ndcgAt20": 0.23719771276929622,
+        "querySha256": "7cad186f7f7da75315e6f2250cf520da3546bce24d07e0217936eb2e4541fcb2",
+        "queryCharacters": 6260,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1873,
+          "omittedNodes": 428
+        },
+        "paths": [
+          "src/files/domain/file.ts",
+          "src/users/domain/user.ts",
+          "src/config/config.type.ts",
+          "src/app.module.ts",
+          "src/utils/serializer.interceptor.ts",
+          "src/users/infrastructure/persistence/document/entities/user.schema.ts",
+          "src/users/infrastructure/persistence/document/mappers/user.mapper.ts",
+          "src/auth/auth.service.ts"
+        ],
+        "matchedTokens": [
+          "domain",
+          "file",
+          "after",
+          "relational",
+          "entity",
+          "response",
+          "interceptor",
+          "data",
+          "nested",
+          "promise",
+          "is",
+          "observable",
+          "module",
+          "api",
+          "database",
+          "or",
+          "schema",
+          "migration"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "nest-02-file-relational-mapper",
+        "goldPathCount": 2,
+        "rankedPathCount": 8,
+        "recallAt5": 0,
+        "recallAt20": 0.5,
+        "ndcgAt20": 0.20438239758848611,
+        "querySha256": "938b4e21c4530cefa9044a6f379a7c43fda08b7ac4b14ec8e20d7a69fe0c4d16",
+        "queryCharacters": 177,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1993,
+          "omittedNodes": 428
+        },
+        "paths": [
+          "src/files/domain/file.ts",
+          "src/utils/relational-entity-helper.ts",
+          "src/users/infrastructure/persistence/relational/entities/user.entity.ts",
+          "src/users/domain/user.ts",
+          "src/users/infrastructure/persistence/relational/mappers/user.mapper.ts",
+          "src/config/config.type.ts",
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.ts",
+          "src/app.module.ts"
+        ],
+        "matchedTokens": [
+          "domain",
+          "file",
+          "after",
+          "relational",
+          "entity",
+          "response",
+          "interceptor",
+          "data",
+          "nested",
+          "promise"
+        ]
+      },
+      "selected": {
+        "taskId": "nest-02-file-relational-mapper",
+        "goldPathCount": 2,
+        "rankedPathCount": 8,
+        "recallAt5": 0,
+        "recallAt20": 0.5,
+        "ndcgAt20": 0.20438239758848611,
+        "querySha256": "938b4e21c4530cefa9044a6f379a7c43fda08b7ac4b14ec8e20d7a69fe0c4d16",
+        "queryCharacters": 177,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1993,
+          "omittedNodes": 428
+        },
+        "paths": [
+          "src/files/domain/file.ts",
+          "src/utils/relational-entity-helper.ts",
+          "src/users/infrastructure/persistence/relational/entities/user.entity.ts",
+          "src/users/domain/user.ts",
+          "src/users/infrastructure/persistence/relational/mappers/user.mapper.ts",
+          "src/config/config.type.ts",
+          "src/files/infrastructure/persistence/relational/repositories/file.repository.ts",
+          "src/app.module.ts"
+        ],
+        "matchedTokens": [
+          "domain",
+          "file",
+          "after",
+          "relational",
+          "entity",
+          "response",
+          "interceptor",
+          "data",
+          "nested",
+          "promise"
+        ]
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-03-swagger-language-header",
+      "requirementSha256": "b3d96dc208076eb52a29dd16083a7c5ce6b5ea73c4936524fae1548c7fe03e71",
+      "baseSha": "1cb55deff983e56f45a0a70bdd2e6c5bfb90b79c",
+      "targetSha": "b5c3262e7b58e4443dd27328e4d2ced50c832204",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": false,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "observed",
+          "complete": true,
+          "tools": [
+            {
+              "kind": "typeorm",
+              "projectPath": ".",
+              "configurationPaths": [
+                "package.json",
+                "src/database/data-source.ts"
+              ],
+              "revisionPaths": [
+                "src/database/migrations/1715028537217-CreateUser.ts"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "path": "package.json",
+              "sha256": "87c15421680e5a1d0e0de772f82d3ed6d4059a24088de40f5fe0698769a08f93"
+            },
+            {
+              "path": "src/database/data-source.ts",
+              "sha256": "a5691d60254737cd04dbfad8a23d1df02c723844dd0e0116a1c6a2ff37575003"
+            },
+            {
+              "path": "src/database/migrations/1715028537217-CreateUser.ts",
+              "sha256": "72f0c3e0aedbebbb970fef550cd36d4c1ca85ccba8c1a373d929ea5df7c68dc8"
+            }
+          ],
+          "diagnostics": [],
+          "inspectedBytes": 13482,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "40d4f1b7e62401df49c291e7c2d4f81dd2bf89d64a799f91f9d1e317daa1e040",
+        "nodes": 411,
+        "edges": 437
+      },
+      "legacy": {
+        "taskId": "nest-03-swagger-language-header",
+        "goldPathCount": 1,
+        "rankedPathCount": 9,
+        "recallAt5": 0,
+        "recallAt20": 0,
+        "ndcgAt20": 0,
+        "querySha256": "a6836331e36895efa95e39ee1b299117425c084fb81b8f1db780891fd6511f2c",
+        "queryCharacters": 6368,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1961,
+          "omittedNodes": 402
+        },
+        "paths": [
+          "src/files/domain/file.ts",
+          "src/app.module.ts",
+          "src/users/dto/update-user.dto.ts",
+          "src/users/domain/user.ts",
+          "src/config/config.type.ts",
+          "src/auth/dto/auth-update.dto.ts",
+          "src/users/dto/create-user.dto.ts",
+          "src/auth-apple/dto/auth-apple-login.dto.ts",
+          "src/auth/auth.controller.ts"
+        ],
+        "matchedTokens": [
+          "optional",
+          "global",
+          "request",
+          "header",
+          "swagger",
+          "is",
+          "observable",
+          "module",
+          "api",
+          "or",
+          "client",
+          "database",
+          "data",
+          "schema",
+          "migration"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "nest-03-swagger-language-header",
+        "goldPathCount": 1,
+        "rankedPathCount": 9,
+        "recallAt5": 0,
+        "recallAt20": 0,
+        "ndcgAt20": 0,
+        "querySha256": "b3d96dc208076eb52a29dd16083a7c5ce6b5ea73c4936524fae1548c7fe03e71",
+        "queryCharacters": 166,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1943,
+          "omittedNodes": 402
+        },
+        "paths": [
+          "src/files/domain/file.ts",
+          "src/users/dto/create-user.dto.ts",
+          "src/users/dto/update-user.dto.ts",
+          "src/auth/dto/auth-update.dto.ts",
+          "src/users/dto/query-user.dto.ts",
+          "src/auth-apple/dto/auth-apple-login.dto.ts",
+          "src/app.module.ts",
+          "src/auth/auth.controller.ts",
+          "eslint.config.mjs"
+        ],
+        "matchedTokens": [
+          "optional",
+          "global",
+          "request",
+          "header",
+          "swagger"
+        ]
+      },
+      "selected": {
+        "taskId": "nest-03-swagger-language-header",
+        "goldPathCount": 1,
+        "rankedPathCount": 9,
+        "recallAt5": 0,
+        "recallAt20": 0,
+        "ndcgAt20": 0,
+        "querySha256": "b3d96dc208076eb52a29dd16083a7c5ce6b5ea73c4936524fae1548c7fe03e71",
+        "queryCharacters": 166,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1943,
+          "omittedNodes": 402
+        },
+        "paths": [
+          "src/files/domain/file.ts",
+          "src/users/dto/create-user.dto.ts",
+          "src/users/dto/update-user.dto.ts",
+          "src/auth/dto/auth-update.dto.ts",
+          "src/users/dto/query-user.dto.ts",
+          "src/auth-apple/dto/auth-apple-login.dto.ts",
+          "src/app.module.ts",
+          "src/auth/auth.controller.ts",
+          "eslint.config.mjs"
+        ],
+        "matchedTokens": [
+          "optional",
+          "global",
+          "request",
+          "header",
+          "swagger"
+        ]
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-04-document-find-update",
+      "requirementSha256": "018920e80cfebd83c05cd068516b81adb61dada9021ce63b9e17b384585923b1",
+      "baseSha": "85c97e1df7132eece3779a14e7f4034e48568a18",
+      "targetSha": "9e2b0c592411883d61f7670fdf8325366e33dfcd",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": true,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "observed",
+          "complete": true,
+          "tools": [
+            {
+              "kind": "typeorm",
+              "projectPath": ".",
+              "configurationPaths": [
+                "package.json",
+                "src/database/data-source.ts"
+              ],
+              "revisionPaths": [
+                "src/database/migrations/1715028537217-CreateUser.ts"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "path": "package.json",
+              "sha256": "f202ae4d70c885d6bfe5f78d2612f3924aaa333a65fa470e718038277b5274bd"
+            },
+            {
+              "path": "src/database/data-source.ts",
+              "sha256": "a5691d60254737cd04dbfad8a23d1df02c723844dd0e0116a1c6a2ff37575003"
+            },
+            {
+              "path": "src/database/migrations/1715028537217-CreateUser.ts",
+              "sha256": "72f0c3e0aedbebbb970fef550cd36d4c1ca85ccba8c1a373d929ea5df7c68dc8"
+            }
+          ],
+          "diagnostics": [],
+          "inspectedBytes": 13004,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "cd6c59935636f4f2a5b581fceefdbbbff64b9d0e21ef070724bc6739b4e22050",
+        "nodes": 277,
+        "edges": 472
+      },
+      "legacy": {
+        "taskId": "nest-04-document-find-update",
+        "goldPathCount": 4,
+        "rankedPathCount": 8,
+        "recallAt5": 0,
+        "recallAt20": 0.25,
+        "ndcgAt20": 0.13905617951077562,
+        "querySha256": "1d54ff2845b42feb2c4f7b2f540eda8a7cf05e0ea8ebe04eec0890b982e339b8",
+        "queryCharacters": 6622,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1980,
+          "omittedNodes": 269
+        },
+        "paths": [
+          "src/auth/auth.service.ts",
+          "src/app.module.ts",
+          "src/config/config.type.ts",
+          "src/users/infrastructure/persistence/document/entities/user.schema.ts",
+          "src/users/domain/user.ts",
+          "src/session/infrastructure/persistence/document/repositories/session.repository.ts",
+          "src/files/infrastructure/uploader/s3-presigned/files.module.ts",
+          "src/session/session.module.ts"
+        ],
+        "matchedTokens": [
+          "post",
+          "update",
+          "document",
+          "user",
+          "session",
+          "persistence",
+          "all",
+          "database",
+          "repository",
+          "generator",
+          "is",
+          "observable",
+          "module",
+          "api",
+          "data",
+          "schema",
+          "or",
+          "migration"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "nest-04-document-find-update",
+        "goldPathCount": 4,
+        "rankedPathCount": 8,
+        "recallAt5": 0.25,
+        "recallAt20": 0.25,
+        "ndcgAt20": 0.24630238874073,
+        "querySha256": "018920e80cfebd83c05cd068516b81adb61dada9021ce63b9e17b384585923b1",
+        "queryCharacters": 198,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1995,
+          "omittedNodes": 269
+        },
+        "paths": [
+          "src/auth/auth.service.ts",
+          "src/session/infrastructure/persistence/document/repositories/session.repository.ts",
+          "src/files/infrastructure/uploader/s3-presigned/files.module.ts",
+          "src/config/config.type.ts",
+          "src/files/infrastructure/uploader/s3/files.module.ts",
+          "src/files/infrastructure/uploader/local/files.module.ts",
+          "src/app.module.ts",
+          "src/users/domain/user.ts"
+        ],
+        "matchedTokens": [
+          "post",
+          "update",
+          "document",
+          "user",
+          "session",
+          "persistence",
+          "all",
+          "database",
+          "repository",
+          "generator"
+        ]
+      },
+      "selected": {
+        "taskId": "nest-04-document-find-update",
+        "goldPathCount": 4,
+        "rankedPathCount": 8,
+        "recallAt5": 0.25,
+        "recallAt20": 0.25,
+        "ndcgAt20": 0.24630238874073,
+        "querySha256": "018920e80cfebd83c05cd068516b81adb61dada9021ce63b9e17b384585923b1",
+        "queryCharacters": 198,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1995,
+          "omittedNodes": 269
+        },
+        "paths": [
+          "src/auth/auth.service.ts",
+          "src/session/infrastructure/persistence/document/repositories/session.repository.ts",
+          "src/files/infrastructure/uploader/s3-presigned/files.module.ts",
+          "src/config/config.type.ts",
+          "src/files/infrastructure/uploader/s3/files.module.ts",
+          "src/files/infrastructure/uploader/local/files.module.ts",
+          "src/app.module.ts",
+          "src/users/domain/user.ts"
+        ],
+        "matchedTokens": [
+          "post",
+          "update",
+          "document",
+          "user",
+          "session",
+          "persistence",
+          "all",
+          "database",
+          "repository",
+          "generator"
+        ]
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-05-auth-email-update",
+      "requirementSha256": "31644e45ade0888cdf781ea72799b81c1c1cf0027be2e9995164718dae36d5c7",
+      "baseSha": "48e484a14b8bc7a4b8cac6f67553038ca6a65fa8",
+      "targetSha": "9e180c985bf4730405da8acb0b7e26c96c630252",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": true,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "observed",
+          "complete": true,
+          "tools": [
+            {
+              "kind": "typeorm",
+              "projectPath": ".",
+              "configurationPaths": [
+                "package.json",
+                "src/database/data-source.ts"
+              ],
+              "revisionPaths": [
+                "src/database/migrations/1709769642152-CreateUser.ts"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "path": "package.json",
+              "sha256": "8011f4348424bc9dd7367d238de1907088b835852f636e56f4616ef6135ec3a8"
+            },
+            {
+              "path": "src/database/data-source.ts",
+              "sha256": "a5691d60254737cd04dbfad8a23d1df02c723844dd0e0116a1c6a2ff37575003"
+            },
+            {
+              "path": "src/database/migrations/1709769642152-CreateUser.ts",
+              "sha256": "72528f4b66a1693f5d4e3604d3220f6234c512a1cb76c6dc929626a891522c8d"
+            }
+          ],
+          "diagnostics": [],
+          "inspectedBytes": 11696,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "4ffda02639107a072a2799cc0af836fcd6e0335e5155fe20f66c709c4d0a1919",
+        "nodes": 219,
+        "edges": 457
+      },
+      "legacy": {
+        "taskId": "nest-05-auth-email-update",
+        "goldPathCount": 7,
+        "rankedPathCount": 9,
+        "recallAt5": 0.2857142857142857,
+        "recallAt20": 0.2857142857142857,
+        "ndcgAt20": 0.22471947398559278,
+        "querySha256": "ead4a414b1b7ff5f5a02a09e99b9b93972e4522a2c15c5ebb37996eca77722d5",
+        "queryCharacters": 7399,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1915,
+          "omittedNodes": 210
+        },
+        "paths": [
+          "src/app.module.ts",
+          "src/files/domain/file.ts",
+          "src/config/config.type.ts",
+          "src/auth/auth.controller.ts",
+          "src/auth/auth.service.ts",
+          "src/users/dto/create-user.dto.ts",
+          "src/social/tokens.ts",
+          "src/auth/dto/auth-forgot-password.dto.ts",
+          "src/users/dto/update-user.dto.ts"
+        ],
+        "matchedTokens": [
+          "allow",
+          "user",
+          "request",
+          "email",
+          "validate",
+          "mail",
+          "token",
+          "is",
+          "activate",
+          "password",
+          "observable",
+          "module",
+          "api",
+          "or",
+          "client",
+          "database",
+          "data"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "nest-05-auth-email-update",
+        "goldPathCount": 7,
+        "rankedPathCount": 9,
+        "recallAt5": 0.2857142857142857,
+        "recallAt20": 0.2857142857142857,
+        "ndcgAt20": 0.4483039899025303,
+        "querySha256": "31644e45ade0888cdf781ea72799b81c1c1cf0027be2e9995164718dae36d5c7",
+        "queryCharacters": 320,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1914,
+          "omittedNodes": 210
+        },
+        "paths": [
+          "src/auth/auth.controller.ts",
+          "src/auth/auth.service.ts",
+          "src/social/tokens.ts",
+          "src/auth/dto/auth-forgot-password.dto.ts",
+          "src/files/domain/file.ts",
+          "src/users/dto/create-user.dto.ts",
+          "src/users/dto/update-user.dto.ts",
+          "src/config/config.type.ts",
+          "src/app.module.ts"
+        ],
+        "matchedTokens": [
+          "allow",
+          "user",
+          "request",
+          "email",
+          "validate",
+          "mail",
+          "token",
+          "is",
+          "activate",
+          "password"
+        ]
+      },
+      "selected": {
+        "taskId": "nest-05-auth-email-update",
+        "goldPathCount": 7,
+        "rankedPathCount": 9,
+        "recallAt5": 0.2857142857142857,
+        "recallAt20": 0.2857142857142857,
+        "ndcgAt20": 0.4483039899025303,
+        "querySha256": "31644e45ade0888cdf781ea72799b81c1c1cf0027be2e9995164718dae36d5c7",
+        "queryCharacters": 320,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1914,
+          "omittedNodes": 210
+        },
+        "paths": [
+          "src/auth/auth.controller.ts",
+          "src/auth/auth.service.ts",
+          "src/social/tokens.ts",
+          "src/auth/dto/auth-forgot-password.dto.ts",
+          "src/files/domain/file.ts",
+          "src/users/dto/create-user.dto.ts",
+          "src/users/dto/update-user.dto.ts",
+          "src/config/config.type.ts",
+          "src/app.module.ts"
+        ],
+        "matchedTokens": [
+          "allow",
+          "user",
+          "request",
+          "email",
+          "validate",
+          "mail",
+          "token",
+          "is",
+          "activate",
+          "password"
+        ]
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-06-user-email-conflict",
+      "requirementSha256": "941a72db44e3a0c686d1aa7640f63010be1110347a7163414c4dec4e3040d563",
+      "baseSha": "d523e2638a649817883c57971914cdeccdd04bde",
+      "targetSha": "ab530c4da7559bf2487698982799920a4d10e345",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": false,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "observed",
+          "complete": true,
+          "tools": [
+            {
+              "kind": "typeorm",
+              "projectPath": ".",
+              "configurationPaths": [
+                "package.json",
+                "src/database/data-source.ts"
+              ],
+              "revisionPaths": [
+                "src/database/migrations/1709769642152-CreateUser.ts"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "path": "package.json",
+              "sha256": "4f5f95dea14b22852c154b4a0ede48121a60764679686ab2d408c8076c87b330"
+            },
+            {
+              "path": "src/database/data-source.ts",
+              "sha256": "8c8499fad6bd9927075402fdf35a0b183488bf4cc941a6b3fc3f1ba4a86ef6e9"
+            },
+            {
+              "path": "src/database/migrations/1709769642152-CreateUser.ts",
+              "sha256": "72528f4b66a1693f5d4e3604d3220f6234c512a1cb76c6dc929626a891522c8d"
+            }
+          ],
+          "diagnostics": [],
+          "inspectedBytes": 11741,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "ae82f30def7a3d9a617228b564b50fc4cc04da40f81480d5787c53690b7296b9",
+        "nodes": 213,
+        "edges": 324
+      },
+      "legacy": {
+        "taskId": "nest-06-user-email-conflict",
+        "goldPathCount": 1,
+        "rankedPathCount": 9,
+        "recallAt5": 0,
+        "recallAt20": 0,
+        "ndcgAt20": 0,
+        "querySha256": "2977e146454f0e97c492d97f6985196f115e9e7f0d8b5733d6bb5a7803888098",
+        "queryCharacters": 6536,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1987,
+          "omittedNodes": 204
+        },
+        "paths": [
+          "src/auth/auth.controller.ts",
+          "src/app.module.ts",
+          "src/auth/auth.service.ts",
+          "src/users/dto/update-user.dto.ts",
+          "src/database/seeds/relational/seed.module.ts",
+          "src/users/dto/create-user.dto.ts",
+          "src/users/users.controller.ts",
+          "src/database/seeds/document/user/user-seed.service.ts",
+          "src/social/tokens.ts"
+        ],
+        "matchedTokens": [
+          "user",
+          "email",
+          "update",
+          "or",
+          "error",
+          "is",
+          "observable",
+          "module",
+          "api",
+          "client",
+          "database",
+          "data",
+          "schema",
+          "migration"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "nest-06-user-email-conflict",
+        "goldPathCount": 1,
+        "rankedPathCount": 9,
+        "recallAt5": 0,
+        "recallAt20": 0,
+        "ndcgAt20": 0,
+        "querySha256": "941a72db44e3a0c686d1aa7640f63010be1110347a7163414c4dec4e3040d563",
+        "queryCharacters": 186,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 2000,
+          "omittedNodes": 204
+        },
+        "paths": [
+          "src/auth/auth.service.ts",
+          "src/auth/auth.controller.ts",
+          "src/users/dto/update-user.dto.ts",
+          "src/users/users.controller.ts",
+          "src/users/dto/create-user.dto.ts",
+          "src/users/domain/user.ts",
+          "src/auth/strategies/jwt-refresh.strategy.ts",
+          "src/utils/types/or-never.type.ts",
+          "src/session/domain/session.ts"
+        ],
+        "matchedTokens": [
+          "user",
+          "email",
+          "update",
+          "or",
+          "error"
+        ]
+      },
+      "selected": {
+        "taskId": "nest-06-user-email-conflict",
+        "goldPathCount": 1,
+        "rankedPathCount": 9,
+        "recallAt5": 0,
+        "recallAt20": 0,
+        "ndcgAt20": 0,
+        "querySha256": "941a72db44e3a0c686d1aa7640f63010be1110347a7163414c4dec4e3040d563",
+        "queryCharacters": 186,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 2000,
+          "omittedNodes": 204
+        },
+        "paths": [
+          "src/auth/auth.service.ts",
+          "src/auth/auth.controller.ts",
+          "src/users/dto/update-user.dto.ts",
+          "src/users/users.controller.ts",
+          "src/users/dto/create-user.dto.ts",
+          "src/users/domain/user.ts",
+          "src/auth/strategies/jwt-refresh.strategy.ts",
+          "src/utils/types/or-never.type.ts",
+          "src/session/domain/session.ts"
+        ],
+        "matchedTokens": [
+          "user",
+          "email",
+          "update",
+          "or",
+          "error"
+        ]
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-07-refresh-token-single-use",
+      "requirementSha256": "c10047fcc9b1b63441fccfceacbffad3991e98328df66df44a0b4f222300d6e4",
+      "baseSha": "ca1c3cc3e8d2f2c88f03f0cdb6210ba47c0f5476",
+      "targetSha": "0e58e0872a852eaa5e0013fd2e81a9fffe2740b1",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": "migration",
+        "dataClaims": {
+          "changesDatabase": true,
+          "requiresMigration": true
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "observed",
+          "complete": true,
+          "tools": [
+            {
+              "kind": "typeorm",
+              "projectPath": ".",
+              "configurationPaths": [
+                "package.json",
+                "src/database/data-source.ts"
+              ],
+              "revisionPaths": [
+                "src/database/migrations/1700333930058-CreateUser.ts"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "path": "package.json",
+              "sha256": "c84b6b4657ddbfd014592ef15e284dc1930ea80b01568e19f5e47e559301d8c8"
+            },
+            {
+              "path": "src/database/data-source.ts",
+              "sha256": "8c8499fad6bd9927075402fdf35a0b183488bf4cc941a6b3fc3f1ba4a86ef6e9"
+            },
+            {
+              "path": "src/database/migrations/1700333930058-CreateUser.ts",
+              "sha256": "a145f32a4b78b60a192b1cb656ba7353b99ecaaafc9351fd9c6b47b2964e4c82"
+            }
+          ],
+          "diagnostics": [],
+          "inspectedBytes": 11668,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "aa6f94552017a058fb81776e015e1d4cdd864f5053944e68c2d60736c3aeb1b1",
+        "nodes": 213,
+        "edges": 324
+      },
+      "legacy": {
+        "taskId": "nest-07-refresh-token-single-use",
+        "goldPathCount": 15,
+        "rankedPathCount": 8,
+        "recallAt5": 0.13333333333333333,
+        "recallAt20": 0.13333333333333333,
+        "ndcgAt20": 0.19294704118484146,
+        "querySha256": "48849a0409336ec64e8d185c2c06f32df5e235a234fffce74dc56c291d602511",
+        "queryCharacters": 7714,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1963,
+          "omittedNodes": 205
+        },
+        "paths": [
+          "src/users/domain/user.ts",
+          "src/session/infrastructure/persistence/document/repositories/session.repository.ts",
+          "src/auth/auth.service.ts",
+          "src/files/domain/file.ts",
+          "src/session/session.module.ts",
+          "src/users/infrastructure/persistence/document/entities/user.schema.ts",
+          "src/database/seeds/document/user/user-seed.service.ts",
+          "src/files/files.module.ts"
+        ],
+        "matchedTokens": [
+          "refresh",
+          "token",
+          "session",
+          "domain",
+          "relational",
+          "document",
+          "persistence",
+          "install",
+          "schema",
+          "database",
+          "is",
+          "observable",
+          "module",
+          "api",
+          "or"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "nest-07-refresh-token-single-use",
+        "goldPathCount": 15,
+        "rankedPathCount": 7,
+        "recallAt5": 0.2,
+        "recallAt20": 0.2,
+        "ndcgAt20": 0.34425230535531276,
+        "querySha256": "c10047fcc9b1b63441fccfceacbffad3991e98328df66df44a0b4f222300d6e4",
+        "queryCharacters": 358,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1966,
+          "omittedNodes": 206
+        },
+        "paths": [
+          "src/session/infrastructure/persistence/document/repositories/session.repository.ts",
+          "src/session/infrastructure/persistence/document/mappers/session.mapper.ts",
+          "src/users/domain/user.ts",
+          "src/users/infrastructure/persistence/document/entities/user.schema.ts",
+          "src/session/infrastructure/persistence/document/entities/session.schema.ts",
+          "src/database/seeds/document/user/user-seed.service.ts",
+          "src/session/session.module.ts"
+        ],
+        "matchedTokens": [
+          "refresh",
+          "token",
+          "session",
+          "domain",
+          "relational",
+          "document",
+          "persistence",
+          "install",
+          "schema",
+          "database"
+        ]
+      },
+      "selected": {
+        "taskId": "nest-07-refresh-token-single-use",
+        "goldPathCount": 15,
+        "rankedPathCount": 7,
+        "recallAt5": 0.2,
+        "recallAt20": 0.2,
+        "ndcgAt20": 0.34425230535531276,
+        "querySha256": "c10047fcc9b1b63441fccfceacbffad3991e98328df66df44a0b4f222300d6e4",
+        "queryCharacters": 358,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1966,
+          "omittedNodes": 206
+        },
+        "paths": [
+          "src/session/infrastructure/persistence/document/repositories/session.repository.ts",
+          "src/session/infrastructure/persistence/document/mappers/session.mapper.ts",
+          "src/users/domain/user.ts",
+          "src/users/infrastructure/persistence/document/entities/user.schema.ts",
+          "src/session/infrastructure/persistence/document/entities/session.schema.ts",
+          "src/database/seeds/document/user/user-seed.service.ts",
+          "src/session/session.module.ts"
+        ],
+        "matchedTokens": [
+          "refresh",
+          "token",
+          "session",
+          "domain",
+          "relational",
+          "document",
+          "persistence",
+          "install",
+          "schema",
+          "database"
+        ]
+      }
+    },
+    {
+      "repositoryId": "fastapi-template",
+      "taskId": "fastapi-01-database-url",
+      "requirementSha256": "a26ecc9cbac12562d2e11b4ad54c285f585e2aaf9aa7851206397efe18de8d76",
+      "baseSha": "cf1548a983fd0339dd1d0533b0db495614e27f7b",
+      "targetSha": "32ab6dd022cf46a2bc2f901f746d684078843969",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": false,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "observed",
+          "complete": true,
+          "tools": [
+            {
+              "kind": "alembic",
+              "projectPath": "backend",
+              "configurationPaths": [
+                "backend/alembic.ini",
+                "backend/app/alembic/env.py"
+              ],
+              "revisionPaths": [
+                "backend/app/alembic/versions/1a31ce608336_add_cascade_delete_relationships.py",
+                "backend/app/alembic/versions/9c0a54914c78_add_max_length_for_string_varchar_.py",
+                "backend/app/alembic/versions/d98dd8ec85a3_edit_replace_id_integers_in_all_models_.py",
+                "backend/app/alembic/versions/e2412789c190_initialize_models.py",
+                "backend/app/alembic/versions/fe56fa70289e_add_created_at_to_user_and_item.py"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "path": "frontend/package.json",
+              "sha256": "bb55e22f8cee98394e8a19838ab6fcdb2bd1492b514e98fa50c536e2048ab23e"
+            },
+            {
+              "path": "package.json",
+              "sha256": "163147bc5eb115551352912b69fd5aff968c5a8792d8edaf53f870e45392e618"
+            },
+            {
+              "path": "packages/react-email/package.json",
+              "sha256": "588d53e87fa955cdf70c0979874748e9670d4ea91895236fcc57228f68444793"
+            },
+            {
+              "path": "backend/alembic.ini",
+              "sha256": "a3fe6c2cd06b6c5b66e13901c0e25c018372d75009359e56692d24a1b7c554a2"
+            },
+            {
+              "path": "backend/app/alembic/env.py",
+              "sha256": "251d283c02d64eaf7f15957cbeb76afc0f25b8f4b1f06815c0b88918beb0c2c3"
+            },
+            {
+              "path": "backend/app/alembic/versions/1a31ce608336_add_cascade_delete_relationships.py",
+              "sha256": "56d9a949c1455e59dc9a4b09c469a4d35cd6063230ab1ac1059ba4b58f6804c1"
+            },
+            {
+              "path": "backend/app/alembic/versions/9c0a54914c78_add_max_length_for_string_varchar_.py",
+              "sha256": "d9919ae828a0d1aa0fa68fd75bc75a90994a256b66a3a153918149d9578c0c1b"
+            },
+            {
+              "path": "backend/app/alembic/versions/d98dd8ec85a3_edit_replace_id_integers_in_all_models_.py",
+              "sha256": "d5c549df50ddda6c9877e637e146cd757095460ee6285a7db06bb66724f32730"
+            },
+            {
+              "path": "backend/app/alembic/versions/e2412789c190_initialize_models.py",
+              "sha256": "a73fcd9ff8a143b0a75228b63b6589e0ecbfa14c27286d33d4adeffe99c40075"
+            },
+            {
+              "path": "backend/app/alembic/versions/fe56fa70289e_add_created_at_to_user_and_item.py",
+              "sha256": "68dc46eb06c7a6fe9059930eadbdeb349f5b13c789bb1a11846b05eccea0c304"
+            }
+          ],
+          "diagnostics": [],
+          "inspectedBytes": 16831,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "ac0778fd1dd2d5307a710f13ec28638bd3fbf0892f81006f8195402443310f03",
+        "nodes": 205,
+        "edges": 292
+      },
+      "legacy": {
+        "taskId": "fastapi-01-database-url",
+        "goldPathCount": 6,
+        "rankedPathCount": 10,
+        "recallAt5": 0.3333333333333333,
+        "recallAt20": 0.5,
+        "ndcgAt20": 0.5203978935105923,
+        "querySha256": "b398058b0a6d4629cdfeabd9c39a589b8cf7531ed203474b4b2e8ac1f6d54349",
+        "queryCharacters": 6110,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1992,
+          "omittedNodes": 195
+        },
+        "paths": [
+          "backend/app/core/config.py",
+          "backend/app/api/deps.py",
+          "backend/app/api/routes/login.py",
+          "backend/app/core/db.py",
+          "frontend/src/routeTree.gen.ts",
+          "backend/app/models.py",
+          "backend/app/utils.py",
+          "backend/tests/conftest.py",
+          "backend/app/api/routes/users.py",
+          ".env"
+        ],
+        "matchedTokens": [
+          "settings",
+          "setting",
+          "by",
+          "config",
+          "db",
+          "setup",
+          "alembic",
+          "compose",
+          "is",
+          "change",
+          "root",
+          "public",
+          "api",
+          "data",
+          "state",
+          "read",
+          "or",
+          "project"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "fastapi-01-database-url",
+        "goldPathCount": 6,
+        "rankedPathCount": 10,
+        "recallAt5": 0.5,
+        "recallAt20": 0.6666666666666666,
+        "ndcgAt20": 0.6980575869171198,
+        "querySha256": "a26ecc9cbac12562d2e11b4ad54c285f585e2aaf9aa7851206397efe18de8d76",
+        "queryCharacters": 147,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1989,
+          "omittedNodes": 195
+        },
+        "paths": [
+          "backend/app/core/config.py",
+          "backend/app/core/db.py",
+          "backend/app/api/deps.py",
+          "backend/tests/conftest.py",
+          "backend/app/alembic/env.py",
+          "backend/tests/utils/utils.py",
+          "backend/app/core/security.py",
+          "backend/app/utils.py",
+          "backend/app/api/routes/login.py",
+          ".env"
+        ],
+        "matchedTokens": [
+          "settings",
+          "setting",
+          "by",
+          "config",
+          "db",
+          "setup",
+          "alembic",
+          "compose"
+        ]
+      },
+      "selected": {
+        "taskId": "fastapi-01-database-url",
+        "goldPathCount": 6,
+        "rankedPathCount": 10,
+        "recallAt5": 0.5,
+        "recallAt20": 0.6666666666666666,
+        "ndcgAt20": 0.6980575869171198,
+        "querySha256": "a26ecc9cbac12562d2e11b4ad54c285f585e2aaf9aa7851206397efe18de8d76",
+        "queryCharacters": 147,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1989,
+          "omittedNodes": 195
+        },
+        "paths": [
+          "backend/app/core/config.py",
+          "backend/app/core/db.py",
+          "backend/app/api/deps.py",
+          "backend/tests/conftest.py",
+          "backend/app/alembic/env.py",
+          "backend/tests/utils/utils.py",
+          "backend/app/core/security.py",
+          "backend/app/utils.py",
+          "backend/app/api/routes/login.py",
+          ".env"
+        ],
+        "matchedTokens": [
+          "settings",
+          "setting",
+          "by",
+          "config",
+          "db",
+          "setup",
+          "alembic",
+          "compose"
+        ]
+      }
+    },
+    {
+      "repositoryId": "fastapi-template",
+      "taskId": "fastapi-02-cors",
+      "requirementSha256": "4a87c48c028460d314122d13fa1abff73a7ee3226438a387905cb613cca80361",
+      "baseSha": "781b283849e602fa2c2c3562b2fe4fbd9374919d",
+      "targetSha": "d85803bf642102ecbc01ea676501106ae12a5e1d",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": false,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "observed",
+          "complete": true,
+          "tools": [
+            {
+              "kind": "alembic",
+              "projectPath": "backend",
+              "configurationPaths": [
+                "backend/alembic.ini",
+                "backend/app/alembic/env.py"
+              ],
+              "revisionPaths": [
+                "backend/app/alembic/versions/1a31ce608336_add_cascade_delete_relationships.py",
+                "backend/app/alembic/versions/9c0a54914c78_add_max_length_for_string_varchar_.py",
+                "backend/app/alembic/versions/d98dd8ec85a3_edit_replace_id_integers_in_all_models_.py",
+                "backend/app/alembic/versions/e2412789c190_initialize_models.py",
+                "backend/app/alembic/versions/fe56fa70289e_add_created_at_to_user_and_item.py"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "path": "frontend/package.json",
+              "sha256": "bb55e22f8cee98394e8a19838ab6fcdb2bd1492b514e98fa50c536e2048ab23e"
+            },
+            {
+              "path": "package.json",
+              "sha256": "163147bc5eb115551352912b69fd5aff968c5a8792d8edaf53f870e45392e618"
+            },
+            {
+              "path": "packages/react-email/package.json",
+              "sha256": "588d53e87fa955cdf70c0979874748e9670d4ea91895236fcc57228f68444793"
+            },
+            {
+              "path": "backend/alembic.ini",
+              "sha256": "a3fe6c2cd06b6c5b66e13901c0e25c018372d75009359e56692d24a1b7c554a2"
+            },
+            {
+              "path": "backend/app/alembic/env.py",
+              "sha256": "251d283c02d64eaf7f15957cbeb76afc0f25b8f4b1f06815c0b88918beb0c2c3"
+            },
+            {
+              "path": "backend/app/alembic/versions/1a31ce608336_add_cascade_delete_relationships.py",
+              "sha256": "56d9a949c1455e59dc9a4b09c469a4d35cd6063230ab1ac1059ba4b58f6804c1"
+            },
+            {
+              "path": "backend/app/alembic/versions/9c0a54914c78_add_max_length_for_string_varchar_.py",
+              "sha256": "d9919ae828a0d1aa0fa68fd75bc75a90994a256b66a3a153918149d9578c0c1b"
+            },
+            {
+              "path": "backend/app/alembic/versions/d98dd8ec85a3_edit_replace_id_integers_in_all_models_.py",
+              "sha256": "d5c549df50ddda6c9877e637e146cd757095460ee6285a7db06bb66724f32730"
+            },
+            {
+              "path": "backend/app/alembic/versions/e2412789c190_initialize_models.py",
+              "sha256": "a73fcd9ff8a143b0a75228b63b6589e0ecbfa14c27286d33d4adeffe99c40075"
+            },
+            {
+              "path": "backend/app/alembic/versions/fe56fa70289e_add_created_at_to_user_and_item.py",
+              "sha256": "68dc46eb06c7a6fe9059930eadbdeb349f5b13c789bb1a11846b05eccea0c304"
+            }
+          ],
+          "diagnostics": [],
+          "inspectedBytes": 16831,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "b55be551e5f89804282d5d5a3425cac2f64613f8f2c62bc11be255e27c923fc1",
+        "nodes": 204,
+        "edges": 292
+      },
+      "legacy": {
+        "taskId": "fastapi-02-cors",
+        "goldPathCount": 4,
+        "rankedPathCount": 9,
+        "recallAt5": 0.5,
+        "recallAt20": 0.75,
+        "ndcgAt20": 0.7030861797445797,
+        "querySha256": "12258307f6e8f8b7ccb652b9265fbebf3cb2f5a2451497330c9447a3901aaebd",
+        "queryCharacters": 6367,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1988,
+          "omittedNodes": 195
+        },
+        "paths": [
+          "backend/app/main.py",
+          "frontend/src/lib/utils.ts",
+          "backend/app/core/config.py",
+          "frontend/src/client/core/types.gen.ts",
+          "frontend/src/client/client/client.gen.ts",
+          "backend/app/api/routes/login.py",
+          "frontend/src/components/UserSettings/ChangePassword.tsx",
+          "frontend/src/routeTree.gen.ts",
+          "deployment.md"
+        ],
+        "matchedTokens": [
+          "as",
+          "cors",
+          "cor",
+          "method",
+          "headers",
+          "header",
+          "settings",
+          "setting",
+          "compose",
+          "deployment",
+          "is",
+          "change",
+          "root",
+          "public",
+          "api",
+          "data",
+          "read",
+          "or",
+          "project"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "fastapi-02-cors",
+        "goldPathCount": 4,
+        "rankedPathCount": 9,
+        "recallAt5": 0.5,
+        "recallAt20": 0.5,
+        "ndcgAt20": 0.5855700749881525,
+        "querySha256": "4a87c48c028460d314122d13fa1abff73a7ee3226438a387905cb613cca80361",
+        "queryCharacters": 212,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1990,
+          "omittedNodes": 195
+        },
+        "paths": [
+          "backend/app/main.py",
+          "frontend/src/client/client/client.gen.ts",
+          "backend/app/core/config.py",
+          "frontend/src/lib/utils.ts",
+          "frontend/src/routeTree.gen.ts",
+          "frontend/src/components/Sidebar/User.tsx",
+          "frontend/src/client/client/types.gen.ts",
+          "backend/tests/utils/utils.py",
+          "backend/app/api/deps.py"
+        ],
+        "matchedTokens": [
+          "as",
+          "cors",
+          "cor",
+          "method",
+          "headers",
+          "header",
+          "settings",
+          "setting",
+          "compose",
+          "deployment"
+        ]
+      },
+      "selected": {
+        "taskId": "fastapi-02-cors",
+        "goldPathCount": 4,
+        "rankedPathCount": 9,
+        "recallAt5": 0.5,
+        "recallAt20": 0.5,
+        "ndcgAt20": 0.5855700749881525,
+        "querySha256": "4a87c48c028460d314122d13fa1abff73a7ee3226438a387905cb613cca80361",
+        "queryCharacters": 212,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1990,
+          "omittedNodes": 195
+        },
+        "paths": [
+          "backend/app/main.py",
+          "frontend/src/client/client/client.gen.ts",
+          "backend/app/core/config.py",
+          "frontend/src/lib/utils.ts",
+          "frontend/src/routeTree.gen.ts",
+          "frontend/src/components/Sidebar/User.tsx",
+          "frontend/src/client/client/types.gen.ts",
+          "backend/tests/utils/utils.py",
+          "backend/app/api/deps.py"
+        ],
+        "matchedTokens": [
+          "as",
+          "cors",
+          "cor",
+          "method",
+          "headers",
+          "header",
+          "settings",
+          "setting",
+          "compose",
+          "deployment"
+        ]
+      }
+    },
+    {
+      "repositoryId": "fastapi-template",
+      "taskId": "fastapi-03-created-at",
+      "requirementSha256": "84284f83debb3bc0c483f4ea3bb1bfe0508fbeacc2e73a5d59f81a46fcb8c4ed",
+      "baseSha": "2720308701fef9d22505013d4c417bfe3afb4530",
+      "targetSha": "3c1f7c4cdb67dff619898d66236cf6e09cb7c3e2",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": "migration",
+        "dataClaims": {
+          "changesDatabase": true,
+          "requiresMigration": true
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "observed",
+          "complete": true,
+          "tools": [
+            {
+              "kind": "alembic",
+              "projectPath": "backend",
+              "configurationPaths": [
+                "backend/alembic.ini",
+                "backend/app/alembic/env.py"
+              ],
+              "revisionPaths": [
+                "backend/app/alembic/versions/1a31ce608336_add_cascade_delete_relationships.py",
+                "backend/app/alembic/versions/9c0a54914c78_add_max_length_for_string_varchar_.py",
+                "backend/app/alembic/versions/d98dd8ec85a3_edit_replace_id_integers_in_all_models_.py",
+                "backend/app/alembic/versions/e2412789c190_initialize_models.py"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "path": "frontend/package.json",
+              "sha256": "b33bb403c9167fdd8b32ae33694ad0229a6d53786b68666867cc4c8cc6de250d"
+            },
+            {
+              "path": "package.json",
+              "sha256": "0d928af4a874d9a635df334e2484be11e5305db243349aa6cc772c3f57f9acf1"
+            },
+            {
+              "path": "backend/alembic.ini",
+              "sha256": "a3fe6c2cd06b6c5b66e13901c0e25c018372d75009359e56692d24a1b7c554a2"
+            },
+            {
+              "path": "backend/app/alembic/env.py",
+              "sha256": "02cdd530d8bc068a11f98fd04c7744e24f87393a095abf9df1557483461e728f"
+            },
+            {
+              "path": "backend/app/alembic/versions/1a31ce608336_add_cascade_delete_relationships.py",
+              "sha256": "37e70a0a762eeb416e453be5b5fafdc22cd441da4ae7b6bd28e5190c3a78cc86"
+            },
+            {
+              "path": "backend/app/alembic/versions/9c0a54914c78_add_max_length_for_string_varchar_.py",
+              "sha256": "d9919ae828a0d1aa0fa68fd75bc75a90994a256b66a3a153918149d9578c0c1b"
+            },
+            {
+              "path": "backend/app/alembic/versions/d98dd8ec85a3_edit_replace_id_integers_in_all_models_.py",
+              "sha256": "d5c549df50ddda6c9877e637e146cd757095460ee6285a7db06bb66724f32730"
+            },
+            {
+              "path": "backend/app/alembic/versions/e2412789c190_initialize_models.py",
+              "sha256": "a73fcd9ff8a143b0a75228b63b6589e0ecbfa14c27286d33d4adeffe99c40075"
+            }
+          ],
+          "diagnostics": [],
+          "inspectedBytes": 15139,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "dd7cc0e87654156c8b1faaef6fd29d7f2a64fc23da4f029a8c6082ceed0a3e6e",
+        "nodes": 180,
+        "edges": 281
+      },
+      "legacy": {
+        "taskId": "fastapi-03-created-at",
+        "goldPathCount": 6,
+        "rankedPathCount": 9,
+        "recallAt5": 0.3333333333333333,
+        "recallAt20": 0.3333333333333333,
+        "ndcgAt20": 0.4935232796777481,
+        "querySha256": "a50a439952cfc8d3ace6e76275a110e79ad74ef6e7210c379ba53ba05b37fe61",
+        "queryCharacters": 7767,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1972,
+          "omittedNodes": 171
+        },
+        "paths": [
+          "backend/app/models.py",
+          "frontend/src/client/types.gen.ts",
+          "frontend/src/client/sdk.gen.ts",
+          "frontend/src/client/index.ts",
+          "frontend/src/components/Admin/EditUser.tsx",
+          "frontend/src/components/Items/EditItem.tsx",
+          "frontend/src/lib/utils.ts",
+          "frontend/src/components/UserSettings/ChangePassword.tsx",
+          ".env"
+        ],
+        "matchedTokens": [
+          "new",
+          "user",
+          "item",
+          "upgrade",
+          "downgrade",
+          "field",
+          "api",
+          "client",
+          "list",
+          "users",
+          "items",
+          "first",
+          "pagination",
+          "is",
+          "change",
+          "root",
+          "public",
+          "data",
+          "schema"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "fastapi-03-created-at",
+        "goldPathCount": 6,
+        "rankedPathCount": 9,
+        "recallAt5": 0.3333333333333333,
+        "recallAt20": 0.5,
+        "ndcgAt20": 0.5449960234716782,
+        "querySha256": "84284f83debb3bc0c483f4ea3bb1bfe0508fbeacc2e73a5d59f81a46fcb8c4ed",
+        "queryCharacters": 304,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1999,
+          "omittedNodes": 171
+        },
+        "paths": [
+          "backend/app/models.py",
+          "frontend/src/client/sdk.gen.ts",
+          "frontend/src/client/types.gen.ts",
+          "frontend/src/client/index.ts",
+          "backend/app/api/main.py",
+          "frontend/src/components/Admin/EditUser.tsx",
+          "frontend/src/lib/utils.ts",
+          "frontend/src/components/Admin/DeleteUser.tsx",
+          "backend/app/api/routes/items.py"
+        ],
+        "matchedTokens": [
+          "new",
+          "user",
+          "item",
+          "upgrade",
+          "downgrade",
+          "field",
+          "api",
+          "client",
+          "list",
+          "users",
+          "items",
+          "first",
+          "pagination"
+        ]
+      },
+      "selected": {
+        "taskId": "fastapi-03-created-at",
+        "goldPathCount": 6,
+        "rankedPathCount": 9,
+        "recallAt5": 0.3333333333333333,
+        "recallAt20": 0.5,
+        "ndcgAt20": 0.5449960234716782,
+        "querySha256": "84284f83debb3bc0c483f4ea3bb1bfe0508fbeacc2e73a5d59f81a46fcb8c4ed",
+        "queryCharacters": 304,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1999,
+          "omittedNodes": 171
+        },
+        "paths": [
+          "backend/app/models.py",
+          "frontend/src/client/sdk.gen.ts",
+          "frontend/src/client/types.gen.ts",
+          "frontend/src/client/index.ts",
+          "backend/app/api/main.py",
+          "frontend/src/components/Admin/EditUser.tsx",
+          "frontend/src/lib/utils.ts",
+          "frontend/src/components/Admin/DeleteUser.tsx",
+          "backend/app/api/routes/items.py"
+        ],
+        "matchedTokens": [
+          "new",
+          "user",
+          "item",
+          "upgrade",
+          "downgrade",
+          "field",
+          "api",
+          "client",
+          "list",
+          "users",
+          "items",
+          "first",
+          "pagination"
+        ]
+      }
+    },
+    {
+      "repositoryId": "fastapi-template",
+      "taskId": "fastapi-04-constant-time-login",
+      "requirementSha256": "a1c9c7ed88925c9ffa48472fa8e479f7be8a54268d415b29229fe8d66424c995",
+      "baseSha": "7107f7e83acdf93272377ca97985dd3c51c47686",
+      "targetSha": "689d7105e12039db84bb0e0c0cc797ca086192db",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": false,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "observed",
+          "complete": true,
+          "tools": [
+            {
+              "kind": "alembic",
+              "projectPath": "backend",
+              "configurationPaths": [
+                "backend/alembic.ini",
+                "backend/app/alembic/env.py"
+              ],
+              "revisionPaths": [
+                "backend/app/alembic/versions/1a31ce608336_add_cascade_delete_relationships.py",
+                "backend/app/alembic/versions/9c0a54914c78_add_max_length_for_string_varchar_.py",
+                "backend/app/alembic/versions/d98dd8ec85a3_edit_replace_id_integers_in_all_models_.py",
+                "backend/app/alembic/versions/e2412789c190_initialize_models.py"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "path": "frontend/package.json",
+              "sha256": "b33bb403c9167fdd8b32ae33694ad0229a6d53786b68666867cc4c8cc6de250d"
+            },
+            {
+              "path": "package.json",
+              "sha256": "f84cdc901cb6e7e114c0a68a577ba8f8e30f614e4302e67858de27fbfcf4f3de"
+            },
+            {
+              "path": "backend/alembic.ini",
+              "sha256": "a3fe6c2cd06b6c5b66e13901c0e25c018372d75009359e56692d24a1b7c554a2"
+            },
+            {
+              "path": "backend/app/alembic/env.py",
+              "sha256": "02cdd530d8bc068a11f98fd04c7744e24f87393a095abf9df1557483461e728f"
+            },
+            {
+              "path": "backend/app/alembic/versions/1a31ce608336_add_cascade_delete_relationships.py",
+              "sha256": "37e70a0a762eeb416e453be5b5fafdc22cd441da4ae7b6bd28e5190c3a78cc86"
+            },
+            {
+              "path": "backend/app/alembic/versions/9c0a54914c78_add_max_length_for_string_varchar_.py",
+              "sha256": "d9919ae828a0d1aa0fa68fd75bc75a90994a256b66a3a153918149d9578c0c1b"
+            },
+            {
+              "path": "backend/app/alembic/versions/d98dd8ec85a3_edit_replace_id_integers_in_all_models_.py",
+              "sha256": "d5c549df50ddda6c9877e637e146cd757095460ee6285a7db06bb66724f32730"
+            },
+            {
+              "path": "backend/app/alembic/versions/e2412789c190_initialize_models.py",
+              "sha256": "a73fcd9ff8a143b0a75228b63b6589e0ecbfa14c27286d33d4adeffe99c40075"
+            }
+          ],
+          "diagnostics": [],
+          "inspectedBytes": 15138,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "b5c0387d3903fe7702d889c2728c1d0bf799422d561fc389bc70038b84182411",
+        "nodes": 181,
+        "edges": 281
+      },
+      "legacy": {
+        "taskId": "fastapi-04-constant-time-login",
+        "goldPathCount": 3,
+        "rankedPathCount": 9,
+        "recallAt5": 0,
+        "recallAt20": 0.3333333333333333,
+        "ndcgAt20": 0.16716045496620227,
+        "querySha256": "417439cc24a4ce9f065c278527a4485699bfe0ab76dc6b44a86684837bb2ffdc",
+        "queryCharacters": 7354,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 2000,
+          "omittedNodes": 172
+        },
+        "paths": [
+          "frontend/src/client/sdk.gen.ts",
+          "frontend/src/client/types.gen.ts",
+          "backend/app/models.py",
+          "backend/app/api/deps.py",
+          "backend/app/utils.py",
+          "backend/app/api/routes/login.py",
+          "frontend/src/client/index.ts",
+          "frontend/src/routeTree.gen.ts",
+          "frontend/src/components/UserSettings/ChangePassword.tsx"
+        ],
+        "matchedTokens": [
+          "user",
+          "by",
+          "password",
+          "hash",
+          "email",
+          "response",
+          "emails",
+          "users",
+          "invalid",
+          "token",
+          "error",
+          "reset",
+          "is",
+          "change",
+          "root",
+          "public",
+          "api"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "fastapi-04-constant-time-login",
+        "goldPathCount": 3,
+        "rankedPathCount": 9,
+        "recallAt5": 0,
+        "recallAt20": 0.3333333333333333,
+        "ndcgAt20": 0.15642624200758548,
+        "querySha256": "a1c9c7ed88925c9ffa48472fa8e479f7be8a54268d415b29229fe8d66424c995",
+        "queryCharacters": 373,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1970,
+          "omittedNodes": 172
+        },
+        "paths": [
+          "frontend/src/client/types.gen.ts",
+          "frontend/src/client/sdk.gen.ts",
+          "backend/app/models.py",
+          "backend/app/utils.py",
+          "backend/app/api/deps.py",
+          "frontend/tests/reset-password.spec.ts",
+          "backend/app/api/routes/login.py",
+          "frontend/src/client/index.ts",
+          "frontend/src/routeTree.gen.ts"
+        ],
+        "matchedTokens": [
+          "user",
+          "by",
+          "password",
+          "hash",
+          "email",
+          "response",
+          "emails",
+          "users",
+          "invalid",
+          "token",
+          "error",
+          "reset"
+        ]
+      },
+      "selected": {
+        "taskId": "fastapi-04-constant-time-login",
+        "goldPathCount": 3,
+        "rankedPathCount": 9,
+        "recallAt5": 0,
+        "recallAt20": 0.3333333333333333,
+        "ndcgAt20": 0.15642624200758548,
+        "querySha256": "a1c9c7ed88925c9ffa48472fa8e479f7be8a54268d415b29229fe8d66424c995",
+        "queryCharacters": 373,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1970,
+          "omittedNodes": 172
+        },
+        "paths": [
+          "frontend/src/client/types.gen.ts",
+          "frontend/src/client/sdk.gen.ts",
+          "backend/app/models.py",
+          "backend/app/utils.py",
+          "backend/app/api/deps.py",
+          "frontend/tests/reset-password.spec.ts",
+          "backend/app/api/routes/login.py",
+          "frontend/src/client/index.ts",
+          "frontend/src/routeTree.gen.ts"
+        ],
+        "matchedTokens": [
+          "user",
+          "by",
+          "password",
+          "hash",
+          "email",
+          "response",
+          "emails",
+          "users",
+          "invalid",
+          "token",
+          "error",
+          "reset"
+        ]
+      }
+    },
+    {
+      "repositoryId": "fastapi-template",
+      "taskId": "fastapi-05-missing-user",
+      "requirementSha256": "0436817770a2cd033201c336db91be0261664020e3e6f6aa6f4ff1f6b2e09ef5",
+      "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+      "targetSha": "4cab9e972f5e3e32c518ec2c6e09e18455fe469a",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": false,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "observed",
+          "complete": true,
+          "tools": [
+            {
+              "kind": "alembic",
+              "projectPath": "backend",
+              "configurationPaths": [
+                "backend/alembic.ini",
+                "backend/app/alembic/env.py"
+              ],
+              "revisionPaths": [
+                "backend/app/alembic/versions/1a31ce608336_add_cascade_delete_relationships.py",
+                "backend/app/alembic/versions/9c0a54914c78_add_max_length_for_string_varchar_.py",
+                "backend/app/alembic/versions/d98dd8ec85a3_edit_replace_id_integers_in_all_models_.py",
+                "backend/app/alembic/versions/e2412789c190_initialize_models.py"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "path": "frontend/package.json",
+              "sha256": "b33bb403c9167fdd8b32ae33694ad0229a6d53786b68666867cc4c8cc6de250d"
+            },
+            {
+              "path": "package.json",
+              "sha256": "f84cdc901cb6e7e114c0a68a577ba8f8e30f614e4302e67858de27fbfcf4f3de"
+            },
+            {
+              "path": "backend/alembic.ini",
+              "sha256": "a3fe6c2cd06b6c5b66e13901c0e25c018372d75009359e56692d24a1b7c554a2"
+            },
+            {
+              "path": "backend/app/alembic/env.py",
+              "sha256": "02cdd530d8bc068a11f98fd04c7744e24f87393a095abf9df1557483461e728f"
+            },
+            {
+              "path": "backend/app/alembic/versions/1a31ce608336_add_cascade_delete_relationships.py",
+              "sha256": "37e70a0a762eeb416e453be5b5fafdc22cd441da4ae7b6bd28e5190c3a78cc86"
+            },
+            {
+              "path": "backend/app/alembic/versions/9c0a54914c78_add_max_length_for_string_varchar_.py",
+              "sha256": "d9919ae828a0d1aa0fa68fd75bc75a90994a256b66a3a153918149d9578c0c1b"
+            },
+            {
+              "path": "backend/app/alembic/versions/d98dd8ec85a3_edit_replace_id_integers_in_all_models_.py",
+              "sha256": "d5c549df50ddda6c9877e637e146cd757095460ee6285a7db06bb66724f32730"
+            },
+            {
+              "path": "backend/app/alembic/versions/e2412789c190_initialize_models.py",
+              "sha256": "a73fcd9ff8a143b0a75228b63b6589e0ecbfa14c27286d33d4adeffe99c40075"
+            }
+          ],
+          "diagnostics": [],
+          "inspectedBytes": 15138,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "c82c0d80ca860450b987db84451e4c642a2a8282b4e6a36363481e10d2603d26",
+        "nodes": 181,
+        "edges": 282
+      },
+      "legacy": {
+        "taskId": "fastapi-05-missing-user",
+        "goldPathCount": 2,
+        "rankedPathCount": 8,
+        "recallAt5": 0,
+        "recallAt20": 0,
+        "ndcgAt20": 0,
+        "querySha256": "9a81f4b4de67f9ae43313429e8950be35e983d1332e1e94bc448309f1c2f6bf6",
+        "queryCharacters": 6696,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1942,
+          "omittedNodes": 173
+        },
+        "paths": [
+          "frontend/src/client/sdk.gen.ts",
+          "frontend/src/client/types.gen.ts",
+          "frontend/src/client/index.ts",
+          "frontend/src/components/Admin/EditUser.tsx",
+          "frontend/src/components/UserSettings/UserInformation.tsx",
+          "frontend/src/components/UserSettings/ChangePassword.tsx",
+          "frontend/src/components/Admin/AddUser.tsx",
+          "frontend/src/client/core/request.ts"
+        ],
+        "matchedTokens": [
+          "user",
+          "found",
+          "superuser",
+          "read",
+          "id",
+          "response",
+          "users",
+          "is",
+          "change",
+          "root",
+          "public",
+          "api",
+          "client",
+          "data",
+          "state",
+          "schema"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "fastapi-05-missing-user",
+        "goldPathCount": 2,
+        "rankedPathCount": 9,
+        "recallAt5": 0,
+        "recallAt20": 0,
+        "ndcgAt20": 0,
+        "querySha256": "0436817770a2cd033201c336db91be0261664020e3e6f6aa6f4ff1f6b2e09ef5",
+        "queryCharacters": 218,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1993,
+          "omittedNodes": 172
+        },
+        "paths": [
+          "frontend/src/client/sdk.gen.ts",
+          "frontend/src/client/types.gen.ts",
+          "backend/app/models.py",
+          "frontend/tests/user-settings.spec.ts",
+          "backend/app/api/routes/login.py",
+          "frontend/src/client/core/request.ts",
+          "frontend/src/components/UserSettings/UserInformation.tsx",
+          "frontend/src/components/Admin/EditUser.tsx",
+          ".env"
+        ],
+        "matchedTokens": [
+          "user",
+          "found",
+          "superuser",
+          "read",
+          "id",
+          "response",
+          "users"
+        ]
+      },
+      "selected": {
+        "taskId": "fastapi-05-missing-user",
+        "goldPathCount": 2,
+        "rankedPathCount": 9,
+        "recallAt5": 0,
+        "recallAt20": 0,
+        "ndcgAt20": 0,
+        "querySha256": "0436817770a2cd033201c336db91be0261664020e3e6f6aa6f4ff1f6b2e09ef5",
+        "queryCharacters": 218,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1993,
+          "omittedNodes": 172
+        },
+        "paths": [
+          "frontend/src/client/sdk.gen.ts",
+          "frontend/src/client/types.gen.ts",
+          "backend/app/models.py",
+          "frontend/tests/user-settings.spec.ts",
+          "backend/app/api/routes/login.py",
+          "frontend/src/client/core/request.ts",
+          "frontend/src/components/UserSettings/UserInformation.tsx",
+          "frontend/src/components/Admin/EditUser.tsx",
+          ".env"
+        ],
+        "matchedTokens": [
+          "user",
+          "found",
+          "superuser",
+          "read",
+          "id",
+          "response",
+          "users"
+        ]
+      }
+    },
+    {
+      "repositoryId": "fastapi-template",
+      "taskId": "fastapi-06-delete-self",
+      "requirementSha256": "7127fee88c6c19e2c07f5854fb985e159c31fbaeeb19198a8e143ed09a062852",
+      "baseSha": "d1cc75903e80dbb18261160fddf38a5eb2ad8b31",
+      "targetSha": "b81cec8ea54d3bd20af5e02cc4d5baa4fa43ac83",
+      "planStatus": "plan-proposed",
+      "evaluated": true,
+      "planning": {
+        "schemaStrategy": null,
+        "dataClaims": {
+          "changesDatabase": true,
+          "requiresMigration": false
+        },
+        "migrations": {
+          "schemaVersion": 1,
+          "status": "observed",
+          "complete": true,
+          "tools": [
+            {
+              "kind": "alembic",
+              "projectPath": "backend",
+              "configurationPaths": [
+                "backend/alembic.ini",
+                "backend/app/alembic/env.py"
+              ],
+              "revisionPaths": [
+                "backend/app/alembic/versions/e2412789c190_initialize_models.py"
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "path": "frontend/package.json",
+              "sha256": "005485a93930d7eb2f84b5afafc3f76bc1af681b1f09be8fcef7d68ea03c325a"
+            },
+            {
+              "path": "backend/alembic.ini",
+              "sha256": "a3fe6c2cd06b6c5b66e13901c0e25c018372d75009359e56692d24a1b7c554a2"
+            },
+            {
+              "path": "backend/app/alembic/env.py",
+              "sha256": "2467eec7cda25693070c69c4a1e8202faba6bc03fc6c4418ddfdbdbe6e4530fc"
+            },
+            {
+              "path": "backend/app/alembic/versions/e2412789c190_initialize_models.py",
+              "sha256": "a73fcd9ff8a143b0a75228b63b6589e0ecbfa14c27286d33d4adeffe99c40075"
+            }
+          ],
+          "diagnostics": [],
+          "inspectedBytes": 7084,
+          "authority": {
+            "sourcePatternObservationOnly": true,
+            "configurationExecuted": false,
+            "databaseConnected": false,
+            "migrationVerified": false
+          }
+        }
+      },
+      "graph": {
+        "generation": "b18fbafca3e2f1f9389c0820c9db9e105f56e0e6edb65aef6e2defa4e3702234",
+        "nodes": 117,
+        "edges": 157
+      },
+      "legacy": {
+        "taskId": "fastapi-06-delete-self",
+        "goldPathCount": 3,
+        "rankedPathCount": 8,
+        "recallAt5": 0,
+        "recallAt20": 0,
+        "ndcgAt20": 0,
+        "querySha256": "0f5cf18f46f00d9061633e42a3a25df324a9f495f14cf30a716b35c74407186e",
+        "queryCharacters": 7199,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1901,
+          "omittedNodes": 109
+        },
+        "paths": [
+          "frontend/src/client/services.ts",
+          "frontend/src/client/index.ts",
+          "backend/app/models.py",
+          "frontend/src/client/models.ts",
+          "frontend/src/routes/_layout/settings.tsx",
+          "frontend/src/components/Common/ActionsMenu.tsx",
+          "frontend/src/components/UserSettings/DeleteConfirmation.tsx",
+          "frontend/src/components/Common/DeleteAlert.tsx"
+        ],
+        "matchedTokens": [
+          "delete",
+          "users",
+          "user",
+          "me",
+          "items",
+          "item",
+          "account",
+          "self",
+          "by",
+          "id",
+          "response",
+          "is",
+          "change",
+          "root",
+          "public",
+          "api",
+          "client",
+          "data"
+        ]
+      },
+      "requirementOnly": {
+        "taskId": "fastapi-06-delete-self",
+        "goldPathCount": 3,
+        "rankedPathCount": 9,
+        "recallAt5": 0,
+        "recallAt20": 0,
+        "ndcgAt20": 0,
+        "querySha256": "7127fee88c6c19e2c07f5854fb985e159c31fbaeeb19198a8e143ed09a062852",
+        "queryCharacters": 270,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1988,
+          "omittedNodes": 108
+        },
+        "paths": [
+          "frontend/src/client/services.ts",
+          "backend/app/models.py",
+          "frontend/src/client/models.ts",
+          "frontend/src/components/Common/DeleteAlert.tsx",
+          "frontend/src/client/index.ts",
+          "frontend/src/components/Common/ActionsMenu.tsx",
+          "backend/app/api/main.py",
+          "frontend/src/routes/_layout/settings.tsx",
+          ".copier/update_dotenv.py"
+        ],
+        "matchedTokens": [
+          "delete",
+          "users",
+          "user",
+          "me",
+          "items",
+          "item",
+          "account",
+          "self",
+          "by",
+          "id",
+          "response"
+        ]
+      },
+      "selected": {
+        "taskId": "fastapi-06-delete-self",
+        "goldPathCount": 3,
+        "rankedPathCount": 9,
+        "recallAt5": 0,
+        "recallAt20": 0,
+        "ndcgAt20": 0,
+        "querySha256": "7127fee88c6c19e2c07f5854fb985e159c31fbaeeb19198a8e143ed09a062852",
+        "queryCharacters": 270,
+        "budget": {
+          "limitCharacters": 2000,
+          "usedCharacters": 1988,
+          "omittedNodes": 108
+        },
+        "paths": [
+          "frontend/src/client/services.ts",
+          "backend/app/models.py",
+          "frontend/src/client/models.ts",
+          "frontend/src/components/Common/DeleteAlert.tsx",
+          "frontend/src/client/index.ts",
+          "frontend/src/components/Common/ActionsMenu.tsx",
+          "backend/app/api/main.py",
+          "frontend/src/routes/_layout/settings.tsx",
+          ".copier/update_dotenv.py"
+        ],
+        "matchedTokens": [
+          "delete",
+          "users",
+          "user",
+          "me",
+          "items",
+          "item",
+          "account",
+          "self",
+          "by",
+          "id",
+          "response"
+        ]
+      }
+    }
+  ]
+}
