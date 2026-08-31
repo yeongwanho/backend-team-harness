@@ -1,0 +1,1279 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T01:23:13.292Z",
+  "sourceSha256": {
+    "src/core/convention-compiler.mjs": "a98d4f26fe2d8b3ffed2cbd652cb4dde13ccadf97d025410cc9e34e9df2b3b6c",
+    "src/core/project-conventions.mjs": "6306d17834e6d1e0d37c455999a375066c84370d338ae7f971d36cfa20d142d7",
+    "src/runtime/interview-orchestrator.mjs": "d3c10467b6896471c7b9122188f2d5ff23bbb9e7a2d84c37f165dbb46e4d5397",
+    "src/runtime/implementation-orchestrator.mjs": "41bd926c3de533d22e5b71830156642b283f0f620d4e57bcb56d7784f6dd93a4",
+    "scripts/benchmark-provider-comparison.mjs": "4bb522bf42ffbedd75260860071ae97f54c84b36e2b4e0530ec8dcea185b59a5",
+    "src/evaluation/provider-benchmark-runner.mjs": "c70ca20f0db6a3befb0542bf29028dfacf41c56e7f10037c5caf4ee1c1a949ca",
+    "src/core/provider-context.mjs": "51f8eb198987cd906c350aeb86d42cbc544ef15da5c87e502dd542937746f4e2",
+    "src/providers/model-cli.mjs": "a56d0c6c44ae037f38a2276bdfa10a061770692ff6d3e3a98f255d65a6f88eff"
+  },
+  "provider": "claude",
+  "order": [
+    "bth",
+    "direct"
+  ],
+  "providerInvocations": 2,
+  "completedInvocations": 0,
+  "attemptsPerLane": 1,
+  "mode": "fast",
+  "records": {
+    "direct": {
+      "originalArtifactSha256": "e403e6ee7aa255c627a8e48230d10412750dabf55dd6f3f20497f5983f5d306b",
+      "schemaVersion": 1,
+      "case": {
+        "id": "claude:direct:fastapi-05-missing-user",
+        "provider": "claude",
+        "lane": "direct",
+        "repositoryId": "fastapi-template",
+        "taskId": "fastapi-05-missing-user",
+        "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+        "requirementSha256": "0436817770a2cd033201c336db91be0261664020e3e6f6aa6f4ff1f6b2e09ef5",
+        "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+        "targetSha": "4cab9e972f5e3e32c518ec2c6e09e18455fe469a"
+      },
+      "fairness": {
+        "sanitizedSingleCommitHistory": true,
+        "goldHiddenFromProvider": true,
+        "sameProvider": true,
+        "protocolVersion": "context-correctness-v34",
+        "configSha256": "4932b011a3c62c6b7d65f2a4dafbdf36004ca9d74fd71ab3775d883ef665cc7c",
+        "fixedMode": "fast",
+        "fixedModel": "opus",
+        "setupCommandSha256": "645c74b03c8e93293b4339995fd2768b69779cea381e878e44fedad54537f69c"
+      },
+      "setup": {
+        "passed": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 154,
+          "stdout": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "stderr": {
+            "sha256": "00e0f091fd8654d1d10dffaf285039f3814d27a892453246121d32567dbf949b",
+            "bytes": 1599
+          }
+        },
+        "preparation": {
+          "kind": "uv-sync-offline",
+          "projectPath": "backend",
+          "status": "passed",
+          "dependencyEntries": 76,
+          "workspaceEntries": 1,
+          "inputs": [
+            {
+              "path": "backend/pyproject.toml",
+              "sha256": "34fbc0c1c702b37576e479d71ec02fe5a641f4b1a9495eda9ecee8a2eb3430d9"
+            },
+            {
+              "path": "pyproject.toml",
+              "sha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+            },
+            {
+              "path": "uv.lock",
+              "sha256": "c27a6c9636dc203d1151f96f9d6733a4f52986fb43a079c6d354e5a389148b68"
+            }
+          ],
+          "command": [
+            "uv",
+            "sync",
+            "--project",
+            "<isolated-workspace>",
+            "--package",
+            "app",
+            "--offline",
+            "--locked",
+            "--no-build",
+            "--no-install-workspace",
+            "--no-python-downloads",
+            "--no-config",
+            "--python",
+            "3.12",
+            "--group",
+            "dev"
+          ],
+          "environmentPath": ".backend-harness/local/python-venv",
+          "failureCode": null,
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 154,
+            "stdout": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            },
+            "stderr": {
+              "sha256": "00e0f091fd8654d1d10dffaf285039f3814d27a892453246121d32567dbf949b",
+              "bytes": 1599
+            }
+          },
+          "lifecycleScripts": false,
+          "onlineFallback": false,
+          "egressIsolation": "not-enforced"
+        },
+        "fixture": {
+          "files": [
+            {
+              "path": "backend/tests/bth_evaluation_bootstrap.py",
+              "beforeSha256": null,
+              "sha256": "8aa98e4fe8cf718817211ddf30a592133ca05cfe99a0b101a7533f5f6562327f"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi.mjs",
+              "beforeSha256": null,
+              "sha256": "2e7a5c6ed657a26362af6532ef45b41e6b24bbb95797c2f80fc69b8ce26f53fa"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi",
+              "beforeSha256": null,
+              "sha256": "1486e7ac42647a75f682317ad92321462fdb5b4894a64cfb13a5283742370faf"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi.cmd",
+              "beforeSha256": null,
+              "sha256": "8ba96bfee91d48be818061140248bfb77ba0c986820ff6afe5f1180650326f05"
+            },
+            {
+              "path": "backend/tests/scripts/test_backend_pre_start.py",
+              "beforeSha256": "4db7d166345b73313ce79754ec446c8ca78e18c4a6bc94888de6ecaaac75ad5f",
+              "sha256": "0301cc388e74b0d8b1cf691224bd6447a413084695b3ecb23657b8adcbbbb839"
+            },
+            {
+              "path": "backend/tests/scripts/test_test_pre_start.py",
+              "beforeSha256": "d0c2c2f074d2b5a0230dd00e7cad24b78e035ef64c3df04a633734f8405da860",
+              "sha256": "24a6c93b0f101d2755807ee5c093f1617929fe93817a7b90519fda1902497ba5"
+            },
+            {
+              "path": "backend/tests/test_baseline_environment.py",
+              "beforeSha256": null,
+              "sha256": "ab10054180cf606d0759c084cf560e0c9fecb7c440c223d0056e52bde51ee6aa"
+            },
+            {
+              "path": "backend/tests/utils/utils.py",
+              "beforeSha256": "ec4de331ed328dda26e329024c1f598996845fb5d9f662413a99a5b39a7e7f70",
+              "sha256": "037e8c294c1a6645bc6975b91d01284e89e42bddc2bc99c0daa9a94563d6df06"
+            },
+            {
+              "path": ".backend-harness/implementation.json",
+              "beforeSha256": "71479154133c5c8d5b20869a0f37e2334d47b15e864d2fcaf7e73ad2d2acd0a4",
+              "sha256": "4d4020de042bcddf670ef280d9b8d73d7e63c440b04fd7e594dfd9bfd042860c"
+            },
+            {
+              "path": ".backend-harness/verification.json",
+              "beforeSha256": "ca9f76121deda83e18264732253f11b3e192e2a50dee113c938df0c63b725c4b",
+              "sha256": "e1ffff25c68b9ef09c304fc14441d4f5288eddee1e3e05665ec9e579d579d76c"
+            }
+          ],
+          "integrity": {
+            "valid": true,
+            "mismatchedPaths": []
+          },
+          "sourceClean": true
+        }
+      },
+      "preflight": {
+        "confirmed": true,
+        "emptyTestBaseline": null,
+        "failureCode": null,
+        "diagnosticCode": null,
+        "tests": {
+          "tests": 57,
+          "executed": 57,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "passed",
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 27377,
+              "stdout": {
+                "sha256": "adb309b726814e24c0b274ada2dfc4c9a397980ad8aaedad575cfc23e15e8ca6",
+                "bytes": 1881
+              },
+              "stderr": {
+                "sha256": "f0349365104a572f6b270b19ce0850ccec3a6f05c5e449c6dd1efce361cb8c68",
+                "bytes": 379
+              }
+            }
+          }
+        ]
+      },
+      "acceptanceControls": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "0265a5d8f576c08248509d450eb0426afe57d0751d605799c6d1c5cd3f5d4ea2",
+        "testFiles": [
+          {
+            "path": "backend/test/bth/run.mjs",
+            "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+          },
+          {
+            "path": "backend/test/bth/conftest.py",
+            "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+          },
+          {
+            "path": "backend/test/bth/test_missing_user.py",
+            "sha256": "edbc8e68423f4a29c649d1c201475e602b6a9d11d762c4853f9c232b28e9e112"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10780,
+              "stdout": {
+                "sha256": "4ae9c699d79e6268a76205b407bda85aded310d22486baaadb0710f329dc770d",
+                "bytes": 3305
+              },
+              "stderr": {
+                "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "4c31a5b8ff5c25df11181f40a2ab4856383d3aedd60576cd75edbdb2f7ad493d",
+                "bytes": 1863
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10501,
+              "stdout": {
+                "sha256": "cac5d535a234e3fed22780ab46d82745160d53412f068d0997f0279d527fa204",
+                "bytes": 826
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "cd74c26709f9a8d909bba2adda1eae0bb5e37e234d63afb03c3c20048a3355dd",
+                "bytes": 1043
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 22390
+      },
+      "observation": {
+        "provider": "claude",
+        "lane": "direct",
+        "providerCompleted": false,
+        "verificationConfirmed": false,
+        "acceptance": {
+          "controlsConfirmed": false,
+          "candidatePassed": null,
+          "reason": "candidate-not-eligible"
+        },
+        "attempts": 1,
+        "elapsedMs": 4657,
+        "changedPaths": [],
+        "impactPaths": null,
+        "ruleViolations": [],
+        "usage": {
+          "schemaVersion": 2,
+          "provider": "claude",
+          "tokens": {
+            "input": 0,
+            "uncachedInput": 0,
+            "output": 0,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "reasoningOutput": null,
+            "total": 0
+          },
+          "costUsd": 0,
+          "durationMs": 424,
+          "turns": 1,
+          "providerReported": {
+            "duration_api_ms": 0,
+            "num_turns": 1,
+            "total_cost_usd": 0,
+            "usage.output_tokens_details.thinking_tokens": 0,
+            "usage.input_tokens": 0,
+            "usage.cache_creation_input_tokens": 0,
+            "usage.cache_read_input_tokens": 0,
+            "usage.output_tokens": 0,
+            "usage.cache_creation.ephemeral_1h_input_tokens": 0,
+            "usage.cache_creation.ephemeral_5m_input_tokens": 0,
+            "duration_ms": 424
+          },
+          "scope": "invocation-final"
+        },
+        "evidence": {
+          "providerFailureCode": "rate-limited",
+          "verificationFailureCode": null,
+          "verificationTests": null,
+          "verificationDiagnostic": null,
+          "request": {
+            "promptBytes": 2366
+          },
+          "providerActivity": {
+            "schemaVersion": 1,
+            "provider": "claude",
+            "authority": "provider-event-derived-advisory",
+            "parsedEvents": 4,
+            "rejectedEvents": 0,
+            "firstWriteObserved": false,
+            "preWritePaths": [],
+            "preWriteContentPaths": [],
+            "preWriteDiscoveryPaths": [],
+            "changedPaths": [],
+            "readCommandCount": 0,
+            "discoveryCommandCount": 0,
+            "validationCommandCount": 0,
+            "writeEventCount": 0
+          },
+          "process": {
+            "exitCode": 1,
+            "signal": null,
+            "timedOut": false,
+            "stdout": {
+              "sha256": "600e726c77ed226938ad3a7e2d5847304b9910d7e9d5db56c28b3928bfb5a0f6",
+              "bytes": 3528
+            },
+            "stderr": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            }
+          }
+        }
+      },
+      "score": {
+        "schemaVersion": 3,
+        "id": "claude:direct:fastapi-05-missing-user",
+        "provider": "claude",
+        "lane": "direct",
+        "taskId": "fastapi-05-missing-user",
+        "successAt1": false,
+        "verificationSuccessAt1": false,
+        "acceptanceConfirmed": null,
+        "failureReasons": [
+          "provider-did-not-complete",
+          "structured-verification-not-confirmed",
+          "no-source-change",
+          "task-acceptance-not-measured"
+        ],
+        "providerCompleted": false,
+        "verificationConfirmed": false,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 4657,
+        "usage": {
+          "provider": "claude",
+          "tokens": {
+            "input": 0,
+            "uncachedInput": 0,
+            "output": 0,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "reasoningOutput": null,
+            "total": 0
+          },
+          "costUsd": 0,
+          "durationMs": 424,
+          "turns": 1
+        },
+        "changedPaths": [],
+        "goldPathsChanged": [],
+        "unexpectedChangedPaths": [],
+        "changedGoldRecall": 0,
+        "ruleViolations": [],
+        "impactLocalization": null,
+        "outcomeLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 0,
+          "recallAt5": 0,
+          "recallAt20": 0,
+          "ndcgAt20": 0
+        }
+      },
+      "totalElapsedMs": 55754,
+      "workspace": null
+    },
+    "bth": {
+      "originalArtifactSha256": "9227fecef2afc94dbb811f23a013301d93da14ca2789a6d8db280e94339ec505",
+      "schemaVersion": 1,
+      "case": {
+        "id": "claude:bth:fastapi-05-missing-user",
+        "provider": "claude",
+        "lane": "bth",
+        "repositoryId": "fastapi-template",
+        "taskId": "fastapi-05-missing-user",
+        "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+        "requirementSha256": "0436817770a2cd033201c336db91be0261664020e3e6f6aa6f4ff1f6b2e09ef5",
+        "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+        "targetSha": "4cab9e972f5e3e32c518ec2c6e09e18455fe469a"
+      },
+      "fairness": {
+        "sanitizedSingleCommitHistory": true,
+        "goldHiddenFromProvider": true,
+        "sameProvider": true,
+        "protocolVersion": "context-correctness-v34",
+        "configSha256": "4932b011a3c62c6b7d65f2a4dafbdf36004ca9d74fd71ab3775d883ef665cc7c",
+        "fixedMode": "fast",
+        "fixedModel": "opus",
+        "setupCommandSha256": "645c74b03c8e93293b4339995fd2768b69779cea381e878e44fedad54537f69c"
+      },
+      "setup": {
+        "passed": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 175,
+          "stdout": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "stderr": {
+            "sha256": "d63443c99d072b8eec422b0821d7952a944db1c64f994ba5e13899f26d97cd23",
+            "bytes": 1599
+          }
+        },
+        "preparation": {
+          "kind": "uv-sync-offline",
+          "projectPath": "backend",
+          "status": "passed",
+          "dependencyEntries": 76,
+          "workspaceEntries": 1,
+          "inputs": [
+            {
+              "path": "backend/pyproject.toml",
+              "sha256": "34fbc0c1c702b37576e479d71ec02fe5a641f4b1a9495eda9ecee8a2eb3430d9"
+            },
+            {
+              "path": "pyproject.toml",
+              "sha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+            },
+            {
+              "path": "uv.lock",
+              "sha256": "c27a6c9636dc203d1151f96f9d6733a4f52986fb43a079c6d354e5a389148b68"
+            }
+          ],
+          "command": [
+            "uv",
+            "sync",
+            "--project",
+            "<isolated-workspace>",
+            "--package",
+            "app",
+            "--offline",
+            "--locked",
+            "--no-build",
+            "--no-install-workspace",
+            "--no-python-downloads",
+            "--no-config",
+            "--python",
+            "3.12",
+            "--group",
+            "dev"
+          ],
+          "environmentPath": ".backend-harness/local/python-venv",
+          "failureCode": null,
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 175,
+            "stdout": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            },
+            "stderr": {
+              "sha256": "d63443c99d072b8eec422b0821d7952a944db1c64f994ba5e13899f26d97cd23",
+              "bytes": 1599
+            }
+          },
+          "lifecycleScripts": false,
+          "onlineFallback": false,
+          "egressIsolation": "not-enforced"
+        },
+        "fixture": {
+          "files": [
+            {
+              "path": "backend/tests/bth_evaluation_bootstrap.py",
+              "beforeSha256": null,
+              "sha256": "8aa98e4fe8cf718817211ddf30a592133ca05cfe99a0b101a7533f5f6562327f"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi.mjs",
+              "beforeSha256": null,
+              "sha256": "2e7a5c6ed657a26362af6532ef45b41e6b24bbb95797c2f80fc69b8ce26f53fa"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi",
+              "beforeSha256": null,
+              "sha256": "1486e7ac42647a75f682317ad92321462fdb5b4894a64cfb13a5283742370faf"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi.cmd",
+              "beforeSha256": null,
+              "sha256": "8ba96bfee91d48be818061140248bfb77ba0c986820ff6afe5f1180650326f05"
+            },
+            {
+              "path": "backend/tests/scripts/test_backend_pre_start.py",
+              "beforeSha256": "4db7d166345b73313ce79754ec446c8ca78e18c4a6bc94888de6ecaaac75ad5f",
+              "sha256": "0301cc388e74b0d8b1cf691224bd6447a413084695b3ecb23657b8adcbbbb839"
+            },
+            {
+              "path": "backend/tests/scripts/test_test_pre_start.py",
+              "beforeSha256": "d0c2c2f074d2b5a0230dd00e7cad24b78e035ef64c3df04a633734f8405da860",
+              "sha256": "24a6c93b0f101d2755807ee5c093f1617929fe93817a7b90519fda1902497ba5"
+            },
+            {
+              "path": "backend/tests/test_baseline_environment.py",
+              "beforeSha256": null,
+              "sha256": "ab10054180cf606d0759c084cf560e0c9fecb7c440c223d0056e52bde51ee6aa"
+            },
+            {
+              "path": "backend/tests/utils/utils.py",
+              "beforeSha256": "ec4de331ed328dda26e329024c1f598996845fb5d9f662413a99a5b39a7e7f70",
+              "sha256": "037e8c294c1a6645bc6975b91d01284e89e42bddc2bc99c0daa9a94563d6df06"
+            },
+            {
+              "path": ".backend-harness/implementation.json",
+              "beforeSha256": "71479154133c5c8d5b20869a0f37e2334d47b15e864d2fcaf7e73ad2d2acd0a4",
+              "sha256": "4d4020de042bcddf670ef280d9b8d73d7e63c440b04fd7e594dfd9bfd042860c"
+            },
+            {
+              "path": ".backend-harness/verification.json",
+              "beforeSha256": "ca9f76121deda83e18264732253f11b3e192e2a50dee113c938df0c63b725c4b",
+              "sha256": "e1ffff25c68b9ef09c304fc14441d4f5288eddee1e3e05665ec9e579d579d76c"
+            }
+          ],
+          "integrity": {
+            "valid": true,
+            "mismatchedPaths": []
+          },
+          "sourceClean": true
+        }
+      },
+      "preflight": {
+        "confirmed": true,
+        "emptyTestBaseline": null,
+        "failureCode": null,
+        "diagnosticCode": null,
+        "tests": {
+          "tests": 57,
+          "executed": 57,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "passed",
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 27559,
+              "stdout": {
+                "sha256": "89ef73d75d29e0495cc2f18f47e82fed4a196f33bd490c3d4f95540107d4fda3",
+                "bytes": 1881
+              },
+              "stderr": {
+                "sha256": "f0349365104a572f6b270b19ce0850ccec3a6f05c5e449c6dd1efce361cb8c68",
+                "bytes": 379
+              }
+            }
+          }
+        ]
+      },
+      "acceptanceControls": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "0265a5d8f576c08248509d450eb0426afe57d0751d605799c6d1c5cd3f5d4ea2",
+        "testFiles": [
+          {
+            "path": "backend/test/bth/run.mjs",
+            "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+          },
+          {
+            "path": "backend/test/bth/conftest.py",
+            "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+          },
+          {
+            "path": "backend/test/bth/test_missing_user.py",
+            "sha256": "edbc8e68423f4a29c649d1c201475e602b6a9d11d762c4853f9c232b28e9e112"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10747,
+              "stdout": {
+                "sha256": "739d810674da5e47f6a6850818c26c7a958a5866fd54999a1b83fdd4d5cfeee0",
+                "bytes": 3305
+              },
+              "stderr": {
+                "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "c739ee4da7f42609f517bdea680c72e8df834aba02e9a72ef6f055b3eb0f8d71",
+                "bytes": 1863
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10390,
+              "stdout": {
+                "sha256": "5c3a7ce30040be0ab02974cc426364a95ba669348c0068c268bd528c96eb770b",
+                "bytes": 826
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "5f8af2bbe27268580aa70832cf7acf87b3afc9efb85106301f63b4cc7c78a316",
+                "bytes": 1043
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 22309
+      },
+      "observation": {
+        "provider": "claude",
+        "lane": "bth",
+        "providerCompleted": false,
+        "verificationConfirmed": false,
+        "acceptance": {
+          "controlsConfirmed": false,
+          "candidatePassed": null,
+          "reason": "candidate-not-eligible"
+        },
+        "attempts": 1,
+        "elapsedMs": 6383,
+        "changedPaths": [],
+        "impactPaths": [
+          "backend/tests/api/routes/test_users.py",
+          "backend/app/api/routes/users.py",
+          "backend/app/models.py",
+          "backend/app/api/routes/login.py",
+          "backend/app/api/deps.py",
+          "backend/tests/api/routes/test_items.py",
+          "backend/app/core/config.py",
+          "backend/app/api/main.py",
+          "backend/tests/conftest.py"
+        ],
+        "ruleViolations": [],
+        "usage": {
+          "provider": "claude",
+          "tokens": {
+            "input": 0,
+            "uncachedInput": 0,
+            "output": 0,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "reasoningOutput": null,
+            "total": 0
+          },
+          "costUsd": 0,
+          "durationMs": 432,
+          "turns": 1
+        },
+        "evidence": {
+          "taskState": "IMPLEMENTING",
+          "implementationStatus": "failed",
+          "verificationRunPath": null,
+          "failureCode": "implementation_adapter_failed",
+          "preparation": {
+            "kind": "uv-sync-offline",
+            "projectPath": "backend",
+            "status": "passed",
+            "dependencyEntries": 76,
+            "workspaceEntries": 1,
+            "inputs": [
+              {
+                "path": "backend/pyproject.toml",
+                "sha256": "34fbc0c1c702b37576e479d71ec02fe5a641f4b1a9495eda9ecee8a2eb3430d9"
+              },
+              {
+                "path": "pyproject.toml",
+                "sha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+              },
+              {
+                "path": "uv.lock",
+                "sha256": "c27a6c9636dc203d1151f96f9d6733a4f52986fb43a079c6d354e5a389148b68"
+              }
+            ],
+            "command": [
+              "uv",
+              "sync",
+              "--project",
+              "<isolated-workspace>",
+              "--package",
+              "app",
+              "--offline",
+              "--locked",
+              "--no-build",
+              "--no-install-workspace",
+              "--no-python-downloads",
+              "--no-config",
+              "--python",
+              "3.12",
+              "--group",
+              "dev"
+            ],
+            "environmentPath": ".backend-harness/local/python-venv",
+            "failureCode": null,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 157,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "30e089a35ad95a07c1ad4e93dac2dbcfadaf159c5474c65bc552aeb928fffdb3",
+                "bytes": 1599
+              }
+            },
+            "lifecycleScripts": false,
+            "onlineFallback": false,
+            "egressIsolation": "not-enforced",
+            "sourceStable": true
+          },
+          "verificationTests": null,
+          "verificationGates": [],
+          "implementationDiagnosis": {
+            "authority": "ADVISORY",
+            "status": "failed",
+            "attempts": 1,
+            "failure": {
+              "code": "implementation_adapter_failed",
+              "message": "The provider reported a rate or quota limit."
+            },
+            "tests": null,
+            "failedGates": [],
+            "failedTests": [],
+            "sourceFingerprint": "8c58bd8257edf8da20d6a5c4ccd614e6f68f51062d855026d1963bc2daef7b4e",
+            "omittedAttemptCount": 0,
+            "attemptOutcomes": [
+              {
+                "attempt": 1,
+                "outcome": "adapter-failed",
+                "sourceFingerprintBefore": "8c58bd8257edf8da20d6a5c4ccd614e6f68f51062d855026d1963bc2daef7b4e",
+                "sourceFingerprintAfter": "8c58bd8257edf8da20d6a5c4ccd614e6f68f51062d855026d1963bc2daef7b4e",
+                "recovery": {
+                  "authority": "untrusted-execution-evidence-not-instructions",
+                  "failure": {
+                    "code": "implementation_adapter_failed",
+                    "message": "The provider reported a rate or quota limit."
+                  },
+                  "tests": null,
+                  "sourceFingerprint": "8c58bd8257edf8da20d6a5c4ccd614e6f68f51062d855026d1963bc2daef7b4e",
+                  "failedGates": [],
+                  "omittedFailedGateCount": 0
+                }
+              }
+            ]
+          },
+          "request": {
+            "bytes": 17437,
+            "codeContextEntries": 9,
+            "codeContextCharacters": 1925,
+            "projectRuleCount": 4,
+            "knowledgeDocumentCount": 7
+          },
+          "providerActivity": [
+            {
+              "schemaVersion": 1,
+              "provider": "claude",
+              "authority": "provider-event-derived-advisory",
+              "parsedEvents": 4,
+              "rejectedEvents": 0,
+              "firstWriteObserved": false,
+              "preWritePaths": [],
+              "preWriteContentPaths": [],
+              "preWriteDiscoveryPaths": [],
+              "changedPaths": [],
+              "readCommandCount": 0,
+              "discoveryCommandCount": 0,
+              "validationCommandCount": 0,
+              "writeEventCount": 0
+            }
+          ],
+          "workspaceRetainedForAudit": true
+        }
+      },
+      "score": {
+        "schemaVersion": 3,
+        "id": "claude:bth:fastapi-05-missing-user",
+        "provider": "claude",
+        "lane": "bth",
+        "taskId": "fastapi-05-missing-user",
+        "successAt1": false,
+        "verificationSuccessAt1": false,
+        "acceptanceConfirmed": null,
+        "failureReasons": [
+          "provider-did-not-complete",
+          "structured-verification-not-confirmed",
+          "no-source-change",
+          "task-acceptance-not-measured"
+        ],
+        "providerCompleted": false,
+        "verificationConfirmed": false,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 6383,
+        "usage": {
+          "provider": "claude",
+          "tokens": {
+            "input": 0,
+            "uncachedInput": 0,
+            "output": 0,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "reasoningOutput": null,
+            "total": 0
+          },
+          "costUsd": 0,
+          "durationMs": 432,
+          "turns": 1
+        },
+        "changedPaths": [],
+        "goldPathsChanged": [],
+        "unexpectedChangedPaths": [],
+        "changedGoldRecall": 0,
+        "ruleViolations": [],
+        "impactLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 9,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 1
+        },
+        "outcomeLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 0,
+          "recallAt5": 0,
+          "recallAt20": 0,
+          "ndcgAt20": 0
+        }
+      },
+      "totalElapsedMs": 57774,
+      "workspace": null
+    }
+  },
+  "summary": {
+    "direct": {
+      "successAt1": false,
+      "workflowMs": 4657,
+      "providerMs": 424,
+      "totalElapsedMs": 55754,
+      "usage": {
+        "schemaVersion": 2,
+        "provider": "claude",
+        "tokens": {
+          "input": 0,
+          "uncachedInput": 0,
+          "output": 0,
+          "cachedInput": 0,
+          "cacheCreationInput": 0,
+          "reasoningOutput": null,
+          "total": 0
+        },
+        "costUsd": 0,
+        "durationMs": 424,
+        "turns": 1,
+        "providerReported": {
+          "duration_api_ms": 0,
+          "num_turns": 1,
+          "total_cost_usd": 0,
+          "usage.output_tokens_details.thinking_tokens": 0,
+          "usage.input_tokens": 0,
+          "usage.cache_creation_input_tokens": 0,
+          "usage.cache_read_input_tokens": 0,
+          "usage.output_tokens": 0,
+          "usage.cache_creation.ephemeral_1h_input_tokens": 0,
+          "usage.cache_creation.ephemeral_5m_input_tokens": 0,
+          "duration_ms": 424
+        },
+        "scope": "invocation-final"
+      },
+      "tests": null,
+      "request": {
+        "promptBytes": 2366
+      },
+      "changedPaths": [],
+      "ruleViolations": [],
+      "score": {
+        "schemaVersion": 3,
+        "id": "claude:direct:fastapi-05-missing-user",
+        "provider": "claude",
+        "lane": "direct",
+        "taskId": "fastapi-05-missing-user",
+        "successAt1": false,
+        "verificationSuccessAt1": false,
+        "acceptanceConfirmed": null,
+        "failureReasons": [
+          "provider-did-not-complete",
+          "structured-verification-not-confirmed",
+          "no-source-change",
+          "task-acceptance-not-measured"
+        ],
+        "providerCompleted": false,
+        "verificationConfirmed": false,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 4657,
+        "usage": {
+          "provider": "claude",
+          "tokens": {
+            "input": 0,
+            "uncachedInput": 0,
+            "output": 0,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "reasoningOutput": null,
+            "total": 0
+          },
+          "costUsd": 0,
+          "durationMs": 424,
+          "turns": 1
+        },
+        "changedPaths": [],
+        "goldPathsChanged": [],
+        "unexpectedChangedPaths": [],
+        "changedGoldRecall": 0,
+        "ruleViolations": [],
+        "impactLocalization": null,
+        "outcomeLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 0,
+          "recallAt5": 0,
+          "recallAt20": 0,
+          "ndcgAt20": 0
+        }
+      }
+    },
+    "bth": {
+      "successAt1": false,
+      "workflowMs": 6383,
+      "providerMs": 432,
+      "totalElapsedMs": 57774,
+      "usage": {
+        "provider": "claude",
+        "tokens": {
+          "input": 0,
+          "uncachedInput": 0,
+          "output": 0,
+          "cachedInput": 0,
+          "cacheCreationInput": 0,
+          "reasoningOutput": null,
+          "total": 0
+        },
+        "costUsd": 0,
+        "durationMs": 432,
+        "turns": 1
+      },
+      "tests": null,
+      "request": {
+        "bytes": 17437,
+        "codeContextEntries": 9,
+        "codeContextCharacters": 1925,
+        "projectRuleCount": 4,
+        "knowledgeDocumentCount": 7
+      },
+      "changedPaths": [],
+      "ruleViolations": [],
+      "score": {
+        "schemaVersion": 3,
+        "id": "claude:bth:fastapi-05-missing-user",
+        "provider": "claude",
+        "lane": "bth",
+        "taskId": "fastapi-05-missing-user",
+        "successAt1": false,
+        "verificationSuccessAt1": false,
+        "acceptanceConfirmed": null,
+        "failureReasons": [
+          "provider-did-not-complete",
+          "structured-verification-not-confirmed",
+          "no-source-change",
+          "task-acceptance-not-measured"
+        ],
+        "providerCompleted": false,
+        "verificationConfirmed": false,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 6383,
+        "usage": {
+          "provider": "claude",
+          "tokens": {
+            "input": 0,
+            "uncachedInput": 0,
+            "output": 0,
+            "cachedInput": 0,
+            "cacheCreationInput": 0,
+            "reasoningOutput": null,
+            "total": 0
+          },
+          "costUsd": 0,
+          "durationMs": 432,
+          "turns": 1
+        },
+        "changedPaths": [],
+        "goldPathsChanged": [],
+        "unexpectedChangedPaths": [],
+        "changedGoldRecall": 0,
+        "ruleViolations": [],
+        "impactLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 9,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 1
+        },
+        "outcomeLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 0,
+          "recallAt5": 0,
+          "recallAt20": 0,
+          "ndcgAt20": 0
+        }
+      }
+    }
+  },
+  "limitations": [
+    "One observation per lane, not a causal performance estimate.",
+    "Shared prepared public test fixture; no company source or production DB.",
+    "Total elapsed includes preparation and independent controls; workflow includes implementation and ordinary verification.",
+    "Impact localization is a path-order proxy, not equivalent model understanding.",
+    "No OS-level egress isolation. Unknown cost remains null."
+  ]
+}

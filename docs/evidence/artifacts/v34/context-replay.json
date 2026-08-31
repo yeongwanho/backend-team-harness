@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "sourceBaseCommit": "3f97179089f4d3dcb07e586c903d0729bc5acd4a",
+  "sourceSha256": {
+    "src/core/convention-compiler.mjs": "a98d4f26fe2d8b3ffed2cbd652cb4dde13ccadf97d025410cc9e34e9df2b3b6c",
+    "src/core/project-conventions.mjs": "6306d17834e6d1e0d37c455999a375066c84370d338ae7f971d36cfa20d142d7",
+    "src/runtime/interview-orchestrator.mjs": "d3c10467b6896471c7b9122188f2d5ff23bbb9e7a2d84c37f165dbb46e4d5397",
+    "src/runtime/implementation-orchestrator.mjs": "41bd926c3de533d22e5b71830156642b283f0f620d4e57bcb56d7784f6dd93a4",
+    "scripts/benchmark-provider-comparison.mjs": "4bb522bf42ffbedd75260860071ae97f54c84b36e2b4e0530ec8dcea185b59a5",
+    "src/evaluation/provider-benchmark-runner.mjs": "c70ca20f0db6a3befb0542bf29028dfacf41c56e7f10037c5caf4ee1c1a949ca",
+    "src/core/provider-context.mjs": "51f8eb198987cd906c350aeb86d42cbc544ef15da5c87e502dd542937746f4e2",
+    "src/providers/model-cli.mjs": "a56d0c6c44ae037f38a2276bdfa10a061770692ff6d3e3a98f255d65a6f88eff"
+  },
+  "taskId": "fastapi-05-missing-user",
+  "beforeRequestSha256": "ebc0b07345c878bfdb6dc403ff76518dcae998a3983e6848932c9e3f659a898a",
+  "afterRequestSha256": "f797e1afb965866ee1124c42e1ea1d381f5a96f24af26b9b2ddc19c0f8369bfc",
+  "beforeBytes": 18209,
+  "afterBytes": 17435,
+  "approvedPlanUnchanged": true,
+  "projectRulesUnchanged": true,
+  "verificationUnchanged": true,
+  "authorityUnchanged": true,
+  "originalContextCharacters": 1262,
+  "projectedContextCharacters": 288,
+  "beforePairs": [
+    {
+      "production": "backend/app/core/__init__.py",
+      "productionSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test": "backend/tests/__init__.py",
+      "testSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "production": "backend/app/core/__init__.py",
+      "productionSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test": "backend/tests/api/__init__.py",
+      "testSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "afterPairs": [
+    {
+      "production": "backend/app/api/routes/users.py",
+      "productionSha256": "019b851f1d9ceb89fec926517439ec75f146a3553380afa8ac81a86581753bd2",
+      "test": "backend/tests/api/routes/test_users.py",
+      "testSha256": "5adc4e45bf9a5093f57f07002b435b8705243fcadf224dcdb10d562c889c014c"
+    },
+    {
+      "production": "backend/app/api/routes/login.py",
+      "productionSha256": "719f2f392b41dfd0d47d1d1c7e0d067127520e4200dcf9c6f2f47be18cd1a68f",
+      "test": "backend/tests/api/routes/test_login.py",
+      "testSha256": "c85b4ba34d5c8b0d66cec3a29f1666853a884dc0aac87b9c427ae7d4c775da39"
+    }
+  ],
+  "observedTests": {
+    "status": "observed",
+    "count": 19,
+    "pairs": [
+      {
+        "production": "backend/app/api/routes/items.py",
+        "productionSha256": "78733cf0cf59308af3d8e7ad13e76a21162ebf84fc2b38a26c3fef33d116e770",
+        "test": "backend/tests/api/routes/test_items.py",
+        "testSha256": "75c47e42549c158c42a3bd3d87bc6100e9a27af74884a2dcc13bec3f0207ccd6"
+      },
+      {
+        "production": "backend/app/api/routes/login.py",
+        "productionSha256": "719f2f392b41dfd0d47d1d1c7e0d067127520e4200dcf9c6f2f47be18cd1a68f",
+        "test": "backend/tests/api/routes/test_login.py",
+        "testSha256": "c85b4ba34d5c8b0d66cec3a29f1666853a884dc0aac87b9c427ae7d4c775da39"
+      },
+      {
+        "production": "backend/app/api/routes/private.py",
+        "productionSha256": "f5df74cc276f0d8d83337922fb8e05e69ecbc885d466d90d2e3de54ba5e4c8f4",
+        "test": "backend/tests/api/routes/test_private.py",
+        "testSha256": "50b1d6d285a86c878b2501f8af68ce862dfb16dfccb7a4ab25b6c04143e40aa9"
+      },
+      {
+        "production": "backend/app/api/routes/users.py",
+        "productionSha256": "019b851f1d9ceb89fec926517439ec75f146a3553380afa8ac81a86581753bd2",
+        "test": "backend/tests/api/routes/test_users.py",
+        "testSha256": "5adc4e45bf9a5093f57f07002b435b8705243fcadf224dcdb10d562c889c014c"
+      },
+      {
+        "production": "backend/app/backend_pre_start.py",
+        "productionSha256": "81341fc74b8b147f504cdc6fe5d3dcbfeb12fb163f23bc1c7355230216990cf7",
+        "test": "backend/tests/scripts/test_backend_pre_start.py",
+        "testSha256": "0301cc388e74b0d8b1cf691224bd6447a413084695b3ecb23657b8adcbbbb839"
+      }
+    ],
+    "omittedPairCount": 0,
+    "ambiguousTestFileCount": 1,
+    "unmatchedTestFileCount": 13,
+    "candidateLimitExceededTestFileCount": 0
+  },
+  "duplicateBucketProbe": {
+    "files": 10000,
+    "testFiles": 5000,
+    "repetitions": 5,
+    "durationMs": [
+      64.47145799999998,
+      52.08904100000001,
+      50.001750000000015,
+      49.64000000000004,
+      50.955749999999966
+    ],
+    "exceededBudgetTests": 5000,
+    "candidateCap": 128,
+    "unexpectedPairs": 0,
+    "limitation": "Synthetic compiler-only bound check, not repository I/O or provider latency; no speedup versus the old incorrect matcher claimed."
+  }
+}

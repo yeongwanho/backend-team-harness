@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T01:31:43.758Z",
+  "sourceBaseCommit": "3f97179089f4d3dcb07e586c903d0729bc5acd4a",
+  "sourceSha256": {
+    "src/core/convention-compiler.mjs": "a98d4f26fe2d8b3ffed2cbd652cb4dde13ccadf97d025410cc9e34e9df2b3b6c",
+    "src/core/project-conventions.mjs": "6306d17834e6d1e0d37c455999a375066c84370d338ae7f971d36cfa20d142d7",
+    "src/runtime/interview-orchestrator.mjs": "d3c10467b6896471c7b9122188f2d5ff23bbb9e7a2d84c37f165dbb46e4d5397",
+    "src/runtime/implementation-orchestrator.mjs": "41bd926c3de533d22e5b71830156642b283f0f620d4e57bcb56d7784f6dd93a4",
+    "scripts/benchmark-provider-comparison.mjs": "4bb522bf42ffbedd75260860071ae97f54c84b36e2b4e0530ec8dcea185b59a5",
+    "scripts/mutation-smoke.mjs": "a2d8574cb1f53d41f522168cf6f45d06605cf2d90319e56a91c889c532d4328d",
+    "test/convention-compiler.test.mjs": "a587c90412587e55376f492acd0d0eb399a83130083e38146be025b260eb2069",
+    "test/project-conventions.test.mjs": "752d36b7610952dba4190d10e40266979c7612d6e9d86f4befe66cee9c66d39d",
+    "test/interview-orchestrator.test.mjs": "6502f61f8b684da253cb55a083afa5939780567fb8641a3f3f733f45c90c9322",
+    "test/implementation-orchestrator.test.mjs": "ec15e8b3808d73bf87eaebdda891c510906c3f3ff1dacb949e1dd84a5335c4ed"
+  },
+  "environment": {
+    "node": "v22.23.1",
+    "platform": "darwin",
+    "codex": "0.151.0",
+    "claude": "2.1.239"
+  },
+  "checks": [
+    {
+      "command": "npm run test:coverage",
+      "exitCode": 0,
+      "tests": 530,
+      "passed": 526,
+      "failed": 0,
+      "skipped": 4,
+      "coverage": {
+        "statements": 90.99,
+        "branches": 82.26,
+        "functions": 98.9,
+        "lines": 90.99
+      },
+      "log": {
+        "sha256": "2bb85ac7a2f49ced5f44206520a30686bf1e143c8caac039db4938a4c140d736",
+        "bytes": 131989
+      }
+    },
+    {
+      "command": "node scripts/mutation-smoke.mjs",
+      "exitCode": 0,
+      "selectedMutants": 33,
+      "killed": 33,
+      "assertions": [
+        "KILLED src/core/convention-compiler.mjs by test/convention-compiler.test.mjs (baseline 8 passed; mutant 2 failed tests with assertion evidence)",
+        "KILLED src/core/convention-compiler.mjs by test/convention-compiler.test.mjs (baseline 8 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/convention-compiler.mjs by test/convention-compiler.test.mjs (baseline 8 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/runtime/interview-orchestrator.mjs by test/interview-orchestrator.test.mjs (baseline 14 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/evaluation/project-fixture.mjs by test/project-fixture.test.mjs (baseline 10 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/evaluation/project-fixture-config.mjs by test/project-fixture.test.mjs (baseline 10 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/evaluation/provider-benchmark-runner.mjs by test/provider-benchmark-runner.test.mjs (baseline 13 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/evaluation/project-fixture.mjs by test/project-fixture.test.mjs (baseline 10 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/python-workspace-preparation.mjs by test/python-workspace-preparation.test.mjs (baseline 6 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/python-project.mjs by test/python-project.test.mjs (baseline 7 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/evaluation/task-acceptance.mjs by test/task-acceptance.test.mjs (baseline 10 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/jest-module-resolution.mjs by test/jest-module-resolution.test.mjs (baseline 8 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/evaluation/empty-test-baseline.mjs by test/empty-test-baseline.test.mjs (baseline 5 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/execution-diagnostics.mjs by test/execution-diagnostics.test.mjs (baseline 7 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/implementation-verification.mjs by test/implementation-verification.test.mjs (baseline 4 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/test-authoring-contract.mjs by test/test-authoring-contract.test.mjs (baseline 6 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/test-authoring-contract.mjs by test/test-authoring-contract.test.mjs (baseline 6 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/lexical-retrieval.mjs by test/lexical-retrieval.test.mjs (baseline 8 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/lexical-retrieval.mjs by test/lexical-retrieval.test.mjs (baseline 8 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/implementation-verification.mjs by test/implementation-verification.test.mjs (baseline 4 passed; mutant 2 failed tests with assertion evidence)",
+        "KILLED src/core/portable-project-index.mjs by test/portable-project-index.test.mjs (baseline 5 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/workspace-preparation.mjs by test/workspace-preparation.test.mjs (baseline 4 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/evaluation/empty-test-baseline.mjs by test/empty-test-baseline.test.mjs (baseline 5 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/runtime/implementation-orchestrator.mjs by test/work-first-test.test.mjs (baseline 5 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/jest-report.mjs by test/jest-report.test.mjs (baseline 4 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/task-state.mjs by test/task-state.test.mjs (baseline 8 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/adapters/verification-tool.mjs by test/generic-verification.test.mjs (baseline 11 passed; mutant 6 failed tests with assertion evidence)",
+        "KILLED src/core/work-draft.mjs by test/work-draft.test.mjs (baseline 5 passed; mutant 3 failed tests with assertion evidence)",
+        "KILLED src/core/junit.mjs by test/junit.test.mjs (baseline 14 passed; mutant 2 failed tests with assertion evidence)",
+        "KILLED src/core/junit.mjs by test/junit.test.mjs (baseline 14 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/retrieval-query.mjs by test/retrieval-query.test.mjs (baseline 5 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/migration-discovery.mjs by test/migration-discovery.test.mjs (baseline 7 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/migration-discovery.mjs by test/migration-discovery.test.mjs (baseline 7 passed; mutant 1 failed tests with assertion evidence)"
+      ],
+      "log": {
+        "sha256": "4e988c84614f806d76466755f3ff20668d7e93800b13f97f48f0a51889bc6e5d",
+        "bytes": 4761
+      },
+      "wholeCodebaseMutationScore": null
+    },
+    {
+      "command": "node scripts/install-smoke.mjs",
+      "exitCode": 0,
+      "log": {
+        "sha256": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989",
+        "bytes": 62
+      }
+    },
+    {
+      "command": "node scripts/check-syntax.mjs",
+      "exitCode": 0,
+      "log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "command": "node --test test/docs-contract.test.mjs",
+      "exitCode": 0,
+      "log": {
+        "sha256": "940c7d531f3d91332a9d6a2df7baae9617d83ff8fe3615cc41a21169ee430bfd",
+        "bytes": 307
+      }
+    },
+    {
+      "command": "npm audit --omit=dev --json",
+      "exitCode": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      }
+    }
+  ],
+  "behavioralRegression": [
+    {
+      "cases": [
+        "Python test prefix and initializer exclusion",
+        "module-scoped deterministic duplicate matching",
+        "package/directory evidence and ambiguity",
+        "test-only production observation pollution"
+      ],
+      "before": {
+        "exitCode": 1,
+        "failed": 4,
+        "log": {
+          "sha256": "5434eafd98cbe7c33ddc13cbf6ab4bd7e4ec875e68dd42ff972d66375adec6cd",
+          "bytes": 7668
+        }
+      },
+      "after": {
+        "exitCode": 0,
+        "passed": 7,
+        "log": {
+          "sha256": "58303e6cddd92ead9b495a8466c88cce6706b6421a79cf47fb0a89466f9f3371",
+          "bytes": 1642
+        }
+      }
+    },
+    {
+      "cases": [
+        "candidate expansion bound and language separation"
+      ],
+      "before": {
+        "exitCode": 1,
+        "failed": 1,
+        "log": {
+          "sha256": "6429cdb1acaa99b0aa068292865453a7321eb6da40945ca14419f961535a4d25",
+          "bytes": 2727
+        }
+      },
+      "after": {
+        "exitCode": 0,
+        "passed": 8,
+        "log": {
+          "sha256": "e8dd7eee1525e576c79755c7eec0737e813bbfea70913dfa98a5d40addaf0301",
+          "bytes": 1863
+        }
+      }
+    }
+  ],
+  "notes": [
+    "The first context-test draft failed on a not-yet-exported symbol; it is not counted as behavioral red evidence. Full integration tests and the custom-context mutation guard demonstrate the final behavior.",
+    "The initial offline replay assumed a persisted codegraph. Its unavailable result was handled by the same bounded source inspection fallback used by production before recording the replay."
+  ],
+  "resourceCleanup": {
+    "bth.fastapi.productqa": {
+      "containerCount": 0,
+      "networkCount": 0
+    },
+    "bth.fastapi.oracle": {
+      "containerCount": 0,
+      "networkCount": 0
+    }
+  },
+  "skipped": [
+    "Opt-in real MySQL E2E",
+    "Separate opt-in Maven/Gradle JVM fixture suite",
+    "Real Windows provider shim",
+    "Real Windows descendant process termination"
+  ],
+  "limitations": [
+    "No company source or production DB.",
+    "No OS-level egress isolation.",
+    "One observation per lane is not a stable speed estimate.",
+    "Claude quota prevented inference; no completed Claude model evaluation.",
+    "Package 0.9.0 was installed for smoke, not published."
+  ]
+}

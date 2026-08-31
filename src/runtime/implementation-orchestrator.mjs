@@ -30,6 +30,7 @@ import { selectTaskRetrievalQuery } from '../core/retrieval-query.mjs'
 import { inspectTestAuthoringContract } from '../core/test-authoring-contract.mjs'
 import { assertNoSymlinkSegments, assertRelativeChild, resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { captureConfiguredSourceBinding, checkProject } from './backend-harness.mjs'
+import { generatedProviderContext } from './interview-orchestrator.mjs'
 import {
   probeImplementationProvider,
   runImplementationProvider,
@@ -242,14 +243,15 @@ function protectedControlPlaneChanges(paths, implementationConfig, verificationC
   return paths.filter((path) => path === '.backend-harness' || path.startsWith('.backend-harness/') || protectedPaths.has(path))
 }
 
-function providerTaskPayload(task) {
-  const payload = { id: task.id, title: task.title, context: task.context, approvedPlan: task.plan }
+function providerTaskPayload(task, context = task.context) {
+  const payload = { id: task.id, title: task.title, context, approvedPlan: task.plan }
   const characters = Object.values(payload).reduce((total, value) => total + (typeof value === 'string' ? value.length : 0), 0)
   return { payload, characters }
 }
 
 async function structuredImplementationContext(root, task) {
   const fallback = {
+    providerContext: task.context,
     retrievalRequirement: null,
     claims: {},
     projectRuleEvaluation: {
@@ -267,6 +269,7 @@ async function structuredImplementationContext(root, task) {
     claims.requiredGates = [...interview.artifacts.plan.declaredRequiredGates]
   }
   return {
+    providerContext: generatedProviderContext(task, interview),
     retrievalRequirement: interview.record.requirement,
     claims,
     projectRuleEvaluation: interview.artifacts?.plan?.projectRuleEvaluation ?? fallback.projectRuleEvaluation,
@@ -460,8 +463,8 @@ async function prepareProviderPlanning(root, task, config, sourceBinding) {
   if (config.adapter.kind !== 'provider') {
     return { providerTask: null, planningContext: null, profile: null, codeContext: null, projectConventions: null }
   }
-  const providerTask = providerTaskPayload(task)
   const planningContext = await structuredImplementationContext(root, task)
+  const providerTask = providerTaskPayload(task, planningContext.providerContext)
   const profileInput = {
     mode: config.adapter.mode,
     contextBudgetCharacters: config.adapter.contextBudgetCharacters,

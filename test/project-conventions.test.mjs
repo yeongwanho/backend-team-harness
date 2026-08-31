@@ -75,3 +75,13 @@ test('project convention conflicts stay explicit and bounded', () => {
   assert.equal(conflicted.projectRules.rules[0].status, 'conflict')
   assert.equal(conflicted.requiredBeforeEdit.stopOnUnknownOrConflictingBlockingRule, true)
 })
+
+test('uncertain test pairs remain visible in the provider-facing contract', () => {
+  const projected = buildProjectConventions(confirmedEvaluation, null, null, {
+    ...observedConventions,
+    tests: { status: 'observed', count: 5, pairs: [], ambiguousTestFileCount: 2, unmatchedTestFileCount: 3, candidateLimitExceededTestFileCount: 1 }
+  })
+  assert.equal(projected.discovered.tests.ambiguousTestFileCount, 2)
+  assert.equal(projected.discovered.tests.unmatchedTestFileCount, 3)
+  assert.equal(projected.discovered.tests.candidateLimitExceededTestFileCount, 1)
+})

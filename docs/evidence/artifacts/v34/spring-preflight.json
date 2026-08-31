@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "protocolVersion": "context-correctness-v34",
+  "repositoryId": "spring-petclinic",
+  "taskId": "spring-02-owner-search-whitespace",
+  "baseSha": "0f6e8614047bd74cf6223b4d8a858d2ed2824f8a",
+  "targetSha": "bb37aad8c332264723817d855e8b3b96b7c392bc",
+  "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+  "requirementSha256": "da8f4d1379a8d99fc25cdec81a342d2f4a2136b921147c1e7d05f4075ae3dc2f",
+  "configSha256": "4932b011a3c62c6b7d65f2a4dafbdf36004ca9d74fd71ab3775d883ef665cc7c",
+  "sanitizedSingleCommitHistory": true,
+  "setup": {
+    "passed": true,
+    "process": {
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "stdioDrainTimedOut": false,
+      "durationMs": 82652,
+      "stdout": {
+        "sha256": "33e5e3f2e0a20d986de1283416d37274d81da24e101c0f93d4040fa15c3032b4",
+        "bytes": 82261
+      },
+      "stderr": {
+        "sha256": "4a1895c9431ff99d34f1df426fa425e037d592409a90fa7fb1eb38d433a9146a",
+        "bytes": 902
+      }
+    }
+  },
+  "preflight": {
+    "confirmed": true,
+    "emptyTestBaseline": null,
+    "failureCode": null,
+    "diagnosticCode": null,
+    "tests": {
+      "tests": 71,
+      "executed": 71,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "gates": [
+      {
+        "id": "tests",
+        "outcome": "passed",
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 48713,
+          "stdout": {
+            "sha256": "e84ce269c9699a13ad1603dea6dcb1c67e315aec5113d723067bc147d70854fb",
+            "bytes": 94551
+          },
+          "stderr": {
+            "sha256": "f37c38d144acdccab76fdd43c2504f2a5e99969e160ee2b269f4af964c1c93cd",
+            "bytes": 902
+          }
+        }
+      }
+    ]
+  },
+  "acceptanceControls": {
+    "schemaVersion": 1,
+    "kind": "fixture-tests",
+    "controlsConfirmed": true,
+    "candidatePassed": null,
+    "candidateSourceSha256": null,
+    "candidateUntouched": null,
+    "reason": "candidate-not-provided",
+    "oracleSha256": "87525dcf64a069cf490c2b47ef23fdc1c29600461e6a85d50eaf56b72013d194",
+    "testFiles": [
+      {
+        "path": "src/test/java/org/springframework/samples/petclinic/owner/OwnerSearchAcceptanceTests.java",
+        "sha256": "f53fd6ad54a2ae1351487f8ae0ef2317c974b133c5baedcd5a95783d5ee2965b"
+      }
+    ],
+    "controls": {
+      "base": {
+        "sourceStable": true,
+        "process": {
+          "exitCode": 1,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 12519,
+          "stdout": {
+            "sha256": "14a98c9a8fe064938e2dca40d52972da8cb506b42b66e416f2afdc980abeb87c",
+            "bytes": 5103
+          },
+          "stderr": {
+            "sha256": "4a1895c9431ff99d34f1df426fa425e037d592409a90fa7fb1eb38d433a9146a",
+            "bytes": 902
+          }
+        },
+        "reports": [
+          {
+            "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests.xml",
+            "sha256": "aed5519f61967476b455b9608c49192db105823864aca07d6c3ca45d8e6c217b",
+            "bytes": 50955
+          }
+        ],
+        "cases": [
+          {
+            "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+            "name": "surroundingWhitespaceFindsSameOwner",
+            "outcome": "failed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+            "name": "whitespaceOnlyUsesUnfilteredSearch",
+            "outcome": "failed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+            "name": "emptyOrMissingNameStillListsOwners",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+            "name": "ordinaryNameKeepsIdentity",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+            "name": "internalWhitespaceAndCaseAreNotRewritten",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+            "name": "unmatchedNameStaysAValidationResult",
+            "outcome": "passed"
+          }
+        ],
+        "passed": false,
+        "regressionReproduced": true
+      },
+      "target": {
+        "sourceStable": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 14403,
+          "stdout": {
+            "sha256": "02ee1ea3c785dd6629e54f3d28eb65e176a22d49d139e59f7d82bb8997ea47bf",
+            "bytes": 2228
+          },
+          "stderr": {
+            "sha256": "f37c38d144acdccab76fdd43c2504f2a5e99969e160ee2b269f4af964c1c93cd",
+            "bytes": 902
+          }
+        },
+        "reports": [
+          {
+            "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests.xml",
+            "sha256": "129d5be73b78bcd2802f7a6ffc2a0cdcb4c23e6ec93f644e3e767385c982fe96",
+            "bytes": 49639
+          }
+        ],
+        "cases": [
+          {
+            "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+            "name": "surroundingWhitespaceFindsSameOwner",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+            "name": "whitespaceOnlyUsesUnfilteredSearch",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+            "name": "emptyOrMissingNameStillListsOwners",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+            "name": "ordinaryNameKeepsIdentity",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+            "name": "internalWhitespaceAndCaseAreNotRewritten",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+            "name": "unmatchedNameStaysAValidationResult",
+            "outcome": "passed"
+          }
+        ],
+        "passed": true,
+        "regressionReproduced": false
+      }
+    },
+    "candidate": null,
+    "elapsedMs": 33306
+  },
+  "readyForProviderComparison": true,
+  "readyForTaskSuccessComparison": true,
+  "elapsedMs": 166106,
+  "workspace": null
+}

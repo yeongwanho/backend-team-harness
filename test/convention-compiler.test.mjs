@@ -83,3 +83,86 @@ test('compiler returns an explicit unknown boundary when no supported source exi
   assert.deepEqual(result.modules, [])
   assert.match(result.limitations[0], /supported backend source/)
 })
+
+test('Python prefixes pair real modules, not empty package initializers', () => {
+  const result = compileProjectConventions({ files: [
+    file('backend/app/api/routes/users.py', ['read_user'], ['controller'], [], 'app.api.routes.users'),
+    file('backend/app/core/__init__.py', [], [], [], 'app.core'),
+    file('backend/tests/__init__.py', [], ['test'], [], 'tests'),
+    file('backend/tests/api/__init__.py', [], ['test'], [], 'tests.api'),
+    file('backend/tests/api/routes/test_users.py', ['test_missing_user'], ['test', 'controller'], [], 'tests.api.routes.test_users')
+  ] })
+  assert.deepEqual(result.tests.pairs.map(({ production, test }) => [production, test]), [
+    ['backend/app/api/routes/users.py', 'backend/tests/api/routes/test_users.py']
+  ])
+  assert.equal(result.tests.count, 3)
+  assert.equal(result.layers.find(layer => layer.role === 'controller').count, 1)
+})
+
+test('test pairing is module-aware, deduplicated and independent of input order', () => {
+  const files = [
+    file('hospital/src/main/java/example/UserService.java', ['UserService'], ['service']),
+    file('admin/src/main/java/example/UserService.java', ['UserService'], ['service']),
+    file('hospital/src/test/java/example/UserServiceTest.java', ['UserServiceTest'], ['test']),
+    file('admin/src/test/java/example/UserServiceTest.java', ['UserServiceTest'], ['test'])
+  ]
+  const expected = [
+    ['admin/src/main/java/example/UserService.java', 'admin/src/test/java/example/UserServiceTest.java'],
+    ['hospital/src/main/java/example/UserService.java', 'hospital/src/test/java/example/UserServiceTest.java']
+  ]
+  for (const order of [files, [...files].reverse()]) {
+    assert.deepEqual(compileProjectConventions({ files: order }).tests.pairs.map(pair => [pair.production, pair.test]), expected)
+  }
+})
+
+test('test pairing resolves package or parallel directory evidence and leaves ties unknown', () => {
+  const files = [
+    file('src/main/kotlin/a/UserService.kt', ['UserService'], ['service'], [], 'a'),
+    file('src/main/kotlin/b/UserService.kt', ['UserService'], ['service'], [], 'b'),
+    file('src/test/kotlin/b/UserServiceTest.kt', ['UserServiceTest'], ['test'], [], 'b'),
+    file('src/test/kotlin/other/UserServiceTest.kt', ['UserServiceTest'], ['test'], [], 'other'),
+    file('src/a/users.ts', [], ['controller'], [], ''),
+    file('src/b/users.ts', [], ['controller'], [], ''),
+    file('tests/b/users.test.ts', [], ['test'], [], ''),
+    file('tests/other/users.spec.ts', [], ['test'], [], ''),
+    file('tests/index.ts', [], ['test'], [], ''),
+    file('src/index.ts', [], [], [], '')
+  ]
+  const result = compileProjectConventions({ files }).tests
+  assert.deepEqual(result.pairs.map(pair => [pair.production, pair.test]), [
+    ['src/b/users.ts', 'tests/b/users.test.ts'],
+    ['src/main/kotlin/b/UserService.kt', 'src/test/kotlin/b/UserServiceTest.kt']
+  ])
+  assert.equal(result.ambiguousTestFileCount, 2)
+  assert.equal(result.unmatchedTestFileCount, 1)
+})
+
+test('tests do not invent production transactions, routes, tables or query risks', () => {
+  const result = compileProjectConventions({ files: [
+    file('src/main/java/example/UserService.java', ['UserService'], ['service']),
+    file('src/test/java/example/UserServiceTest.java', ['UserServiceTest'], ['test', 'service', 'repository'], ['Transactional'], 'example', {
+      routes: [{ method: 'POST', path: '/fixture' }], tables: ['fixture'],
+      persistenceSignals: { declaredQueries: 3, selectStarQueries: 3, transactionalAnnotations: 1 }
+    })
+  ] })
+  assert.equal(result.layers.find(layer => layer.role === 'service').count, 1)
+  assert.ok(!result.layers.some(layer => layer.role === 'repository'))
+  assert.equal(result.layers.find(layer => layer.role === 'test').count, 1)
+  assert.equal(result.transactions.status, 'not-observed')
+  assert.equal(result.persistence.status, 'not-observed')
+  assert.equal(result.contracts.routes.count, 0)
+  assert.deepEqual(result.contracts.tables.names, [])
+  assert.equal(result.database.totals.declaredQueries, 0)
+})
+
+test('a huge ambiguous name bucket stays bounded and cannot match another language', () => {
+  const files = Array.from({ length: 500 }, (_, index) => file('src/p' + index + '/users.py', [], ['controller'], [], ''))
+  files.push(file('tests/test_users.py', [], ['test'], [], ''))
+  files.push(file('src/unique.ts', [], ['controller'], [], ''))
+  files.push(file('tests/test_unique.py', [], ['test'], [], ''))
+  const result = compileProjectConventions({ files }).tests
+  assert.deepEqual(result.pairs, [])
+  assert.equal(result.candidateLimitExceededTestFileCount, 1)
+  assert.equal(result.ambiguousTestFileCount, 1)
+  assert.equal(result.unmatchedTestFileCount, 1)
+})

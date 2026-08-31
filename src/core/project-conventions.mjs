@@ -174,7 +174,10 @@ function normalizedDiscoveredConventions(conventions) {
         test: boundedText(pair?.test, 4096),
         testSha256: boundedText(pair?.testSha256, 128)
       })),
-      omittedPairCount: Number.isSafeInteger(conventions.tests?.omittedPairCount) ? conventions.tests.omittedPairCount : 0
+      omittedPairCount: Number.isSafeInteger(conventions.tests?.omittedPairCount) ? conventions.tests.omittedPairCount : 0,
+      ambiguousTestFileCount: Number.isSafeInteger(conventions.tests?.ambiguousTestFileCount) ? conventions.tests.ambiguousTestFileCount : 0,
+      unmatchedTestFileCount: Number.isSafeInteger(conventions.tests?.unmatchedTestFileCount) ? conventions.tests.unmatchedTestFileCount : 0,
+      candidateLimitExceededTestFileCount: Number.isSafeInteger(conventions.tests?.candidateLimitExceededTestFileCount) ? conventions.tests.candidateLimitExceededTestFileCount : 0
     },
     limitations: (conventions.limitations ?? []).slice(0, 8).map((entry) => boundedText(entry, 1024))
   }

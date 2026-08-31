@@ -9,6 +9,7 @@ import { inspectProjectIntelligence } from '../src/adapters/project-intelligence
 import {
   answerInterview,
   completeInterview,
+  generatedProviderContext,
   interviewStatus,
   rebindInterview,
   resolveInterviewContradiction,
@@ -82,6 +83,25 @@ test('native interview materializes a source-bound PLAN_PROPOSED task', async ()
 
   const retried = await completeInterview(root, 'USER-17', { actor: 'developer' })
   assert.equal(retried.task.revision, task.record.revision)
+
+  const projected = generatedProviderContext(task.record, finalized)
+  assert.ok(projected.length < task.record.context.length)
+  assert.match(projected, /unchanged approvedPlan/)
+  assert.match(projected, /Project facts needing attention:/)
+  assert.match(projected, /Project rules needing attention:/)
+  assert.ok(!projected.includes('Acceptance criteria:'))
+  for (const modified of [
+    { ...task.record, context: task.record.context + '\nKeep this custom requirement.' },
+    { ...task.record, plan: task.record.plan + '\nKeep this custom plan instruction.' },
+    { ...task.record, planArtifactSha256: 'a'.repeat(64) },
+    { ...task.record, id: 'OTHER-1' }
+  ]) assert.equal(generatedProviderContext(modified, finalized), modified.context)
+  for (const modified of [
+    { ...finalized, record: { ...finalized.record, status: 'READY' } },
+    { ...finalized, artifacts: { ...finalized.artifacts, plan: { ...finalized.artifacts.plan, schemaVersion: 99 } } },
+    { ...finalized, artifacts: { ...finalized.artifacts, plan: { ...finalized.artifacts.plan, allowedScope: 'Tampered scope' } } }
+  ]) assert.equal(generatedProviderContext(task.record, modified), task.record.context)
+  assert.equal(generatedProviderContext(task.record, null), task.record.context)
 })
 
 test('existing migrations do not add a database step when the interview explicitly declares no DB impact', async () => {

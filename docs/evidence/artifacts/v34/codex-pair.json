@@ -1,0 +1,1816 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T01:20:27.734Z",
+  "sourceSha256": {
+    "src/core/convention-compiler.mjs": "a98d4f26fe2d8b3ffed2cbd652cb4dde13ccadf97d025410cc9e34e9df2b3b6c",
+    "src/core/project-conventions.mjs": "6306d17834e6d1e0d37c455999a375066c84370d338ae7f971d36cfa20d142d7",
+    "src/runtime/interview-orchestrator.mjs": "d3c10467b6896471c7b9122188f2d5ff23bbb9e7a2d84c37f165dbb46e4d5397",
+    "src/runtime/implementation-orchestrator.mjs": "41bd926c3de533d22e5b71830156642b283f0f620d4e57bcb56d7784f6dd93a4",
+    "scripts/benchmark-provider-comparison.mjs": "4bb522bf42ffbedd75260860071ae97f54c84b36e2b4e0530ec8dcea185b59a5",
+    "src/evaluation/provider-benchmark-runner.mjs": "c70ca20f0db6a3befb0542bf29028dfacf41c56e7f10037c5caf4ee1c1a949ca",
+    "src/core/provider-context.mjs": "51f8eb198987cd906c350aeb86d42cbc544ef15da5c87e502dd542937746f4e2",
+    "src/providers/model-cli.mjs": "a56d0c6c44ae037f38a2276bdfa10a061770692ff6d3e3a98f255d65a6f88eff"
+  },
+  "provider": "codex",
+  "order": [
+    "direct",
+    "bth"
+  ],
+  "providerCalls": 2,
+  "attemptsPerLane": 1,
+  "mode": "fast",
+  "records": {
+    "direct": {
+      "originalArtifactSha256": "c33b6d1a79979355928f637680a95b05ecdc01a02464fd1acc11191a2ce583b3",
+      "schemaVersion": 1,
+      "case": {
+        "id": "codex:direct:fastapi-05-missing-user",
+        "provider": "codex",
+        "lane": "direct",
+        "repositoryId": "fastapi-template",
+        "taskId": "fastapi-05-missing-user",
+        "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+        "requirementSha256": "0436817770a2cd033201c336db91be0261664020e3e6f6aa6f4ff1f6b2e09ef5",
+        "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+        "targetSha": "4cab9e972f5e3e32c518ec2c6e09e18455fe469a"
+      },
+      "fairness": {
+        "sanitizedSingleCommitHistory": true,
+        "goldHiddenFromProvider": true,
+        "sameProvider": true,
+        "protocolVersion": "context-correctness-v34",
+        "configSha256": "4932b011a3c62c6b7d65f2a4dafbdf36004ca9d74fd71ab3775d883ef665cc7c",
+        "fixedMode": "fast",
+        "fixedModel": "gpt-5.6-sol",
+        "setupCommandSha256": "645c74b03c8e93293b4339995fd2768b69779cea381e878e44fedad54537f69c"
+      },
+      "setup": {
+        "passed": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 288,
+          "stdout": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "stderr": {
+            "sha256": "b177559ec42e21e308660fd82557cb035d18511a9347c3166321a6b585f247a7",
+            "bytes": 1599
+          }
+        },
+        "preparation": {
+          "kind": "uv-sync-offline",
+          "projectPath": "backend",
+          "status": "passed",
+          "dependencyEntries": 76,
+          "workspaceEntries": 1,
+          "inputs": [
+            {
+              "path": "backend/pyproject.toml",
+              "sha256": "34fbc0c1c702b37576e479d71ec02fe5a641f4b1a9495eda9ecee8a2eb3430d9"
+            },
+            {
+              "path": "pyproject.toml",
+              "sha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+            },
+            {
+              "path": "uv.lock",
+              "sha256": "c27a6c9636dc203d1151f96f9d6733a4f52986fb43a079c6d354e5a389148b68"
+            }
+          ],
+          "command": [
+            "uv",
+            "sync",
+            "--project",
+            "<isolated-workspace>",
+            "--package",
+            "app",
+            "--offline",
+            "--locked",
+            "--no-build",
+            "--no-install-workspace",
+            "--no-python-downloads",
+            "--no-config",
+            "--python",
+            "3.12",
+            "--group",
+            "dev"
+          ],
+          "environmentPath": ".backend-harness/local/python-venv",
+          "failureCode": null,
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 288,
+            "stdout": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            },
+            "stderr": {
+              "sha256": "b177559ec42e21e308660fd82557cb035d18511a9347c3166321a6b585f247a7",
+              "bytes": 1599
+            }
+          },
+          "lifecycleScripts": false,
+          "onlineFallback": false,
+          "egressIsolation": "not-enforced"
+        },
+        "fixture": {
+          "files": [
+            {
+              "path": "backend/tests/bth_evaluation_bootstrap.py",
+              "beforeSha256": null,
+              "sha256": "8aa98e4fe8cf718817211ddf30a592133ca05cfe99a0b101a7533f5f6562327f"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi.mjs",
+              "beforeSha256": null,
+              "sha256": "2e7a5c6ed657a26362af6532ef45b41e6b24bbb95797c2f80fc69b8ce26f53fa"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi",
+              "beforeSha256": null,
+              "sha256": "1486e7ac42647a75f682317ad92321462fdb5b4894a64cfb13a5283742370faf"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi.cmd",
+              "beforeSha256": null,
+              "sha256": "8ba96bfee91d48be818061140248bfb77ba0c986820ff6afe5f1180650326f05"
+            },
+            {
+              "path": "backend/tests/scripts/test_backend_pre_start.py",
+              "beforeSha256": "4db7d166345b73313ce79754ec446c8ca78e18c4a6bc94888de6ecaaac75ad5f",
+              "sha256": "0301cc388e74b0d8b1cf691224bd6447a413084695b3ecb23657b8adcbbbb839"
+            },
+            {
+              "path": "backend/tests/scripts/test_test_pre_start.py",
+              "beforeSha256": "d0c2c2f074d2b5a0230dd00e7cad24b78e035ef64c3df04a633734f8405da860",
+              "sha256": "24a6c93b0f101d2755807ee5c093f1617929fe93817a7b90519fda1902497ba5"
+            },
+            {
+              "path": "backend/tests/test_baseline_environment.py",
+              "beforeSha256": null,
+              "sha256": "ab10054180cf606d0759c084cf560e0c9fecb7c440c223d0056e52bde51ee6aa"
+            },
+            {
+              "path": "backend/tests/utils/utils.py",
+              "beforeSha256": "ec4de331ed328dda26e329024c1f598996845fb5d9f662413a99a5b39a7e7f70",
+              "sha256": "037e8c294c1a6645bc6975b91d01284e89e42bddc2bc99c0daa9a94563d6df06"
+            },
+            {
+              "path": ".backend-harness/implementation.json",
+              "beforeSha256": "71479154133c5c8d5b20869a0f37e2334d47b15e864d2fcaf7e73ad2d2acd0a4",
+              "sha256": "4d4020de042bcddf670ef280d9b8d73d7e63c440b04fd7e594dfd9bfd042860c"
+            },
+            {
+              "path": ".backend-harness/verification.json",
+              "beforeSha256": "ca9f76121deda83e18264732253f11b3e192e2a50dee113c938df0c63b725c4b",
+              "sha256": "e1ffff25c68b9ef09c304fc14441d4f5288eddee1e3e05665ec9e579d579d76c"
+            }
+          ],
+          "integrity": {
+            "valid": true,
+            "mismatchedPaths": []
+          },
+          "sourceClean": true
+        }
+      },
+      "preflight": {
+        "confirmed": true,
+        "emptyTestBaseline": null,
+        "failureCode": null,
+        "diagnosticCode": null,
+        "tests": {
+          "tests": 57,
+          "executed": 57,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "passed",
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 28060,
+              "stdout": {
+                "sha256": "8a946698b83d62db1a11920f7f07353ed38fd08743f412012690658796530c73",
+                "bytes": 1881
+              },
+              "stderr": {
+                "sha256": "f0349365104a572f6b270b19ce0850ccec3a6f05c5e449c6dd1efce361cb8c68",
+                "bytes": 379
+              }
+            }
+          }
+        ]
+      },
+      "acceptanceControls": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "0265a5d8f576c08248509d450eb0426afe57d0751d605799c6d1c5cd3f5d4ea2",
+        "testFiles": [
+          {
+            "path": "backend/test/bth/run.mjs",
+            "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+          },
+          {
+            "path": "backend/test/bth/conftest.py",
+            "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+          },
+          {
+            "path": "backend/test/bth/test_missing_user.py",
+            "sha256": "edbc8e68423f4a29c649d1c201475e602b6a9d11d762c4853f9c232b28e9e112"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10446,
+              "stdout": {
+                "sha256": "c32d3bc256130291914c8bf5f059f95305de5158dfc3ac8bd8b13285a45fc9bc",
+                "bytes": 3305
+              },
+              "stderr": {
+                "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "b23be9bed4718bec6a921561b5df7ada71c55d9233ff1e072d2ed498fc2dbcd9",
+                "bytes": 1863
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10323,
+              "stdout": {
+                "sha256": "91f85eabb66468a09f88d5c683a4efb1064932f9c82a5a19c95a05b0dd3317fa",
+                "bytes": 826
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "dc3e3e90cfc68f633d2e443748e5bf828433b545e51f6c24fd6a106abaaf2f4d",
+                "bytes": 1043
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 21971
+      },
+      "observation": {
+        "provider": "codex",
+        "lane": "direct",
+        "providerCompleted": true,
+        "verificationConfirmed": true,
+        "acceptance": {
+          "schemaVersion": 1,
+          "kind": "fixture-tests",
+          "controlsConfirmed": true,
+          "candidatePassed": true,
+          "candidateSourceSha256": "3d3dd2217e931749bcdd8fde85df016b4f4bd1b32b5b5e2bacabd32799b82687",
+          "candidateUntouched": true,
+          "reason": null,
+          "oracleSha256": "0265a5d8f576c08248509d450eb0426afe57d0751d605799c6d1c5cd3f5d4ea2",
+          "testFiles": [
+            {
+              "path": "backend/test/bth/run.mjs",
+              "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+            },
+            {
+              "path": "backend/test/bth/conftest.py",
+              "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+            },
+            {
+              "path": "backend/test/bth/test_missing_user.py",
+              "sha256": "edbc8e68423f4a29c649d1c201475e602b6a9d11d762c4853f9c232b28e9e112"
+            }
+          ],
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 10870,
+                "stdout": {
+                  "sha256": "f2468c626b4e972237718faff68342207a02f7eed4f394e161624a990c0ffd83",
+                  "bytes": 3305
+                },
+                "stderr": {
+                  "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                  "bytes": 355
+                }
+              },
+              "reports": [
+                {
+                  "path": "backend/.cache/bth-junit.xml",
+                  "sha256": "addba58ffe2a03f6ba068f390786ae5130d89dda2b4b9ec8537f1afc3a3d02a1",
+                  "bytes": 1863
+                }
+              ],
+              "cases": [
+                {
+                  "className": "test_missing_user",
+                  "name": "test_superuser_missing_user_is_404",
+                  "outcome": "failed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_superuser_existing_user_is_readable",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_ordinary_user_can_read_self",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_ordinary_user_cannot_read_another_user",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_ordinary_user_missing_id_still_returns_403",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_missing_id_without_authentication_is_not_public",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_invalid_id_preserves_validation",
+                  "outcome": "passed"
+                }
+              ],
+              "passed": false,
+              "regressionReproduced": true
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 0,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 10175,
+                "stdout": {
+                  "sha256": "0d5b7305b63e114e022a25bc008bb59b61eab19e58f4d0b2696302c5afcb02e0",
+                  "bytes": 826
+                },
+                "stderr": {
+                  "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                  "bytes": 355
+                }
+              },
+              "reports": [
+                {
+                  "path": "backend/.cache/bth-junit.xml",
+                  "sha256": "cf46b735bb1258893e10680fbaa6efe04ec126228ba5b2cab70797ddaa761303",
+                  "bytes": 1043
+                }
+              ],
+              "cases": [
+                {
+                  "className": "test_missing_user",
+                  "name": "test_superuser_missing_user_is_404",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_superuser_existing_user_is_readable",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_ordinary_user_can_read_self",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_ordinary_user_cannot_read_another_user",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_ordinary_user_missing_id_still_returns_403",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_missing_id_without_authentication_is_not_public",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_invalid_id_preserves_validation",
+                  "outcome": "passed"
+                }
+              ],
+              "passed": true,
+              "regressionReproduced": false
+            }
+          },
+          "candidate": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10165,
+              "stdout": {
+                "sha256": "c71c63f7e643067837a23f64c4ed677d9f0bb1e37c8b66baa279fcf2570fcda4",
+                "bytes": 829
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "1b8a28b2e41b6e35882e662970c7a8d6d64198b5adf259fa564d8772451be624",
+                "bytes": 1043
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          },
+          "elapsedMs": 33160
+        },
+        "attempts": 1,
+        "elapsedMs": 66722,
+        "changedPaths": [
+          "backend/app/api/routes/users.py",
+          "backend/tests/api/routes/test_users.py"
+        ],
+        "impactPaths": [
+          "backend/app/api/routes/users.py",
+          "backend/tests/api/routes/test_users.py",
+          "backend/app/api/routes/items.py",
+          "backend/tests/api/routes/test_items.py"
+        ],
+        "ruleViolations": [],
+        "usage": {
+          "schemaVersion": 2,
+          "provider": "codex",
+          "tokens": {
+            "input": 151244,
+            "uncachedInput": 25804,
+            "output": 1268,
+            "cachedInput": 125440,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 201,
+            "total": 152512
+          },
+          "costUsd": null,
+          "durationMs": 42627,
+          "turns": null,
+          "providerReported": {
+            "usage.input_tokens": 151244,
+            "usage.cached_input_tokens": 125440,
+            "usage.cache_write_input_tokens": 0,
+            "usage.output_tokens": 1268,
+            "usage.reasoning_output_tokens": 201
+          },
+          "scope": "invocation-final"
+        },
+        "evidence": {
+          "providerFailureCode": null,
+          "verificationFailureCode": null,
+          "verificationTests": {
+            "tests": 58,
+            "executed": 58,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "verificationDiagnostic": {
+            "confirmed": true,
+            "sourceFingerprint": "852919c8c246fdf4125883ea0a9534b4d8a2b230cfff5b5337262c8e81939f11",
+            "runPath": ".backend-harness/local/runs/latest.json",
+            "failure": null,
+            "tests": {
+              "tests": 58,
+              "executed": 58,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            "gates": [
+              {
+                "id": "tests",
+                "required": true,
+                "outcome": "passed",
+                "reason": null,
+                "structuredReason": null,
+                "executionDiagnostics": null,
+                "tests": {
+                  "tests": 58,
+                  "executed": 58,
+                  "failures": 0,
+                  "errors": 0,
+                  "skipped": 0
+                },
+                "process": {
+                  "exitCode": 0,
+                  "signal": null,
+                  "timedOut": false,
+                  "stdioDrainTimedOut": false
+                },
+                "failedTests": [],
+                "omittedFailedTestCount": 0
+              }
+            ],
+            "omittedGateCount": 0
+          },
+          "request": {
+            "promptBytes": 2366
+          },
+          "providerActivity": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "authority": "provider-event-derived-advisory",
+            "parsedEvents": 16,
+            "rejectedEvents": 0,
+            "firstWriteObserved": true,
+            "preWritePaths": [
+              "backend/app/api/routes/users.py",
+              "backend/tests/api/routes/test_users.py",
+              "backend/app/api/routes/items.py",
+              "backend/tests/api/routes/test_items.py"
+            ],
+            "preWriteContentPaths": [
+              "backend/app/api/routes/users.py",
+              "backend/tests/api/routes/test_users.py",
+              "backend/app/api/routes/items.py",
+              "backend/tests/api/routes/test_items.py"
+            ],
+            "preWriteDiscoveryPaths": [],
+            "changedPaths": [],
+            "readCommandCount": 2,
+            "discoveryCommandCount": 0,
+            "validationCommandCount": 0,
+            "writeEventCount": 1
+          },
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdout": {
+              "sha256": "2e9655c9c81abe1c4213a965dbe011de815820455803075eca33218a57090543",
+              "bytes": 44933
+            },
+            "stderr": {
+              "sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+              "bytes": 39
+            }
+          }
+        }
+      },
+      "score": {
+        "schemaVersion": 3,
+        "id": "codex:direct:fastapi-05-missing-user",
+        "provider": "codex",
+        "lane": "direct",
+        "taskId": "fastapi-05-missing-user",
+        "successAt1": true,
+        "verificationSuccessAt1": true,
+        "acceptanceConfirmed": true,
+        "failureReasons": [],
+        "providerCompleted": true,
+        "verificationConfirmed": true,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 66722,
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 151244,
+            "uncachedInput": 25804,
+            "output": 1268,
+            "cachedInput": 125440,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 201,
+            "total": 152512
+          },
+          "costUsd": null,
+          "durationMs": 42627,
+          "turns": null
+        },
+        "changedPaths": [
+          "backend/app/api/routes/users.py",
+          "backend/tests/api/routes/test_users.py"
+        ],
+        "goldPathsChanged": [
+          "backend/app/api/routes/users.py",
+          "backend/tests/api/routes/test_users.py"
+        ],
+        "unexpectedChangedPaths": [],
+        "changedGoldRecall": 1,
+        "ruleViolations": [],
+        "impactLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 4,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 1
+        },
+        "outcomeLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 2,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 1
+        }
+      },
+      "totalElapsedMs": 151469,
+      "workspace": null
+    },
+    "bth": {
+      "originalArtifactSha256": "7f33c52e13d5d50c3c692e58b2c8eae7bb4f0333b87444caa66d8f61d08b502a",
+      "schemaVersion": 1,
+      "case": {
+        "id": "codex:bth:fastapi-05-missing-user",
+        "provider": "codex",
+        "lane": "bth",
+        "repositoryId": "fastapi-template",
+        "taskId": "fastapi-05-missing-user",
+        "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+        "requirementSha256": "0436817770a2cd033201c336db91be0261664020e3e6f6aa6f4ff1f6b2e09ef5",
+        "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+        "targetSha": "4cab9e972f5e3e32c518ec2c6e09e18455fe469a"
+      },
+      "fairness": {
+        "sanitizedSingleCommitHistory": true,
+        "goldHiddenFromProvider": true,
+        "sameProvider": true,
+        "protocolVersion": "context-correctness-v34",
+        "configSha256": "4932b011a3c62c6b7d65f2a4dafbdf36004ca9d74fd71ab3775d883ef665cc7c",
+        "fixedMode": "fast",
+        "fixedModel": "gpt-5.6-sol",
+        "setupCommandSha256": "645c74b03c8e93293b4339995fd2768b69779cea381e878e44fedad54537f69c"
+      },
+      "setup": {
+        "passed": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 156,
+          "stdout": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "stderr": {
+            "sha256": "025548feedb47c1d365829a6eddfec7ff0797353796acaea6910e0e1648fb445",
+            "bytes": 1599
+          }
+        },
+        "preparation": {
+          "kind": "uv-sync-offline",
+          "projectPath": "backend",
+          "status": "passed",
+          "dependencyEntries": 76,
+          "workspaceEntries": 1,
+          "inputs": [
+            {
+              "path": "backend/pyproject.toml",
+              "sha256": "34fbc0c1c702b37576e479d71ec02fe5a641f4b1a9495eda9ecee8a2eb3430d9"
+            },
+            {
+              "path": "pyproject.toml",
+              "sha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+            },
+            {
+              "path": "uv.lock",
+              "sha256": "c27a6c9636dc203d1151f96f9d6733a4f52986fb43a079c6d354e5a389148b68"
+            }
+          ],
+          "command": [
+            "uv",
+            "sync",
+            "--project",
+            "<isolated-workspace>",
+            "--package",
+            "app",
+            "--offline",
+            "--locked",
+            "--no-build",
+            "--no-install-workspace",
+            "--no-python-downloads",
+            "--no-config",
+            "--python",
+            "3.12",
+            "--group",
+            "dev"
+          ],
+          "environmentPath": ".backend-harness/local/python-venv",
+          "failureCode": null,
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 156,
+            "stdout": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            },
+            "stderr": {
+              "sha256": "025548feedb47c1d365829a6eddfec7ff0797353796acaea6910e0e1648fb445",
+              "bytes": 1599
+            }
+          },
+          "lifecycleScripts": false,
+          "onlineFallback": false,
+          "egressIsolation": "not-enforced"
+        },
+        "fixture": {
+          "files": [
+            {
+              "path": "backend/tests/bth_evaluation_bootstrap.py",
+              "beforeSha256": null,
+              "sha256": "8aa98e4fe8cf718817211ddf30a592133ca05cfe99a0b101a7533f5f6562327f"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi.mjs",
+              "beforeSha256": null,
+              "sha256": "2e7a5c6ed657a26362af6532ef45b41e6b24bbb95797c2f80fc69b8ce26f53fa"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi",
+              "beforeSha256": null,
+              "sha256": "1486e7ac42647a75f682317ad92321462fdb5b4894a64cfb13a5283742370faf"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi.cmd",
+              "beforeSha256": null,
+              "sha256": "8ba96bfee91d48be818061140248bfb77ba0c986820ff6afe5f1180650326f05"
+            },
+            {
+              "path": "backend/tests/scripts/test_backend_pre_start.py",
+              "beforeSha256": "4db7d166345b73313ce79754ec446c8ca78e18c4a6bc94888de6ecaaac75ad5f",
+              "sha256": "0301cc388e74b0d8b1cf691224bd6447a413084695b3ecb23657b8adcbbbb839"
+            },
+            {
+              "path": "backend/tests/scripts/test_test_pre_start.py",
+              "beforeSha256": "d0c2c2f074d2b5a0230dd00e7cad24b78e035ef64c3df04a633734f8405da860",
+              "sha256": "24a6c93b0f101d2755807ee5c093f1617929fe93817a7b90519fda1902497ba5"
+            },
+            {
+              "path": "backend/tests/test_baseline_environment.py",
+              "beforeSha256": null,
+              "sha256": "ab10054180cf606d0759c084cf560e0c9fecb7c440c223d0056e52bde51ee6aa"
+            },
+            {
+              "path": "backend/tests/utils/utils.py",
+              "beforeSha256": "ec4de331ed328dda26e329024c1f598996845fb5d9f662413a99a5b39a7e7f70",
+              "sha256": "037e8c294c1a6645bc6975b91d01284e89e42bddc2bc99c0daa9a94563d6df06"
+            },
+            {
+              "path": ".backend-harness/implementation.json",
+              "beforeSha256": "71479154133c5c8d5b20869a0f37e2334d47b15e864d2fcaf7e73ad2d2acd0a4",
+              "sha256": "4d4020de042bcddf670ef280d9b8d73d7e63c440b04fd7e594dfd9bfd042860c"
+            },
+            {
+              "path": ".backend-harness/verification.json",
+              "beforeSha256": "ca9f76121deda83e18264732253f11b3e192e2a50dee113c938df0c63b725c4b",
+              "sha256": "e1ffff25c68b9ef09c304fc14441d4f5288eddee1e3e05665ec9e579d579d76c"
+            }
+          ],
+          "integrity": {
+            "valid": true,
+            "mismatchedPaths": []
+          },
+          "sourceClean": true
+        }
+      },
+      "preflight": {
+        "confirmed": true,
+        "emptyTestBaseline": null,
+        "failureCode": null,
+        "diagnosticCode": null,
+        "tests": {
+          "tests": 57,
+          "executed": 57,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "passed",
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 27554,
+              "stdout": {
+                "sha256": "39688db2d1950e815307af2a06c07c60cfbe5e854423efac2b911385607fc044",
+                "bytes": 1881
+              },
+              "stderr": {
+                "sha256": "f0349365104a572f6b270b19ce0850ccec3a6f05c5e449c6dd1efce361cb8c68",
+                "bytes": 379
+              }
+            }
+          }
+        ]
+      },
+      "acceptanceControls": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "0265a5d8f576c08248509d450eb0426afe57d0751d605799c6d1c5cd3f5d4ea2",
+        "testFiles": [
+          {
+            "path": "backend/test/bth/run.mjs",
+            "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+          },
+          {
+            "path": "backend/test/bth/conftest.py",
+            "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+          },
+          {
+            "path": "backend/test/bth/test_missing_user.py",
+            "sha256": "edbc8e68423f4a29c649d1c201475e602b6a9d11d762c4853f9c232b28e9e112"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10541,
+              "stdout": {
+                "sha256": "a4a874863c1962b623398f9620d9d329c427db6f7b263bae27e91cd43edd6692",
+                "bytes": 3305
+              },
+              "stderr": {
+                "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "648dd54b9ceccc2544b741eb66a934c0e1741f1b0d5816b2c4d23408a2cb1247",
+                "bytes": 1863
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10122,
+              "stdout": {
+                "sha256": "84af0a2c49f7c8158aa7a0a5163c973fad042862e4d243b3fd480ecf88017d51",
+                "bytes": 826
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "d642c53d672cf5571d56168001ea3214a19670d1345c7b23908f066a33b06ee1",
+                "bytes": 1043
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 21737
+      },
+      "observation": {
+        "provider": "codex",
+        "lane": "bth",
+        "providerCompleted": true,
+        "verificationConfirmed": true,
+        "acceptance": {
+          "schemaVersion": 1,
+          "kind": "fixture-tests",
+          "controlsConfirmed": true,
+          "candidatePassed": true,
+          "candidateSourceSha256": "59c872b141f338b19fdfb7bbe43f1f682f2cf8e51429b1bb4d513d59ebfe6af4",
+          "candidateUntouched": true,
+          "reason": null,
+          "oracleSha256": "0265a5d8f576c08248509d450eb0426afe57d0751d605799c6d1c5cd3f5d4ea2",
+          "testFiles": [
+            {
+              "path": "backend/test/bth/run.mjs",
+              "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+            },
+            {
+              "path": "backend/test/bth/conftest.py",
+              "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+            },
+            {
+              "path": "backend/test/bth/test_missing_user.py",
+              "sha256": "edbc8e68423f4a29c649d1c201475e602b6a9d11d762c4853f9c232b28e9e112"
+            }
+          ],
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 10153,
+                "stdout": {
+                  "sha256": "45cd060cf7e9badd7fdf773b1e58e18b7327d45f7dc2131cd73d8476c920046e",
+                  "bytes": 3305
+                },
+                "stderr": {
+                  "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                  "bytes": 355
+                }
+              },
+              "reports": [
+                {
+                  "path": "backend/.cache/bth-junit.xml",
+                  "sha256": "de5c56ea6f4e89c923e24d120c1416335eaa8ca6caa0983dc3e47aa52cf20155",
+                  "bytes": 1863
+                }
+              ],
+              "cases": [
+                {
+                  "className": "test_missing_user",
+                  "name": "test_superuser_missing_user_is_404",
+                  "outcome": "failed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_superuser_existing_user_is_readable",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_ordinary_user_can_read_self",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_ordinary_user_cannot_read_another_user",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_ordinary_user_missing_id_still_returns_403",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_missing_id_without_authentication_is_not_public",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_invalid_id_preserves_validation",
+                  "outcome": "passed"
+                }
+              ],
+              "passed": false,
+              "regressionReproduced": true
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 0,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 10129,
+                "stdout": {
+                  "sha256": "181d42e0c424497eb6560f5df656cbce6f0ef3514bd81af0427de9ff49d2e5eb",
+                  "bytes": 826
+                },
+                "stderr": {
+                  "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                  "bytes": 355
+                }
+              },
+              "reports": [
+                {
+                  "path": "backend/.cache/bth-junit.xml",
+                  "sha256": "9be264d1cb5f3a2238179344c36c7ca67b85352f2895d4db0d23764c598a11cc",
+                  "bytes": 1043
+                }
+              ],
+              "cases": [
+                {
+                  "className": "test_missing_user",
+                  "name": "test_superuser_missing_user_is_404",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_superuser_existing_user_is_readable",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_ordinary_user_can_read_self",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_ordinary_user_cannot_read_another_user",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_ordinary_user_missing_id_still_returns_403",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_missing_id_without_authentication_is_not_public",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_missing_user",
+                  "name": "test_invalid_id_preserves_validation",
+                  "outcome": "passed"
+                }
+              ],
+              "passed": true,
+              "regressionReproduced": false
+            }
+          },
+          "candidate": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10106,
+              "stdout": {
+                "sha256": "e0713000a07f0c784fc513cf292e3d7ad31f527ec6fbd14e146b778f7ee3a2fa",
+                "bytes": 829
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "ef612d39baeba4185b8118c538c7891884e0f8fcdc4fe6905dc6839e3237453e",
+                "bytes": 1043
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          },
+          "elapsedMs": 32235
+        },
+        "attempts": 1,
+        "elapsedMs": 92677,
+        "changedPaths": [
+          "backend/app/api/routes/users.py",
+          "backend/tests/api/routes/test_users.py"
+        ],
+        "impactPaths": [
+          "backend/tests/api/routes/test_users.py",
+          "backend/app/api/routes/users.py",
+          "backend/app/models.py",
+          "backend/app/api/routes/login.py",
+          "backend/app/api/deps.py",
+          "backend/tests/api/routes/test_items.py",
+          "backend/app/core/config.py",
+          "backend/app/api/main.py",
+          "backend/tests/conftest.py"
+        ],
+        "ruleViolations": [],
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 173350,
+            "uncachedInput": 31526,
+            "output": 2202,
+            "cachedInput": 141824,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 306,
+            "total": 175552
+          },
+          "costUsd": null,
+          "durationMs": 63804,
+          "turns": null
+        },
+        "evidence": {
+          "taskState": "IMPLEMENTING",
+          "implementationStatus": "passed",
+          "verificationRunPath": ".backend-harness/local/runs/latest.json",
+          "failureCode": null,
+          "preparation": {
+            "kind": "uv-sync-offline",
+            "projectPath": "backend",
+            "status": "passed",
+            "dependencyEntries": 76,
+            "workspaceEntries": 1,
+            "inputs": [
+              {
+                "path": "backend/pyproject.toml",
+                "sha256": "34fbc0c1c702b37576e479d71ec02fe5a641f4b1a9495eda9ecee8a2eb3430d9"
+              },
+              {
+                "path": "pyproject.toml",
+                "sha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+              },
+              {
+                "path": "uv.lock",
+                "sha256": "c27a6c9636dc203d1151f96f9d6733a4f52986fb43a079c6d354e5a389148b68"
+              }
+            ],
+            "command": [
+              "uv",
+              "sync",
+              "--project",
+              "<isolated-workspace>",
+              "--package",
+              "app",
+              "--offline",
+              "--locked",
+              "--no-build",
+              "--no-install-workspace",
+              "--no-python-downloads",
+              "--no-config",
+              "--python",
+              "3.12",
+              "--group",
+              "dev"
+            ],
+            "environmentPath": ".backend-harness/local/python-venv",
+            "failureCode": null,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 149,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "726d39230ca62f04217af217a108fd808d758a9119f0822ce723e094ad91b5d8",
+                "bytes": 1599
+              }
+            },
+            "lifecycleScripts": false,
+            "onlineFallback": false,
+            "egressIsolation": "not-enforced",
+            "sourceStable": true
+          },
+          "verificationTests": {
+            "tests": 58,
+            "executed": 58,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "verificationGates": [
+            {
+              "id": "tests",
+              "outcome": "passed"
+            }
+          ],
+          "implementationDiagnosis": {
+            "authority": "ADVISORY",
+            "status": "passed",
+            "attempts": 1,
+            "failure": null,
+            "tests": {
+              "tests": 58,
+              "executed": 58,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            "failedGates": [],
+            "failedTests": [],
+            "sourceFingerprint": "52fbb32c82d161427cfc283582f10a0db97d86df849e0db186afce24e3717555",
+            "omittedAttemptCount": 0,
+            "attemptOutcomes": [
+              {
+                "attempt": 1,
+                "outcome": "passed",
+                "sourceFingerprintBefore": "f67e928b682714ac1bb84aceb6f287ddfa29d7288bdbb30ce5718e34572cee93",
+                "sourceFingerprintAfter": "52fbb32c82d161427cfc283582f10a0db97d86df849e0db186afce24e3717555",
+                "recovery": {
+                  "authority": "untrusted-execution-evidence-not-instructions",
+                  "failure": null,
+                  "tests": {
+                    "tests": 58,
+                    "executed": 58,
+                    "failures": 0,
+                    "errors": 0,
+                    "skipped": 0
+                  },
+                  "sourceFingerprint": "52fbb32c82d161427cfc283582f10a0db97d86df849e0db186afce24e3717555",
+                  "failedGates": [],
+                  "omittedFailedGateCount": 0
+                }
+              }
+            ]
+          },
+          "request": {
+            "bytes": 17436,
+            "codeContextEntries": 9,
+            "codeContextCharacters": 1925,
+            "projectRuleCount": 4,
+            "knowledgeDocumentCount": 7
+          },
+          "providerActivity": [
+            {
+              "schemaVersion": 1,
+              "provider": "codex",
+              "authority": "provider-event-derived-advisory",
+              "parsedEvents": 26,
+              "rejectedEvents": 0,
+              "firstWriteObserved": true,
+              "preWritePaths": [],
+              "preWriteContentPaths": [],
+              "preWriteDiscoveryPaths": [],
+              "changedPaths": [
+                "backend/app/api/routes/users.py",
+                "backend/tests/api/routes/test_users.py"
+              ],
+              "readCommandCount": 0,
+              "discoveryCommandCount": 0,
+              "validationCommandCount": 0,
+              "writeEventCount": 1
+            }
+          ],
+          "workspaceRetainedForAudit": true
+        }
+      },
+      "score": {
+        "schemaVersion": 3,
+        "id": "codex:bth:fastapi-05-missing-user",
+        "provider": "codex",
+        "lane": "bth",
+        "taskId": "fastapi-05-missing-user",
+        "successAt1": true,
+        "verificationSuccessAt1": true,
+        "acceptanceConfirmed": true,
+        "failureReasons": [],
+        "providerCompleted": true,
+        "verificationConfirmed": true,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 92677,
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 173350,
+            "uncachedInput": 31526,
+            "output": 2202,
+            "cachedInput": 141824,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 306,
+            "total": 175552
+          },
+          "costUsd": null,
+          "durationMs": 63804,
+          "turns": null
+        },
+        "changedPaths": [
+          "backend/app/api/routes/users.py",
+          "backend/tests/api/routes/test_users.py"
+        ],
+        "goldPathsChanged": [
+          "backend/app/api/routes/users.py",
+          "backend/tests/api/routes/test_users.py"
+        ],
+        "unexpectedChangedPaths": [],
+        "changedGoldRecall": 1,
+        "ruleViolations": [],
+        "impactLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 9,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 1
+        },
+        "outcomeLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 2,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 1
+        }
+      },
+      "totalElapsedMs": 175754,
+      "workspace": null
+    }
+  },
+  "summary": {
+    "direct": {
+      "successAt1": true,
+      "workflowMs": 66722,
+      "providerMs": 42627,
+      "totalElapsedMs": 151469,
+      "usage": {
+        "schemaVersion": 2,
+        "provider": "codex",
+        "tokens": {
+          "input": 151244,
+          "uncachedInput": 25804,
+          "output": 1268,
+          "cachedInput": 125440,
+          "cacheCreationInput": 0,
+          "reasoningOutput": 201,
+          "total": 152512
+        },
+        "costUsd": null,
+        "durationMs": 42627,
+        "turns": null,
+        "providerReported": {
+          "usage.input_tokens": 151244,
+          "usage.cached_input_tokens": 125440,
+          "usage.cache_write_input_tokens": 0,
+          "usage.output_tokens": 1268,
+          "usage.reasoning_output_tokens": 201
+        },
+        "scope": "invocation-final"
+      },
+      "tests": {
+        "tests": 58,
+        "executed": 58,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "request": {
+        "promptBytes": 2366
+      },
+      "changedPaths": [
+        "backend/app/api/routes/users.py",
+        "backend/tests/api/routes/test_users.py"
+      ],
+      "ruleViolations": [],
+      "score": {
+        "schemaVersion": 3,
+        "id": "codex:direct:fastapi-05-missing-user",
+        "provider": "codex",
+        "lane": "direct",
+        "taskId": "fastapi-05-missing-user",
+        "successAt1": true,
+        "verificationSuccessAt1": true,
+        "acceptanceConfirmed": true,
+        "failureReasons": [],
+        "providerCompleted": true,
+        "verificationConfirmed": true,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 66722,
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 151244,
+            "uncachedInput": 25804,
+            "output": 1268,
+            "cachedInput": 125440,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 201,
+            "total": 152512
+          },
+          "costUsd": null,
+          "durationMs": 42627,
+          "turns": null
+        },
+        "changedPaths": [
+          "backend/app/api/routes/users.py",
+          "backend/tests/api/routes/test_users.py"
+        ],
+        "goldPathsChanged": [
+          "backend/app/api/routes/users.py",
+          "backend/tests/api/routes/test_users.py"
+        ],
+        "unexpectedChangedPaths": [],
+        "changedGoldRecall": 1,
+        "ruleViolations": [],
+        "impactLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 4,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 1
+        },
+        "outcomeLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 2,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 1
+        }
+      }
+    },
+    "bth": {
+      "successAt1": true,
+      "workflowMs": 92677,
+      "providerMs": 63804,
+      "totalElapsedMs": 175754,
+      "usage": {
+        "provider": "codex",
+        "tokens": {
+          "input": 173350,
+          "uncachedInput": 31526,
+          "output": 2202,
+          "cachedInput": 141824,
+          "cacheCreationInput": 0,
+          "reasoningOutput": 306,
+          "total": 175552
+        },
+        "costUsd": null,
+        "durationMs": 63804,
+        "turns": null
+      },
+      "tests": {
+        "tests": 58,
+        "executed": 58,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "request": {
+        "bytes": 17436,
+        "codeContextEntries": 9,
+        "codeContextCharacters": 1925,
+        "projectRuleCount": 4,
+        "knowledgeDocumentCount": 7
+      },
+      "changedPaths": [
+        "backend/app/api/routes/users.py",
+        "backend/tests/api/routes/test_users.py"
+      ],
+      "ruleViolations": [],
+      "score": {
+        "schemaVersion": 3,
+        "id": "codex:bth:fastapi-05-missing-user",
+        "provider": "codex",
+        "lane": "bth",
+        "taskId": "fastapi-05-missing-user",
+        "successAt1": true,
+        "verificationSuccessAt1": true,
+        "acceptanceConfirmed": true,
+        "failureReasons": [],
+        "providerCompleted": true,
+        "verificationConfirmed": true,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 92677,
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 173350,
+            "uncachedInput": 31526,
+            "output": 2202,
+            "cachedInput": 141824,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 306,
+            "total": 175552
+          },
+          "costUsd": null,
+          "durationMs": 63804,
+          "turns": null
+        },
+        "changedPaths": [
+          "backend/app/api/routes/users.py",
+          "backend/tests/api/routes/test_users.py"
+        ],
+        "goldPathsChanged": [
+          "backend/app/api/routes/users.py",
+          "backend/tests/api/routes/test_users.py"
+        ],
+        "unexpectedChangedPaths": [],
+        "changedGoldRecall": 1,
+        "ruleViolations": [],
+        "impactLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 9,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 1
+        },
+        "outcomeLocalization": {
+          "taskId": "fastapi-05-missing-user",
+          "goldPathCount": 2,
+          "rankedPathCount": 2,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 1
+        }
+      }
+    }
+  },
+  "limitations": [
+    "The direct lane started before the v34 candidate-budget metadata was finalized. Direct execution does not invoke BTH convention compilation or generated-context projection; the BTH lane started after those changes. Source hashes describe the final v34 modules, not a claim that every unused module was reloaded by the earlier direct process.",
+    "One observation per lane, not a causal performance estimate.",
+    "Shared prepared public test fixture; no company source or production DB.",
+    "Total elapsed includes preparation and independent controls; workflow includes implementation and ordinary verification.",
+    "Impact localization is a path-order proxy, not equivalent model understanding.",
+    "No OS-level egress isolation. Unknown cost remains null."
+  ]
+}

@@ -7,6 +7,30 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/core/convention-compiler.mjs',
+    from: "if (path.endsWith('.py')) stem = stem.replace(/^test_/, '')",
+    to: 'if (false) stem = stem',
+    test: 'test/convention-compiler.test.mjs'
+  },
+  {
+    file: 'src/core/convention-compiler.mjs',
+    from: 'if (best.length !== 1)',
+    to: 'if (best.length === 0)',
+    test: 'test/convention-compiler.test.mjs'
+  },
+  {
+    file: 'src/core/convention-compiler.mjs',
+    from: 'if (candidates.size > MAX_PAIR_CANDIDATES) {',
+    to: 'if (false) {',
+    test: 'test/convention-compiler.test.mjs'
+  },
+  {
+    file: 'src/runtime/interview-orchestrator.mjs',
+    from: 'task.context !== taskContextText(artifacts, contextSnapshot)',
+    to: 'false',
+    test: 'test/interview-orchestrator.test.mjs'
+  },
+  {
     file: 'src/evaluation/project-fixture.mjs',
     from: '(before?.sha256 ?? null) !== file.expectedSha256 && before?.sha256 !== file.sha256',
     to: 'false',

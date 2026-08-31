@@ -306,7 +306,9 @@ test('automatic fast implementation requires confirmed project rules and adjacen
   assert.equal(capturedRequest.implementation.profile.verificationStrategy, 'all-required-gates')
   assert.deepEqual(capturedRequest.codeContext.entries, semanticContext.entries)
   assert.equal(capturedRequest.task.approvedPlan, taskBefore.plan)
-  assert.equal(capturedRequest.task.context, taskBefore.context)
+  assert.ok(capturedRequest.task.context.length < taskBefore.context.length)
+  assert.match(capturedRequest.task.context, /unchanged approvedPlan/)
+  assert.match(capturedRequest.task.context, /Project rules needing attention:/)
 })
 
 test('an unavailable built-in provider fails before creating implementation state or changing the task', async () => {

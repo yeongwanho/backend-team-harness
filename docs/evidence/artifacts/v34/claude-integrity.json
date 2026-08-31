@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "sameProtectedInputsAcrossLanes": true,
+  "candidates": {
+    "direct": {
+      "protectedInputs": [
+        {
+          "path": ".backend-harness/bin/verify-portable.cmd",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "a437553789aa5c5b5a630404746e8fac26cdc4ef9584ed4d6f086a65b7470352"
+        },
+        {
+          "path": ".backend-harness/bin/verify-portable.mjs",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "b9e0f09deb00a4f3490b52a1a5e8067098ac3e712bea4e54fa87f9517c711f94"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi",
+          "kind": "file",
+          "executable": true,
+          "contentSha256": "1486e7ac42647a75f682317ad92321462fdb5b4894a64cfb13a5283742370faf"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi.cmd",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "8ba96bfee91d48be818061140248bfb77ba0c986820ff6afe5f1180650326f05"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi.mjs",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "2e7a5c6ed657a26362af6532ef45b41e6b24bbb95797c2f80fc69b8ce26f53fa"
+        },
+        {
+          "path": ".backend-harness/verification.json",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "e1ffff25c68b9ef09c304fc14441d4f5288eddee1e3e05665ec9e579d579d76c"
+        },
+        {
+          "path": "backend/pyproject.toml",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "34fbc0c1c702b37576e479d71ec02fe5a641f4b1a9495eda9ecee8a2eb3430d9"
+        },
+        {
+          "path": "backend/tests/bth_evaluation_bootstrap.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "8aa98e4fe8cf718817211ddf30a592133ca05cfe99a0b101a7533f5f6562327f"
+        },
+        {
+          "path": "backend/tests/scripts/test_backend_pre_start.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "0301cc388e74b0d8b1cf691224bd6447a413084695b3ecb23657b8adcbbbb839"
+        },
+        {
+          "path": "backend/tests/scripts/test_test_pre_start.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "24a6c93b0f101d2755807ee5c093f1617929fe93817a7b90519fda1902497ba5"
+        },
+        {
+          "path": "backend/tests/test_baseline_environment.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "ab10054180cf606d0759c084cf560e0c9fecb7c440c223d0056e52bde51ee6aa"
+        },
+        {
+          "path": "backend/tests/utils/utils.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "037e8c294c1a6645bc6975b91d01284e89e42bddc2bc99c0daa9a94563d6df06"
+        },
+        {
+          "path": "pyproject.toml",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+        },
+        {
+          "path": "uv.lock",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "c27a6c9636dc203d1151f96f9d6733a4f52986fb43a079c6d354e5a389148b68"
+        }
+      ],
+      "baselineRecordSha256": "611a8bfd5ea172bedf950fae896792bc3766103d25f4fdb4178091e114061f27",
+      "comparedWithContemporaneousInputs": true,
+      "mismatches": [],
+      "fixture": {
+        "valid": true,
+        "mismatchedPaths": []
+      },
+      "originalTests": 55,
+      "finalTests": null,
+      "missingOriginalTests": null,
+      "finalReportSha256": null,
+      "addedCases": null
+    },
+    "bth": {
+      "protectedInputs": [
+        {
+          "path": ".backend-harness/bin/verify-portable.cmd",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "a437553789aa5c5b5a630404746e8fac26cdc4ef9584ed4d6f086a65b7470352"
+        },
+        {
+          "path": ".backend-harness/bin/verify-portable.mjs",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "b9e0f09deb00a4f3490b52a1a5e8067098ac3e712bea4e54fa87f9517c711f94"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi",
+          "kind": "file",
+          "executable": true,
+          "contentSha256": "1486e7ac42647a75f682317ad92321462fdb5b4894a64cfb13a5283742370faf"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi.cmd",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "8ba96bfee91d48be818061140248bfb77ba0c986820ff6afe5f1180650326f05"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi.mjs",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "2e7a5c6ed657a26362af6532ef45b41e6b24bbb95797c2f80fc69b8ce26f53fa"
+        },
+        {
+          "path": ".backend-harness/verification.json",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "e1ffff25c68b9ef09c304fc14441d4f5288eddee1e3e05665ec9e579d579d76c"
+        },
+        {
+          "path": "backend/pyproject.toml",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "34fbc0c1c702b37576e479d71ec02fe5a641f4b1a9495eda9ecee8a2eb3430d9"
+        },
+        {
+          "path": "backend/tests/bth_evaluation_bootstrap.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "8aa98e4fe8cf718817211ddf30a592133ca05cfe99a0b101a7533f5f6562327f"
+        },
+        {
+          "path": "backend/tests/scripts/test_backend_pre_start.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "0301cc388e74b0d8b1cf691224bd6447a413084695b3ecb23657b8adcbbbb839"
+        },
+        {
+          "path": "backend/tests/scripts/test_test_pre_start.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "24a6c93b0f101d2755807ee5c093f1617929fe93817a7b90519fda1902497ba5"
+        },
+        {
+          "path": "backend/tests/test_baseline_environment.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "ab10054180cf606d0759c084cf560e0c9fecb7c440c223d0056e52bde51ee6aa"
+        },
+        {
+          "path": "backend/tests/utils/utils.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "037e8c294c1a6645bc6975b91d01284e89e42bddc2bc99c0daa9a94563d6df06"
+        },
+        {
+          "path": "pyproject.toml",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+        },
+        {
+          "path": "uv.lock",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "c27a6c9636dc203d1151f96f9d6733a4f52986fb43a079c6d354e5a389148b68"
+        }
+      ],
+      "baselineRecordSha256": "4b484508b73e3b92f4656aecac2817d92b24763ea30cf91e73b4c8a5487f5680",
+      "comparedWithContemporaneousInputs": true,
+      "mismatches": [],
+      "fixture": {
+        "valid": true,
+        "mismatchedPaths": []
+      },
+      "originalTests": 55,
+      "finalTests": null,
+      "missingOriginalTests": null,
+      "finalReportSha256": null,
+      "addedCases": null
+    }
+  }
+}

@@ -18,6 +18,8 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Changed
 
+- Test pairing recognizes Python prefixes, scopes duplicate names by module/language and package/directory hints, and leaves ambiguous or over-budget buckets unresolved. Test-only annotations and DB signals no longer contaminate production convention observations.
+- Provider input removes only exactly duplicated generated context fields after artifact and renderer checks. Approved plans and custom human context remain intact. The v34 real Codex comparison still does not demonstrate a latency advantage; see `docs/evidence/provider-context-correctness-v34.md`.
 - Generated pytest verification uses an already-prepared project/workspace environment and the backend working directory; it no longer implicitly runs `uv run`. Python `doctor` lookup recognizes normal interpreter symlink leaves while rejecting linked environment directories, and labels presence checks as unprobed imports/tests.
 - Code-context retrieval splits snake_case/acronyms, distinguishes explicitly named identifier ownership, and retains only query matches in memory. The known 20-task comparison improves on average but still has per-task losses; no end-to-end provider speed claim is made. See `docs/evidence/identifier-retrieval-v28.md`.
 - Generated Jest verification rejects unknown assertion states, contradictory counts, interrupted/runtime-error suites and stale raw JSON. It preserves skipped/todo results, omits failure-message bodies, bounds conversion and refuses linked report paths. The exact generated runner is exercised by the Nest controls.

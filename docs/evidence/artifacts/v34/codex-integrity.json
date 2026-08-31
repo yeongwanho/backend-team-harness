@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 1,
+  "sameProtectedInputsAcrossLanes": true,
+  "candidates": {
+    "direct": {
+      "protectedInputs": [
+        {
+          "path": ".backend-harness/bin/verify-portable.cmd",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "a437553789aa5c5b5a630404746e8fac26cdc4ef9584ed4d6f086a65b7470352"
+        },
+        {
+          "path": ".backend-harness/bin/verify-portable.mjs",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "b9e0f09deb00a4f3490b52a1a5e8067098ac3e712bea4e54fa87f9517c711f94"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi",
+          "kind": "file",
+          "executable": true,
+          "contentSha256": "1486e7ac42647a75f682317ad92321462fdb5b4894a64cfb13a5283742370faf"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi.cmd",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "8ba96bfee91d48be818061140248bfb77ba0c986820ff6afe5f1180650326f05"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi.mjs",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "2e7a5c6ed657a26362af6532ef45b41e6b24bbb95797c2f80fc69b8ce26f53fa"
+        },
+        {
+          "path": ".backend-harness/verification.json",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "e1ffff25c68b9ef09c304fc14441d4f5288eddee1e3e05665ec9e579d579d76c"
+        },
+        {
+          "path": "backend/pyproject.toml",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "34fbc0c1c702b37576e479d71ec02fe5a641f4b1a9495eda9ecee8a2eb3430d9"
+        },
+        {
+          "path": "backend/tests/bth_evaluation_bootstrap.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "8aa98e4fe8cf718817211ddf30a592133ca05cfe99a0b101a7533f5f6562327f"
+        },
+        {
+          "path": "backend/tests/scripts/test_backend_pre_start.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "0301cc388e74b0d8b1cf691224bd6447a413084695b3ecb23657b8adcbbbb839"
+        },
+        {
+          "path": "backend/tests/scripts/test_test_pre_start.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "24a6c93b0f101d2755807ee5c093f1617929fe93817a7b90519fda1902497ba5"
+        },
+        {
+          "path": "backend/tests/test_baseline_environment.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "ab10054180cf606d0759c084cf560e0c9fecb7c440c223d0056e52bde51ee6aa"
+        },
+        {
+          "path": "backend/tests/utils/utils.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "037e8c294c1a6645bc6975b91d01284e89e42bddc2bc99c0daa9a94563d6df06"
+        },
+        {
+          "path": "pyproject.toml",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+        },
+        {
+          "path": "uv.lock",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "c27a6c9636dc203d1151f96f9d6733a4f52986fb43a079c6d354e5a389148b68"
+        }
+      ],
+      "baselineRecordSha256": "29ad6325442ecd862a4e4f3d83d373cbe23896e6930b5cb34a99218ad3517d5a",
+      "comparedWithContemporaneousInputs": true,
+      "mismatches": [],
+      "fixture": {
+        "valid": true,
+        "mismatchedPaths": []
+      },
+      "originalTests": 55,
+      "finalTests": 58,
+      "missingOriginalTests": [],
+      "finalReportSha256": "b4bec1274e3dc042944b4c00063cbfd00e3b7b68c878b7553a234aec7e1e69b9",
+      "addedCases": [
+        "tests.api.routes.test_users::test_get_user_not_found",
+        "tests.test_baseline_environment::test_synthetic_mail_builds_real_mime_without_using_smtp",
+        "tests.test_baseline_environment::test_synthetic_transport_rejects_non_test_addresses_before_reading_message"
+      ]
+    },
+    "bth": {
+      "protectedInputs": [
+        {
+          "path": ".backend-harness/bin/verify-portable.cmd",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "a437553789aa5c5b5a630404746e8fac26cdc4ef9584ed4d6f086a65b7470352"
+        },
+        {
+          "path": ".backend-harness/bin/verify-portable.mjs",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "b9e0f09deb00a4f3490b52a1a5e8067098ac3e712bea4e54fa87f9517c711f94"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi",
+          "kind": "file",
+          "executable": true,
+          "contentSha256": "1486e7ac42647a75f682317ad92321462fdb5b4894a64cfb13a5283742370faf"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi.cmd",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "8ba96bfee91d48be818061140248bfb77ba0c986820ff6afe5f1180650326f05"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi.mjs",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "2e7a5c6ed657a26362af6532ef45b41e6b24bbb95797c2f80fc69b8ce26f53fa"
+        },
+        {
+          "path": ".backend-harness/verification.json",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "e1ffff25c68b9ef09c304fc14441d4f5288eddee1e3e05665ec9e579d579d76c"
+        },
+        {
+          "path": "backend/pyproject.toml",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "34fbc0c1c702b37576e479d71ec02fe5a641f4b1a9495eda9ecee8a2eb3430d9"
+        },
+        {
+          "path": "backend/tests/bth_evaluation_bootstrap.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "8aa98e4fe8cf718817211ddf30a592133ca05cfe99a0b101a7533f5f6562327f"
+        },
+        {
+          "path": "backend/tests/scripts/test_backend_pre_start.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "0301cc388e74b0d8b1cf691224bd6447a413084695b3ecb23657b8adcbbbb839"
+        },
+        {
+          "path": "backend/tests/scripts/test_test_pre_start.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "24a6c93b0f101d2755807ee5c093f1617929fe93817a7b90519fda1902497ba5"
+        },
+        {
+          "path": "backend/tests/test_baseline_environment.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "ab10054180cf606d0759c084cf560e0c9fecb7c440c223d0056e52bde51ee6aa"
+        },
+        {
+          "path": "backend/tests/utils/utils.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "037e8c294c1a6645bc6975b91d01284e89e42bddc2bc99c0daa9a94563d6df06"
+        },
+        {
+          "path": "pyproject.toml",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+        },
+        {
+          "path": "uv.lock",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "c27a6c9636dc203d1151f96f9d6733a4f52986fb43a079c6d354e5a389148b68"
+        }
+      ],
+      "baselineRecordSha256": "fa159059c36f539c86f9b2c76b27a1c246cf87b6c0cd0d882fe577f0e332cdd2",
+      "comparedWithContemporaneousInputs": true,
+      "mismatches": [],
+      "fixture": {
+        "valid": true,
+        "mismatchedPaths": []
+      },
+      "originalTests": 55,
+      "finalTests": 58,
+      "missingOriginalTests": [],
+      "finalReportSha256": "01cde22324a2c6a43fea6b8e05b22a0a64f7bd1a3b5bc42f15d44147bd003c88",
+      "addedCases": [
+        "tests.api.routes.test_users::test_get_nonexistent_user_superuser_not_found",
+        "tests.test_baseline_environment::test_synthetic_mail_builds_real_mime_without_using_smtp",
+        "tests.test_baseline_environment::test_synthetic_transport_rejects_non_test_addresses_before_reading_message"
+      ]
+    }
+  }
+}

@@ -305,6 +305,36 @@ function taskContextText(artifacts, contextSnapshot) {
   ].join('\n')
 }
 
+// Only collapse fields emitted by our exact current renderer. The approved plan
+// itself is never shortened, and any human amendment or legacy schema falls back
+// to the original context. loadInterview verifies the immutable artifacts first.
+export function generatedProviderContext(task, interview) {
+  const { artifacts, record, contextSnapshot } = interview ?? {}
+  const plan = artifacts?.plan
+  if (record?.status !== 'FINALIZED' || plan?.schemaVersion !== 4 ||
+      record.taskId !== task.id || plan.taskId !== task.id ||
+      task.planArtifactSha256 !== record.artifactDigests?.plan ||
+      task.planArtifactSha256 !== sha256(plan)) return task.context
+  try {
+    if (task.plan !== planMarkdown(artifacts, contextSnapshot).trim() ||
+        task.context !== taskContextText(artifacts, contextSnapshot)) return task.context
+    const fields = [
+      ['Requirement', artifacts.requirement.initialRequirement, plan.objective],
+      ['Acceptance criteria', artifacts.requirement.acceptanceCriteria, plan.acceptanceCriteria],
+      ['Allowed scope', artifacts.impact.allowedScope, plan.allowedScope],
+      ['Database/data impact', artifacts.impact.databaseAndData, plan.databaseAndData],
+      ['Constraints/exclusions', artifacts.impact.constraintsAndExclusions, plan.constraintsAndExclusions]
+    ]
+    if (fields.some(([, contextValue, planValue]) => contextValue !== planValue)) return task.context
+    const repeated = fields.map(([label, value]) => label + ': ' + value).join('\n\n') + '\n\n'
+    if (!task.context.startsWith(repeated)) return task.context
+    const compact = 'Repeated generated fields are in unchanged approvedPlan.\n' + task.context.slice(repeated.length)
+    return compact.length < task.context.length ? compact : task.context
+  } catch {
+    return task.context
+  }
+}
+
 function shellArgument(value) {
   return "'" + String(value).replaceAll("'", "'\\''") + "'"
 }
