@@ -1,0 +1,318 @@
+{
+  "schemaVersion": 1,
+  "kind": "public-base-target-behavior-controls",
+  "providerCalls": 0,
+  "sourceCommit": "2e38f5fd64d930f261c278941960db423f6e4fac",
+  "sourceHashes": {
+    "src/evaluation/task-acceptance.mjs": "87819f0124426be23cbce34d636b2f2c4d8de229bf8254dd2d4a0cf4a7248e3e",
+    "src/evaluation/isolated-git-snapshot.mjs": "d96a1038205b2d8fe4921a9c650455b21cba4439f9f9588e6e82fcab68e2925b",
+    "src/evaluation/provider-benchmark-config.mjs": "808f6949d88d443a96e7cf4d432c030efdce32f38a8cb6271ee322b22fc67391",
+    "src/core/junit.mjs": "884a507f9e189babc568617ecbfa0dd5d733925f21d2d3b064cdac901248b92c",
+    "scripts/acceptance-controls.mjs": "d705923f10c3675e68af194884f77cbed64cc7744634aa0928a9280cb470bf44"
+  },
+  "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+  "configSha256": "564c0f46622487b6a51fe7b51a8f28899316fbbce720c256e05ebd2c77c096f7",
+  "taskCount": 1,
+  "controlsConfirmed": 1,
+  "node": "v22.23.1",
+  "platform": "darwin",
+  "results": [
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-04-document-find-update",
+      "requirementSha256": "018920e80cfebd83c05cd068516b81adb61dada9021ce63b9e17b384585923b1",
+      "baseSha": "85c97e1df7132eece3779a14e7f4034e48568a18",
+      "targetSha": "9e2b0c592411883d61f7670fdf8325366e33dfcd",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "aaa3c643c00949f1e19d81c6daeb75d5bc00c66668214fd718771551a35e404c",
+        "testFiles": [
+          {
+            "path": "test/bth/document-update.spec.ts",
+            "sha256": "527b2cdaf67b53df8b996e61fc89c569a41132e3ef256b7003a088324116a9a0"
+          },
+          {
+            "path": "test/bth/jest.config.cjs",
+            "sha256": "2eb06d9bfb5783ee19238c138841726dca5003b3391df55ad9230085e6946eae"
+          },
+          {
+            "path": "test/bth/run.cjs",
+            "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+          },
+          {
+            "path": "test/bth/verify-jest.mjs",
+            "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 9779,
+              "stdout": {
+                "sha256": "4d776972de16ac7b938c9be27914d32441cbca3e77d9c1febacc4ec3a889b0c0",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "d71becddaae26aa127e72a1f28a8913f76559d9b5ec0425738157c0638ae2c7a",
+                "bytes": 7022
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "9f52293c60b1b469837ca5ad70b0e002dabe1a66731a5763cece4a156568ffab",
+                "bytes": 3072
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user returns the changed document and preserves caller ID and untouched data",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user preserves initial missing-document behavior without an update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user returns null when the document disappears during update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user propagates lookup failure without a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user propagates update failure without returning stale data",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session returns the changed document and preserves caller ID and untouched data",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session preserves initial missing-document behavior without an update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session returns null when the document disappears during update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session propagates lookup failure without a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session propagates update failure without returning stale data",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource returns the changed document and preserves caller ID and untouched data",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource preserves initial missing-document behavior without an update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource returns null when the document disappears during update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource propagates lookup failure without a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource propagates update failure without returning stale data",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource returns the changed document and preserves caller ID and untouched data",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource preserves initial missing-document behavior without an update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource returns null when the document disappears during update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource propagates lookup failure without a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource propagates update failure without returning stale data",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 9466,
+              "stdout": {
+                "sha256": "4d776972de16ac7b938c9be27914d32441cbca3e77d9c1febacc4ec3a889b0c0",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "dda4ac1fb3a67d3b95868dbe4eaa59bbd55d60f45968b08ec335eaeee75f66f0",
+                "bytes": 2905
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "4ef4b42c24997c3ac398339da40adb1c0c6bbd5dec40a96a48b7dec95a4d464f",
+                "bytes": 2964
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user returns the changed document and preserves caller ID and untouched data",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user preserves initial missing-document behavior without an update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user returns null when the document disappears during update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user propagates lookup failure without a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user propagates update failure without returning stale data",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session returns the changed document and preserves caller ID and untouched data",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session preserves initial missing-document behavior without an update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session returns null when the document disappears during update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session propagates lookup failure without a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session propagates update failure without returning stale data",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource returns the changed document and preserves caller ID and untouched data",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource preserves initial missing-document behavior without an update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource returns null when the document disappears during update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource propagates lookup failure without a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource propagates update failure without returning stale data",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource returns the changed document and preserves caller ID and untouched data",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource preserves initial missing-document behavior without an update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource returns null when the document disappears during update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource propagates lookup failure without a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource propagates update failure without returning stale data",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 30163
+      }
+    }
+  ]
+}

@@ -1,0 +1,1746 @@
+{
+  "schemaVersion": 1,
+  "kind": "public-base-target-behavior-controls",
+  "providerCalls": 0,
+  "sourceCommit": "2e38f5fd64d930f261c278941960db423f6e4fac",
+  "sourceHashes": {
+    "src/evaluation/task-acceptance.mjs": "87819f0124426be23cbce34d636b2f2c4d8de229bf8254dd2d4a0cf4a7248e3e",
+    "src/evaluation/isolated-git-snapshot.mjs": "d96a1038205b2d8fe4921a9c650455b21cba4439f9f9588e6e82fcab68e2925b",
+    "src/evaluation/provider-benchmark-config.mjs": "808f6949d88d443a96e7cf4d432c030efdce32f38a8cb6271ee322b22fc67391",
+    "src/core/junit.mjs": "884a507f9e189babc568617ecbfa0dd5d733925f21d2d3b064cdac901248b92c",
+    "scripts/acceptance-controls.mjs": "d705923f10c3675e68af194884f77cbed64cc7744634aa0928a9280cb470bf44"
+  },
+  "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+  "configSha256": "564c0f46622487b6a51fe7b51a8f28899316fbbce720c256e05ebd2c77c096f7",
+  "taskCount": 11,
+  "controlsConfirmed": 10,
+  "node": "v22.23.1",
+  "platform": "darwin",
+  "results": [
+    {
+      "repositoryId": "spring-petclinic",
+      "taskId": "spring-01-pet-association",
+      "requirementSha256": "e7c52525cc266de34cde23b1132ff70eea2a073ff8d9d51175453532eb2f9c87",
+      "baseSha": "88e37c15cf6fc8490b01bc3e8e2c800cec1ac272",
+      "targetSha": "676db04515ee5f289641cea6cb379dc02b40f67f",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "target-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "5822e5ed58176a23f6cb86d4d7a0a29e93ae39fce5ccb545027087746154e60d",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/OwnerTests.java",
+            "sha256": "a0c5366440acf52c330729cc301419acbc279d22c4bc252e0ae70aa02098095d"
+          },
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/PetValidatorTests.java",
+            "sha256": "91a7c7d4273233d61881519447af8690ace3e19f8a34fe4b874ad1534a462487"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 7708,
+              "stdout": {
+                "sha256": "e5524bb53b42534575add64f6caf22dea1e0c9c107208a20f9dc18b1fe9e101d",
+                "bytes": 3807
+              },
+              "stderr": {
+                "sha256": "4a1895c9431ff99d34f1df426fa425e037d592409a90fa7fb1eb38d433a9146a",
+                "bytes": 902
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.OwnerTests.xml",
+                "sha256": "d2e2c6b02c369d7beafd2df48ae1f40f7d597a7d58487abc276bccd485a3fc61",
+                "bytes": 46975
+              },
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetValidatorTests.xml",
+                "sha256": "74019aef3fec585b25f58acdc6cdaf8d4f65d6d68a25a4e2a8c3a1011983139a",
+                "bytes": 47835
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerTests",
+                "name": "addPetAddsPersistedPet",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerTests",
+                "name": "addPetDoesNotAddDuplicatePet",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetValidatorTests",
+                "name": "validate",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetValidatorTests$ValidateHasErrors",
+                "name": "validateWithLongPetName",
+                "outcome": "failed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 6715,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "f37c38d144acdccab76fdd43c2504f2a5e99969e160ee2b269f4af964c1c93cd",
+                "bytes": 902
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.OwnerTests.xml",
+                "sha256": "4cf503022f3d64e00ed8a551eaf97a5b0fabe24b4a14afc4d59944ae13f30584",
+                "bytes": 45328
+              },
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetValidatorTests.xml",
+                "sha256": "bc20d4218b1f61ebae528929419ee77fae355e16a887148ab24569a61bbb0e4a",
+                "bytes": 46950
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerTests",
+                "name": "addPetAddsPersistedPet",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerTests",
+                "name": "addPetDoesNotAddDuplicatePet",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetValidatorTests",
+                "name": "validate",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetValidatorTests$ValidateHasErrors",
+                "name": "validateWithLongPetName",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 15062
+      }
+    },
+    {
+      "repositoryId": "spring-petclinic",
+      "taskId": "spring-02-owner-search-whitespace",
+      "requirementSha256": "da8f4d1379a8d99fc25cdec81a342d2f4a2136b921147c1e7d05f4075ae3dc2f",
+      "baseSha": "0f6e8614047bd74cf6223b4d8a858d2ed2824f8a",
+      "targetSha": "bb37aad8c332264723817d855e8b3b96b7c392bc",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "87525dcf64a069cf490c2b47ef23fdc1c29600461e6a85d50eaf56b72013d194",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/OwnerSearchAcceptanceTests.java",
+            "sha256": "f53fd6ad54a2ae1351487f8ae0ef2317c974b133c5baedcd5a95783d5ee2965b"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 7867,
+              "stdout": {
+                "sha256": "c2b8a0b9752f8611657efbb61406c283ec88794f6fd441cfa09a1aa053b82b02",
+                "bytes": 5103
+              },
+              "stderr": {
+                "sha256": "f37c38d144acdccab76fdd43c2504f2a5e99969e160ee2b269f4af964c1c93cd",
+                "bytes": 902
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests.xml",
+                "sha256": "26d05f3022a44cb1f394224f498a7c6bddb696867bd20229b66e10f74b57836b",
+                "bytes": 50902
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "surroundingWhitespaceFindsSameOwner",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "whitespaceOnlyUsesUnfilteredSearch",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "emptyOrMissingNameStillListsOwners",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "ordinaryNameKeepsIdentity",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "internalWhitespaceAndCaseAreNotRewritten",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "unmatchedNameStaysAValidationResult",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 7533,
+              "stdout": {
+                "sha256": "c70a6b6353e906cef1fedba86f75ae4d46af34ffef46330dbf9c1f61ed5758e5",
+                "bytes": 2228
+              },
+              "stderr": {
+                "sha256": "4a1895c9431ff99d34f1df426fa425e037d592409a90fa7fb1eb38d433a9146a",
+                "bytes": 902
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests.xml",
+                "sha256": "4f31219dfd9635c5df38e98cfd049748ec1245bc70d4f79d5d9eb2c492456136",
+                "bytes": 49584
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "surroundingWhitespaceFindsSameOwner",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "whitespaceOnlyUsesUnfilteredSearch",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "emptyOrMissingNameStillListsOwners",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "ordinaryNameKeepsIdentity",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "internalWhitespaceAndCaseAreNotRewritten",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "unmatchedNameStaysAValidationResult",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 15972
+      }
+    },
+    {
+      "repositoryId": "spring-petclinic",
+      "taskId": "spring-04-future-visit",
+      "requirementSha256": "b24d45e6d00787b1edea2a1dfd0d73402b476ea0669a27418f67b35bcbc6f617",
+      "baseSha": "3c06fbfc1e42eb40802e0d0ca989bc9226755804",
+      "targetSha": "753d35c2f84432d88c0f3b61c9302a16069b78dd",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "d0c995453902e967986e3f89518e8974817d589626d35d6a2b392c95828587da",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitAcceptanceTests.java",
+            "sha256": "7c13cba46c1da29271390412f45abb5c2cd0dee13b64341f031828bce5110eb4"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 9412,
+              "stdout": {
+                "sha256": "2c1dd5174cc0353fee93fd7106dde9537511ab0d5271741eb91423366a4c100a",
+                "bytes": 20750
+              },
+              "stderr": {
+                "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+                "sha256": "1be1f40ad7b502de4a70223ce97884bc3eae58d56da6f9b07c06229f50771342",
+                "bytes": 64875
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rejectsTodayAndPastWithLocalizedDateError",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "acceptsTomorrowAndLater",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "defaultsNewVisitToTomorrow",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersTomorrowAsMinimumDate",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersLocalizedDateErrors",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "keepsDescriptionRequired",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 8974,
+              "stdout": {
+                "sha256": "094411b131f9cd58da5eb5d20aa4bdb542cbcbd8372b99722c506619a3b1fbbc",
+                "bytes": 2531
+              },
+              "stderr": {
+                "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+                "sha256": "6b7d800054317390ba2c0073aea07061eaeb37820f06e9cf714ad3b0a15bb887",
+                "bytes": 47750
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rejectsTodayAndPastWithLocalizedDateError",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "acceptsTomorrowAndLater",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "defaultsNewVisitToTomorrow",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersTomorrowAsMinimumDate",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersLocalizedDateErrors",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "keepsDescriptionRequired",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 18943
+      }
+    },
+    {
+      "repositoryId": "spring-petclinic",
+      "taskId": "spring-05-binder-id-protection",
+      "requirementSha256": "08ffced3a99ae6a8d5f9197b70fc482ef9e1793cea47b6c45f41a726f68922fd",
+      "baseSha": "f1e0e22b883e185e680d44b264fb73a8efcff8b9",
+      "targetSha": "c7ee170434ec3e369fdc9201290ba2ea4c92b557",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "4286c93013e34c652095c4fe2e7fdc564bc0fbb851f1bf78f5292e63ca1e7528",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/BinderAcceptanceTests.java",
+            "sha256": "8dac1241b8571304540145191626941b215157c9f4a241289aaa934e26f06639"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 7643,
+              "stdout": {
+                "sha256": "4279f054b578da92cfcf08c94b5ac6a2eb7a39ad7f99d70db365706057a9f583",
+                "bytes": 9018
+              },
+              "stderr": {
+                "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.BinderAcceptanceTests.xml",
+                "sha256": "379589fabda3728713fd22063c3d3682a6c74c87be98131218db40da9b4b9cca",
+                "bytes": 52527
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests",
+                "name": "ownerRequestRejectsDirectAndNestedIdsButBindsMutableFields",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests",
+                "name": "petRequestRejectsDirectAndNestedIdsButBindsMutableFields",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests",
+                "name": "visitRequestRejectsDirectAndNestedIdsButBindsDescription",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests",
+                "name": "petNameValidationRemainsActive",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests",
+                "name": "petTypeValidationRemainsActive",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 7792,
+              "stdout": {
+                "sha256": "d570e08181c0c78bca08dfa4ae3c5b650ddbf36daa93f694ff16affa4fca2327",
+                "bytes": 1876
+              },
+              "stderr": {
+                "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.BinderAcceptanceTests.xml",
+                "sha256": "d58a5540d6777172aa9d183cc8b8316c1f140dac9bfb4995a5aeca71efae4cc3",
+                "bytes": 46934
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests",
+                "name": "ownerRequestRejectsDirectAndNestedIdsButBindsMutableFields",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests",
+                "name": "petRequestRejectsDirectAndNestedIdsButBindsMutableFields",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests",
+                "name": "visitRequestRejectsDirectAndNestedIdsButBindsDescription",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests",
+                "name": "petNameValidationRemainsActive",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.BinderAcceptanceTests",
+                "name": "petTypeValidationRemainsActive",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 16016
+      }
+    },
+    {
+      "repositoryId": "spring-petclinic",
+      "taskId": "spring-06-pet-update",
+      "requirementSha256": "68ddc1556c11a5541ba6180a616fd548ecb8619619262edbe14a94fda412f953",
+      "baseSha": "6328d2c9dc8eb2c367c6a613a1ae959c994003c7",
+      "targetSha": "2aa53f929d32b0d41e0fe0391b8385eabe9a3432",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "93412a069c0c269d41e267af620f54d5d7b99b9e24dbcfc077f94c5902a3fd86",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/PetUpdateAcceptanceTests.java",
+            "sha256": "bf4c3a3052701b8c5f98e817aeed01b6799a21a82a6151b373bb2f9065b19934"
+          },
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/PetOwnershipAcceptanceTests.java",
+            "sha256": "093b38cfd6d109c4250fe85a2000ea7516cc4b628594f8c1eb4e2a3e50a2b782"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10677,
+              "stdout": {
+                "sha256": "19da95ea7d73899c81af00a94a8b835c29a51c863bf6e13f9568b93d9a0a6759",
+                "bytes": 16293
+              },
+              "stderr": {
+                "sha256": "c46a982a15820c1eb8994d3fd3b7f35b823415950a689134a673ed8c19cdcc07",
+                "bytes": 895
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests.xml",
+                "sha256": "d3985cae24a70e7bf9f7786a13e095d85cf7ce5ffabd7979d76d98027f3a48d7",
+                "bytes": 46926
+              },
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests.xml",
+                "sha256": "1bf6d7345fa471e18fc48420d681d3cb5741756cce4c16d5ccb0a5800d8bdee9",
+                "bytes": 41024
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+                "name": "persistsExistingPetFieldsWithoutAddingDuplicate",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+                "name": "preservesFallbackForNewUnassociatedPet",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+                "name": "duplicateNameDoesNotChangeStoredPet",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+                "name": "futureBirthDateDoesNotChangeStoredPet",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests",
+                "name": "doesNotModifyOrReparentAnotherOwnersPersistentPet",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10159,
+              "stdout": {
+                "sha256": "dc85a6d6084f045d7d951d4b0ba31fbd643437ffcedf9104caf4bba4dc4f0bc2",
+                "bytes": 14126
+              },
+              "stderr": {
+                "sha256": "c46a982a15820c1eb8994d3fd3b7f35b823415950a689134a673ed8c19cdcc07",
+                "bytes": 895
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests.xml",
+                "sha256": "5dc22beb3fb2fc158b9513934d54412e3e925be44360d39dbac06b3daa6afffd",
+                "bytes": 46446
+              },
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests.xml",
+                "sha256": "c59c70d2009c12ef9775a7d8500188ccf609d9c5d2d4840c751c231e7d63744b",
+                "bytes": 41522
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+                "name": "persistsExistingPetFieldsWithoutAddingDuplicate",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+                "name": "preservesFallbackForNewUnassociatedPet",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+                "name": "duplicateNameDoesNotChangeStoredPet",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+                "name": "futureBirthDateDoesNotChangeStoredPet",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests",
+                "name": "doesNotModifyOrReparentAnotherOwnersPersistentPet",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 21404
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-01-session-update-by-hash",
+      "requirementSha256": "f43ab885965fb78f90245dc5dfb44c2e11c42230151c0a635388d623dce58d8c",
+      "baseSha": "a3aaea0e60fdbb0af3b0108d98f09cf2c8b50fe4",
+      "targetSha": "bba9827ca548ca30c98068936550b8cb94bbc1a0",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": false,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "oracle-controls-not-confirmed",
+        "oracleSha256": "96a59f970f3e422f3a1b9889b8e86a928f13fb267ddfb64fd1508bfae3e02a05",
+        "testFiles": [
+          {
+            "path": "test/bth/session-hash.spec.ts",
+            "sha256": "a3243da03ae35f9806efb8328eb057238d1b999701fd892834936818a31af8f7"
+          },
+          {
+            "path": "test/bth/jest.config.cjs",
+            "sha256": "a7474e42cb1cc0bba4831e31e8a99a16e7c320179d41559891df3340dafba075"
+          },
+          {
+            "path": "test/bth/run.cjs",
+            "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+          },
+          {
+            "path": "test/bth/verify-jest.mjs",
+            "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 719,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "28a2332cf6a95ae471385b5d3506d761df7c4842a97dc99655e009689d6caeb0",
+                "bytes": 1372
+              }
+            },
+            "reports": [],
+            "cases": [
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "service delegates both current ID and hash with the replacement hash",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational rotation includes ID and old hash in the update predicate",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational no-match returns null without reading an unrelated session",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational deletion after update remains null",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational update errors propagate without a read",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "document rotation uses a conditional predicate and requests the updated document",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "document no-match remains null and persistence errors propagate",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "auth signs only after conditional rotation and embeds the rotated hash",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "a failed conditional match cannot issue tokens despite plausible prior session state",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "an absent session is rejected without issuing tokens",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "auth waits for conditional persistence before signing",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "conditional persistence errors and a missing user do not produce tokens",
+                "outcome": "missing"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": false
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 631,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "9a09eef70b2a7aeb24671d6c8819bb7bffc88d83ae8406eecd70a6e82e624822",
+                "bytes": 1372
+              }
+            },
+            "reports": [],
+            "cases": [
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "service delegates both current ID and hash with the replacement hash",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational rotation includes ID and old hash in the update predicate",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational no-match returns null without reading an unrelated session",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational deletion after update remains null",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational update errors propagate without a read",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "document rotation uses a conditional predicate and requests the updated document",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "document no-match remains null and persistence errors propagate",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "auth signs only after conditional rotation and embeds the rotated hash",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "a failed conditional match cannot issue tokens despite plausible prior session state",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "an absent session is rejected without issuing tokens",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "auth waits for conditional persistence before signing",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "conditional persistence errors and a missing user do not produce tokens",
+                "outcome": "missing"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 2339
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-02-file-relational-mapper",
+      "requirementSha256": "938b4e21c4530cefa9044a6f379a7c43fda08b7ac4b14ec8e20d7a69fe0c4d16",
+      "baseSha": "07ac5f29d3032bb173fd538c549966e7eb96dcff",
+      "targetSha": "f4703907ddc54dff7f6e81bc37f0a42e3fdd8d22",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "ff52db4a1bc0b16bbf7532308a250bca99dd66d9dc6ed4e58ffc1ad7f25bf704",
+        "testFiles": [
+          {
+            "path": "test/bth/file-flow.spec.ts",
+            "sha256": "30f8531d2500cb29694894ab6d97ca33be35e95de077ef213f119f683c72bfe3"
+          },
+          {
+            "path": "test/bth/jest.config.cjs",
+            "sha256": "663d94b68f3a7a30e50c7c04404c1456cc8dc65944e2f97d1d1aff0fde9184d8"
+          },
+          {
+            "path": "test/bth/run.cjs",
+            "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+          },
+          {
+            "path": "test/bth/verify-jest.mjs",
+            "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12324,
+              "stdout": {
+                "sha256": "9380cd2e222df98b8ae64e3273de57767f4141dc17c5748f7d6b39abf4b1a3c9",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "4a34b360108fad6f0c9cd7d51b052c3ac6cb228f3a85f31d25d291f0198168b9",
+                "bytes": 5786
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "9d1bb1e675c23f722bf687f768df43bc57a7eed148bf5626c88cc68028081294",
+                "bytes": 1110
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create returns mapped domain data from the saved entity",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create propagates persistence failure without returning a file",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findById maps existing files and preserves missing-file null",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findByIds maps each returned entity and preserves an empty result",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor emits resolved nested values rather than Promise objects",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor routes rejected values through the observable error channel",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor preserves an upstream observable failure",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12147,
+              "stdout": {
+                "sha256": "9380cd2e222df98b8ae64e3273de57767f4141dc17c5748f7d6b39abf4b1a3c9",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "eba8a8781374b435fb107833e923031aa91e81e9645679f39cac5bd2e42b57ad",
+                "bytes": 2071
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "d78b25a29e6031789acde96937e4996a3d7284b4255b2a71b52e71f2faf6089b",
+                "bytes": 1029
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create returns mapped domain data from the saved entity",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create propagates persistence failure without returning a file",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findById maps existing files and preserves missing-file null",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findByIds maps each returned entity and preserves an empty result",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor emits resolved nested values rather than Promise objects",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor routes rejected values through the observable error channel",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor preserves an upstream observable failure",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 38904
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-03-swagger-language-header",
+      "requirementSha256": "b3d96dc208076eb52a29dd16083a7c5ce6b5ea73c4936524fae1548c7fe03e71",
+      "baseSha": "1cb55deff983e56f45a0a70bdd2e6c5bfb90b79c",
+      "targetSha": "b5c3262e7b58e4443dd27328e4d2ced50c832204",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "39d9c1ea6a3f3bfd70e66d01ba7917a0035d8be29c3fd7f8f39868a0e2c538db",
+        "testFiles": [
+          {
+            "path": "test/bth/swagger-language.spec.ts",
+            "sha256": "af2ce4fcbd88e6a16e10edbcdb158d212f834d9de966015740cfb789a3ae8276"
+          },
+          {
+            "path": "test/bth/jest.config.cjs",
+            "sha256": "b697d3e36123cfd6b1aeca64375e19438b806b24787fb7bbb58280d93834505d"
+          },
+          {
+            "path": "test/bth/run.cjs",
+            "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+          },
+          {
+            "path": "test/bth/verify-jest.mjs",
+            "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12016,
+              "stdout": {
+                "sha256": "5f189ffaf876be5015070af348e40fc8151ab4af692c6552f6c5f7099264c954",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "3441e7457c73dd0e43bc37d4ad9908ec241022f024aef72673f32e6b0f3f9d3c",
+                "bytes": 4139
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "0d528bc9bb7154b343cc31c4419607c6c75b7628c760073c1d388937b3cdaa23",
+                "bytes": 618
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "configured language header is optional with an English example in generated operations",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "an unset language setting falls back to x-custom-lang",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "an empty language setting falls back to x-custom-lang",
+                "outcome": "failed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 11983,
+              "stdout": {
+                "sha256": "5f189ffaf876be5015070af348e40fc8151ab4af692c6552f6c5f7099264c954",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "c71a4c3fd084cd645f146dc7f99e92b2eab6d4c6798e1571669d8711dd8491b6",
+                "bytes": 1277
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "cbe793d335fc132a5240a2d67f7e1ef289a3567c733d62e750b961ccdc5537b5",
+                "bytes": 537
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "configured language header is optional with an English example in generated operations",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "an unset language setting falls back to x-custom-lang",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "an empty language setting falls back to x-custom-lang",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 38357
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-06-user-email-conflict",
+      "requirementSha256": "941a72db44e3a0c686d1aa7640f63010be1110347a7163414c4dec4e3040d563",
+      "baseSha": "d523e2638a649817883c57971914cdeccdd04bde",
+      "targetSha": "ab530c4da7559bf2487698982799920a4d10e345",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "115f64a93020c404d60537c47e2069bc269a785ff65a61d0cdd222e80b0be6cd",
+        "testFiles": [
+          {
+            "path": "test/bth/users-email.spec.ts",
+            "sha256": "b586bce481ee96baacd37ffb6dc98eb7deb4a999668cd06c4bbb8965b59c7799"
+          },
+          {
+            "path": "test/bth/jest.config.cjs",
+            "sha256": "c385deb0342efa1a15acaf1f1b4d6256d4d29bebe6c0de20b476f258d196cfcb"
+          },
+          {
+            "path": "test/bth/run.cjs",
+            "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+          },
+          {
+            "path": "test/bth/verify-jest.mjs",
+            "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 9135,
+              "stdout": {
+                "sha256": "2553b7ff51d390965010292c65d0aaf4dbe4f093700385e01d8c8fbb6c48be4d",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "531fd3023e502af90cb854a4ce613f2e4921d607eb6c03476c31902cfc28a6f1",
+                "bytes": 3329
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "4f4f6703630d007e6887d83468d426c199250002de9d3586abc4b57defbeb66b",
+                "bytes": 1112
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "unused email reaches persistence and does not mutate caller payload",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "the same account may retain its existing email",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "another account email is rejected without any persistence update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "an update without email does not perform an email uniqueness lookup",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "email lookup failure propagates and prevents a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "persistence failure is not replaced by an email conflict",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "a missing update result remains null rather than a fabricated account",
+                "outcome": "failed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 8655,
+              "stdout": {
+                "sha256": "72e4862d9dbdcf48d7d4adee5df6c9b4b76673a3eb06b84c5980af7b26f10449",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "602d431184e62a15929983c3145f379d91b1eb0f8ab18f3e47848fc137c34464",
+                "bytes": 1523
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "e4b9f3db83b71e795ad008b9d66b4b8827fe6fb4309bf61513a112a2b95eb779",
+                "bytes": 1031
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "unused email reaches persistence and does not mutate caller payload",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "the same account may retain its existing email",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "another account email is rejected without any persistence update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "an update without email does not perform an email uniqueness lookup",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "email lookup failure propagates and prevents a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "persistence failure is not replaced by an email conflict",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "a missing update result remains null rather than a fabricated account",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 29582
+      }
+    },
+    {
+      "repositoryId": "fastapi-template",
+      "taskId": "fastapi-04-constant-time-login",
+      "requirementSha256": "a1c9c7ed88925c9ffa48472fa8e479f7be8a54268d415b29229fe8d66424c995",
+      "baseSha": "7107f7e83acdf93272377ca97985dd3c51c47686",
+      "targetSha": "689d7105e12039db84bb0e0c0cc797ca086192db",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "56e13ff438566da679231fc2283c9723dc9a890109e68b407eb165b4549437d8",
+        "testFiles": [
+          {
+            "path": "backend/test/bth/run.mjs",
+            "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+          },
+          {
+            "path": "backend/test/bth/conftest.py",
+            "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+          },
+          {
+            "path": "backend/test/bth/test_auth_enumeration.py",
+            "sha256": "fb0bfb3b37c58b9aca5aa94b9471d849cb297446257a1f6080f54b8a5172e336"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 11051,
+              "stdout": {
+                "sha256": "0b35b1ee70e9897963bf44e8ce4f94a0f13e8d4d761d200fdd79c8e9b0ccf22c",
+                "bytes": 6968
+              },
+              "stderr": {
+                "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "b65bc1850da0f72187145f1297b46acf2336424b73cd7686507fc828ae4afe1f",
+                "bytes": 5832
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_login_executes_real_password_verification",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_wrong_password_retains_same_login_response",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_correct_password_still_returns_usable_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_recovery_response_does_not_reveal_registration",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_recovery_never_sends_mail",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_login_remains_denied",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_reset_does_not_change_password",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 9900,
+              "stdout": {
+                "sha256": "79b7d9b7ae4186239e4e87341441d4e935ebadcaeffae222c0865bfc5cf49987",
+                "bytes": 237
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "cd87ff257a7e8aca61b1a34bbc6846df1fd1c7f0e5886b107c7109480a4d97c0",
+                "bytes": 1374
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_login_executes_real_password_verification",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_wrong_password_retains_same_login_response",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_correct_password_still_returns_usable_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_recovery_response_does_not_reveal_registration",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_recovery_never_sends_mail",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_login_remains_denied",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_reset_does_not_change_password",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 21618
+      }
+    },
+    {
+      "repositoryId": "fastapi-template",
+      "taskId": "fastapi-05-missing-user",
+      "requirementSha256": "0436817770a2cd033201c336db91be0261664020e3e6f6aa6f4ff1f6b2e09ef5",
+      "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+      "targetSha": "4cab9e972f5e3e32c518ec2c6e09e18455fe469a",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "0265a5d8f576c08248509d450eb0426afe57d0751d605799c6d1c5cd3f5d4ea2",
+        "testFiles": [
+          {
+            "path": "backend/test/bth/run.mjs",
+            "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+          },
+          {
+            "path": "backend/test/bth/conftest.py",
+            "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+          },
+          {
+            "path": "backend/test/bth/test_missing_user.py",
+            "sha256": "edbc8e68423f4a29c649d1c201475e602b6a9d11d762c4853f9c232b28e9e112"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10064,
+              "stdout": {
+                "sha256": "366286b19b83693f5e149bb5ad49acddce33b384ef6d20fe316157d28d99501a",
+                "bytes": 3305
+              },
+              "stderr": {
+                "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "14808255b1ec7cf8e0858bafc47dda256d2010a37e2f6b26866daf6f504d9155",
+                "bytes": 1863
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 9566,
+              "stdout": {
+                "sha256": "22470b45289712d85ee6a4cab10d12beda24435c77edef3a890c8fbf333b1d9e",
+                "bytes": 826
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "49c179370b2a040fa20ccc60cb973664cf933165108cc68d6daea0d9b6481e6b",
+                "bytes": 1043
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_missing_user_is_404",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_superuser_existing_user_is_readable",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_can_read_self",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_cannot_read_another_user",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_ordinary_user_missing_id_still_returns_403",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_missing_id_without_authentication_is_not_public",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_missing_user",
+                "name": "test_invalid_id_preserves_validation",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 20292
+      }
+    }
+  ]
+}

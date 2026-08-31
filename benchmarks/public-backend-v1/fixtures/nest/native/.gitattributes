@@ -1,0 +1,3 @@
+# Preserve harness contract bytes across Git checkouts.
+* -text
+*.cmd whitespace=cr-at-eol

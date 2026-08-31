@@ -245,6 +245,10 @@ export function portableVerificationTemplates(detection) {
     {
       path: '.backend-harness/bin/verify-portable.cmd',
       content: '@echo off\r\n"%BTH_NODE%" ".backend-harness\\bin\\verify-portable.mjs"\r\n'
+    },
+    {
+      path: '.backend-harness/.gitattributes',
+      content: '# Preserve harness contract bytes across Git checkouts.\n* -text\n*.cmd whitespace=cr-at-eol\n'
     }
   ]
 }
@@ -262,6 +266,7 @@ export function portableVerificationConfig(detection) {
       command: ['./.backend-harness/bin/verify-portable'],
       inputs: [
         ...detection.buildInputs,
+        '.backend-harness/.gitattributes',
         '.backend-harness/bin/verify-portable.mjs',
         '.backend-harness/bin/verify-portable.cmd'
       ],

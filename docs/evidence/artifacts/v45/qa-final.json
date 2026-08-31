@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T06:56:49.470Z",
+  "node": "v22.23.1",
+  "platform": "darwin",
+  "sourceHashes": {
+    "README.md": "6d2842e0fb58d549db625cb7d42e11e7996a2517eaa781a941fb5793278ee253",
+    "benchmarks/public-backend-v1/corpus.json": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+    "benchmarks/public-backend-v1/fixtures/nest/document-update.spec.ts": "527b2cdaf67b53df8b996e61fc89c569a41132e3ef256b7003a088324116a9a0",
+    "benchmarks/public-backend-v1/fixtures/nest/jest-document-update.config.cjs": "2eb06d9bfb5783ee19238c138841726dca5003b3391df55ad9230085e6946eae",
+    "benchmarks/public-backend-v1/fixtures/nest/native/.gitattributes": "9fd024081353d9a674863f93b4aae2aeaeda8eab1dddfe13f25894179e51b626",
+    "benchmarks/public-backend-v1/fixtures/nest/native/verify-portable": "db4a7f5b0906638f52f0c8767c2d0d74e56a1ecb365d16bbf5014d001a88d357",
+    "benchmarks/public-backend-v1/fixtures/nest/native/verify-portable.cmd": "a437553789aa5c5b5a630404746e8fac26cdc4ef9584ed4d6f086a65b7470352",
+    "benchmarks/public-backend-v1/fixtures/nest/native/verify-portable.mjs": "992d6cf926a6b268a35e9de8f0349aa95a0c2ece11c96daf0c792b13c81c46c0",
+    "benchmarks/public-backend-v1/provider-comparison.json": "e970cc916b249845912275f532a954de0c760088a1921cdc6c8f2c85ba859081",
+    "docs/evidence/artifacts/v45/probe-nest-baseline.mjs": "ec686c1ab4f9b40db1a3747b16d50b36c31e041307c3c3d66220fd5fc5ef06e0",
+    "docs/evidence/artifacts/v45/rebuild-progress.mjs": "0eafe314152ef08a661349b9f392c680ffaa7f4680c1ec8a5e693795263842b3",
+    "docs/evidence/artifacts/v45/record-qa.mjs": "1458bea3609d8fb0d96cd68419373667b113eff7fe9ac0b8a9b5b62149033905",
+    "docs/evidence/native-nest-work-v45.md": "025910bca7210845c5bea04d3431cce1cd1fc6d2e78300a1c952472bf37717b5",
+    "docs/plans/native-nest-work-v45.md": "d3d48f500c03fbd1b733ac8ca81b8362d75ddbd461a12237e6a2dbd220b6c3cc",
+    "scripts/acceptance-controls.mjs": "d705923f10c3675e68af194884f77cbed64cc7744634aa0928a9280cb470bf44",
+    "scripts/mutation-smoke.mjs": "ed0e42e667b8c8b27cfd63fe702885bfb530ee8aa8036574ffa95d521c2ee26f",
+    "src/config/verification.mjs": "4a26caee63fa9d2400de02028152401a1e8a803b8fff6b63d2065f0109823ee6",
+    "src/core/jest-module-resolution.mjs": "09f9900d82f079eb01805ae9c9d6dc03073eba460c6259f6a7ba08530a4aa7a8",
+    "src/core/jest-report.mjs": "c4e49101c6b808673c69b78fb8af0a04ca332a16ddf95e76b9c90d207cb28395",
+    "src/core/junit.mjs": "884a507f9e189babc568617ecbfa0dd5d733925f21d2d3b064cdac901248b92c",
+    "src/core/portable-test-discovery.mjs": "990d9558111ae86fd1747fdd249032c8a4626b05d2c285a4cd96a4e4213e356e",
+    "src/core/workspace-preparation.mjs": "465ccbf2bc14821e02703a59cb5cbe5577f4495b33b6300bae594ada74596449",
+    "src/evaluation/empty-test-baseline.mjs": "828fdef6c9046ab84a2a6738c4c824075132240347b874ba5c58cff60d4a957d",
+    "src/evaluation/isolated-git-snapshot.mjs": "d96a1038205b2d8fe4921a9c650455b21cba4439f9f9588e6e82fcab68e2925b",
+    "src/evaluation/project-fixture-config.mjs": "92e1579ea6a0702f414a81422784b5da509f970e04bb06acfbbe4067d6522487",
+    "src/evaluation/project-fixture.mjs": "8853daff9c4697f5964f6f21edee7da3ebb53908f1091d9cbbb4b77950949fbb",
+    "src/evaluation/provider-benchmark-config.mjs": "808f6949d88d443a96e7cf4d432c030efdce32f38a8cb6271ee322b22fc67391",
+    "src/evaluation/task-acceptance.mjs": "87819f0124426be23cbce34d636b2f2c4d8de229bf8254dd2d4a0cf4a7248e3e",
+    "src/init-project.mjs": "95f3e9d15737450f5f674d8260ddb417570df86bee871db20e407123c95e6c3b",
+    "src/runtime/backend-harness.mjs": "cd68df4c80088c92d2a6c3ec24ed0f84ddfaa26284d3fcb4fe266d127e815f73",
+    "test/empty-test-baseline.test.mjs": "238533a473cf29cb150385160eeccb8a11c25106fd2c4983c3f6edc4ebaa89ec",
+    "test/project-fixture.test.mjs": "2d05833a8d2c3096fe72b268dc3c799e8d165afce16fdf33808495a8aae4dfc8",
+    "test/public-nest-fixture.test.mjs": "4a926eeaee7c7a2d026f5936224a6f6351e1c0feb8d67afe5aede47253a41363",
+    "test/task-acceptance.test.mjs": "c611b9f6d837be084e08c8580dcd2be70a3c2a999fd1556dbca0c31e6d931767"
+  },
+  "artifactHashes": {
+    "nest-document-controls.json": "c9fdef27683297f444cfd1a4699153e2d7df8c133d4179c80784aabf46d5bb9c",
+    "nest-empty-baseline-final.json": "63d5c7c0ecfcad9d0ed1788aa8b54e76db624edbd7da1517c7cb48108ca4a842",
+    "prior-controls.json": "f2fb9260bf99c6a207c10204b0238c93cbb5e692890c737316ff37219c449bdd",
+    "corpus-ledger.json": "c5574cdf3f7c9131a332af043070e9f0a1ba2984b1463b523658f20369ec1630",
+    "qa.json": "877b62fd2a328122c6be55fa5831f21bedd26dc284871a9126769dba8483d4d1",
+    "corpus-ledger-before-git.json": "e1e1baa3be6d43527abe62ad24677469fccd6cc412e724b3de8855acb6ce7ec8",
+    "nest-empty-baseline.json": "1972ad699914a7dbc2a839517301d9d3d05b242645fe72d6e0b4992673277ff9",
+    "nest-empty-baseline-git.json": "efcb61804c7738d57f91b717171516ec876cb94c1c3887945f0614dc9dcf44ec"
+  },
+  "suite": {
+    "tests": 627,
+    "pass": 623,
+    "fail": 0,
+    "skipped": 4
+  },
+  "finalTargetedSuite": {
+    "tests": 40,
+    "pass": 40,
+    "fail": 0,
+    "skipped": 0
+  },
+  "coverage": {
+    "statements": 91.4,
+    "branches": 83.19,
+    "functions": 98.6,
+    "lines": null
+  },
+  "mutation": {
+    "curated": 53,
+    "killed": 53,
+    "exhaustive": false
+  },
+  "installPassed": true,
+  "syntaxPassed": true,
+  "diffCheckPassed": true,
+  "logHashes": {
+    "coverage": "545fad126745678712280663b2d4386ac4250b2970e0d05971f89553b3a7827b",
+    "targeted": "8bce7cb5ed33de30cff492409f90f085357dff8607165f6824f322aa6475a98a",
+    "mutation": "a3022e710d084e2a44713c4552e1a2503131993585bdf70f3a6350ef35a46669",
+    "install": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989",
+    "originalMutation": "75dd8f35651922ce1899cfaf9473dc257ae3be9fe2d24e92f74098d7ccfa2efe",
+    "stageRed": "4f3531583be38943cdfe6b172e537526c472c9b39e087e83b79b2e3be34377c6",
+    "fixtureRed": "5da01dbaa28384e770f16d0182be6a5c8fa81b1aa7dd1574fe40342f217b59cb",
+    "stageGreen": "7ccafa07a783397ea254805a31168208432c5fd7b7c3a0d85a3c6ed0f00335a0"
+  },
+  "firstMutationAttempt": {
+    "countedAsPass": false,
+    "reason": "Parser rejection escaped as an Error, not an assertion. Added explicit doesNotThrow expectation; complete mutation suite rerun."
+  },
+  "supersedes": "qa.json records the earlier pre-staging snapshot; use this final record for source hashes.",
+  "priorArtifactLocations": {
+    "qa.json:corpus-ledger.json": "corpus-ledger-before-git.json"
+  },
+  "regressionScope": "Final full coverage suite plus 40 targeted tests after generated-contract Git round-trip fixes; production source unchanged during these final runs.",
+  "gitRoundTrip": {
+    "crlfFixturePreserved": true,
+    "autocrlfModes": [
+      "input",
+      "true",
+      "false"
+    ],
+    "forcedTextConversionControl": true
+  },
+  "corpusCounts": {
+    "tasks": 20,
+    "configuredOracles": 12,
+    "currentValidatedOracles": 11,
+    "tasksWithHistoricalPairedInference": 9,
+    "tasksWithHistoricalSuccessfulPair": 4,
+    "tasksWithNativePairAttempt": 3,
+    "tasksWithConfirmedNativePair": 1
+  },
+  "currentControlResults": [
+    {
+      "taskId": "spring-01-pet-association",
+      "confirmed": true
+    },
+    {
+      "taskId": "spring-02-owner-search-whitespace",
+      "confirmed": true
+    },
+    {
+      "taskId": "spring-04-future-visit",
+      "confirmed": true
+    },
+    {
+      "taskId": "spring-05-binder-id-protection",
+      "confirmed": true
+    },
+    {
+      "taskId": "spring-06-pet-update",
+      "confirmed": true
+    },
+    {
+      "taskId": "nest-01-session-update-by-hash",
+      "confirmed": false
+    },
+    {
+      "taskId": "nest-02-file-relational-mapper",
+      "confirmed": true
+    },
+    {
+      "taskId": "nest-03-swagger-language-header",
+      "confirmed": true
+    },
+    {
+      "taskId": "nest-06-user-email-conflict",
+      "confirmed": true
+    },
+    {
+      "taskId": "fastapi-04-constant-time-login",
+      "confirmed": true
+    },
+    {
+      "taskId": "fastapi-05-missing-user",
+      "confirmed": true
+    }
+  ],
+  "benchmarkProviderCalls": 0,
+  "goalComplete": false,
+  "commands": [
+    "node --test test/task-acceptance.test.mjs test/isolated-git-snapshot.test.mjs test/acceptance-controls-script.test.mjs",
+    "node docs/evidence/artifacts/v45/probe-nest-baseline.mjs",
+    "node scripts/acceptance-controls.mjs --cache <public-cache> --output <new-json> --task <task-id>",
+    "node node_modules/c8/bin/c8.js --all --include=src/**/*.mjs --check-coverage --lines 88 --branches 77 --functions 90 --reporter=text node --test --test-concurrency=4 test/*.test.mjs",
+    "node scripts/mutation-smoke.mjs",
+    "node scripts/install-smoke.mjs",
+    "node scripts/check-syntax.mjs"
+  ],
+  "limitations": [
+    "No native Nest model pair ran. Empty baseline discovery is not implementation success.",
+    "The document oracle executes actual repositories and rendered generated mappers with mocked persistence/configuration, not a live MongoDB or full generator CLI.",
+    "No new provider time/token/cost, company-policy, actual Windows or two-developer handoff result.",
+    "Four optional environment-dependent tests are skipped by the default suite.",
+    "Curated mutation checks are not exhaustive mutation testing or proof of zero bugs."
+  ]
+}

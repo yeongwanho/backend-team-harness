@@ -154,6 +154,9 @@ export async function evaluateTaskAcceptance(input, options = {}) {
       const root = join(directory, name)
       await cloneAt(input.mirror, ref, root)
       controls[name] = await runOracle(root, oracle, testFiles, timeoutMs, processRunner)
+      // Reports/source hashes are captured. Do not retain dependency-heavy
+      // completed controls while the next isolated stage is prepared.
+      await rm(root, { recursive: true, force: true })
     }
     const controlsConfirmed = controls.base.regressionReproduced && controls.target.passed
     let candidate = null
@@ -165,6 +168,7 @@ export async function evaluateTaskAcceptance(input, options = {}) {
       const root = join(directory, 'candidate')
       await copyCandidate(input.candidateRoot, root, before)
       candidate = await runOracle(root, oracle, testFiles, timeoutMs, processRunner)
+      await rm(root, { recursive: true, force: true })
       candidateUntouched = candidateSourceSha256 === digest(JSON.stringify(await snapshot(input.candidateRoot)))
     }
     return {

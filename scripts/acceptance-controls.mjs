@@ -73,7 +73,7 @@ for (const { repository, task, acceptance } of selections) {
     baseSha: task.baseSha, targetSha: task.targetSha, result })
   process.stdout.write(JSON.stringify({ taskId: task.id, controlsConfirmed: result.controlsConfirmed, reason: result.reason }) + '\n')
 }
-const sourcePaths = ['src/evaluation/task-acceptance.mjs', 'src/evaluation/provider-benchmark-config.mjs', 'src/core/junit.mjs', 'scripts/acceptance-controls.mjs']
+const sourcePaths = ['src/evaluation/task-acceptance.mjs', 'src/evaluation/isolated-git-snapshot.mjs', 'src/evaluation/provider-benchmark-config.mjs', 'src/core/junit.mjs', 'scripts/acceptance-controls.mjs']
 const sourceHashes = Object.fromEntries(await Promise.all(sourcePaths.map(async path => [path, hash(await readFile(join(root, path)))])))
 const confirmed = results.filter(entry => entry.result.controlsConfirmed).length
 await writeFile(options.output, JSON.stringify({

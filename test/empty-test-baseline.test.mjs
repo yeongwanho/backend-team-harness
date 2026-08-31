@@ -5,11 +5,39 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { initProject } from '../src/init-project.mjs'
 import { canAttemptBaseline, inspectEmptyTestBaseline } from '../src/evaluation/empty-test-baseline.mjs'
-import { initializeGit } from '../test-support/git-project.mjs'
+import { initializeGit, runGit } from '../test-support/git-project.mjs'
+import { createIsolatedGitSnapshot } from '../src/evaluation/isolated-git-snapshot.mjs'
 
 const empty = { confirmed: false, result: { tests: { tests: 0, executed: 0, failures: 0, errors: 0, skipped: 0 } } }
 const execution = (text = '[]') => ({ exitCode: 0, signal: null, timedOut: false, stdioDrainTimedOut: false, durationMs: 1,
   stdout: { tail: text, bytes: Buffer.byteLength(text), sha256: 'a'.repeat(64) }, stderr: { tail: '', bytes: 0, sha256: 'b'.repeat(64) } })
+
+test('generated verification survives commit and isolated checkout without losing Windows wrapper bytes', async t => {
+  const root = await fixture(t, true)
+  runGit(root, ['config', 'core.autocrlf', 'input'])
+  runGit(root, ['add', '-f', '--', '.backend-harness/.gitignore'])
+  runGit(root, ['add', '--', '.backend-harness'])
+  runGit(root, ['commit', '-qm', 'generated verification'])
+  const directory = await mkdtemp(join(tmpdir(), 'bth-generated-checkout-'))
+  t.after(() => rm(directory, { recursive: true, force: true }))
+  const copy = join(directory, 'project')
+  await createIsolatedGitSnapshot(root, runGit(root, ['rev-parse', 'HEAD']), copy)
+  const paths = ['bin/verify-portable', 'bin/verify-portable.mjs', 'bin/verify-portable.cmd', '.gitattributes', 'verification.json']
+  const windowsCopy = join(directory, 'windows-checkout')
+  runGit(directory, ['-c', 'core.autocrlf=true', 'clone', '--quiet', '--local', '--no-hardlinks', root, windowsCopy])
+  for (const name of paths) {
+    const expected = await readFile(join(root, '.backend-harness', name))
+    assert.deepEqual(await readFile(join(copy, '.backend-harness', name)), expected, name)
+    assert.deepEqual(await readFile(join(windowsCopy, '.backend-harness', name)), expected, 'autocrlf=true ' + name)
+  }
+  const config = JSON.parse(await readFile(join(copy, '.backend-harness/verification.json')))
+  assert.ok(config.gates[0].inputs.includes('.backend-harness/.gitattributes'))
+  await mkdir(join(copy, 'node_modules/jest/bin'), { recursive: true })
+  await writeFile(join(copy, 'node_modules/jest/bin/jest.js'), '// fixture process runner\n')
+  const result = await inspectEmptyTestBaseline(copy, empty, { processRunner: async () => execution() })
+  assert.equal(result.status, 'no-tests-discovered')
+  assert.equal(result.baselinePassed, false)
+})
 
 async function fixture(t, moduleSearch = false) {
   const root = await mkdtemp(join(tmpdir(), 'bth-empty-baseline-'))

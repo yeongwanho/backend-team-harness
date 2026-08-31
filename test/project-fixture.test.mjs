@@ -41,6 +41,8 @@ test('project fixtures require exact hashes, test-only replacements and protecte
     c => { c.files[0].path = '../outside' }, c => { c.files[0].path = '.git/config' },
     c => { c.files[0].fixture = '/tmp/private' }, c => { c.files[1].path = 'src/user.py' },
     c => { c.files[1].path = 'tests/.env' }, c => { c.files[1].path = 'tests/node_modules/file.py' },
+    c => { c.files[1].path = '.backend-harness/verification.json' },
+    c => { c.files[1].path = '.backend-harness/implementation.json' },
     c => { c.files[1].expectedSha256 = 'guess' }, c => { delete c.files[1].expectedSha256 },
     c => { c.files[1].sha256 = '' }, c => { c.files.push(c.files[1]) },
     c => { c.verification.gates[0].inputs = [command] }, c => { c.files[0].executable = 'yes' },
@@ -57,6 +59,17 @@ test('a validated fixture publishes complete files and is idempotent without cha
   assert.equal(await readFile(join(root, 'application.py'), 'utf8'), 'unchanged\n')
   assert.equal((await inspectProjectFixture(root, config)).valid, true)
   assert.deepEqual((await applyProjectFixture(root, fixtureRoot, config)).changedPaths, [])
+})
+
+test('a pinned gate command is protected without duplicating it in explicit inputs', () => {
+  const c = configuration()
+  c.verification.gates[0].inputs = ['tests/base.py']
+  let fixture
+  assert.doesNotThrow(() => { fixture = parseProjectFixture(c) })
+  assert.deepEqual(fixture.verification.gates[0].inputs, ['tests/base.py'])
+  assert.equal(fixture.files[0].path, command)
+  c.files.push({ ...c.files[0], path: '.backend-harness/bin/unbound' })
+  assert.throws(() => parseProjectFixture(c), /protected/)
 })
 
 test('hash or preimage mismatch causes no partial application', async t => {

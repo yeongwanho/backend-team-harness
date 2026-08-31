@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 1,
+  "kind": "real-empty-test-baseline-only",
+  "taskId": "nest-06-user-email-conflict",
+  "baseSha": "d523e2638a649817883c57971914cdeccdd04bde",
+  "targetSha": "ab530c4da7559bf2487698982799920a4d10e345",
+  "recordedAt": "2026-08-31T06:51:15.213Z",
+  "providerCalls": 0,
+  "modelImplementationAttempted": false,
+  "modelImplementationPassed": null,
+  "generatedVerificationSha256": "625740b09724ca43e4455961601f448815e89fc50e558edb5d2398593a5b8672",
+  "preparation": {
+    "kind": "npm-ci-offline",
+    "projectPath": ".",
+    "status": "passed",
+    "dependencyEntries": 1835,
+    "legacyIntegrityEntries": 73,
+    "inputs": [
+      {
+        "path": "package.json",
+        "sha256": "4f5f95dea14b22852c154b4a0ede48121a60764679686ab2d408c8076c87b330"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "09fafc16722735684091855791499c0aaa143dc19ced48237da40da04c5a7a71"
+      }
+    ],
+    "command": [
+      "npm",
+      "--prefix",
+      "<isolated-project>",
+      "--global=false",
+      "--workspaces=false",
+      "ci",
+      "--offline",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund"
+    ],
+    "failureCode": null,
+    "process": {
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "stdioDrainTimedOut": false,
+      "durationMs": 6820,
+      "stdout": {
+        "sha256": "2553b7ff51d390965010292c65d0aaf4dbe4f093700385e01d8c8fbb6c48be4d",
+        "bytes": 27
+      },
+      "stderr": {
+        "sha256": "0c7b2e87f9fe5fb6a4c923e1b4a8a85b12e47b9bb89a3454f9e7f78e0f13d40c",
+        "bytes": 800
+      }
+    },
+    "lifecycleScripts": false,
+    "onlineFallback": false,
+    "egressIsolation": "not-enforced"
+  },
+  "detection": {
+    "status": "confirmed",
+    "system": "node-jest",
+    "framework": "jest",
+    "projectPath": ".",
+    "buildInputs": [
+      "package.json",
+      "tsconfig.json",
+      "package-lock.json"
+    ],
+    "moduleSearchPath": ".",
+    "testArgs": [],
+    "label": "node-jest",
+    "canGenerateVerification": true,
+    "candidates": [
+      {
+        "system": "node-jest",
+        "framework": "jest",
+        "projectPath": ".",
+        "buildInputs": [
+          "package.json",
+          "tsconfig.json",
+          "package-lock.json"
+        ],
+        "moduleSearchPath": ".",
+        "testArgs": []
+      }
+    ],
+    "diagnostics": []
+  },
+  "fixtureIntegrity": {
+    "valid": true,
+    "mismatchedPaths": []
+  },
+  "snapshotRoundTripFixtureValid": true,
+  "windowsConfiguredCheckoutValid": true,
+  "sourceUnchangedDuringVerification": true,
+  "verification": {
+    "confirmed": false,
+    "failure": null,
+    "tests": {
+      "tests": 0,
+      "executed": 0,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "gates": [
+      {
+        "id": "tests"
+      }
+    ]
+  },
+  "emptyTestBaseline": {
+    "status": "no-tests-discovered",
+    "framework": "jest",
+    "projectPath": ".",
+    "sourceStable": true,
+    "sourceFingerprint": "0d503f8a7cc549f954c5e0fafc1b8a214b845fb4385448355cde0df761cf7708",
+    "process": {
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "stdioDrainTimedOut": false,
+      "durationMs": 263,
+      "stdout": {
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "bytes": 3
+      },
+      "stderr": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    "discoveredFiles": 0,
+    "requiredFinalMinimumTests": 1,
+    "baselinePassed": false,
+    "requirement": "Create executable focused tests; all final required gates and independent task acceptance must pass."
+  },
+  "mayAttemptFirstTestCreation": true,
+  "storage": {
+    "availableBeforeBytes": 744087552,
+    "availableAfterPreparationBytes": 228990976,
+    "dependencyKiB": 468184,
+    "fullNativePairAttempted": false,
+    "reason": "Insufficient headroom for parent, implementation and oracle dependencies; no unrelated deletion."
+  },
+  "node": "v22.23.1",
+  "platform": "darwin",
+  "goalComplete": false,
+  "limitations": [
+    "An empty baseline is not a passing test suite or implementation success.",
+    "This probe has no provider, candidate, independent candidate acceptance, live DB, app E2E or actual Windows run.",
+    "The native project fixture changes no original code, test script, package lock or assertions."
+  ],
+  "sourceHashes": {
+    "src/evaluation/isolated-git-snapshot.mjs": "d96a1038205b2d8fe4921a9c650455b21cba4439f9f9588e6e82fcab68e2925b",
+    "src/evaluation/project-fixture-config.mjs": "92e1579ea6a0702f414a81422784b5da509f970e04bb06acfbbe4067d6522487",
+    "src/evaluation/project-fixture.mjs": "8853daff9c4697f5964f6f21edee7da3ebb53908f1091d9cbbb4b77950949fbb",
+    "src/evaluation/empty-test-baseline.mjs": "828fdef6c9046ab84a2a6738c4c824075132240347b874ba5c58cff60d4a957d",
+    "src/core/workspace-preparation.mjs": "465ccbf2bc14821e02703a59cb5cbe5577f4495b33b6300bae594ada74596449",
+    "src/core/portable-test-discovery.mjs": "990d9558111ae86fd1747fdd249032c8a4626b05d2c285a4cd96a4e4213e356e",
+    "src/core/jest-module-resolution.mjs": "09f9900d82f079eb01805ae9c9d6dc03073eba460c6259f6a7ba08530a4aa7a8",
+    "src/core/jest-report.mjs": "c4e49101c6b808673c69b78fb8af0a04ca332a16ddf95e76b9c90d207cb28395",
+    "src/runtime/backend-harness.mjs": "cd68df4c80088c92d2a6c3ec24ed0f84ddfaa26284d3fcb4fe266d127e815f73",
+    "src/config/verification.mjs": "4a26caee63fa9d2400de02028152401a1e8a803b8fff6b63d2065f0109823ee6",
+    "src/init-project.mjs": "95f3e9d15737450f5f674d8260ddb417570df86bee871db20e407123c95e6c3b",
+    "benchmarks/public-backend-v1/corpus.json": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+    "benchmarks/public-backend-v1/provider-comparison.json": "e970cc916b249845912275f532a954de0c760088a1921cdc6c8f2c85ba859081",
+    "docs/evidence/artifacts/v45/probe-nest-baseline.mjs": "ec686c1ab4f9b40db1a3747b16d50b36c31e041307c3c3d66220fd5fc5ef06e0",
+    "benchmarks/public-backend-v1/fixtures/nest/native/verify-portable": "db4a7f5b0906638f52f0c8767c2d0d74e56a1ecb365d16bbf5014d001a88d357",
+    "benchmarks/public-backend-v1/fixtures/nest/native/verify-portable.cmd": "a437553789aa5c5b5a630404746e8fac26cdc4ef9584ed4d6f086a65b7470352",
+    "benchmarks/public-backend-v1/fixtures/nest/native/verify-portable.mjs": "992d6cf926a6b268a35e9de8f0349aa95a0c2ece11c96daf0c792b13c81c46c0",
+    "benchmarks/public-backend-v1/fixtures/nest/native/.gitattributes": "9fd024081353d9a674863f93b4aae2aeaeda8eab1dddfe13f25894179e51b626"
+  },
+  "ownedProbeRemoved": true
+}

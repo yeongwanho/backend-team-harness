@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { chmod, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
+import { chmod, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
 import { parseTaskAcceptance } from '../src/evaluation/provider-benchmark-config.mjs'
@@ -131,6 +131,40 @@ test('evaluator fixture config refuses production overwrites, duplicate paths, t
 function resultProcess(exitCode = 0, timedOut = false) {
   return { exitCode, signal: null, timedOut, stdioDrainTimedOut: false, durationMs: 1, stdout: { sha256: 'a'.repeat(64), bytes: 0 }, stderr: { sha256: 'b'.repeat(64), bytes: 0 } }
 }
+
+test('completed acceptance snapshots are released before the next dependency-heavy stage', async t => {
+  const { root, input } = await fixture()
+  t.after(() => rm(root, { recursive: true, force: true }))
+  await writeFile(join(root, 'value.txt'), 'correct')
+  await writeFile(join(root, 'untracked.txt'), 'keep candidate')
+  const before = runGit(root, ['status', '--porcelain=v1']), visited = []
+  const result = await evaluateTaskAcceptance({ ...input, candidateRoot: root }, { processRunner: async ({ cwd }) => {
+    for (const previous of visited) await assert.rejects(lstat(previous), { code: 'ENOENT' })
+    visited.push(cwd)
+    const base = basename(cwd) === 'base'
+    await mkdir(join(cwd, 'reports'), { recursive: true })
+    await writeFile(join(cwd, acceptance.reports[0]), '<testsuite><testcase classname="Acceptance" name="requiredBehavior">' + (base ? '<failure/>' : '') + '</testcase></testsuite>')
+    return resultProcess(base ? 1 : 0)
+  } })
+  assert.deepEqual(visited.map(path => basename(path)), ['base', 'target', 'candidate'])
+  assert.equal(result.controlsConfirmed, true)
+  assert.equal(result.candidatePassed, true)
+  for (const path of visited) await assert.rejects(lstat(path), { code: 'ENOENT' })
+  assert.equal(runGit(root, ['status', '--porcelain=v1']), before)
+  assert.equal(await readFile(join(root, 'untracked.txt'), 'utf8'), 'keep candidate')
+})
+
+test('acceptance exceptions release allocated stages without deleting the caller source', async t => {
+  const { root, input } = await fixture()
+  t.after(() => rm(root, { recursive: true, force: true }))
+  let allocated
+  const failure = new Error('synthetic stage failure')
+  await assert.rejects(evaluateTaskAcceptance(input, { processRunner: async ({ cwd }) => {
+    allocated = cwd; throw failure
+  } }), error => error === failure)
+  await assert.rejects(lstat(allocated), { code: 'ENOENT' })
+  assert.equal(await readFile(join(root, 'value.txt'), 'utf8'), 'incorrect')
+})
 
 test('pytest/JUnit setup errors cannot count as reproduced behavior even when the target passes', async t => {
   const { root, input } = await fixture()

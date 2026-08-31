@@ -23,8 +23,9 @@ export function parseProjectFixture(value) {
   const files = value.files.map(entry => {
     keys(entry, ['path', 'fixture', 'sha256', 'expectedSha256', 'executable'])
     const target = path(entry.path), fixture = path(entry.fixture)
-    if (!(target.startsWith('.backend-harness/bin/') || /(^|\/)(?:test|tests|__tests__)\//.test(target)) ||
-      (target.includes('.backend-harness/') && !target.startsWith('.backend-harness/bin/'))) throw new Error('Project fixture files must be test-only or harness verification wrappers.')
+    const gitContract = target === '.backend-harness/.gitattributes'
+    if (!(gitContract || target.startsWith('.backend-harness/bin/') || /(^|\/)(?:test|tests|__tests__)\//.test(target)) ||
+      (target.includes('.backend-harness/') && !gitContract && !target.startsWith('.backend-harness/bin/'))) throw new Error('Project fixture files must be test-only, harness verification wrappers or their Git byte contract.')
     if (!fixture.startsWith('fixtures/')) throw new Error('Project fixture source must be inside the fixtures directory.')
     if (!HASH.test(entry.sha256 ?? '') || !Object.hasOwn(entry, 'expectedSha256') ||
       (entry.expectedSha256 !== null && !HASH.test(entry.expectedSha256 ?? ''))) throw new Error('Project fixture hashes and explicit preimages are required.')
@@ -34,7 +35,9 @@ export function parseProjectFixture(value) {
   const paths = files.map(file => file.path)
   if (new Set(paths).size !== files.length || paths.some(a => paths.some(b => a !== b && a.startsWith(b + '/')))) throw new Error('Project fixture paths must not overlap.')
   const verification = parseVerificationConfig(JSON.stringify(value.verification), 'project-fixture.verification')
-  const inputs = new Set(verification.gates.flatMap(gate => gate.inputs).map(path => path.replace(/^\.\//, '')))
+  // The verification fingerprint already includes each gate executable. Keep
+  // exact generated contracts valid without adding redundant input entries.
+  const inputs = new Set(verification.gates.flatMap(gate => [gate.command[0], ...gate.inputs]).map(path => path.replace(/^\.\//, '')))
   if (paths.some(path => !inputs.has(path))) throw new Error('Every project fixture must be protected by declared verification inputs.')
   if (verification.gates.some(gate => !paths.includes(gate.command[0].replace(/^\.\//, '')))) throw new Error('Every project fixture gate command must be a pinned wrapper.')
   const workspacePreparation = parseImplementationConfig(JSON.stringify({ schemaVersion: 2, adapter: null,

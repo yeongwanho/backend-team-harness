@@ -7,6 +7,24 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/core/portable-test-discovery.mjs',
+    from: '* -text',
+    to: '* text',
+    test: 'test/empty-test-baseline.test.mjs'
+  },
+  {
+    file: 'src/evaluation/project-fixture-config.mjs',
+    from: 'gate => [gate.command[0], ...gate.inputs]',
+    to: 'gate => gate.inputs',
+    test: 'test/project-fixture.test.mjs'
+  },
+  {
+    file: 'src/evaluation/task-acceptance.mjs',
+    from: 'await rm(root, { recursive: true, force: true })\n    }\n    const controlsConfirmed',
+    to: '// retain completed control until final cleanup\n    }\n    const controlsConfirmed',
+    test: 'test/task-acceptance.test.mjs'
+  },
+  {
     file: 'benchmarks/public-backend-v1/fixtures/spring/full-test-run.mjs',
     from: 'info[0].Config?.Labels?.[LABEL] !== owner',
     to: 'false',

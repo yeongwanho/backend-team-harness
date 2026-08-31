@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T06:42:01.915Z",
+  "node": "v22.23.1",
+  "platform": "darwin",
+  "sourceHashes": {
+    "README.md": "6d2842e0fb58d549db625cb7d42e11e7996a2517eaa781a941fb5793278ee253",
+    "benchmarks/public-backend-v1/corpus.json": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+    "benchmarks/public-backend-v1/fixtures/nest/document-update.spec.ts": "527b2cdaf67b53df8b996e61fc89c569a41132e3ef256b7003a088324116a9a0",
+    "benchmarks/public-backend-v1/fixtures/nest/jest-document-update.config.cjs": "2eb06d9bfb5783ee19238c138841726dca5003b3391df55ad9230085e6946eae",
+    "benchmarks/public-backend-v1/fixtures/nest/native/verify-portable": "db4a7f5b0906638f52f0c8767c2d0d74e56a1ecb365d16bbf5014d001a88d357",
+    "benchmarks/public-backend-v1/fixtures/nest/native/verify-portable.cmd": "a437553789aa5c5b5a630404746e8fac26cdc4ef9584ed4d6f086a65b7470352",
+    "benchmarks/public-backend-v1/fixtures/nest/native/verify-portable.mjs": "992d6cf926a6b268a35e9de8f0349aa95a0c2ece11c96daf0c792b13c81c46c0",
+    "benchmarks/public-backend-v1/provider-comparison.json": "564c0f46622487b6a51fe7b51a8f28899316fbbce720c256e05ebd2c77c096f7",
+    "docs/evidence/artifacts/v45/probe-nest-baseline.mjs": "d465ca323858ddd50c3155aa18364ca122bd99c56cae48bd0e2e068e2823d022",
+    "docs/evidence/artifacts/v45/rebuild-progress.mjs": "0eafe314152ef08a661349b9f392c680ffaa7f4680c1ec8a5e693795263842b3",
+    "docs/evidence/artifacts/v45/record-qa.mjs": "5e74b7f218ff30b35d0da29026a3b543877af27df30a6a1c123354364ccbf893",
+    "docs/evidence/native-nest-work-v45.md": "d896f716ecd5c5e49c7225ab375dae08f3cf41425f6a49985f6cf9b5880be12e",
+    "docs/plans/native-nest-work-v45.md": "8ccc6cf02cde8a532cb94b5e9555731302cfe4e29fd4c2cdcbe70d043b210d69",
+    "scripts/acceptance-controls.mjs": "d705923f10c3675e68af194884f77cbed64cc7744634aa0928a9280cb470bf44",
+    "scripts/mutation-smoke.mjs": "14e5fbf1b35fc8dc9f8f7d73eeba895864c84322c647b5260feed7b73f6d12cd",
+    "src/config/verification.mjs": "4a26caee63fa9d2400de02028152401a1e8a803b8fff6b63d2065f0109823ee6",
+    "src/core/jest-module-resolution.mjs": "09f9900d82f079eb01805ae9c9d6dc03073eba460c6259f6a7ba08530a4aa7a8",
+    "src/core/jest-report.mjs": "c4e49101c6b808673c69b78fb8af0a04ca332a16ddf95e76b9c90d207cb28395",
+    "src/core/junit.mjs": "884a507f9e189babc568617ecbfa0dd5d733925f21d2d3b064cdac901248b92c",
+    "src/core/portable-test-discovery.mjs": "e502c3335cec9ab0382c05f9ae7ea7238769946226bef24f6e5105d947fa6b1d",
+    "src/core/workspace-preparation.mjs": "465ccbf2bc14821e02703a59cb5cbe5577f4495b33b6300bae594ada74596449",
+    "src/evaluation/empty-test-baseline.mjs": "828fdef6c9046ab84a2a6738c4c824075132240347b874ba5c58cff60d4a957d",
+    "src/evaluation/isolated-git-snapshot.mjs": "d96a1038205b2d8fe4921a9c650455b21cba4439f9f9588e6e82fcab68e2925b",
+    "src/evaluation/project-fixture-config.mjs": "7fc441cc0a9d090ee26525930ed2209872f183f37cced287242e1852dd7fdd20",
+    "src/evaluation/project-fixture.mjs": "8853daff9c4697f5964f6f21edee7da3ebb53908f1091d9cbbb4b77950949fbb",
+    "src/evaluation/provider-benchmark-config.mjs": "808f6949d88d443a96e7cf4d432c030efdce32f38a8cb6271ee322b22fc67391",
+    "src/evaluation/task-acceptance.mjs": "87819f0124426be23cbce34d636b2f2c4d8de229bf8254dd2d4a0cf4a7248e3e",
+    "src/init-project.mjs": "95f3e9d15737450f5f674d8260ddb417570df86bee871db20e407123c95e6c3b",
+    "src/runtime/backend-harness.mjs": "cd68df4c80088c92d2a6c3ec24ed0f84ddfaa26284d3fcb4fe266d127e815f73",
+    "test/project-fixture.test.mjs": "243495d49ac3d27046017bac95cee5380e8a419d2d4b55bb2c78f2deacde9a4d",
+    "test/public-nest-fixture.test.mjs": "203f0e33f44ab09f8b01d2a22208672a0677f994878657538de68a4ee26cf02e",
+    "test/task-acceptance.test.mjs": "c611b9f6d837be084e08c8580dcd2be70a3c2a999fd1556dbca0c31e6d931767"
+  },
+  "artifactHashes": {
+    "nest-document-controls.json": "c9fdef27683297f444cfd1a4699153e2d7df8c133d4179c80784aabf46d5bb9c",
+    "nest-empty-baseline.json": "1972ad699914a7dbc2a839517301d9d3d05b242645fe72d6e0b4992673277ff9",
+    "prior-controls.json": "f2fb9260bf99c6a207c10204b0238c93cbb5e692890c737316ff37219c449bdd",
+    "corpus-ledger.json": "e1e1baa3be6d43527abe62ad24677469fccd6cc412e724b3de8855acb6ce7ec8"
+  },
+  "suite": {
+    "tests": 625,
+    "pass": 621,
+    "fail": 0,
+    "skipped": 4
+  },
+  "finalTargetedSuite": {
+    "tests": 38,
+    "pass": 38,
+    "fail": 0,
+    "skipped": 0
+  },
+  "coverage": {
+    "statements": 91.45,
+    "branches": 83.2,
+    "functions": 98.73,
+    "lines": null
+  },
+  "mutation": {
+    "curated": 52,
+    "killed": 52,
+    "exhaustive": false
+  },
+  "installPassed": true,
+  "syntaxPassed": true,
+  "diffCheckPassed": true,
+  "logHashes": {
+    "coverage": "6308442ed72ba9ef8b86d10677486cf00e241dee197f80863d350e4ea238ec61",
+    "targeted": "0cfa701ab9ba6763107a1063370af0c2acde32b6c8e7c52cf3b76fcac3fefbff",
+    "mutation": "b01caecd1201d7b8f321c940537f854e08fd32489e4778d4fdc2683ff908accb",
+    "install": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989",
+    "originalMutation": "75dd8f35651922ce1899cfaf9473dc257ae3be9fe2d24e92f74098d7ccfa2efe",
+    "stageRed": "4f3531583be38943cdfe6b172e537526c472c9b39e087e83b79b2e3be34377c6",
+    "fixtureRed": "5da01dbaa28384e770f16d0182be6a5c8fa81b1aa7dd1574fe40342f217b59cb",
+    "stageGreen": "7ccafa07a783397ea254805a31168208432c5fd7b7c3a0d85a3c6ed0f00335a0"
+  },
+  "firstMutationAttempt": {
+    "countedAsPass": false,
+    "reason": "Parser rejection escaped as an Error, not an assertion. Added explicit doesNotThrow expectation; complete mutation suite rerun."
+  },
+  "regressionScope": "Full coverage suite followed by 38 targeted tests after that test assertion refinement; production source unchanged between them.",
+  "corpusCounts": {
+    "tasks": 20,
+    "configuredOracles": 12,
+    "currentValidatedOracles": 11,
+    "tasksWithHistoricalPairedInference": 9,
+    "tasksWithHistoricalSuccessfulPair": 4,
+    "tasksWithNativePairAttempt": 3,
+    "tasksWithConfirmedNativePair": 1
+  },
+  "currentControlResults": [
+    {
+      "taskId": "spring-01-pet-association",
+      "confirmed": true
+    },
+    {
+      "taskId": "spring-02-owner-search-whitespace",
+      "confirmed": true
+    },
+    {
+      "taskId": "spring-04-future-visit",
+      "confirmed": true
+    },
+    {
+      "taskId": "spring-05-binder-id-protection",
+      "confirmed": true
+    },
+    {
+      "taskId": "spring-06-pet-update",
+      "confirmed": true
+    },
+    {
+      "taskId": "nest-01-session-update-by-hash",
+      "confirmed": false
+    },
+    {
+      "taskId": "nest-02-file-relational-mapper",
+      "confirmed": true
+    },
+    {
+      "taskId": "nest-03-swagger-language-header",
+      "confirmed": true
+    },
+    {
+      "taskId": "nest-06-user-email-conflict",
+      "confirmed": true
+    },
+    {
+      "taskId": "fastapi-04-constant-time-login",
+      "confirmed": true
+    },
+    {
+      "taskId": "fastapi-05-missing-user",
+      "confirmed": true
+    }
+  ],
+  "benchmarkProviderCalls": 0,
+  "goalComplete": false,
+  "commands": [
+    "node --test test/task-acceptance.test.mjs test/isolated-git-snapshot.test.mjs test/acceptance-controls-script.test.mjs",
+    "node docs/evidence/artifacts/v45/probe-nest-baseline.mjs",
+    "node scripts/acceptance-controls.mjs --cache <public-cache> --output <new-json> --task <task-id>",
+    "node node_modules/c8/bin/c8.js --all --include=src/**/*.mjs --check-coverage --lines 88 --branches 77 --functions 90 --reporter=text node --test --test-concurrency=4 test/*.test.mjs",
+    "node scripts/mutation-smoke.mjs",
+    "node scripts/install-smoke.mjs",
+    "node scripts/check-syntax.mjs"
+  ],
+  "limitations": [
+    "No native Nest model pair ran. Empty baseline discovery is not implementation success.",
+    "The document oracle executes actual repositories and rendered generated mappers with mocked persistence/configuration, not a live MongoDB or full generator CLI.",
+    "No new provider time/token/cost, company-policy, actual Windows or two-developer handoff result.",
+    "Four optional environment-dependent tests are skipped by the default suite.",
+    "Curated mutation checks are not exhaustive mutation testing or proof of zero bugs."
+  ]
+}

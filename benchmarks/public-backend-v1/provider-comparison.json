@@ -409,10 +409,204 @@
             ]
           }
         },
-        { "id": "nest-04-document-find-update", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "none" } },
+        {
+          "id": "nest-04-document-find-update",
+          "decisions": {
+            "modules": [
+              "root"
+            ],
+            "databaseImpact": "write",
+            "apiImpact": "none"
+          },
+          "acceptance": {
+            "kind": "fixture-tests",
+            "files": [
+              {
+                "path": "test/bth/document-update.spec.ts",
+                "fixture": "fixtures/nest/document-update.spec.ts",
+                "sha256": "527b2cdaf67b53df8b996e61fc89c569a41132e3ef256b7003a088324116a9a0"
+              },
+              {
+                "path": "test/bth/jest.config.cjs",
+                "fixture": "fixtures/nest/jest-document-update.config.cjs",
+                "sha256": "2eb06d9bfb5783ee19238c138841726dca5003b3391df55ad9230085e6946eae"
+              },
+              {
+                "path": "test/bth/run.cjs",
+                "fixture": "fixtures/nest/run.cjs",
+                "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+              },
+              {
+                "path": "test/bth/verify-jest.mjs",
+                "fixture": "fixtures/nest/verify-jest.mjs",
+                "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75"
+              }
+            ],
+            "command": [
+              "node",
+              "test/bth/run.cjs"
+            ],
+            "reports": [
+              "coverage/bth-junit.xml"
+            ],
+            "cases": [
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user returns the changed document and preserves caller ID and untouched data"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user preserves initial missing-document behavior without an update"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user returns null when the document disappears during update"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user propagates lookup failure without a write"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "user propagates update failure without returning stale data"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session returns the changed document and preserves caller ID and untouched data"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session preserves initial missing-document behavior without an update"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session returns null when the document disappears during update"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session propagates lookup failure without a write"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "session propagates update failure without returning stale data"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource returns the changed document and preserves caller ID and untouched data"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource preserves initial missing-document behavior without an update"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource returns null when the document disappears during update"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource propagates lookup failure without a write"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "document-resource propagates update failure without returning stale data"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource returns the changed document and preserves caller ID and untouched data"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource preserves initial missing-document behavior without an update"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource returns null when the document disappears during update"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource propagates lookup failure without a write"
+              },
+              {
+                "className": "test/bth/document-update.spec.ts",
+                "name": "all-db-resource propagates update failure without returning stale data"
+              }
+            ]
+          }
+        },
         { "id": "nest-05-auth-email-update", "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" } },
         {
           "id": "nest-06-user-email-conflict",
+          "projectFixture": {
+            "files": [
+              {
+                "path": ".backend-harness/bin/verify-portable",
+                "fixture": "fixtures/nest/native/verify-portable",
+                "sha256": "db4a7f5b0906638f52f0c8767c2d0d74e56a1ecb365d16bbf5014d001a88d357",
+                "expectedSha256": "db4a7f5b0906638f52f0c8767c2d0d74e56a1ecb365d16bbf5014d001a88d357",
+                "executable": true
+              },
+              {
+                "path": ".backend-harness/bin/verify-portable.cmd",
+                "fixture": "fixtures/nest/native/verify-portable.cmd",
+                "sha256": "a437553789aa5c5b5a630404746e8fac26cdc4ef9584ed4d6f086a65b7470352",
+                "expectedSha256": "a437553789aa5c5b5a630404746e8fac26cdc4ef9584ed4d6f086a65b7470352",
+                "executable": false
+              },
+              {
+                "path": ".backend-harness/bin/verify-portable.mjs",
+                "fixture": "fixtures/nest/native/verify-portable.mjs",
+                "sha256": "992d6cf926a6b268a35e9de8f0349aa95a0c2ece11c96daf0c792b13c81c46c0",
+                "expectedSha256": "992d6cf926a6b268a35e9de8f0349aa95a0c2ece11c96daf0c792b13c81c46c0",
+                "executable": false
+              },
+              {
+                "path": ".backend-harness/.gitattributes",
+                "fixture": "fixtures/nest/native/.gitattributes",
+                "sha256": "9fd024081353d9a674863f93b4aae2aeaeda8eab1dddfe13f25894179e51b626",
+                "expectedSha256": "9fd024081353d9a674863f93b4aae2aeaeda8eab1dddfe13f25894179e51b626",
+                "executable": false
+              }
+            ],
+            "verification": {
+              "schemaVersion": 1,
+              "context": {
+                "profile": "test",
+                "databaseDialect": null
+              },
+              "gates": [
+                {
+                  "id": "tests",
+                  "required": true,
+                  "feedback": true,
+                  "pathPrefixes": [],
+                  "command": [
+                    "./.backend-harness/bin/verify-portable"
+                  ],
+                  "inputs": [
+                    "package.json",
+                    "tsconfig.json",
+                    "package-lock.json",
+                    ".backend-harness/.gitattributes",
+                    ".backend-harness/bin/verify-portable.mjs",
+                    ".backend-harness/bin/verify-portable.cmd"
+                  ],
+                  "timeoutMs": 600000,
+                  "result": {
+                    "type": "junit",
+                    "reports": [
+                      ".backend-harness/local/reports/tests/*.xml"
+                    ],
+                    "minimumTests": 1
+                  }
+                }
+              ]
+            },
+            "workspacePreparation": {
+              "kind": "npm-ci-offline",
+              "projectPath": ".",
+              "timeoutMs": 180000
+            }
+          },
           "decisions": {
             "modules": [
               "root"
