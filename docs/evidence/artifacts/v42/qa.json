@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T05:31:14.699Z",
+  "platform": "darwin",
+  "node": "v22.23.1",
+  "sourceHashes": {
+    "src/providers/model-cli.mjs": "c081e4b3fda23e1ff49d85fb0689faa5c3dce3cabfece85b087c8eb8ab98eead",
+    "src/evaluation/workflow-budget.mjs": "edecc1aef45efe8ce8c2c781628115e6e94c259ad65c463bb1e2e38eea0be822",
+    "src/evaluation/provider-benchmark-runner.mjs": "82b7c897eed542218a3aca8b1b358a1918283a6063cef56e4fc5b491b30e26b9",
+    "src/evaluation/provider-comparison.mjs": "ddc22cecdc5eb176da77dfd64b0a79075ff160d79e1eac3b04992ef2ec5d0087",
+    "src/runtime/implementation-orchestrator.mjs": "16f088635dde87b16954bf6413f7a5398f60b139e6313ec30c5f56d8433e3610",
+    "src/runtime/work-orchestrator.mjs": "27ec7327b113e2dea43175dc5ac23beef886b00bb31387e02333b7cbb87bccb0",
+    "src/core/provider-context.mjs": "3fe58aadbe8690ed1b070247e01a416ca4440644d5d897d931fe3d2ac9a8dc14",
+    "packs/codegraph-advisory/indexer.mjs": "ac2e15649c943151872edc3304fd0e79a558fadafaf94e706d9c4c01a4780bab",
+    "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+    "scripts/benchmark-provider-comparison.mjs": "d1aa9a8c0ed143e5a38f305d08a2371f8ae5e992e386861565ef5c9475d985a7",
+    "benchmarks/public-backend-v1/provider-comparison.json": "f7999657dfbbe143510dd46000a436c88d86f4da74d23feea511ef3882addf74",
+    "docs/evidence/artifacts/v42/record.mjs": "999e46b953b021085b5e3654d2f2879fb84a3ae1da4912e7b98f0d8b06b4ad83",
+    "README.md": "d3351cda094153871ec8a8bcb55dd06fc422279a07558d9223a3263b179d129b",
+    "CHANGELOG.md": "d4af9cbe5f83e222a861a0a0360fe870d18c7bc88d3b4c997bfce2d2eff449a6",
+    "docs/evidence/native-workflow-v42.md": "6414248bd0eae4a0572864ab6eabce175a67f7a211f07c12f102462b7f73dfd6",
+    "scripts/mutation-smoke.mjs": "988ebeae46ce1c158f016a2b0523808da3b36be374569f21f12b33fa220a86f1",
+    "docs/evidence/artifacts/v42/record-qa.mjs": "b8eb709b58e81523621f7ff497634ffacd1642ef823c73a5c15121c933a2c681",
+    "docs/evidence/artifacts/v42/audit-native-validation.mjs": "bd118f38a22d45bfec62e2706e310d1c23aa409b0d45aa47733bd70cddc923c2",
+    "src/providers/validation-activity.mjs": "993fc228774e46b5e62af0948524ca1a94854d14288ada5f421760aedd308862",
+    "test/validation-activity.test.mjs": "2c968f2fc058653a42046a36fb4111afe75cb246a7711c6177f9fab16ca2d73c",
+    "test/workflow-budget.test.mjs": "3a0bce69e64074830c50ce4b2163e51a8a5b6b06b8700c697b7aebdc59f34d6d",
+    "test/model-cli-provider.test.mjs": "13cb2e8b911c21d1602c006ceb6e568c1c8cf2623a06af80740f52842f2de495",
+    "test/provider-comparison.test.mjs": "2cdbe804a8b0b0c38fc72b59a529bcfe6d51fac6dc86d936cdb90893ec11872e",
+    "test/provider-benchmark-runner.test.mjs": "b16e7a5724844767b8df5f82f71d5b5d883a23da8edafdb068a3485d6c9c29ff",
+    "test/provider-benchmark-script.test.mjs": "412dbd46b88e9c6edf43d64c8296bd58b9de61e6da87088ae4977546ff1bc772"
+  },
+  "suites": {
+    "red": {
+      "logSha256": "d8eeb876a849dca74f1a646025ed905eba422edcfc62c7d05406522165066545",
+      "tests": 14,
+      "pass": 11,
+      "fail": 3,
+      "skipped": 0
+    },
+    "scoped": {
+      "logSha256": "d413c31a6c9497bb4bd6bc1ebe0c7f4636627248725dcdd71e3d892af5c78edd",
+      "tests": 47,
+      "pass": 47,
+      "fail": 0,
+      "skipped": 0
+    },
+    "postreview": {
+      "logSha256": "f2bc68bbb6a381a54ab88c82697bcb1f63ec1a574bce56b7e55b7ee17a609079",
+      "tests": 21,
+      "pass": 21,
+      "fail": 0,
+      "skipped": 0
+    },
+    "proofRed": {
+      "logSha256": "556a27a1a443f409a774f47468ee813f50b835bc3fc627123c4a90ca3f6117d1",
+      "tests": 9,
+      "pass": 8,
+      "fail": 1,
+      "skipped": 0
+    },
+    "proofGreen": {
+      "logSha256": "8d22e545f81e4db2dff1519f85932691ea867087a47dd2730a086a6195f9dea1",
+      "tests": 52,
+      "pass": 52,
+      "fail": 0,
+      "skipped": 0
+    },
+    "shellProofRed": {
+      "logSha256": "7a0a620d5ec81fafbc3cfb998e3e03e4a4693be87e26b30a0d2c383efa64c089",
+      "tests": 3,
+      "pass": 2,
+      "fail": 1,
+      "skipped": 0
+    },
+    "shellProofGreen": {
+      "logSha256": "aaeb9f367cebe31339158ed6aa509400f824b8ca8af1c65195f441028a7fe7b8",
+      "tests": 54,
+      "pass": 54,
+      "fail": 0,
+      "skipped": 0
+    },
+    "coverage": {
+      "logSha256": "dc46dd8f7be1e8d2fcf42d8c13bc3ca0f84d2544f429a42e27b790181bd285cc",
+      "tests": 612,
+      "pass": 608,
+      "fail": 0,
+      "skipped": 4
+    }
+  },
+  "skippedTests": [
+    "DB Pack runs real MySQL migrations and integration behavior",
+    "real Maven and Gradle projects produce accepted JUnit verification",
+    "real Windows command shim executes provider JSON and normalizes telemetry",
+    "real Windows timeout terminates the provider descendant tree"
+  ],
+  "coverage": {
+    "statements": 91.45,
+    "branches": 83.2,
+    "functions": 98.72,
+    "lines": 91.45
+  },
+  "mutation": {
+    "killed": 46,
+    "curatedTotal": 46,
+    "exhaustive": false,
+    "logSha256": "fb3114ae0e9f9bf40e296d4738e7e95b56310ba3869fb7a409c6b96535c36812"
+  },
+  "installSmoke": {
+    "passed": true,
+    "logSha256": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989"
+  },
+  "syntaxPassed": true,
+  "diffCheckPassed": true,
+  "pairSha256": "a04d68487863f11c4e77ed18386e2408412aedea264fd43d9ef55fc66853dabc",
+  "auditSha256": "da5ecde204681ed7361d8e301eff57b0c0caa437410e65456b38ca10ef2f7200",
+  "postComparisonChanges": [
+    {
+      "path": "src/providers/model-cli.mjs",
+      "comparedSha256": "b8cffe7d528ae07ca00779982be3f1c9c6b22d4efd211fa8c3b796c9ebfe4d71",
+      "currentSha256": "c081e4b3fda23e1ff49d85fb0689faa5c3dce3cabfece85b087c8eb8ab98eead"
+    },
+    {
+      "path": "src/evaluation/provider-benchmark-runner.mjs",
+      "comparedSha256": "865bf612b4a16def09854e04287dd94fdfe3268a61c3091d2c8e678d305479ff",
+      "currentSha256": "82b7c897eed542218a3aca8b1b358a1918283a6063cef56e4fc5b491b30e26b9"
+    },
+    {
+      "path": "src/evaluation/provider-comparison.mjs",
+      "comparedSha256": "64dfe0d387c5e38bdd5bee1ec6eeb37d4b7d49bde6594eacd28ffb4348b64cf5",
+      "currentSha256": "ddc22cecdc5eb176da77dfd64b0a79075ff160d79e1eac3b04992ef2ec5d0087"
+    },
+    {
+      "path": "scripts/benchmark-provider-comparison.mjs",
+      "comparedSha256": "90e1dcdcceca04a56a1b55e1f3c80e2a90e8b8fa2b5a7946b54484cd402c599f",
+      "currentSha256": "d1aa9a8c0ed143e5a38f305d08a2371f8ae5e992e386861565ef5c9475d985a7"
+    }
+  ],
+  "remainingResources": [
+    {
+      "label": "bth.fastapi.productqa",
+      "kind": "container",
+      "remaining": 0
+    },
+    {
+      "label": "bth.fastapi.productqa",
+      "kind": "network",
+      "remaining": 0
+    },
+    {
+      "label": "bth.fastapi.oracle",
+      "kind": "container",
+      "remaining": 0
+    },
+    {
+      "label": "bth.fastapi.oracle",
+      "kind": "network",
+      "remaining": 0
+    }
+  ],
+  "postComparisonCorrection": "Missing direct native validation now produces unknown completion. New observer and scoring were tested after the frozen actual pair, not run through another paid pair here.",
+  "goalComplete": false,
+  "goalGaps": [
+    "Only one attempted native public task pair, whose direct self-validation is unconfirmed; no completed native pair claimed. 3 backends and 20 tasks are not completed.",
+    "Native Claude full-workflow execution, actual Windows/MySQL and two-developer onboarding remain unverified here.",
+    "Direct internal repair count is unknown, observed command events do not prove complete policy compliance.",
+    "Approved decisions and prepared fixtures omit human interview time and unfamiliar company-policy correctness."
+  ]
+}

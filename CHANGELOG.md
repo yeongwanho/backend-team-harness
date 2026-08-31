@@ -25,6 +25,10 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Changed
 
+- Added opt-in `native-workflow` provider evaluation with direct CLI test/repair commands, a shared provider time/Claude cost envelope over BTH repair calls, and final evaluator verification. Default provider implementation still leaves validation to BTH. Exact approved Claude commands do not grant global Bash or egress isolation.
+- Separated whole-workflow success from one-provider-call success; direct internal repair counts remain unknown. Comparison resume binds timeout/cost/recovery policy, and direct CLI version/profile are now retained. Current protocols are `controlled-edit-v42` and `native-workflow-v42-observed-validation`.
+- Direct native workflow completion requires observed successful approved commands, not provider prose or only a later evaluator pass. Literal argv matching rejects compound scripts, skipped commands and swallowed exits. The original `native-workflow-v42` pair is preserved, with direct completion re-scored as unknown in a separate audit; no completed native pair is claimed. The observer does not prove source binding of an earlier command or OS isolation.
+
 - Bounded initial provider navigation to fast/balanced/deep 8/16/24 entries while retaining the approved plan, supplied rules, DB review signals and verification. Parallel nested Python/ECMAScript test paths now co-select a unique same-module production file; ambiguous layouts remain unlinked. Pre-projection Java guidance is kept separately so navigation truncation cannot suppress it. Static context is smaller, but an actual Codex pair still favors direct execution on time/tokens; see `docs/evidence/provider-navigation-v41.md`.
 - Added assertion-checked mutation cases for navigation limits and ambiguous test-path rejection. Existing project-owned Pack copies and sealed graphs are not silently upgraded.
 

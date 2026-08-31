@@ -104,6 +104,71 @@ async function preparedFixture(root) {
   return { configuration, protectedPath }
 }
 
+test('native direct may validate but evaluator failure still defeats its success claim', async t => {
+  const root = await project('bth-native-direct-')
+  t.after(() => rm(root, { recursive: true, force: true }))
+  const { configuration } = await preparedFixture(root)
+  let checks = 0
+  const result = await runPreparedComparisonCase(root, task, configuration, {
+    lane: 'direct', provider: 'claude', workflow: 'native-workflow', mode: 'deep', model: null,
+    maxAttempts: 3, timeoutMs: 30000, maxBudgetUsd: 2
+  }, {
+    directProviderRunner: async (adapter, input) => {
+      assert.deepEqual(adapter.validationCommands, [['./.backend-harness/bin/verify-fixture']])
+      assert.match(input.prompt, /repair concrete failures within this session/)
+      assert.doesNotMatch(input.prompt, /executing them belongs to the evaluator|Do not run build/)
+      await fixtureProvider(adapter, input)
+      return successfulRun(adapter.provider, { validationCommandCount: 2 })
+    },
+    projectChecker: async () => { checks++; return { confirmed: false } }
+  })
+  assert.equal(checks, 1)
+  assert.equal(result.score.successAt1, false)
+  assert.deepEqual(result.score.ruleViolations, [])
+  assert.equal(result.score.retries, null)
+  assert.equal(result.observation.evidence.providerVersion, 'fixture')
+  assert.equal(result.observation.evidence.providerBudget.invocations, 1)
+  assert.match(result.observation.evidence.elapsedScope, /final-independent-acceptance/)
+})
+
+test('native BTH finishes one workflow after a real failing gate and bounded repair', async t => {
+  const root = await project('bth-native-bth-recovery-')
+  t.after(() => rm(root, { recursive: true, force: true }))
+  const normal = await readFile(join(root, 'gradlew'), 'utf8')
+  await writeFile(join(root, 'gradlew'), normal.replace('mkdir -p build/test-results/test', [
+    'mkdir -p build/test-results/test',
+    'if grep -q "value = 0" src/main/java/example/Feature.java 2>/dev/null; then',
+    'printf \'%s\\n\' \'<testsuite tests="1" failures="1"><testcase name="verified"><failure type="AssertionError" message="wrong value"/></testcase></testsuite>\' > build/test-results/test/TEST-fixture.xml',
+    'exit 1', 'fi'
+  ].join('\n')))
+  const { configuration } = await preparedFixture(root)
+  const committed = spawnSync('git', ['-c', 'user.name=BTH Test', '-c', 'user.email=bth@example.invalid', 'commit', '-qam', 'fixture gate'], { cwd: root, encoding: 'utf8' })
+  assert.equal(committed.status, 0, committed.stderr)
+  let calls = 0
+  const result = await runPreparedComparisonCase(root, task, configuration, {
+    lane: 'bth', provider: 'codex', workflow: 'native-workflow', mode: 'deep', model: null,
+    maxAttempts: 3, timeoutMs: 30000, maxBudgetUsd: null
+  }, {
+    providerProbe: async () => ({ available: true, version: 'fixture' }), cleanupBthWorkspace: true,
+    bthProviderRunner: async (adapter, input) => {
+      calls++
+      const request = JSON.parse(await readFile(join(input.cwd, input.requestPath), 'utf8'))
+      assert.equal(request.attempt, calls)
+      if (calls === 2) assert.ok(request.recovery)
+      assert.ok(adapter.timeoutMs <= 30000)
+      await writeFile(join(input.cwd, 'src/main/java/example/Feature.java'), 'package example; class Feature { int value = ' + (calls === 1 ? 0 : 1) + '; }\n')
+      return successfulRun(adapter.provider)
+    },
+    acceptanceEvaluator: async () => ({ controlsConfirmed: true, candidatePassed: true })
+  })
+  assert.equal(calls, 2)
+  assert.equal(result.score.successUnit, 'workflow-request')
+  assert.equal(result.score.successAt1, true)
+  assert.equal(result.score.providerInvocations, 2)
+  assert.equal(result.score.retries, 1)
+  assert.equal(result.score.usage.tokens.total, 30)
+})
+
 test('both providers lanes retain the same immutable prepared baseline during normal verification', async () => {
   for (const lane of ['bth', 'direct']) {
     const root = await project('bth-comparison-prepared-fixture-')

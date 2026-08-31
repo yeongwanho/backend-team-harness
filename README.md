@@ -383,7 +383,36 @@ npm run benchmark:providers -- --execute --provider codex --lane both \
   --allow-network
 ```
 
-provider 비교는 공개 이력을 target commit 없이 단일 합성 base commit으로 만들고 gold 경로를 provider에게 전달하지 않습니다. raw provider 출력·소스 본문은 결과에 저장하지 않고 digest, byte count, 사용량, pre-write 경로와 명령 종류 집계만 남깁니다. `--all`은 provider당 40회 호출이므로 별도의 `BTH_PROVIDER_BENCHMARK_ALL=I_UNDERSTAND_40_PROVIDER_RUNS` 승인이 추가로 필요합니다.
+위 설명과 기본 명령은 `--workflow controlled-edit`입니다. AI는 코드·테스트를
+작성하고 평가기가 실행합니다. 별도 `--workflow native-workflow`에서는 직접 CLI가
+준비된 검증 명령을 실행하고 실패를 수정할 수 있으며, BTH는 원래의 관리형 복구
+루프를 사용합니다. 두 방식 모두 최종 구조화 검증과 독립 과제 검증을 거칩니다.
+직접 CLI는 승인된 검증 명령의 성공 종료까지 관찰돼야 전체 작업 완료로 인정합니다.
+최종 코드만 통과하고 그 실행 근거가 없으면 `successAt1: null`입니다. 복합 셸
+스크립트·종료 코드 숨김·명령을 출력만 한 경우도 검증 성공의 근거로 삼지 않습니다.
+
+```bash
+# 비용 없이 전체 흐름 비교의 최대 호출 수와 예산 확인
+npm run benchmark:providers -- --plan --workflow native-workflow \
+  --provider codex --lane both --task fastapi-04-constant-time-login \
+  --max-attempts 3 --timeout-ms 240000
+```
+
+실행할 때는 위 기존 명령의 `--execute`, 새 출력 디렉터리, 비용·네트워크 승인이
+동일하게 필요합니다. native 모드의 `--timeout-ms`는 각 경로의 **provider 호출을
+모두 합친** 시간 예산이며 검증 실행 시간은 별도입니다. BTH는 최대 3회 호출,
+직접 CLI는 한 세션 안에서 수정합니다. Claude의 달러 상한도 남은 예산을 전달하며,
+비용이 미측정이면 추가 호출을 막습니다. Codex에는 달러 상한을 보장하지 않습니다.
+
+native의 `successAt1`은 한 번의 전체 작업 요청 성공입니다. controlled-edit의
+한 번의 모델 호출 성공과 합산하지 않습니다. 직접 CLI의 내부 수정 횟수는
+`null`이며 0회라고 주장하지 않습니다. native 시간은 준비된 작업공간부터 독립
+수락 검사까지를 포함합니다. 과거 시간과 범위가 다릅니다. [상세 비교와 한계](docs/evidence/native-workflow-v42.md).
+첫 실제 native Codex 비교에서는 두 코드 모두 테스트를 통과했지만, 직접 CLI의
+자체 검증 실행은 미확인입니다. 따라서 완료된 native 쌍대 비교나 속도 우위를
+확보했다고 주장하지 않습니다. 원본 결과와 보수적으로 재판정한 결과를 함께 보존합니다.
+
+provider 비교는 공개 이력을 target commit 없이 단일 합성 base commit으로 만들고 gold 경로를 provider에게 전달하지 않습니다. raw provider 출력·소스 본문은 결과에 저장하지 않고 digest, byte count, 사용량, pre-write 경로와 명령 종류 집계만 남깁니다. controlled-edit의 `--all`은 provider당 최대 40회로 별도의 `BTH_PROVIDER_BENCHMARK_ALL=I_UNDERSTAND_40_PROVIDER_RUNS` 승인이 필요합니다. native의 전체 쌍대 실행은 최대 80회가 될 수 있어 `BTH_PROVIDER_BENCHMARK_ALL=I_UNDERSTAND_NATIVE_WORKFLOW_CALL_LIMITS` 승인을 별도로 요구합니다. 정확한 선택 범위의 상한은 먼저 `--plan`으로 확인하세요.
 
 기존 테스트 통과는 `verificationSuccessAt1`이며, 요청한 기능의 성공과 다릅니다. `successAt1`은 수정 전 코드에서는 실패하고 정답 코드에서는 통과하는 독립 회귀 테스트로 해당 구현도 확인했을 때만 인정합니다. 그 검증이 없으면 `null`이며, 전체 성공률도 미측정 항목이 남은 동안 확정하지 않습니다. schema 2 이하의 과거 `successAt1`은 기존 테스트 통과 관찰값으로만 취급합니다.
 

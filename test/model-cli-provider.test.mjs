@@ -18,6 +18,48 @@ import {
 } from '../src/providers/model-cli.mjs'
 import { buildProcessLaunch } from '../src/core/process-runner.mjs'
 
+test('native direct validation enables only exact Claude command approvals and leaves defaults unchanged', () => {
+  const adapter = { provider: 'claude', model: null, maxBudgetUsd: null }
+  const profile = selectImplementationProfile({ mode: 'deep' })
+  const executable = { path: '/fixture/claude' }
+  const original = buildProviderPromptInvocation(adapter, executable, 'Implement the task.', profile)
+  assert.equal(original.args[original.args.indexOf('--tools') + 1], 'Read,Edit,Write,Glob,Grep')
+  const native = buildProviderPromptInvocation({ ...adapter, validationCommands: [['./tools/verify', '--local']] }, executable, 'Implement the task.', profile)
+  assert.equal(native.args[native.args.indexOf('--tools') + 1], 'Read,Edit,Write,Glob,Grep,Bash')
+  assert.equal(native.args[native.args.indexOf('--allowedTools') + 1], 'Bash(./tools/verify --local)')
+  assert.equal(native.args[native.args.indexOf('--allowedTools') + 2], '--effort', 'Terminate variadic permission args before positional prompt')
+  assert.equal(native.args.at(-1), 'Implement the task.')
+  for (const command of [['./tools/verify', '*'], ['echo', 'x)'], ['../verify'], ['sh', '-c', 'echo ok; rm x'], []]) {
+    assert.throws(() => buildProviderPromptInvocation({ ...adapter, validationCommands: [command] }, executable, 'task', profile), /exact permission rule/)
+  }
+})
+
+test('declared validation activity distinguishes running a wrapper from reading it for both providers', async t => {
+  if (process.platform === 'win32') return t.skip('POSIX executable discovery fixture')
+  const directory = await mkdtemp(join(tmpdir(), 'bth-native-activity-'))
+  for (const provider of ['codex', 'claude']) {
+    await writeFile(join(directory, provider), '#!/bin/sh\nexit 0\n')
+    await chmod(join(directory, provider), 0o755)
+    const result = await runProviderPrompt({ provider, model: null, maxBudgetUsd: null, timeoutMs: 1000,
+      validationCommands: [['./tools/verify']] }, {
+      cwd: directory, prompt: 'fixture', env: { PATH: directory }, profile: selectImplementationProfile({ mode: 'deep' })
+    }, { env: { PATH: directory }, processRunner: async input => {
+      for (const [index, command] of ['cat ./tools/verify', './tools/verify', "/bin/zsh -lc './tools/verify'"].entries()) {
+        input.onStdoutLine(JSON.stringify(provider === 'codex'
+          ? { type: 'item.started', item: { id: String(index), type: 'command_execution', command } }
+          : { type: 'assistant', message: { content: [{ type: 'tool_use', id: String(index), name: 'Bash', input: { command } }] } }))
+        input.onStdoutLine(JSON.stringify(provider === 'codex'
+          ? { type: 'item.completed', item: { id: String(index), type: 'command_execution', command, exit_code: 0 } }
+          : { type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: String(index), is_error: false }] } }))
+      }
+      return { exitCode: 0, durationMs: 1, stdout: { tail: '' }, stderr: { tail: '' } }
+    } })
+    assert.equal(result.metadata.activity.validationCommandCount, 2, provider)
+    assert.equal(result.metadata.activity.readCommandCount, 1, provider)
+    assert.equal(result.metadata.activity.approvedValidation.complete, true, provider)
+  }
+})
+
 test('auto implementation profiles stay balanced without evidence and escalate structured risk', () => {
   const unknown = selectImplementationProfile({ mode: 'auto', claims: {} })
   assert.equal(unknown.selected, 'balanced')

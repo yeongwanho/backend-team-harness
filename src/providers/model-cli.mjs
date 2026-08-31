@@ -2,6 +2,7 @@ import { constants, lstatSync, realpathSync } from 'node:fs'
 import { access, lstat, realpath, stat } from 'node:fs/promises'
 import { delimiter, isAbsolute, join, relative, resolve } from 'node:path'
 import { buildSafeEnvironment, runProcess } from '../core/process-runner.mjs'
+import { createValidationActivity } from './validation-activity.mjs'
 
 export const PROVIDER_IDS = Object.freeze(['codex', 'claude'])
 export const IMPLEMENTATION_MODES = Object.freeze(['auto', 'fast', 'balanced', 'deep'])
@@ -140,6 +141,19 @@ export function selectImplementationProfile(input = {}) {
 
 export const TEST_AUTHORING_CONTRACT = 'Add or update focused executable regression tests for the changed production behavior and relevant failure paths inside the existing test discovery scope. Writing tests is required; executing them belongs to the evaluator. If no tests exist yet, create the first tests using the declared framework and configuration. Do not add pass-only placeholders, skip assertions, or weaken verification. If required tests cannot fit the approved paths or available framework, stop and explain the missing decision instead of claiming completion.'
 
+// Callers must already own and trust these commands. This rejects permission-rule
+// metacharacters; it does not certify arbitrary commands or provide egress isolation.
+export function approvedValidationCommands(commands = []) {
+  if (!Array.isArray(commands) || commands.length > 32) throw new Error('Invalid approved validation commands.')
+  return [...new Set(commands.map(command => {
+    if (!Array.isArray(command) || command.length < 1 || command.length > 64 || command.some(token =>
+      typeof token !== 'string' || token.length > 4096 || !/^[A-Za-z0-9_./:=+@-]+$/.test(token) || token.split('/').includes('..'))) {
+      throw new Error('Approved validation command cannot be represented as an exact permission rule.')
+    }
+    return command.join(' ')
+  }))]
+}
+
 function providerPrompt(requestPath, profile) {
   const implementationMode = profile?.selected ?? 'balanced'
   return [
@@ -166,6 +180,7 @@ export function buildProviderPromptInvocation(adapter, executable, prompt, profi
   if (typeof prompt !== 'string' || !prompt.trim() || Buffer.byteLength(prompt, 'utf8') > 128 * 1024) {
     throw new Error('Provider prompt must contain between 1 and 131072 UTF-8 bytes.')
   }
+  const validationCommands = approvedValidationCommands(adapter.validationCommands)
   if (adapter.provider === 'codex') {
     const args = [
       'exec', '--ephemeral', '--ignore-user-config', '--approve-for-me',
@@ -178,9 +193,10 @@ export function buildProviderPromptInvocation(adapter, executable, prompt, profi
   if (adapter.provider === 'claude') {
     const args = [
       '--print', '--output-format', 'stream-json', '--verbose', '--no-session-persistence', '--disable-slash-commands', '--no-chrome',
-      '--setting-sources', 'project', '--permission-mode', 'acceptEdits', '--tools', 'Read,Edit,Write,Glob,Grep',
-      '--effort', profile.effort
+      '--setting-sources', 'project', '--permission-mode', 'acceptEdits', '--tools', validationCommands.length ? 'Read,Edit,Write,Glob,Grep,Bash' : 'Read,Edit,Write,Glob,Grep'
     ]
+    if (validationCommands.length) args.push('--allowedTools', validationCommands.map(command => 'Bash(' + command + ')').join(','))
+    args.push('--effort', profile.effort)
     if (adapter.model) args.push('--model', adapter.model)
     if (adapter.maxBudgetUsd !== null) args.push('--max-budget-usd', String(adapter.maxBudgetUsd))
     args.push(prompt)
@@ -229,7 +245,10 @@ function sourcePaths(text, cwd, mustExist = true) {
   return [...new Set(matches.map((entry) => safeActivityPath(entry, cwd, mustExist)).filter(Boolean))].slice(0, 256)
 }
 
-function providerActivityObserver(provider, cwd) {
+function providerActivityObserver(provider, cwd, validationCommands = []) {
+  const declaredValidation = approvedValidationCommands(validationCommands)
+  const validation = createValidationActivity(declaredValidation, cwd)
+  const isValidation = command => VALIDATION_COMMAND.test(command) || validation.matches(command)
   const preWriteContentPaths = new Set()
   const preWriteDiscoveryPaths = new Set()
   const changedPaths = new Set()
@@ -265,7 +284,7 @@ function providerActivityObserver(provider, cwd) {
     }
     if (item.type !== 'command_execution') return
     const command = typeof item.command === 'string' ? item.command : ''
-    if (VALIDATION_COMMAND.test(command) && document.type === 'item.started') validationCommandCount += 1
+    if (isValidation(command) && document.type === 'item.started') validationCommandCount += 1
     if (WRITE_COMMAND.test(command) && document.type === 'item.started') markWrite(sourcePaths(command, cwd, false))
     if (CONTENT_READ_COMMAND.test(command)) {
       readCommandCount += document.type === 'item.started' ? 1 : 0
@@ -286,6 +305,16 @@ function providerActivityObserver(provider, cwd) {
       else if (name === 'Read') {
         readCommandCount += 1
         addPreWriteContent([safeActivityPath(input.file_path, cwd, true)].filter(Boolean))
+      } else if (name === 'Bash' && typeof input.command === 'string') {
+        if (isValidation(input.command)) validationCommandCount += 1
+        if (WRITE_COMMAND.test(input.command)) markWrite(sourcePaths(input.command, cwd, false))
+        if (CONTENT_READ_COMMAND.test(input.command)) {
+          readCommandCount += 1
+          addPreWriteContent(sourcePaths(input.command, cwd))
+        } else if (DISCOVERY_COMMAND.test(input.command)) {
+          discoveryCommandCount += 1
+          addPreWriteDiscovery(sourcePaths(input.command, cwd))
+        }
       }
     }
   }
@@ -298,6 +327,7 @@ function providerActivityObserver(provider, cwd) {
       try {
         const document = JSON.parse(line)
         parsedEvents += 1
+        validation.observe(document, provider)
         if (provider === 'codex') observeCodex(document)
         else observeClaude(document)
       } catch {
@@ -323,6 +353,7 @@ function providerActivityObserver(provider, cwd) {
         readCommandCount,
         discoveryCommandCount,
         validationCommandCount,
+        approvedValidation: validation.snapshot(),
         writeEventCount
       }
     }
@@ -487,7 +518,7 @@ export async function runImplementationProvider(adapter, input, options = {}) {
 }
 
 async function runResolvedProvider(adapter, input, invocation, executable, options) {
-  const activity = providerActivityObserver(adapter.provider, input.cwd)
+  const activity = providerActivityObserver(adapter.provider, input.cwd, adapter.validationCommands)
   const usageObserver = providerUsageObserver(adapter.provider)
   const result = await (options.processRunner ?? runProcess)({
     program: invocation.program,

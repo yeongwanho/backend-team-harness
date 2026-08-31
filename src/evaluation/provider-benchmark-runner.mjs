@@ -6,7 +6,7 @@ import { configureImplementationProvider } from '../config/implementation-setup.
 import { buildSafeEnvironment } from '../core/process-runner.mjs'
 import { resolveSafeProjectPath } from '../fs-safety.mjs'
 import { initProject } from '../init-project.mjs'
-import { runProviderPrompt, selectImplementationProfile, TEST_AUTHORING_CONTRACT } from '../providers/model-cli.mjs'
+import { approvedValidationCommands, runImplementationProvider, runProviderPrompt, selectImplementationProfile, TEST_AUTHORING_CONTRACT } from '../providers/model-cli.mjs'
 import { checkProject } from '../runtime/backend-harness.mjs'
 import { implementationStatus, resetImplementation } from '../runtime/implementation-orchestrator.mjs'
 import { runWork } from '../runtime/work-orchestrator.mjs'
@@ -15,6 +15,7 @@ import { compactImplementationVerification, implementationFailureSummary } from 
 import { inspectProjectFixture } from './project-fixture.mjs'
 import { verificationInputPaths } from '../config/verification.mjs'
 import { snapshotImplementedFiles } from '../core/implementation-record-store.mjs'
+import { createWorkflowBudget } from './workflow-budget.mjs'
 
 const execute = promisify(execFile)
 const MAX_GIT_OUTPUT = 16 * 1024 * 1024
@@ -86,7 +87,7 @@ async function directRuleViolations(root, baseCommit, paths, repositoryConfig, p
   return violations
 }
 
-function directPrompt(task, repositoryConfig) {
+function directPrompt(task, repositoryConfig, validationCommands = []) {
   const decision = repositoryConfig.tasks.find((entry) => entry.id === task.id)?.decisions
   if (!decision) throw new Error('Benchmark decisions are missing for ' + task.id + '.')
   return [
@@ -99,9 +100,11 @@ function directPrompt(task, repositoryConfig) {
     ] : []),
     'Preserve observed naming, layering, DTO/error, persistence, transaction, migration, and test patterns. Do not guess through an unknown or conflicting project rule.',
     'Do not read .env files, credentials, private keys, tokens, or unrelated user data. Do not commit, change Git refs, deploy, access production, or use a production database.',
-    TEST_AUTHORING_CONTRACT,
-    'Do not run build, test, formatter, linter, package-manager, Docker, or database commands; the benchmark evaluator owns the same project-declared structured verification used for the harness lane.',
-    'Finish after making the smallest complete implementation and focused tests. Do not create benchmark or harness metadata files.'
+    validationCommands.length ? TEST_AUTHORING_CONTRACT.replace('executing them belongs to the evaluator.', 'execute the approved verification commands and repair concrete failures within this session.') : TEST_AUTHORING_CONTRACT,
+    validationCommands.length
+      ? 'Run these exact prepared commands from the repository root after editing: ' + approvedValidationCommands(validationCommands).map(command => JSON.stringify(command)).join(', ') + '. These are the only approved validation commands; their reviewed wrappers own local fixtures. Do not install dependencies, run other Docker/database commands, change verification inputs, or claim success from your final text. If a gate fails, inspect the failure, fix within the approved scope, and rerun it within this session. Independent acceptance is hidden and evaluated afterwards.'
+      : 'Do not run build, test, formatter, linter, package-manager, Docker, or database commands; the benchmark evaluator owns the same project-declared structured verification used for the harness lane.',
+    'Finish after making the smallest complete implementation and focused tests. Do not manually create or edit benchmark or harness metadata files; only declared verification commands may write their generated reports.'
   ].join(' ')
 }
 
@@ -176,6 +179,8 @@ async function taskAcceptance(candidateRoot, eligible, options) {
 }
 
 async function runBthLane(root, task, repositoryConfig, input, options) {
+  const budget = input.workflow === 'native-workflow' ? createWorkflowBudget(input) : null
+  const providerRunner = options.bthProviderRunner ?? runImplementationProvider
   await initProject(root, { preferredSystem: repositoryConfig.buildSystem })
   await configureImplementationProvider(root, input.provider, {
     force: true,
@@ -204,7 +209,7 @@ async function runBthLane(root, task, repositoryConfig, input, options) {
       allowWrite: true,
       allowNetwork: true,
       providerProbe: options.providerProbe,
-      providerRunner: options.bthProviderRunner
+      providerRunner: budget ? (adapter, input, options) => budget.run(providerRunner, adapter, input, options) : options.bthProviderRunner
     })
     const elapsedMs = Date.now() - startedAt
     const record = result.implementation?.record
@@ -222,16 +227,19 @@ async function runBthLane(root, task, repositoryConfig, input, options) {
     return {
       provider: input.provider,
       lane: 'bth',
-      providerCompleted: attempts.length > 0 && attempts.every((attempt) => processPassed(attempt.adapter)),
+      providerCompleted: attempts.length > 0 && (budget ? processPassed(attempts.at(-1).adapter) : attempts.every((attempt) => processPassed(attempt.adapter))),
       verificationConfirmed: record?.verification?.confirmed === true,
       acceptance,
-      attempts: attempts.length,
+      attempts: budget ? budget.snapshot().invocations : attempts.length,
+      repairAttempts: budget ? Math.max(0, budget.snapshot().invocations - 1) : null,
       elapsedMs,
       changedPaths: paths,
       impactPaths: request?.codeContextPaths?.length ? request.codeContextPaths : null,
       ruleViolations,
       usage: combinedUsage(attempts, input.provider),
       evidence: {
+        providerBudget: budget?.snapshot() ?? null,
+        providerVersions: [...new Set(attempts.map(attempt => attempt.invocation?.version).filter(Boolean))],
         taskState: result.task?.state ?? null,
         implementationStatus: record?.status ?? null,
         workflowStatus: result.status,
@@ -279,12 +287,15 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
     provider: input.provider,
     model: input.model,
     timeoutMs: input.timeoutMs,
-    maxBudgetUsd: input.provider === 'claude' ? input.maxBudgetUsd : null
+    maxBudgetUsd: input.provider === 'claude' ? input.maxBudgetUsd : null,
+    ...(input.workflow === 'native-workflow' ? { validationCommands: projectFixture.verification.gates.filter(gate => gate.required).map(gate => gate.command) } : {})
   }
+  const budget = input.workflow === 'native-workflow' ? createWorkflowBudget(input) : null
   const startedAt = Date.now()
   const directRunner = options.directProviderRunner ?? runProviderPrompt
-  const prompt = directPrompt(task, repositoryConfig)
-  const run = await directRunner(adapter, {
+  const prompt = directPrompt(task, repositoryConfig, adapter.validationCommands)
+  const executeProvider = budget ? (...args) => budget.run(directRunner, ...args) : directRunner
+  const run = await executeProvider(adapter, {
     cwd: root,
     prompt,
     profile,
@@ -293,7 +304,7 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
   const paths = await changedPaths(root, baseCommit)
   const ruleViolations = await directRuleViolations(root, baseCommit, paths, repositoryConfig,
     projectFixture, protectedInputs)
-  if ((run.metadata?.activity?.validationCommandCount ?? 0) > 0) {
+  if (!budget && (run.metadata?.activity?.validationCommandCount ?? 0) > 0) {
     ruleViolations.push('provider-ran-evaluator-owned-validation')
   }
   let verificationConfirmed = false
@@ -323,6 +334,7 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
     provider: input.provider,
     lane: 'direct',
     providerCompleted: processPassed(run.process),
+    nativeValidationConfirmed: budget ? run.metadata?.activity?.approvedValidation?.complete === true ? true : null : null,
     verificationConfirmed,
     acceptance,
     attempts: 1,
@@ -332,6 +344,10 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
     ruleViolations,
     usage: run.metadata?.usage ?? {},
     evidence: {
+      providerBudget: budget?.snapshot() ?? null,
+      providerVersion: run.metadata?.version ?? null,
+      providerProfile: run.metadata?.profile ?? profile,
+      nativeValidation: budget ? run.metadata?.activity?.approvedValidation ?? { complete: false, status: 'unobserved' } : null,
       providerFailureCode: run.metadata?.failure?.code ?? null,
       verificationFailureCode: verificationFailure,
       verificationTests,
@@ -350,14 +366,32 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
 }
 
 export async function runPreparedComparisonCase(root, task, repositoryConfig, input, options = {}) {
+  const startedAt = Date.now()
+  const workflow = input.workflow ?? 'controlled-edit'
+  if (!['controlled-edit', 'native-workflow'].includes(workflow)) throw new Error('Unknown comparison workflow.')
+  const maxAttempts = input.maxAttempts ?? (workflow === 'native-workflow' ? 3 : 1)
+  if (!Number.isSafeInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 3 || (workflow === 'controlled-edit' && maxAttempts !== 1)) throw new Error('Invalid comparison recovery limit.')
+  input = { ...input, workflow, maxAttempts }
   if (!['bth', 'direct'].includes(input.lane)) throw new Error('Benchmark lane must be bth or direct.')
   if (!['codex', 'claude'].includes(input.provider)) throw new Error('Benchmark provider must be codex or claude.')
   const status = await git(root, ['status', '--porcelain=v1', '--untracked-files=all'])
   if (status.trim()) throw new Error('Benchmark case requires a clean prepared Git workspace.')
   if (!(await inspectProjectFixture(root, repositoryConfig.tasks.find(entry => entry.id === task.id)?.projectFixture)).valid) throw new Error('Benchmark project fixture is missing or changed before provider execution.')
+  if (workflow === 'native-workflow') {
+    const fixture = repositoryConfig.tasks.find(entry => entry.id === task.id)?.projectFixture
+    const commands = fixture?.verification?.gates?.filter(gate => gate.required).map(gate => gate.command)
+    if (!commands?.length) throw new Error('Native workflow requires pinned prepared verification commands.')
+    approvedValidationCommands(commands)
+  }
   const observation = input.lane === 'bth'
     ? await runBthLane(root, task, repositoryConfig, input, options)
     : await runDirectLane(root, task, repositoryConfig, input, options)
+  observation.workflow = workflow
+  if (workflow === 'native-workflow') {
+    observation.evidence.executionAndVerificationMs = observation.elapsedMs
+    observation.elapsedMs = Date.now() - startedAt
+    observation.evidence.elapsedScope = 'prepared-workspace-to-final-independent-acceptance; includes setup of BTH contract, implementation, verification and acceptance, excludes common fixture/dependency preflight'
+  }
   return {
     observation,
     score: scoreProviderCase(task, observation)

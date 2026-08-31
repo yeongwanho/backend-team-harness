@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "kind": "saved-observation-rescore-not-new-inference",
+  "recordedAt": "2026-08-31T05:27:49.328Z",
+  "originalArtifactSha256": "a04d68487863f11c4e77ed18386e2408412aedea264fd43d9ef55fc66853dabc",
+  "sourceHashes": {
+    "src/evaluation/provider-comparison.mjs": "ddc22cecdc5eb176da77dfd64b0a79075ff160d79e1eac3b04992ef2ec5d0087",
+    "src/evaluation/provider-benchmark-runner.mjs": "82b7c897eed542218a3aca8b1b358a1918283a6063cef56e4fc5b491b30e26b9",
+    "src/providers/model-cli.mjs": "c081e4b3fda23e1ff49d85fb0689faa5c3dce3cabfece85b087c8eb8ab98eead",
+    "src/providers/validation-activity.mjs": "993fc228774e46b5e62af0948524ca1a94854d14288ada5f421760aedd308862",
+    "scripts/benchmark-provider-comparison.mjs": "d1aa9a8c0ed143e5a38f305d08a2371f8ae5e992e386861565ef5c9475d985a7"
+  },
+  "scores": {
+    "bth": {
+      "schemaVersion": 4,
+      "successUnit": "workflow-request",
+      "id": "codex:bth:fastapi-04-constant-time-login",
+      "provider": "codex",
+      "lane": "bth",
+      "taskId": "fastapi-04-constant-time-login",
+      "successAt1": true,
+      "taskAcceptanceSuccess": true,
+      "nativeValidationConfirmed": true,
+      "verificationSuccessAt1": true,
+      "acceptanceConfirmed": true,
+      "failureReasons": [],
+      "providerCompleted": true,
+      "verificationConfirmed": true,
+      "attempts": 1,
+      "providerInvocations": 1,
+      "retries": 0,
+      "retryScope": "harness-repair-invocations",
+      "elapsedMs": 245462,
+      "usage": {
+        "provider": "codex",
+        "tokens": {
+          "input": 424259,
+          "uncachedInput": 49219,
+          "output": 8785,
+          "cachedInput": 375040,
+          "cacheCreationInput": 0,
+          "reasoningOutput": 4280,
+          "total": 433044
+        },
+        "costUsd": null,
+        "durationMs": 191720,
+        "turns": null
+      },
+      "changedPaths": [
+        "backend/app/api/routes/login.py",
+        "backend/app/core/security.py",
+        "backend/app/crud.py",
+        "backend/tests/api/routes/test_login.py",
+        "backend/tests/crud/test_user.py"
+      ],
+      "goldPathsChanged": [
+        "backend/app/api/routes/login.py",
+        "backend/app/crud.py",
+        "backend/tests/api/routes/test_login.py"
+      ],
+      "unexpectedChangedPaths": [
+        "backend/app/core/security.py",
+        "backend/tests/crud/test_user.py"
+      ],
+      "changedGoldRecall": 1,
+      "ruleViolations": [],
+      "impactLocalization": {
+        "taskId": "fastapi-04-constant-time-login",
+        "goldPathCount": 3,
+        "rankedPathCount": 24,
+        "recallAt5": 0.6666666666666666,
+        "recallAt20": 1,
+        "ndcgAt20": 0.9066276098484507
+      },
+      "outcomeLocalization": {
+        "taskId": "fastapi-04-constant-time-login",
+        "goldPathCount": 3,
+        "rankedPathCount": 5,
+        "recallAt5": 1,
+        "recallAt20": 1,
+        "ndcgAt20": 0.9060254355346823
+      }
+    },
+    "direct": {
+      "schemaVersion": 4,
+      "successUnit": "workflow-request",
+      "id": "codex:direct:fastapi-04-constant-time-login",
+      "provider": "codex",
+      "lane": "direct",
+      "taskId": "fastapi-04-constant-time-login",
+      "successAt1": null,
+      "taskAcceptanceSuccess": true,
+      "nativeValidationConfirmed": null,
+      "verificationSuccessAt1": true,
+      "acceptanceConfirmed": true,
+      "failureReasons": [
+        "native-validation-unconfirmed"
+      ],
+      "providerCompleted": true,
+      "verificationConfirmed": true,
+      "attempts": 1,
+      "providerInvocations": 1,
+      "retries": null,
+      "retryScope": "internal-repairs-not-observable",
+      "elapsedMs": 195773,
+      "usage": {
+        "provider": "codex",
+        "tokens": {
+          "input": 442863,
+          "uncachedInput": 46063,
+          "output": 6208,
+          "cachedInput": 396800,
+          "cacheCreationInput": 0,
+          "reasoningOutput": 2917,
+          "total": 449071
+        },
+        "costUsd": null,
+        "durationMs": 148703,
+        "turns": null
+      },
+      "changedPaths": [
+        "backend/app/api/routes/login.py",
+        "backend/app/core/security.py",
+        "backend/app/crud.py",
+        "backend/tests/api/routes/test_login.py",
+        "backend/tests/crud/test_user.py"
+      ],
+      "goldPathsChanged": [
+        "backend/app/api/routes/login.py",
+        "backend/app/crud.py",
+        "backend/tests/api/routes/test_login.py"
+      ],
+      "unexpectedChangedPaths": [
+        "backend/app/core/security.py",
+        "backend/tests/crud/test_user.py"
+      ],
+      "changedGoldRecall": 1,
+      "ruleViolations": [],
+      "impactLocalization": {
+        "taskId": "fastapi-04-constant-time-login",
+        "goldPathCount": 3,
+        "rankedPathCount": 14,
+        "recallAt5": 0.6666666666666666,
+        "recallAt20": 1,
+        "ndcgAt20": 0.5400753810454857
+      },
+      "outcomeLocalization": {
+        "taskId": "fastapi-04-constant-time-login",
+        "goldPathCount": 3,
+        "rankedPathCount": 5,
+        "recallAt5": 1,
+        "recallAt20": 1,
+        "ndcgAt20": 0.9060254355346823
+      }
+    }
+  },
+  "goalComplete": false,
+  "nativePairConfirmed": false,
+  "finding": "Both candidates passed evaluator tests, but direct self-validation execution was unobserved. The raw original true score is not accepted as native workflow completion.",
+  "limitations": [
+    "No new model invocation and no source change in either candidate.",
+    "Cannot distinguish skipped validation from missed tracing in the original direct run.",
+    "The new observer recognizes equivalent path spelling and explicit tool completion; this does not retroactively recover missing events.",
+    "Command events are advisory, not OS isolation or proof that a successful earlier command covers the final edited source. Final evaluator verification remains required."
+  ]
+}

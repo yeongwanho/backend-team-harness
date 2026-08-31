@@ -69,7 +69,8 @@ export function assertComparisonInputs(record, expected) {
     record.fairness?.configSha256 !== expected.configSha256 ||
     record.fairness?.fixedMode !== expected.mode ||
     (record.fairness?.fixedModel ?? null) !== (expected.model ?? null) ||
-    (expected.protocolVersion !== undefined && record.fairness?.protocolVersion !== expected.protocolVersion)) {
+    (expected.protocolVersion !== undefined && record.fairness?.protocolVersion !== expected.protocolVersion) ||
+    (expected.executionPolicySha256 !== undefined && record.fairness?.executionPolicySha256 !== expected.executionPolicySha256)) {
     throw new Error('Comparison inputs differ or lack fingerprints; use a fresh output directory instead of mixing results.')
   }
 }
@@ -110,6 +111,9 @@ export function buildComparisonMatrix(corpus, options = {}) {
 }
 
 export function scoreProviderCase(task, observation) {
+  const workflow = observation.workflow ?? 'controlled-edit'
+  if (!['controlled-edit', 'native-workflow'].includes(workflow)) throw new Error('Unknown comparison workflow.')
+  const native = workflow === 'native-workflow'
   const provider = observation?.provider
   const lane = observation?.lane
   const id = comparisonCaseId(provider, lane, task.id)
@@ -131,6 +135,8 @@ export function scoreProviderCase(task, observation) {
   const outcomeLocalization = scoreLocalization(task, changedPaths)
   const attempts = observation.attempts ?? 1
   if (!Number.isSafeInteger(attempts) || attempts < 0 || attempts > 100) throw new Error('attempts must be an integer between 0 and 100.')
+  const repairs = native && lane === 'bth' ? observation.repairAttempts ?? null : null
+  if (repairs !== null && (!Number.isSafeInteger(repairs) || repairs < 0 || repairs > Math.max(0, attempts - 1))) throw new Error('Invalid measured repair attempts.')
   if (attempts === 0 && (providerCompleted || verificationConfirmed)) throw new Error('Zero-attempt observation cannot claim completed implementation or verification.')
   const elapsedMs = finiteNonNegative(observation.elapsedMs, 'elapsedMs')
   const normalizedUsage = usage(observation.usage, provider)
@@ -138,7 +144,7 @@ export function scoreProviderCase(task, observation) {
   if (!providerCompleted) failureReasons.push('provider-did-not-complete')
   if (!verificationConfirmed) failureReasons.push('structured-verification-not-confirmed')
   if (changedPaths.length === 0) failureReasons.push('no-source-change')
-  if (attempts > 1) failureReasons.push('required-retry')
+  if (!native && attempts > 1) failureReasons.push('required-retry')
   if (violations.length) failureReasons.push('rule-violation')
   const verificationSuccessAt1 = attempts === 0 ? null : failureReasons.length === 0
   const acceptanceConfirmed = observation.acceptance?.controlsConfirmed === true && typeof observation.acceptance?.candidatePassed === 'boolean'
@@ -146,20 +152,29 @@ export function scoreProviderCase(task, observation) {
     : null
   if (acceptanceConfirmed === null) failureReasons.push('task-acceptance-not-measured')
   else if (!acceptanceConfirmed) failureReasons.push('task-acceptance-failed')
+  const taskAcceptanceSuccess = attempts === 0 ? null : verificationSuccessAt1 ? acceptanceConfirmed : false
+  const nativeValidationConfirmed = native && lane === 'direct' ? observation.nativeValidationConfirmed === true ? true : null : native ? verificationConfirmed : null
+  const nativeUnconfirmed = native && taskAcceptanceSuccess === true && nativeValidationConfirmed !== true
+  if (nativeUnconfirmed) failureReasons.push('native-validation-unconfirmed')
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
+    successUnit: native ? 'workflow-request' : 'provider-invocation',
     id,
     provider,
     lane,
     taskId: task.id,
-    successAt1: attempts === 0 ? null : verificationSuccessAt1 ? acceptanceConfirmed : false,
+    successAt1: nativeUnconfirmed ? null : taskAcceptanceSuccess,
+    taskAcceptanceSuccess,
+    nativeValidationConfirmed,
     verificationSuccessAt1,
     acceptanceConfirmed,
     failureReasons: attempts === 0 ? ['provider-not-attempted', observation.evidence?.failureCode ?? 'implementation-not-started'] : failureReasons,
     providerCompleted,
     verificationConfirmed,
     attempts,
-    retries: Math.max(0, attempts - 1),
+    providerInvocations: attempts,
+    retries: native ? repairs : Math.max(0, attempts - 1),
+    retryScope: native ? lane === 'bth' ? 'harness-repair-invocations' : 'internal-repairs-not-observable' : 'provider-reinvocations',
     elapsedMs,
     usage: normalizedUsage,
     changedPaths,
@@ -181,6 +196,8 @@ function aggregateMeasuredLocalization(cases, field) {
 }
 
 export function aggregateProviderCases(cases) {
+  const units = new Set(cases.map(entry => entry.successUnit ?? 'provider-invocation'))
+  if (units.size > 1) throw new Error('Cannot aggregate different success units.')
   const impactLocalization = aggregateMeasuredLocalization(cases, 'impactLocalization')
   const outcomeLocalization = aggregateMeasuredLocalization(cases, 'outcomeLocalization')
   // Schema 2's successAt1 measured only existing-suite verification. It cannot
@@ -188,8 +205,10 @@ export function aggregateProviderCases(cases) {
   const measuredSuccess = cases.filter((entry) => entry.schemaVersion >= 3 && typeof entry.successAt1 === 'boolean')
   const successCount = measuredSuccess.filter((entry) => entry.successAt1).length
   const retryCases = cases.filter((entry) => entry.retries > 0).length
+  const measuredRetries = cases.filter(entry => typeof entry.retries === 'number')
   return {
     cases: cases.length,
+    successUnit: [...units][0] ?? null,
     successAt1: {
       count: successCount,
       measured: measuredSuccess.length,
@@ -211,8 +230,9 @@ export function aggregateProviderCases(cases) {
     elapsedMs: { mean: mean(cases.map((entry) => entry.elapsedMs)), total: cases.reduce((sum, entry) => sum + entry.elapsedMs, 0) },
     retries: {
       cases: retryCases,
-      rate: cases.length ? retryCases / cases.length : null,
-      total: cases.reduce((sum, entry) => sum + entry.retries, 0)
+      rate: cases.length && measuredRetries.length === cases.length ? retryCases / cases.length : null,
+      measured: measuredRetries.length,
+      total: measuredRetries.length ? measuredRetries.reduce((sum, entry) => sum + entry.retries, 0) : null
     },
     usage: {
       tokens: Object.fromEntries(['total', 'input', 'uncachedInput', 'cachedInput', 'cacheCreationInput', 'output', 'reasoningOutput']
@@ -224,6 +244,7 @@ export function aggregateProviderCases(cases) {
 }
 
 export function compareProviderLanes(cases) {
+  if (new Set(cases.map(entry => entry.successUnit ?? 'provider-invocation')).size > 1) throw new Error('Cannot compare different success units.')
   const result = []
   for (const provider of COMPARISON_PROVIDERS) {
     const providerCases = cases.filter((entry) => entry.provider === provider)

@@ -1,0 +1,2271 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T05:13:20.856Z",
+  "kind": "actual-native-workflow-pair",
+  "sourceHashes": {
+    "src/providers/model-cli.mjs": "b8cffe7d528ae07ca00779982be3f1c9c6b22d4efd211fa8c3b796c9ebfe4d71",
+    "src/evaluation/workflow-budget.mjs": "edecc1aef45efe8ce8c2c781628115e6e94c259ad65c463bb1e2e38eea0be822",
+    "src/evaluation/provider-benchmark-runner.mjs": "865bf612b4a16def09854e04287dd94fdfe3268a61c3091d2c8e678d305479ff",
+    "src/evaluation/provider-comparison.mjs": "64dfe0d387c5e38bdd5bee1ec6eeb37d4b7d49bde6594eacd28ffb4348b64cf5",
+    "src/runtime/implementation-orchestrator.mjs": "16f088635dde87b16954bf6413f7a5398f60b139e6313ec30c5f56d8433e3610",
+    "src/runtime/work-orchestrator.mjs": "27ec7327b113e2dea43175dc5ac23beef886b00bb31387e02333b7cbb87bccb0",
+    "src/core/provider-context.mjs": "3fe58aadbe8690ed1b070247e01a416ca4440644d5d897d931fe3d2ac9a8dc14",
+    "packs/codegraph-advisory/indexer.mjs": "ac2e15649c943151872edc3304fd0e79a558fadafaf94e706d9c4c01a4780bab",
+    "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+    "scripts/benchmark-provider-comparison.mjs": "90e1dcdcceca04a56a1b55e1f3c80e2a90e8b8fa2b5a7946b54484cd402c599f",
+    "benchmarks/public-backend-v1/provider-comparison.json": "f7999657dfbbe143510dd46000a436c88d86f4da74d23feea511ef3882addf74",
+    "docs/evidence/artifacts/v42/record.mjs": "999e46b953b021085b5e3654d2f2879fb84a3ae1da4912e7b98f0d8b06b4ad83"
+  },
+  "seal": {
+    "sourceHashes": {
+      "src/providers/model-cli.mjs": "b8cffe7d528ae07ca00779982be3f1c9c6b22d4efd211fa8c3b796c9ebfe4d71",
+      "src/evaluation/workflow-budget.mjs": "edecc1aef45efe8ce8c2c781628115e6e94c259ad65c463bb1e2e38eea0be822",
+      "src/evaluation/provider-benchmark-runner.mjs": "865bf612b4a16def09854e04287dd94fdfe3268a61c3091d2c8e678d305479ff",
+      "src/evaluation/provider-comparison.mjs": "64dfe0d387c5e38bdd5bee1ec6eeb37d4b7d49bde6594eacd28ffb4348b64cf5",
+      "src/runtime/implementation-orchestrator.mjs": "16f088635dde87b16954bf6413f7a5398f60b139e6313ec30c5f56d8433e3610",
+      "src/runtime/work-orchestrator.mjs": "27ec7327b113e2dea43175dc5ac23beef886b00bb31387e02333b7cbb87bccb0",
+      "src/core/provider-context.mjs": "3fe58aadbe8690ed1b070247e01a416ca4440644d5d897d931fe3d2ac9a8dc14",
+      "packs/codegraph-advisory/indexer.mjs": "ac2e15649c943151872edc3304fd0e79a558fadafaf94e706d9c4c01a4780bab",
+      "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+      "scripts/benchmark-provider-comparison.mjs": "90e1dcdcceca04a56a1b55e1f3c80e2a90e8b8fa2b5a7946b54484cd402c599f",
+      "benchmarks/public-backend-v1/provider-comparison.json": "f7999657dfbbe143510dd46000a436c88d86f4da74d23feea511ef3882addf74",
+      "docs/evidence/artifacts/v42/record.mjs": "999e46b953b021085b5e3654d2f2879fb84a3ae1da4912e7b98f0d8b06b4ad83"
+    },
+    "createdAt": "2026-08-31T05:04:28.151Z",
+    "sourceParent": "ea0eb6f8f54dcab75336271cf1b8e2ceeb130560"
+  },
+  "taskId": "fastapi-04-constant-time-login",
+  "provider": "codex",
+  "order": [
+    "bth",
+    "direct"
+  ],
+  "records": {
+    "bth": {
+      "originalArtifactSha256": "24f1775c7e01e505c2d5095ceb0de61bb4b65c697f802d9cbc8cb19047813bcf",
+      "schemaVersion": 1,
+      "case": {
+        "id": "codex:bth:fastapi-04-constant-time-login",
+        "provider": "codex",
+        "lane": "bth",
+        "repositoryId": "fastapi-template",
+        "taskId": "fastapi-04-constant-time-login",
+        "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+        "requirementSha256": "a1c9c7ed88925c9ffa48472fa8e479f7be8a54268d415b29229fe8d66424c995",
+        "baseSha": "7107f7e83acdf93272377ca97985dd3c51c47686",
+        "targetSha": "689d7105e12039db84bb0e0c0cc797ca086192db"
+      },
+      "fairness": {
+        "sanitizedSingleCommitHistory": true,
+        "goldHiddenFromProvider": true,
+        "sameProvider": true,
+        "protocolVersion": "native-workflow-v42",
+        "executionPolicy": {
+          "schemaVersion": 1,
+          "workflow": "native-workflow",
+          "maxAttempts": 3,
+          "providerTimeAllowanceMs": 240000,
+          "claudeMaxBudgetUsd": 2,
+          "successUnit": "workflow-request"
+        },
+        "executionPolicySha256": "34380fda1121c1bdf2776478c6fe15a5e44a23f63fa92c6c1e9163eb7da090ac",
+        "configSha256": "f7999657dfbbe143510dd46000a436c88d86f4da74d23feea511ef3882addf74",
+        "fixedMode": "deep",
+        "fixedModel": "gpt-5.6-sol",
+        "setupCommandSha256": "645c74b03c8e93293b4339995fd2768b69779cea381e878e44fedad54537f69c"
+      },
+      "setup": {
+        "passed": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 284,
+          "stdout": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "stderr": {
+            "sha256": "ac206927501b7d0059e62a7ada39b4b85b5b759bf7b6034be52ab765f74be4f0",
+            "bytes": 1653
+          }
+        },
+        "preparation": {
+          "kind": "uv-sync-offline",
+          "projectPath": "backend",
+          "status": "passed",
+          "dependencyEntries": 79,
+          "workspaceEntries": 1,
+          "inputs": [
+            {
+              "path": "backend/pyproject.toml",
+              "sha256": "5c6bbcfb3fbdccbdc22d2828628ed4dc8352e13574899296cd9836ac9342c413"
+            },
+            {
+              "path": "pyproject.toml",
+              "sha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+            },
+            {
+              "path": "uv.lock",
+              "sha256": "23d84712ba614d2701df1c0589d093431b9eba739564d49bd8d49e5aa2f66e84"
+            }
+          ],
+          "command": [
+            "uv",
+            "sync",
+            "--project",
+            "<isolated-workspace>",
+            "--package",
+            "app",
+            "--offline",
+            "--locked",
+            "--no-build",
+            "--no-install-workspace",
+            "--no-python-downloads",
+            "--no-config",
+            "--python",
+            "3.12",
+            "--group",
+            "dev"
+          ],
+          "environmentPath": ".backend-harness/local/python-venv",
+          "failureCode": null,
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 284,
+            "stdout": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            },
+            "stderr": {
+              "sha256": "ac206927501b7d0059e62a7ada39b4b85b5b759bf7b6034be52ab765f74be4f0",
+              "bytes": 1653
+            }
+          },
+          "lifecycleScripts": false,
+          "onlineFallback": false,
+          "egressIsolation": "not-enforced"
+        },
+        "fixture": {
+          "files": [
+            {
+              "path": "backend/tests/bth_evaluation_bootstrap.py",
+              "beforeSha256": null,
+              "sha256": "8aa98e4fe8cf718817211ddf30a592133ca05cfe99a0b101a7533f5f6562327f"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi.mjs",
+              "beforeSha256": null,
+              "sha256": "2e7a5c6ed657a26362af6532ef45b41e6b24bbb95797c2f80fc69b8ce26f53fa"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi",
+              "beforeSha256": null,
+              "sha256": "1486e7ac42647a75f682317ad92321462fdb5b4894a64cfb13a5283742370faf"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi.cmd",
+              "beforeSha256": null,
+              "sha256": "8ba96bfee91d48be818061140248bfb77ba0c986820ff6afe5f1180650326f05"
+            },
+            {
+              "path": "backend/tests/test_baseline_environment.py",
+              "beforeSha256": null,
+              "sha256": "ab10054180cf606d0759c084cf560e0c9fecb7c440c223d0056e52bde51ee6aa"
+            },
+            {
+              "path": "backend/tests/utils/utils.py",
+              "beforeSha256": "ec4de331ed328dda26e329024c1f598996845fb5d9f662413a99a5b39a7e7f70",
+              "sha256": "037e8c294c1a6645bc6975b91d01284e89e42bddc2bc99c0daa9a94563d6df06"
+            },
+            {
+              "path": ".backend-harness/implementation.json",
+              "beforeSha256": "71479154133c5c8d5b20869a0f37e2334d47b15e864d2fcaf7e73ad2d2acd0a4",
+              "sha256": "4d4020de042bcddf670ef280d9b8d73d7e63c440b04fd7e594dfd9bfd042860c"
+            },
+            {
+              "path": ".backend-harness/verification.json",
+              "beforeSha256": "ca9f76121deda83e18264732253f11b3e192e2a50dee113c938df0c63b725c4b",
+              "sha256": "d6ef2801f70402e7d349489b655d75dd40107ac6a16942d1c4a6c1985b39fe86"
+            }
+          ],
+          "integrity": {
+            "valid": true,
+            "mismatchedPaths": []
+          },
+          "sourceClean": true
+        }
+      },
+      "preflight": {
+        "confirmed": true,
+        "emptyTestBaseline": null,
+        "failureCode": null,
+        "diagnosticCode": null,
+        "tests": {
+          "tests": 62,
+          "executed": 62,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "passed",
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 17426,
+              "stdout": {
+                "sha256": "d0fc3aeefff0c5d73f23f4413948f7937548d0a4098cc9f17d5efb85c837b917",
+                "bytes": 1325
+              },
+              "stderr": {
+                "sha256": "f0349365104a572f6b270b19ce0850ccec3a6f05c5e449c6dd1efce361cb8c68",
+                "bytes": 379
+              }
+            }
+          }
+        ]
+      },
+      "acceptanceControls": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "56e13ff438566da679231fc2283c9723dc9a890109e68b407eb165b4549437d8",
+        "testFiles": [
+          {
+            "path": "backend/test/bth/run.mjs",
+            "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+          },
+          {
+            "path": "backend/test/bth/conftest.py",
+            "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+          },
+          {
+            "path": "backend/test/bth/test_auth_enumeration.py",
+            "sha256": "fb0bfb3b37c58b9aca5aa94b9471d849cb297446257a1f6080f54b8a5172e336"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10861,
+              "stdout": {
+                "sha256": "803d918059098021c28aaa160a8da7f355e645ce4f36c717d4a815a33e3fbd25",
+                "bytes": 6968
+              },
+              "stderr": {
+                "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "48218e1aca25fca66c9cc253fd2ee27ede5683abdc9424ff10e6593f81107d57",
+                "bytes": 5832
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_login_executes_real_password_verification",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_wrong_password_retains_same_login_response",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_correct_password_still_returns_usable_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_recovery_response_does_not_reveal_registration",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_recovery_never_sends_mail",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_login_remains_denied",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_reset_does_not_change_password",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10972,
+              "stdout": {
+                "sha256": "c7ed26eb78fede5ab48fb109d45b99ddbd9c03201d9ef6f65ec21c78e4d60199",
+                "bytes": 237
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "d90020d6a6c5dd2bb315fc79b05cf8666e58fc57f37e9cbea824f59466e5b2a2",
+                "bytes": 1374
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_login_executes_real_password_verification",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_wrong_password_retains_same_login_response",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_correct_password_still_returns_usable_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_recovery_response_does_not_reveal_registration",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_recovery_never_sends_mail",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_login_remains_denied",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_reset_does_not_change_password",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 23003
+      },
+      "observation": {
+        "provider": "codex",
+        "lane": "bth",
+        "providerCompleted": true,
+        "verificationConfirmed": true,
+        "acceptance": {
+          "schemaVersion": 1,
+          "kind": "fixture-tests",
+          "controlsConfirmed": true,
+          "candidatePassed": true,
+          "candidateSourceSha256": "186353b7353a296b3d7d20723889ddf0efbcb77f2cfc60a9a4b3b490a503e45e",
+          "candidateUntouched": true,
+          "reason": null,
+          "oracleSha256": "56e13ff438566da679231fc2283c9723dc9a890109e68b407eb165b4549437d8",
+          "testFiles": [
+            {
+              "path": "backend/test/bth/run.mjs",
+              "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+            },
+            {
+              "path": "backend/test/bth/conftest.py",
+              "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+            },
+            {
+              "path": "backend/test/bth/test_auth_enumeration.py",
+              "sha256": "fb0bfb3b37c58b9aca5aa94b9471d849cb297446257a1f6080f54b8a5172e336"
+            }
+          ],
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 11005,
+                "stdout": {
+                  "sha256": "4512fd625a1ace6cc23ced2ad2c171c4559732a23d9490403ac1dfc2c65cf791",
+                  "bytes": 6968
+                },
+                "stderr": {
+                  "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                  "bytes": 355
+                }
+              },
+              "reports": [
+                {
+                  "path": "backend/.cache/bth-junit.xml",
+                  "sha256": "cd40689963a5285fdd264874c5844d0e457dcf9999f642b5f758d6bbd1cd2ca3",
+                  "bytes": 5832
+                }
+              ],
+              "cases": [
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_unknown_login_executes_real_password_verification",
+                  "outcome": "failed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_known_wrong_password_retains_same_login_response",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_known_correct_password_still_returns_usable_token",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_recovery_response_does_not_reveal_registration",
+                  "outcome": "failed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_unknown_recovery_never_sends_mail",
+                  "outcome": "failed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                  "outcome": "failed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_inactive_user_login_remains_denied",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_inactive_user_reset_does_not_change_password",
+                  "outcome": "passed"
+                }
+              ],
+              "passed": false,
+              "regressionReproduced": true
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 0,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 10877,
+                "stdout": {
+                  "sha256": "f221ed422c2590073106cc687ce29c0b54c7e3237da5d50352c0a42f67feaee6",
+                  "bytes": 237
+                },
+                "stderr": {
+                  "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                  "bytes": 355
+                }
+              },
+              "reports": [
+                {
+                  "path": "backend/.cache/bth-junit.xml",
+                  "sha256": "65b528fea90036121b9a530c3a7412f671dedb38e567b870165f36561f905f70",
+                  "bytes": 1374
+                }
+              ],
+              "cases": [
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_unknown_login_executes_real_password_verification",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_known_wrong_password_retains_same_login_response",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_known_correct_password_still_returns_usable_token",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_recovery_response_does_not_reveal_registration",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_unknown_recovery_never_sends_mail",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_inactive_user_login_remains_denied",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_inactive_user_reset_does_not_change_password",
+                  "outcome": "passed"
+                }
+              ],
+              "passed": true,
+              "regressionReproduced": false
+            }
+          },
+          "candidate": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10555,
+              "stdout": {
+                "sha256": "505800ad36d8c617730080d9782c7083980c91a17831f4036e01c7e089f90dab",
+                "bytes": 240
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "db7bd3c1e8c7485289f5176629fa31c7037ab5ca8c053dc6e4e7e2de3b81dd7e",
+                "bytes": 1374
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_login_executes_real_password_verification",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_wrong_password_retains_same_login_response",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_correct_password_still_returns_usable_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_recovery_response_does_not_reveal_registration",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_recovery_never_sends_mail",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_login_remains_denied",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_reset_does_not_change_password",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          },
+          "elapsedMs": 34429
+        },
+        "attempts": 1,
+        "repairAttempts": 0,
+        "elapsedMs": 245462,
+        "changedPaths": [
+          "backend/app/api/routes/login.py",
+          "backend/app/core/security.py",
+          "backend/app/crud.py",
+          "backend/tests/api/routes/test_login.py",
+          "backend/tests/crud/test_user.py"
+        ],
+        "impactPaths": [
+          "backend/tests/api/routes/test_login.py",
+          "backend/app/api/routes/login.py",
+          "backend/app/utils.py",
+          "backend/tests/api/routes/test_users.py",
+          "backend/app/api/routes/users.py",
+          "backend/app/models.py",
+          "backend/app/api/deps.py",
+          "backend/app/core/config.py",
+          "backend/app/crud.py",
+          "backend/app/core/security.py",
+          "backend/tests/utils/user.py",
+          "backend/tests/bth_evaluation_bootstrap.py",
+          "backend/tests/conftest.py",
+          "backend/app/api/routes/private.py",
+          "backend/tests/api/routes/test_private.py",
+          "backend/tests/utils/utils.py",
+          "backend/tests/crud/test_user.py",
+          "backend/app/core/db.py",
+          "backend/app/api/main.py",
+          "backend/app/__init__.py",
+          "backend/tests/test_baseline_environment.py",
+          "backend/tests/utils/item.py",
+          "backend/app/api/routes/utils.py",
+          "backend/app/api/routes/items.py"
+        ],
+        "ruleViolations": [],
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 424259,
+            "uncachedInput": 49219,
+            "output": 8785,
+            "cachedInput": 375040,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 4280,
+            "total": 433044
+          },
+          "costUsd": null,
+          "durationMs": 191720,
+          "turns": null
+        },
+        "evidence": {
+          "providerBudget": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "timeoutMs": 240000,
+            "measuredProviderWallMs": 191724.09487499998,
+            "invocations": 1,
+            "deniedInvocations": 0,
+            "maxBudgetUsd": null,
+            "reportedCostUsd": null,
+            "dollarLimitEnforced": false,
+            "scope": "provider-calls-only; excludes harness verification and acceptance"
+          },
+          "providerVersions": [
+            "codex-cli 0.151.0"
+          ],
+          "taskState": "IMPLEMENTING",
+          "implementationStatus": "passed",
+          "workflowStatus": "implementation-passed",
+          "preservationReview": {
+            "schemaVersion": 1,
+            "authority": "human-acknowledgement-not-semantic-proof",
+            "status": "not-required",
+            "fingerprint": null,
+            "preservation": {
+              "schemaVersion": 1,
+              "authority": "structural-review-not-semantic-proof",
+              "status": "not-applicable",
+              "omittedFileCount": 0,
+              "files": []
+            }
+          },
+          "verificationRunPath": ".backend-harness/local/runs/latest.json",
+          "failureCode": null,
+          "preparation": {
+            "kind": "uv-sync-offline",
+            "projectPath": "backend",
+            "status": "passed",
+            "dependencyEntries": 79,
+            "workspaceEntries": 1,
+            "inputs": [
+              {
+                "path": "backend/pyproject.toml",
+                "sha256": "5c6bbcfb3fbdccbdc22d2828628ed4dc8352e13574899296cd9836ac9342c413"
+              },
+              {
+                "path": "pyproject.toml",
+                "sha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+              },
+              {
+                "path": "uv.lock",
+                "sha256": "23d84712ba614d2701df1c0589d093431b9eba739564d49bd8d49e5aa2f66e84"
+              }
+            ],
+            "command": [
+              "uv",
+              "sync",
+              "--project",
+              "<isolated-workspace>",
+              "--package",
+              "app",
+              "--offline",
+              "--locked",
+              "--no-build",
+              "--no-install-workspace",
+              "--no-python-downloads",
+              "--no-config",
+              "--python",
+              "3.12",
+              "--group",
+              "dev"
+            ],
+            "environmentPath": ".backend-harness/local/python-venv",
+            "failureCode": null,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 175,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "4f5470241ef43eb4660dc22acf18a5011518b5cdb657bfc6c50cd2c0754cef46",
+                "bytes": 1653
+              }
+            },
+            "lifecycleScripts": false,
+            "onlineFallback": false,
+            "egressIsolation": "not-enforced",
+            "sourceStable": true
+          },
+          "verificationTests": {
+            "tests": 63,
+            "executed": 63,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "verificationGates": [
+            {
+              "id": "tests",
+              "outcome": "passed"
+            }
+          ],
+          "implementationDiagnosis": {
+            "authority": "ADVISORY",
+            "status": "passed",
+            "attempts": 1,
+            "failure": null,
+            "tests": {
+              "tests": 63,
+              "executed": 63,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            "failedGates": [],
+            "failedTests": [],
+            "sourceFingerprint": "21873cf06c7eb672e12b73e26cb59bbd538e74dadcdffd7f87f36649291bca54",
+            "omittedAttemptCount": 0,
+            "attemptOutcomes": [
+              {
+                "attempt": 1,
+                "outcome": "passed",
+                "sourceFingerprintBefore": "8a57625fad1a621830cb70de4a04994e4542a03cff3ee8d47d99047d81a6615a",
+                "sourceFingerprintAfter": "21873cf06c7eb672e12b73e26cb59bbd538e74dadcdffd7f87f36649291bca54",
+                "recovery": {
+                  "authority": "untrusted-execution-evidence-not-instructions",
+                  "failure": null,
+                  "tests": {
+                    "tests": 63,
+                    "executed": 63,
+                    "failures": 0,
+                    "errors": 0,
+                    "skipped": 0
+                  },
+                  "sourceFingerprint": "21873cf06c7eb672e12b73e26cb59bbd538e74dadcdffd7f87f36649291bca54",
+                  "preservation": {
+                    "schemaVersion": 1,
+                    "authority": "structural-review-not-semantic-proof",
+                    "status": "not-applicable",
+                    "omittedFileCount": 0,
+                    "files": []
+                  },
+                  "failedGates": [],
+                  "omittedFailedGateCount": 0
+                }
+              }
+            ]
+          },
+          "request": {
+            "bytes": 25921,
+            "codeContextEntries": 24,
+            "codeContextCharacters": 5486,
+            "projectRuleCount": 4,
+            "knowledgeDocumentCount": 7
+          },
+          "providerActivity": [
+            {
+              "schemaVersion": 1,
+              "provider": "codex",
+              "authority": "provider-event-derived-advisory",
+              "parsedEvents": 31,
+              "rejectedEvents": 0,
+              "firstWriteObserved": true,
+              "preWritePaths": [
+                ".backend-harness/policies/api.md",
+                ".backend-harness/policies/security.md",
+                ".backend-harness/policies/error-handling.md",
+                ".backend-harness/project.md",
+                ".backend-harness/architecture.md",
+                ".backend-harness/glossary.md",
+                ".backend-harness/bin/verify-public-fastapi.mjs",
+                "backend/pyproject.toml",
+                "backend/app/api/routes/login.py",
+                "backend/tests/api/routes/test_login.py",
+                ".backend-harness/bin/verify-portable.mjs",
+                "backend/app/crud.py",
+                "backend/app/core/security.py",
+                "backend/app/utils.py",
+                "backend/app/models.py",
+                "backend/tests/conftest.py",
+                "backend/tests/crud/test_user.py"
+              ],
+              "preWriteContentPaths": [
+                ".backend-harness/policies/api.md",
+                ".backend-harness/policies/security.md",
+                ".backend-harness/policies/error-handling.md",
+                ".backend-harness/project.md",
+                ".backend-harness/architecture.md",
+                ".backend-harness/glossary.md",
+                ".backend-harness/bin/verify-public-fastapi.mjs",
+                "backend/pyproject.toml",
+                "backend/app/api/routes/login.py",
+                "backend/tests/api/routes/test_login.py",
+                ".backend-harness/bin/verify-portable.mjs",
+                "backend/app/crud.py",
+                "backend/app/core/security.py",
+                "backend/app/utils.py",
+                "backend/app/models.py",
+                "backend/tests/conftest.py",
+                "backend/tests/crud/test_user.py"
+              ],
+              "preWriteDiscoveryPaths": [],
+              "changedPaths": [
+                "backend/app/api/routes/login.py",
+                "backend/app/core/security.py",
+                "backend/app/crud.py",
+                "backend/tests/api/routes/test_login.py",
+                "backend/tests/crud/test_user.py"
+              ],
+              "readCommandCount": 6,
+              "discoveryCommandCount": 0,
+              "validationCommandCount": 0,
+              "writeEventCount": 2
+            }
+          ],
+          "workspaceRetainedForAudit": true,
+          "executionAndVerificationMs": 210803,
+          "elapsedScope": "prepared-workspace-to-final-independent-acceptance; includes setup of BTH contract, implementation, verification and acceptance, excludes common fixture/dependency preflight"
+        },
+        "workflow": "native-workflow"
+      },
+      "score": {
+        "schemaVersion": 4,
+        "successUnit": "workflow-request",
+        "id": "codex:bth:fastapi-04-constant-time-login",
+        "provider": "codex",
+        "lane": "bth",
+        "taskId": "fastapi-04-constant-time-login",
+        "successAt1": true,
+        "verificationSuccessAt1": true,
+        "acceptanceConfirmed": true,
+        "failureReasons": [],
+        "providerCompleted": true,
+        "verificationConfirmed": true,
+        "attempts": 1,
+        "providerInvocations": 1,
+        "retries": 0,
+        "retryScope": "harness-repair-invocations",
+        "elapsedMs": 245462,
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 424259,
+            "uncachedInput": 49219,
+            "output": 8785,
+            "cachedInput": 375040,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 4280,
+            "total": 433044
+          },
+          "costUsd": null,
+          "durationMs": 191720,
+          "turns": null
+        },
+        "changedPaths": [
+          "backend/app/api/routes/login.py",
+          "backend/app/core/security.py",
+          "backend/app/crud.py",
+          "backend/tests/api/routes/test_login.py",
+          "backend/tests/crud/test_user.py"
+        ],
+        "goldPathsChanged": [
+          "backend/app/api/routes/login.py",
+          "backend/app/crud.py",
+          "backend/tests/api/routes/test_login.py"
+        ],
+        "unexpectedChangedPaths": [
+          "backend/app/core/security.py",
+          "backend/tests/crud/test_user.py"
+        ],
+        "changedGoldRecall": 1,
+        "ruleViolations": [],
+        "impactLocalization": {
+          "taskId": "fastapi-04-constant-time-login",
+          "goldPathCount": 3,
+          "rankedPathCount": 24,
+          "recallAt5": 0.6666666666666666,
+          "recallAt20": 1,
+          "ndcgAt20": 0.9066276098484507
+        },
+        "outcomeLocalization": {
+          "taskId": "fastapi-04-constant-time-login",
+          "goldPathCount": 3,
+          "rankedPathCount": 5,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 0.9060254355346823
+        }
+      },
+      "totalElapsedMs": 287390,
+      "workspace": "<tmp>/bth-provider-case-7QivmU/project"
+    },
+    "direct": {
+      "originalArtifactSha256": "286dd264dc62324e63e836620cba45efb2330c814f73e2aa938a95b61cba0a34",
+      "schemaVersion": 1,
+      "case": {
+        "id": "codex:direct:fastapi-04-constant-time-login",
+        "provider": "codex",
+        "lane": "direct",
+        "repositoryId": "fastapi-template",
+        "taskId": "fastapi-04-constant-time-login",
+        "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+        "requirementSha256": "a1c9c7ed88925c9ffa48472fa8e479f7be8a54268d415b29229fe8d66424c995",
+        "baseSha": "7107f7e83acdf93272377ca97985dd3c51c47686",
+        "targetSha": "689d7105e12039db84bb0e0c0cc797ca086192db"
+      },
+      "fairness": {
+        "sanitizedSingleCommitHistory": true,
+        "goldHiddenFromProvider": true,
+        "sameProvider": true,
+        "protocolVersion": "native-workflow-v42",
+        "executionPolicy": {
+          "schemaVersion": 1,
+          "workflow": "native-workflow",
+          "maxAttempts": 3,
+          "providerTimeAllowanceMs": 240000,
+          "claudeMaxBudgetUsd": 2,
+          "successUnit": "workflow-request"
+        },
+        "executionPolicySha256": "34380fda1121c1bdf2776478c6fe15a5e44a23f63fa92c6c1e9163eb7da090ac",
+        "configSha256": "f7999657dfbbe143510dd46000a436c88d86f4da74d23feea511ef3882addf74",
+        "fixedMode": "deep",
+        "fixedModel": "gpt-5.6-sol",
+        "setupCommandSha256": "645c74b03c8e93293b4339995fd2768b69779cea381e878e44fedad54537f69c"
+      },
+      "setup": {
+        "passed": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 181,
+          "stdout": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "stderr": {
+            "sha256": "59741de4c9699772ccc4e144473fc2775dd07d4f88c14b1d77858378c485fd60",
+            "bytes": 1653
+          }
+        },
+        "preparation": {
+          "kind": "uv-sync-offline",
+          "projectPath": "backend",
+          "status": "passed",
+          "dependencyEntries": 79,
+          "workspaceEntries": 1,
+          "inputs": [
+            {
+              "path": "backend/pyproject.toml",
+              "sha256": "5c6bbcfb3fbdccbdc22d2828628ed4dc8352e13574899296cd9836ac9342c413"
+            },
+            {
+              "path": "pyproject.toml",
+              "sha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+            },
+            {
+              "path": "uv.lock",
+              "sha256": "23d84712ba614d2701df1c0589d093431b9eba739564d49bd8d49e5aa2f66e84"
+            }
+          ],
+          "command": [
+            "uv",
+            "sync",
+            "--project",
+            "<isolated-workspace>",
+            "--package",
+            "app",
+            "--offline",
+            "--locked",
+            "--no-build",
+            "--no-install-workspace",
+            "--no-python-downloads",
+            "--no-config",
+            "--python",
+            "3.12",
+            "--group",
+            "dev"
+          ],
+          "environmentPath": ".backend-harness/local/python-venv",
+          "failureCode": null,
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 181,
+            "stdout": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            },
+            "stderr": {
+              "sha256": "59741de4c9699772ccc4e144473fc2775dd07d4f88c14b1d77858378c485fd60",
+              "bytes": 1653
+            }
+          },
+          "lifecycleScripts": false,
+          "onlineFallback": false,
+          "egressIsolation": "not-enforced"
+        },
+        "fixture": {
+          "files": [
+            {
+              "path": "backend/tests/bth_evaluation_bootstrap.py",
+              "beforeSha256": null,
+              "sha256": "8aa98e4fe8cf718817211ddf30a592133ca05cfe99a0b101a7533f5f6562327f"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi.mjs",
+              "beforeSha256": null,
+              "sha256": "2e7a5c6ed657a26362af6532ef45b41e6b24bbb95797c2f80fc69b8ce26f53fa"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi",
+              "beforeSha256": null,
+              "sha256": "1486e7ac42647a75f682317ad92321462fdb5b4894a64cfb13a5283742370faf"
+            },
+            {
+              "path": ".backend-harness/bin/verify-public-fastapi.cmd",
+              "beforeSha256": null,
+              "sha256": "8ba96bfee91d48be818061140248bfb77ba0c986820ff6afe5f1180650326f05"
+            },
+            {
+              "path": "backend/tests/test_baseline_environment.py",
+              "beforeSha256": null,
+              "sha256": "ab10054180cf606d0759c084cf560e0c9fecb7c440c223d0056e52bde51ee6aa"
+            },
+            {
+              "path": "backend/tests/utils/utils.py",
+              "beforeSha256": "ec4de331ed328dda26e329024c1f598996845fb5d9f662413a99a5b39a7e7f70",
+              "sha256": "037e8c294c1a6645bc6975b91d01284e89e42bddc2bc99c0daa9a94563d6df06"
+            },
+            {
+              "path": ".backend-harness/implementation.json",
+              "beforeSha256": "71479154133c5c8d5b20869a0f37e2334d47b15e864d2fcaf7e73ad2d2acd0a4",
+              "sha256": "4d4020de042bcddf670ef280d9b8d73d7e63c440b04fd7e594dfd9bfd042860c"
+            },
+            {
+              "path": ".backend-harness/verification.json",
+              "beforeSha256": "ca9f76121deda83e18264732253f11b3e192e2a50dee113c938df0c63b725c4b",
+              "sha256": "d6ef2801f70402e7d349489b655d75dd40107ac6a16942d1c4a6c1985b39fe86"
+            }
+          ],
+          "integrity": {
+            "valid": true,
+            "mismatchedPaths": []
+          },
+          "sourceClean": true
+        }
+      },
+      "preflight": {
+        "confirmed": true,
+        "emptyTestBaseline": null,
+        "failureCode": null,
+        "diagnosticCode": null,
+        "tests": {
+          "tests": 62,
+          "executed": 62,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "passed",
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 16018,
+              "stdout": {
+                "sha256": "4480cd4f53087593f09e14411b5b4ce66431a6eadc36d548b88ac1f0b6a4f855",
+                "bytes": 1325
+              },
+              "stderr": {
+                "sha256": "f0349365104a572f6b270b19ce0850ccec3a6f05c5e449c6dd1efce361cb8c68",
+                "bytes": 379
+              }
+            }
+          }
+        ]
+      },
+      "acceptanceControls": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "56e13ff438566da679231fc2283c9723dc9a890109e68b407eb165b4549437d8",
+        "testFiles": [
+          {
+            "path": "backend/test/bth/run.mjs",
+            "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+          },
+          {
+            "path": "backend/test/bth/conftest.py",
+            "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+          },
+          {
+            "path": "backend/test/bth/test_auth_enumeration.py",
+            "sha256": "fb0bfb3b37c58b9aca5aa94b9471d849cb297446257a1f6080f54b8a5172e336"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 11083,
+              "stdout": {
+                "sha256": "fda747919a19d78147511b69f258285168305e9eacae34e6d85aa9a68ad6b5b7",
+                "bytes": 6968
+              },
+              "stderr": {
+                "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "d0c376dd3c798d3c4dd14ed6a0b5f42327f1b5780893ece81abeb5268334f3b9",
+                "bytes": 5832
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_login_executes_real_password_verification",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_wrong_password_retains_same_login_response",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_correct_password_still_returns_usable_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_recovery_response_does_not_reveal_registration",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_recovery_never_sends_mail",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                "outcome": "failed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_login_remains_denied",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_reset_does_not_change_password",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10997,
+              "stdout": {
+                "sha256": "54e3e3e76a1523536474c979999cf7fc43eeed55e8cb28da6b72822b8f61afea",
+                "bytes": 237
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "8c0141a4769eadf96f118426fe70750f201977abc7a7ba759671154fb7c8c89c",
+                "bytes": 1374
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_login_executes_real_password_verification",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_wrong_password_retains_same_login_response",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_correct_password_still_returns_usable_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_recovery_response_does_not_reveal_registration",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_recovery_never_sends_mail",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_login_remains_denied",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_reset_does_not_change_password",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 23225
+      },
+      "observation": {
+        "provider": "codex",
+        "lane": "direct",
+        "providerCompleted": true,
+        "verificationConfirmed": true,
+        "acceptance": {
+          "schemaVersion": 1,
+          "kind": "fixture-tests",
+          "controlsConfirmed": true,
+          "candidatePassed": true,
+          "candidateSourceSha256": "e0dc989a1af43ffd7b708e176fd866e9543c4b25d687d02731e8a77528e59ba1",
+          "candidateUntouched": true,
+          "reason": null,
+          "oracleSha256": "56e13ff438566da679231fc2283c9723dc9a890109e68b407eb165b4549437d8",
+          "testFiles": [
+            {
+              "path": "backend/test/bth/run.mjs",
+              "sha256": "78999909d64912c62cd5a9219700453847e212f80695cb9cb4cac986b0cf5f44"
+            },
+            {
+              "path": "backend/test/bth/conftest.py",
+              "sha256": "22899b1031543e995f477e689f8f27321944d2431915328c03e56b9330056c80"
+            },
+            {
+              "path": "backend/test/bth/test_auth_enumeration.py",
+              "sha256": "fb0bfb3b37c58b9aca5aa94b9471d849cb297446257a1f6080f54b8a5172e336"
+            }
+          ],
+          "controls": {
+            "base": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 1,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 10904,
+                "stdout": {
+                  "sha256": "29fbf8135d8c589c13c703274f3ed2b3cb48b802eb663c3beb8fac03ea8492f2",
+                  "bytes": 6968
+                },
+                "stderr": {
+                  "sha256": "28cd5e7ed64b06231b076c0a87d0b83c7945944bce69c1fbeddac4b23031207a",
+                  "bytes": 355
+                }
+              },
+              "reports": [
+                {
+                  "path": "backend/.cache/bth-junit.xml",
+                  "sha256": "4f694424236b9fd4c3c50300072bd2b43638fa28db1bb48d00932fab959b8c7f",
+                  "bytes": 5832
+                }
+              ],
+              "cases": [
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_unknown_login_executes_real_password_verification",
+                  "outcome": "failed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_known_wrong_password_retains_same_login_response",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_known_correct_password_still_returns_usable_token",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_recovery_response_does_not_reveal_registration",
+                  "outcome": "failed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_unknown_recovery_never_sends_mail",
+                  "outcome": "failed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                  "outcome": "failed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_inactive_user_login_remains_denied",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_inactive_user_reset_does_not_change_password",
+                  "outcome": "passed"
+                }
+              ],
+              "passed": false,
+              "regressionReproduced": true
+            },
+            "target": {
+              "sourceStable": true,
+              "process": {
+                "exitCode": 0,
+                "signal": null,
+                "timedOut": false,
+                "stdioDrainTimedOut": false,
+                "durationMs": 10760,
+                "stdout": {
+                  "sha256": "bcb6633b59f43ca3099395450dbd2eaa4e380cbd01fc09e9187b7ddf271715c2",
+                  "bytes": 237
+                },
+                "stderr": {
+                  "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                  "bytes": 355
+                }
+              },
+              "reports": [
+                {
+                  "path": "backend/.cache/bth-junit.xml",
+                  "sha256": "ae5cd18987681486d3b679dd4298b19082a1f3cb7218fdec8e8661372ebdcf1d",
+                  "bytes": 1374
+                }
+              ],
+              "cases": [
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_unknown_login_executes_real_password_verification",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_known_wrong_password_retains_same_login_response",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_known_correct_password_still_returns_usable_token",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_recovery_response_does_not_reveal_registration",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_unknown_recovery_never_sends_mail",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_inactive_user_login_remains_denied",
+                  "outcome": "passed"
+                },
+                {
+                  "className": "test_auth_enumeration",
+                  "name": "test_inactive_user_reset_does_not_change_password",
+                  "outcome": "passed"
+                }
+              ],
+              "passed": true,
+              "regressionReproduced": false
+            }
+          },
+          "candidate": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10951,
+              "stdout": {
+                "sha256": "e7cb5c41a1d269fd349ed40653e6ec3a2bdc5db42a08d91d8aacc3192b8a1510",
+                "bytes": 240
+              },
+              "stderr": {
+                "sha256": "c6616bd7d392c433b1ea09886c3c255a9b0db1b8a23e7f892f4e1c513e84266a",
+                "bytes": 355
+              }
+            },
+            "reports": [
+              {
+                "path": "backend/.cache/bth-junit.xml",
+                "sha256": "09d3eff195d23a847bb548cdc89dd1802e771615879f8ef89f58d624608e04ea",
+                "bytes": 1374
+              }
+            ],
+            "cases": [
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_login_executes_real_password_verification",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_wrong_password_retains_same_login_response",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_known_correct_password_still_returns_usable_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_recovery_response_does_not_reveal_registration",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_unknown_recovery_never_sends_mail",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_token_for_absent_user_matches_invalid_token",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_reset_existing_user_changes_password_and_preserves_login",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_login_remains_denied",
+                "outcome": "passed"
+              },
+              {
+                "className": "test_auth_enumeration",
+                "name": "test_inactive_user_reset_does_not_change_password",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          },
+          "elapsedMs": 34708
+        },
+        "attempts": 1,
+        "elapsedMs": 195773,
+        "changedPaths": [
+          "backend/app/api/routes/login.py",
+          "backend/app/core/security.py",
+          "backend/app/crud.py",
+          "backend/tests/api/routes/test_login.py",
+          "backend/tests/crud/test_user.py"
+        ],
+        "impactPaths": [
+          "backend/tests/bth_evaluation_bootstrap.py",
+          "backend/tests/test_baseline_environment.py",
+          "backend/tests/utils/utils.py",
+          "backend/app/crud.py",
+          "backend/app/api/routes/login.py",
+          "backend/app/core/security.py",
+          "backend/tests/api/routes/test_login.py",
+          "backend/pyproject.toml",
+          "backend/README.md",
+          "backend/tests/crud/test_user.py",
+          "backend/app/models.py",
+          "backend/app/utils.py",
+          "backend/tests/utils/user.py",
+          "backend/tests/conftest.py"
+        ],
+        "ruleViolations": [],
+        "usage": {
+          "schemaVersion": 2,
+          "provider": "codex",
+          "tokens": {
+            "input": 442863,
+            "uncachedInput": 46063,
+            "output": 6208,
+            "cachedInput": 396800,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 2917,
+            "total": 449071
+          },
+          "costUsd": null,
+          "durationMs": 148703,
+          "turns": null,
+          "providerReported": {
+            "usage.input_tokens": 442863,
+            "usage.cached_input_tokens": 396800,
+            "usage.cache_write_input_tokens": 0,
+            "usage.output_tokens": 6208,
+            "usage.reasoning_output_tokens": 2917
+          },
+          "scope": "invocation-final"
+        },
+        "evidence": {
+          "providerBudget": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "timeoutMs": 240000,
+            "measuredProviderWallMs": 148705.23283400002,
+            "invocations": 1,
+            "deniedInvocations": 0,
+            "maxBudgetUsd": null,
+            "reportedCostUsd": null,
+            "dollarLimitEnforced": false,
+            "scope": "provider-calls-only; excludes harness verification and acceptance"
+          },
+          "providerVersion": "codex-cli 0.151.0",
+          "providerProfile": {
+            "configured": "deep",
+            "selected": "deep",
+            "reasons": [
+              "explicit-configured-mode"
+            ],
+            "effort": "high",
+            "taskCharacters": 373,
+            "taskBudgetCharacters": 64000,
+            "contextBudgetCharacters": 12000,
+            "readiness": {
+              "projectRules": "unknown",
+              "adjacentCode": "pending",
+              "discoveredConventions": "pending"
+            },
+            "verificationStrategy": "all-required-gates"
+          },
+          "providerFailureCode": null,
+          "verificationFailureCode": null,
+          "verificationTests": {
+            "tests": 63,
+            "executed": 63,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "verificationDiagnostic": {
+            "confirmed": true,
+            "sourceFingerprint": "b2087082fdacde7963c8bc7441d5029d04c4823d94b28b089bf80e5765298ebb",
+            "runPath": ".backend-harness/local/runs/latest.json",
+            "failure": null,
+            "tests": {
+              "tests": 63,
+              "executed": 63,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            "gates": [
+              {
+                "id": "tests",
+                "required": true,
+                "outcome": "passed",
+                "reason": null,
+                "structuredReason": null,
+                "executionDiagnostics": null,
+                "tests": {
+                  "tests": 63,
+                  "executed": 63,
+                  "failures": 0,
+                  "errors": 0,
+                  "skipped": 0
+                },
+                "process": {
+                  "exitCode": 0,
+                  "signal": null,
+                  "timedOut": false,
+                  "stdioDrainTimedOut": false
+                },
+                "failedTests": [],
+                "omittedFailedTestCount": 0
+              }
+            ],
+            "omittedGateCount": 0
+          },
+          "request": {
+            "promptBytes": 2879
+          },
+          "providerActivity": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "authority": "provider-event-derived-advisory",
+            "parsedEvents": 31,
+            "rejectedEvents": 0,
+            "firstWriteObserved": true,
+            "preWritePaths": [
+              "backend/tests/bth_evaluation_bootstrap.py",
+              "backend/tests/test_baseline_environment.py",
+              "backend/tests/utils/utils.py",
+              "backend/app/crud.py",
+              "backend/app/api/routes/login.py",
+              "backend/app/core/security.py",
+              "backend/tests/api/routes/test_login.py",
+              "backend/pyproject.toml",
+              "backend/README.md",
+              "backend/tests/crud/test_user.py",
+              "backend/app/models.py",
+              "backend/app/utils.py",
+              "backend/tests/utils/user.py",
+              "backend/tests/conftest.py"
+            ],
+            "preWriteContentPaths": [
+              "backend/tests/bth_evaluation_bootstrap.py",
+              "backend/tests/test_baseline_environment.py",
+              "backend/tests/utils/utils.py",
+              "backend/app/crud.py",
+              "backend/app/api/routes/login.py",
+              "backend/app/core/security.py",
+              "backend/tests/api/routes/test_login.py",
+              "backend/pyproject.toml",
+              "backend/README.md",
+              "backend/tests/crud/test_user.py",
+              "backend/app/models.py",
+              "backend/app/utils.py",
+              "backend/tests/utils/user.py",
+              "backend/tests/conftest.py"
+            ],
+            "preWriteDiscoveryPaths": [],
+            "changedPaths": [],
+            "readCommandCount": 4,
+            "discoveryCommandCount": 0,
+            "validationCommandCount": 0,
+            "writeEventCount": 1
+          },
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdout": {
+              "sha256": "88cf62a6bc7fd146c2a55191545b733b562e0315a173e7feb1372c030dc1b892",
+              "bytes": 69292
+            },
+            "stderr": {
+              "sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+              "bytes": 39
+            }
+          },
+          "executionAndVerificationMs": 160931,
+          "elapsedScope": "prepared-workspace-to-final-independent-acceptance; includes setup of BTH contract, implementation, verification and acceptance, excludes common fixture/dependency preflight"
+        },
+        "workflow": "native-workflow"
+      },
+      "score": {
+        "schemaVersion": 4,
+        "successUnit": "workflow-request",
+        "id": "codex:direct:fastapi-04-constant-time-login",
+        "provider": "codex",
+        "lane": "direct",
+        "taskId": "fastapi-04-constant-time-login",
+        "successAt1": true,
+        "verificationSuccessAt1": true,
+        "acceptanceConfirmed": true,
+        "failureReasons": [],
+        "providerCompleted": true,
+        "verificationConfirmed": true,
+        "attempts": 1,
+        "providerInvocations": 1,
+        "retries": null,
+        "retryScope": "internal-repairs-not-observable",
+        "elapsedMs": 195773,
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 442863,
+            "uncachedInput": 46063,
+            "output": 6208,
+            "cachedInput": 396800,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 2917,
+            "total": 449071
+          },
+          "costUsd": null,
+          "durationMs": 148703,
+          "turns": null
+        },
+        "changedPaths": [
+          "backend/app/api/routes/login.py",
+          "backend/app/core/security.py",
+          "backend/app/crud.py",
+          "backend/tests/api/routes/test_login.py",
+          "backend/tests/crud/test_user.py"
+        ],
+        "goldPathsChanged": [
+          "backend/app/api/routes/login.py",
+          "backend/app/crud.py",
+          "backend/tests/api/routes/test_login.py"
+        ],
+        "unexpectedChangedPaths": [
+          "backend/app/core/security.py",
+          "backend/tests/crud/test_user.py"
+        ],
+        "changedGoldRecall": 1,
+        "ruleViolations": [],
+        "impactLocalization": {
+          "taskId": "fastapi-04-constant-time-login",
+          "goldPathCount": 3,
+          "rankedPathCount": 14,
+          "recallAt5": 0.6666666666666666,
+          "recallAt20": 1,
+          "ndcgAt20": 0.5400753810454857
+        },
+        "outcomeLocalization": {
+          "taskId": "fastapi-04-constant-time-login",
+          "goldPathCount": 3,
+          "rankedPathCount": 5,
+          "recallAt5": 1,
+          "recallAt20": 1,
+          "ndcgAt20": 0.9060254355346823
+        }
+      },
+      "totalElapsedMs": 236394,
+      "workspace": "<tmp>/bth-provider-case-E5EhnQ/project"
+    }
+  },
+  "integrity": {
+    "bth": {
+      "candidate": "<home>/.local/state/backend-team-harness/worktrees/6d38c234d0ff482b1de7efb4b92b4d32/bench-37a53092556427ec-e00631aa",
+      "protectedInputs": [
+        {
+          "path": ".backend-harness/bin/verify-portable.cmd",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "a437553789aa5c5b5a630404746e8fac26cdc4ef9584ed4d6f086a65b7470352"
+        },
+        {
+          "path": ".backend-harness/bin/verify-portable.mjs",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "b9e0f09deb00a4f3490b52a1a5e8067098ac3e712bea4e54fa87f9517c711f94"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi",
+          "kind": "file",
+          "executable": true,
+          "contentSha256": "1486e7ac42647a75f682317ad92321462fdb5b4894a64cfb13a5283742370faf"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi.cmd",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "8ba96bfee91d48be818061140248bfb77ba0c986820ff6afe5f1180650326f05"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi.mjs",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "2e7a5c6ed657a26362af6532ef45b41e6b24bbb95797c2f80fc69b8ce26f53fa"
+        },
+        {
+          "path": ".backend-harness/verification.json",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "d6ef2801f70402e7d349489b655d75dd40107ac6a16942d1c4a6c1985b39fe86"
+        },
+        {
+          "path": "backend/pyproject.toml",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "5c6bbcfb3fbdccbdc22d2828628ed4dc8352e13574899296cd9836ac9342c413"
+        },
+        {
+          "path": "backend/tests/bth_evaluation_bootstrap.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "8aa98e4fe8cf718817211ddf30a592133ca05cfe99a0b101a7533f5f6562327f"
+        },
+        {
+          "path": "backend/tests/test_baseline_environment.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "ab10054180cf606d0759c084cf560e0c9fecb7c440c223d0056e52bde51ee6aa"
+        },
+        {
+          "path": "backend/tests/utils/utils.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "037e8c294c1a6645bc6975b91d01284e89e42bddc2bc99c0daa9a94563d6df06"
+        },
+        {
+          "path": "pyproject.toml",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+        },
+        {
+          "path": "uv.lock",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "23d84712ba614d2701df1c0589d093431b9eba739564d49bd8d49e5aa2f66e84"
+        }
+      ],
+      "fixture": {
+        "valid": true,
+        "mismatchedPaths": []
+      },
+      "finalSourceFingerprint": "21873cf06c7eb672e12b73e26cb59bbd538e74dadcdffd7f87f36649291bca54",
+      "lastVerification": {
+        "sha256": "4803100ff76228d3392a5ae5ff41469118c08afe2b1d98cd298288b0d2598f49",
+        "sourceMatches": true
+      },
+      "changedFiles": [
+        {
+          "path": "backend/app/api/routes/login.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "cc8924caa88fc52d2514b822ee2a7706294ad9728668ad0459e41715ecf7ccbc"
+        },
+        {
+          "path": "backend/app/core/security.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "23f5425335482d5ef598fba7525ec9c1fe046488de8aa9f0661f3ed21b6a5018"
+        },
+        {
+          "path": "backend/app/crud.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "1fdf79fc345368e17b62c418113e8485e7e6b4e4323968cf6eb3ea87cbb3857d"
+        },
+        {
+          "path": "backend/tests/api/routes/test_login.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "abdafc78bd1a5ae8e4e15c6b00908372c63621fce0574e7a1b5fa38e0a711460"
+        },
+        {
+          "path": "backend/tests/crud/test_user.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "47fa0bb765c53cf13cd8e6f1fd08e9d9d3a57ca7b8b25404c514065ceaca32b7"
+        }
+      ],
+      "attempts": [
+        {
+          "number": 1,
+          "outcome": "passed",
+          "process": {
+            "exitCode": 0,
+            "timedOut": false
+          },
+          "invocation": {
+            "kind": "provider",
+            "provider": "codex",
+            "executable": "codex",
+            "version": "codex-cli 0.151.0",
+            "model": "gpt-5.6-sol",
+            "profile": {
+              "configured": "deep",
+              "selected": "deep",
+              "reasons": [
+                "explicit-configured-mode"
+              ],
+              "effort": "high",
+              "taskCharacters": 6108,
+              "taskBudgetCharacters": 64000,
+              "contextBudgetCharacters": 12000,
+              "readiness": {
+                "projectRules": "confirmed",
+                "adjacentCode": "pending",
+                "discoveredConventions": "observed"
+              },
+              "verificationStrategy": "all-required-gates"
+            },
+            "usage": {
+              "schemaVersion": 2,
+              "provider": "codex",
+              "tokens": {
+                "input": 424259,
+                "uncachedInput": 49219,
+                "output": 8785,
+                "cachedInput": 375040,
+                "cacheCreationInput": 0,
+                "reasoningOutput": 4280,
+                "total": 433044
+              },
+              "costUsd": null,
+              "durationMs": 191720,
+              "turns": null,
+              "providerReported": {
+                "usage.input_tokens": 424259,
+                "usage.cached_input_tokens": 375040,
+                "usage.cache_write_input_tokens": 0,
+                "usage.output_tokens": 8785,
+                "usage.reasoning_output_tokens": 4280
+              },
+              "scope": "invocation-final"
+            },
+            "activity": {
+              "schemaVersion": 1,
+              "provider": "codex",
+              "authority": "provider-event-derived-advisory",
+              "parsedEvents": 31,
+              "rejectedEvents": 0,
+              "firstWriteObserved": true,
+              "preWritePaths": [
+                ".backend-harness/policies/api.md",
+                ".backend-harness/policies/security.md",
+                ".backend-harness/policies/error-handling.md",
+                ".backend-harness/project.md",
+                ".backend-harness/architecture.md",
+                ".backend-harness/glossary.md",
+                ".backend-harness/bin/verify-public-fastapi.mjs",
+                "backend/pyproject.toml",
+                "backend/app/api/routes/login.py",
+                "backend/tests/api/routes/test_login.py",
+                ".backend-harness/bin/verify-portable.mjs",
+                "backend/app/crud.py",
+                "backend/app/core/security.py",
+                "backend/app/utils.py",
+                "backend/app/models.py",
+                "backend/tests/conftest.py",
+                "backend/tests/crud/test_user.py"
+              ],
+              "preWriteContentPaths": [
+                ".backend-harness/policies/api.md",
+                ".backend-harness/policies/security.md",
+                ".backend-harness/policies/error-handling.md",
+                ".backend-harness/project.md",
+                ".backend-harness/architecture.md",
+                ".backend-harness/glossary.md",
+                ".backend-harness/bin/verify-public-fastapi.mjs",
+                "backend/pyproject.toml",
+                "backend/app/api/routes/login.py",
+                "backend/tests/api/routes/test_login.py",
+                ".backend-harness/bin/verify-portable.mjs",
+                "backend/app/crud.py",
+                "backend/app/core/security.py",
+                "backend/app/utils.py",
+                "backend/app/models.py",
+                "backend/tests/conftest.py",
+                "backend/tests/crud/test_user.py"
+              ],
+              "preWriteDiscoveryPaths": [],
+              "changedPaths": [
+                "backend/app/api/routes/login.py",
+                "backend/app/core/security.py",
+                "backend/app/crud.py",
+                "backend/tests/api/routes/test_login.py",
+                "backend/tests/crud/test_user.py"
+              ],
+              "readCommandCount": 6,
+              "discoveryCommandCount": 0,
+              "validationCommandCount": 0,
+              "writeEventCount": 2
+            },
+            "failure": null
+          }
+        }
+      ]
+    },
+    "direct": {
+      "candidate": "<tmp>/bth-provider-case-E5EhnQ/project",
+      "protectedInputs": [
+        {
+          "path": ".backend-harness/bin/verify-portable.cmd",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "a437553789aa5c5b5a630404746e8fac26cdc4ef9584ed4d6f086a65b7470352"
+        },
+        {
+          "path": ".backend-harness/bin/verify-portable.mjs",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "b9e0f09deb00a4f3490b52a1a5e8067098ac3e712bea4e54fa87f9517c711f94"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi",
+          "kind": "file",
+          "executable": true,
+          "contentSha256": "1486e7ac42647a75f682317ad92321462fdb5b4894a64cfb13a5283742370faf"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi.cmd",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "8ba96bfee91d48be818061140248bfb77ba0c986820ff6afe5f1180650326f05"
+        },
+        {
+          "path": ".backend-harness/bin/verify-public-fastapi.mjs",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "2e7a5c6ed657a26362af6532ef45b41e6b24bbb95797c2f80fc69b8ce26f53fa"
+        },
+        {
+          "path": ".backend-harness/verification.json",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "d6ef2801f70402e7d349489b655d75dd40107ac6a16942d1c4a6c1985b39fe86"
+        },
+        {
+          "path": "backend/pyproject.toml",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "5c6bbcfb3fbdccbdc22d2828628ed4dc8352e13574899296cd9836ac9342c413"
+        },
+        {
+          "path": "backend/tests/bth_evaluation_bootstrap.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "8aa98e4fe8cf718817211ddf30a592133ca05cfe99a0b101a7533f5f6562327f"
+        },
+        {
+          "path": "backend/tests/test_baseline_environment.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "ab10054180cf606d0759c084cf560e0c9fecb7c440c223d0056e52bde51ee6aa"
+        },
+        {
+          "path": "backend/tests/utils/utils.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "037e8c294c1a6645bc6975b91d01284e89e42bddc2bc99c0daa9a94563d6df06"
+        },
+        {
+          "path": "pyproject.toml",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+        },
+        {
+          "path": "uv.lock",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "23d84712ba614d2701df1c0589d093431b9eba739564d49bd8d49e5aa2f66e84"
+        }
+      ],
+      "fixture": {
+        "valid": true,
+        "mismatchedPaths": []
+      },
+      "finalSourceFingerprint": "b2087082fdacde7963c8bc7441d5029d04c4823d94b28b089bf80e5765298ebb",
+      "lastVerification": {
+        "sha256": "96a1dd77bdc840aaef274849b0f159350b9d5b8589eeb8b8543befed464f14a1",
+        "sourceMatches": true
+      },
+      "changedFiles": [
+        {
+          "path": "backend/app/api/routes/login.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "cc8924caa88fc52d2514b822ee2a7706294ad9728668ad0459e41715ecf7ccbc"
+        },
+        {
+          "path": "backend/app/core/security.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "23f5425335482d5ef598fba7525ec9c1fe046488de8aa9f0661f3ed21b6a5018"
+        },
+        {
+          "path": "backend/app/crud.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "f161bd4d90dea8ef74c67d35746f1e4e1d69e4a93125a2c11822c2fa3a67d5ff"
+        },
+        {
+          "path": "backend/tests/api/routes/test_login.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "a8373030d86565f6976d7458968f06f628c4a7c95f472e4a8eb98b916125d499"
+        },
+        {
+          "path": "backend/tests/crud/test_user.py",
+          "kind": "file",
+          "executable": false,
+          "contentSha256": "acb5e723c564423c2e77d1170056263fdd27a55c6554bec282ed9912dedd9a51"
+        }
+      ],
+      "attempts": null
+    }
+  },
+  "limitations": [
+    "One public task; not aggregate superiority or a held-out trial.",
+    "success@1 is one top-level workflow request. Never pool with controlled-edit provider-invocation success.",
+    "Direct internal repair count is unknown; model calls and validation-command events are separate measures.",
+    "Prepared owned verification wrappers and restricted provider tools; not unrestricted personal CLI configuration.",
+    "Provider time allowance excludes evaluator/harness gates; Codex has no dollar cap, unknown cost is not zero.",
+    "No company source, production systems, user configuration or candidate integration was modified."
+  ]
+}

@@ -9,6 +9,39 @@ const task = {
   goldPaths: ['src/a.js', 'test/a.test.js']
 }
 
+test('native workflow success is one user request with explicitly unknown direct internal repairs', () => {
+  const base = { provider: 'codex', workflow: 'native-workflow', providerCompleted: true, verificationConfirmed: true,
+    elapsedMs: 100, changedPaths: task.goldPaths, acceptance: { controlsConfirmed: true, candidatePassed: true } }
+  const bth = scoreProviderCase(task, { ...base, lane: 'bth', attempts: 2, repairAttempts: 1 })
+  const direct = scoreProviderCase(task, { ...base, lane: 'direct', attempts: 1 })
+  assert.equal(bth.successAt1, true)
+  assert.equal(bth.successUnit, 'workflow-request')
+  assert.equal(bth.providerInvocations, 2)
+  assert.equal(direct.retries, null)
+  const [comparison] = compareProviderLanes([bth, direct])
+  assert.equal(comparison.direct.retries.rate, null)
+  assert.equal(comparison.direct.retries.measured, 0)
+  const controlled = scoreProviderCase(task, { ...base, workflow: 'controlled-edit', lane: 'direct', attempts: 1 })
+  assert.throws(() => compareProviderLanes([bth, controlled]), /success units/)
+})
+
+test('resume rejects changed execution time, cost or recovery policy fingerprints', () => {
+  const expected = { corpusSha256: 'a', configSha256: 'b', mode: 'deep', model: null, executionPolicySha256: 'c' }
+  const record = { case: { corpusSha256: 'a' }, fairness: { configSha256: 'b', fixedMode: 'deep', fixedModel: null, executionPolicySha256: 'd' } }
+  assert.throws(() => assertComparisonInputs(record, expected), /Comparison inputs/)
+})
+
+test('native direct task acceptance alone cannot prove it executed its own validation', () => {
+  const observation = { provider: 'codex', lane: 'direct', workflow: 'native-workflow',
+    providerCompleted: true, verificationConfirmed: true, attempts: 1, elapsedMs: 10,
+    changedPaths: task.goldPaths, acceptance: { controlsConfirmed: true, candidatePassed: true } }
+  const unknown = scoreProviderCase(task, observation)
+  assert.equal(unknown.successAt1, null)
+  assert.equal(unknown.taskAcceptanceSuccess, true)
+  assert.ok(unknown.failureReasons.includes('native-validation-unconfirmed'))
+  assert.equal(scoreProviderCase(task, { ...observation, nativeValidationConfirmed: true }).successAt1, true)
+})
+
 test('resumed and aggregated comparisons cannot mix changed task/config inputs or effort', () => {
   const expected = { corpusSha256: 'a'.repeat(64), configSha256: 'b'.repeat(64), mode: 'balanced', model: null }
   const record = { case: { corpusSha256: expected.corpusSha256 }, fairness: { configSha256: expected.configSha256, fixedMode: 'balanced', fixedModel: null } }

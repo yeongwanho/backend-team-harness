@@ -7,6 +7,30 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/providers/validation-activity.mjs',
+    from: 'Number.isInteger(item.exit_code) ? item.exit_code === 0 : null',
+    to: 'true',
+    test: 'test/validation-activity.test.mjs'
+  },
+  {
+    file: 'src/evaluation/provider-comparison.mjs',
+    from: 'successAt1: nativeUnconfirmed ? null : taskAcceptanceSuccess',
+    to: 'successAt1: taskAcceptanceSuccess',
+    test: 'test/provider-comparison.test.mjs'
+  },
+  {
+    file: 'src/evaluation/workflow-budget.mjs',
+    from: 'Math.min(adapter.timeoutMs, remainingMs)',
+    to: 'adapter.timeoutMs',
+    test: 'test/workflow-budget.test.mjs'
+  },
+  {
+    file: 'src/evaluation/provider-comparison.mjs',
+    from: 'if (!native && attempts > 1)',
+    to: 'if (attempts > 1)',
+    test: 'test/provider-comparison.test.mjs'
+  },
+  {
     file: 'src/core/provider-context.mjs',
     from: 'if (entries.length > limits.entries) {',
     to: 'if (false) {',

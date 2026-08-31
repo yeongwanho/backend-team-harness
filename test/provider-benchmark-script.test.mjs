@@ -7,6 +7,20 @@ import { join } from 'node:path'
 
 const script = 'scripts/benchmark-provider-comparison.mjs'
 
+test('native workflow plan states bounded calls and rejects invalid workflow policies without execution', () => {
+  const result = spawnSync(process.execPath, [script, '--plan', '--workflow', 'native-workflow', '--max-attempts', '3',
+    '--provider', 'codex', '--lane', 'both', '--task', 'spring-02-owner-search-whitespace'], { encoding: 'utf8' })
+  assert.equal(result.status, 0, result.stderr)
+  const plan = JSON.parse(result.stdout)
+  assert.equal(plan.providerCalls, null, 'Native recovery call count is not known in advance')
+  assert.equal(plan.maximumProviderCalls, 4)
+  assert.equal(plan.executionPolicy.successUnit, 'workflow-request')
+  for (const flags of [['--workflow', 'unknown'], ['--workflow', 'controlled-edit', '--max-attempts', '2']]) {
+    const failed = spawnSync(process.execPath, [script, '--plan', ...flags], { encoding: 'utf8' })
+    assert.notEqual(failed.status, 0)
+  }
+})
+
 test('provider benchmark plan exposes one exact costed case without starting a provider', () => {
   const result = spawnSync(process.execPath, [
     script, '--plan', '--provider', 'codex', '--lane', 'bth', '--task', 'spring-02-owner-search-whitespace'
@@ -64,4 +78,17 @@ test('preflight resume refuses legacy readiness before any clone or test executi
   ], { encoding: 'utf8' })
   assert.notEqual(result.status, 0)
   assert.match(result.stderr, /refusing stale readiness evidence/)
+})
+
+test('native execution refuses missing prepared verification before provider discovery', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-native-missing-fixture-'))
+  const config = JSON.parse(await readFile('benchmarks/public-backend-v1/provider-comparison.json', 'utf8'))
+  for (const repository of config.repositories) for (const task of repository.tasks) delete task.projectFixture
+  const path = join(root, 'comparison.json')
+  await writeFile(path, JSON.stringify(config))
+  const result = spawnSync(process.execPath, [script, '--execute', '--workflow', 'native-workflow', '--provider', 'codex',
+    '--lane', 'both', '--task', 'fastapi-04-constant-time-login', '--config', path, '--output', join(root, 'output'), '--allow-network'],
+  { encoding: 'utf8', timeout: 10000, env: { PATH: join(root, 'no-executables'), BTH_PROVIDER_BENCHMARK: 'I_UNDERSTAND_PROVIDER_COSTS' } })
+  assert.notEqual(result.status, 0)
+  assert.match(result.stderr, /native workflow requires pinned prepared verification commands/)
 })

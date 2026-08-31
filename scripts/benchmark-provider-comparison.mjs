@@ -24,7 +24,20 @@ const DEFAULT_CORPUS = 'benchmarks/public-backend-v1/corpus.json'
 const DEFAULT_CONFIG = 'benchmarks/public-backend-v1/provider-comparison.json'
 const EXECUTE_ACK = 'I_UNDERSTAND_PROVIDER_COSTS'
 const ALL_ACK = 'I_UNDERSTAND_40_PROVIDER_RUNS'
-const PROTOCOL_VERSION = 'bounded-navigation-v41'
+const PROTOCOL_VERSION = 'controlled-edit-v42'
+const NATIVE_ALL_ACK = 'I_UNDERSTAND_NATIVE_WORKFLOW_CALL_LIMITS'
+
+function executionPolicy(options) {
+  return { schemaVersion: 1, workflow: options.workflow, maxAttempts: options.maxAttempts,
+    providerTimeAllowanceMs: options.timeoutMs, claudeMaxBudgetUsd: options.maxBudgetUsd,
+    successUnit: options.workflow === 'native-workflow' ? 'workflow-request' : 'provider-invocation' }
+}
+
+function comparisonInputs(corpus, config, options) {
+  return { corpusSha256: corpus.sourceSha256, configSha256: config.sourceSha256, mode: options.mode, model: options.model,
+    workflow: options.workflow, protocolVersion: options.workflow === 'native-workflow' ? 'native-workflow-v42-observed-validation' : PROTOCOL_VERSION,
+    executionPolicySha256: createDigest(executionPolicy(options)) }
+}
 
 function parseArguments(argv) {
   const result = {
@@ -39,6 +52,8 @@ function parseArguments(argv) {
     cache: join(tmpdir(), 'backend-team-harness-public-cache-v2'),
     model: null,
     mode: 'balanced',
+    workflow: 'controlled-edit',
+    maxAttempts: null,
     timeoutMs: 30 * 60 * 1000,
     maxBudgetUsd: 2,
     allowNetwork: false,
@@ -54,14 +69,18 @@ function parseArguments(argv) {
     else if (value === '--allow-network') result.allowNetwork = true
     else if (value === '--resume') result.resume = true
     else if (value === '--keep-workspace') result.keepWorkspace = true
-    else if (['--corpus', '--config', '--provider', '--lane', '--task', '--output', '--cache', '--model', '--mode', '--timeout-ms', '--max-budget-usd'].includes(value)) {
+    else if (['--corpus', '--config', '--provider', '--lane', '--task', '--output', '--cache', '--model', '--mode', '--workflow', '--max-attempts', '--timeout-ms', '--max-budget-usd'].includes(value)) {
       const next = argv[++index]
       if (!next || next.startsWith('--')) throw new Error(value + ' requires a value.')
       const key = value.slice(2).replace(/-([a-z])/g, (_match, letter) => letter.toUpperCase())
-      result[key] = ['--timeout-ms', '--max-budget-usd'].includes(value) ? Number(next) : next
+      result[key] = ['--timeout-ms', '--max-budget-usd', '--max-attempts'].includes(value) ? Number(next) : next
     } else throw new Error('Unknown argument: ' + value)
   }
   if (!result.action) throw new Error('Choose --plan, --preflight, or --execute.')
+  if (!['controlled-edit', 'native-workflow'].includes(result.workflow)) throw new Error('--workflow must be controlled-edit or native-workflow.')
+  result.maxAttempts ??= result.workflow === 'native-workflow' ? 3 : 1
+  if (!Number.isSafeInteger(result.maxAttempts) || result.maxAttempts < 1 || result.maxAttempts > 3 ||
+    (result.workflow === 'controlled-edit' && result.maxAttempts !== 1)) throw new Error('--max-attempts must be 1 for controlled-edit, or 1..3 for native-workflow.')
   if (result.provider !== null && !['codex', 'claude'].includes(result.provider)) throw new Error('--provider must be codex or claude.')
   if (result.lane !== null && !['bth', 'direct', 'both'].includes(result.lane)) throw new Error('--lane must be bth, direct, or both.')
   if (!['fast', 'balanced', 'deep'].includes(result.mode)) throw new Error('--mode must be fast, balanced, or deep.')
@@ -235,12 +254,14 @@ function preProviderFailureCase(caseEntry, task, setup, preflight, elapsedMs, co
   return {
     schemaVersion: 1,
     case: caseEntry,
-    fairness: { sanitizedSingleCommitHistory: true, goldHiddenFromProvider: true, fixedMode: comparisonInputs.mode, fixedModel: comparisonInputs.model, configSha256: comparisonInputs.configSha256, protocolVersion: PROTOCOL_VERSION },
+    fairness: { sanitizedSingleCommitHistory: true, goldHiddenFromProvider: true, fixedMode: comparisonInputs.mode, fixedModel: comparisonInputs.model, configSha256: comparisonInputs.configSha256,
+      protocolVersion: comparisonInputs.protocolVersion, executionPolicySha256: comparisonInputs.executionPolicySha256 },
     setup,
     preflight,
     observation: null,
     score: {
-      schemaVersion: 3,
+      schemaVersion: 4,
+      successUnit: comparisonInputs.workflow === 'native-workflow' ? 'workflow-request' : 'provider-invocation',
       id: caseEntry.id,
       provider: caseEntry.provider,
       lane: caseEntry.lane,
@@ -252,7 +273,8 @@ function preProviderFailureCase(caseEntry, task, setup, preflight, elapsedMs, co
       providerCompleted: false,
       verificationConfirmed: false,
       attempts: 0,
-      retries: 0,
+      providerInvocations: 0,
+      retries: comparisonInputs.workflow === 'native-workflow' ? null : 0,
       elapsedMs,
       usage: { provider: caseEntry.provider, tokens: { input: null, uncachedInput: null, output: null, cachedInput: null, cacheCreationInput: null, reasoningOutput: null, total: null }, costUsd: null, durationMs: null, turns: null },
       changedPaths: [], goldPathsChanged: [], unexpectedChangedPaths: [], changedGoldRecall: 0,
@@ -268,11 +290,11 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
   const repositoryConfig = config.repositories.find((entry) => entry.id === repository.id)
   const task = repository.tasks.find((entry) => entry.id === caseEntry.taskId)
   const outputPath = resultPath(options.output, caseEntry)
-  const comparisonInputs = { corpusSha256: corpus.sourceSha256, configSha256: config.sourceSha256, mode: options.mode, model: options.model, protocolVersion: PROTOCOL_VERSION }
+  const inputs = comparisonInputs(corpus, config, options)
   if (await exists(outputPath)) {
     if (options.resume) {
       const existing = JSON.parse(await readFile(outputPath, 'utf8'))
-      assertComparisonInputs(existing, comparisonInputs)
+      assertComparisonInputs(existing, inputs)
       if (JSON.stringify(existing.case) !== JSON.stringify(caseEntry)) throw new Error('Comparison case identity differs; refusing resume.')
       return { skipped: true, outputPath }
     }
@@ -288,7 +310,7 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
     const setup = await prepareDependencies(project, repositoryConfig, options.timeoutMs, fixture,
       { sourceRoot: join(caseRoot, 'staging'), fixtureRoot: dirname(resolve(options.config)) })
     if (!setup.passed) {
-      const record = preProviderFailureCase(caseEntry, task, setup, null, Date.now() - startedAt, comparisonInputs)
+      const record = preProviderFailureCase(caseEntry, task, setup, null, Date.now() - startedAt, inputs)
       await writeOnce(outputPath, record)
       return { skipped: false, outputPath, record }
     }
@@ -296,7 +318,7 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
     const cleanAfterPreflight = await git(['status', '--porcelain=v1', '--untracked-files=all'], project)
     if (cleanAfterPreflight) throw new Error('Baseline verification left visible source changes; refusing an unfair provider run.')
     if (!canAttemptBaseline(preflight)) {
-      const record = preProviderFailureCase(caseEntry, task, setup, preflight, Date.now() - startedAt, comparisonInputs)
+      const record = preProviderFailureCase(caseEntry, task, setup, preflight, Date.now() - startedAt, inputs)
       await writeOnce(outputPath, record)
       return { skipped: false, outputPath, record }
     }
@@ -305,7 +327,7 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
       acceptance: repositoryConfig.tasks.find(entry => entry.id === task.id).acceptance
     })
     if (!acceptanceControls.controlsConfirmed) {
-      const record = { ...preProviderFailureCase(caseEntry, task, setup, preflight, Date.now() - startedAt, comparisonInputs, 'acceptance-controls-failed'), acceptanceControls }
+      const record = { ...preProviderFailureCase(caseEntry, task, setup, preflight, Date.now() - startedAt, inputs, 'acceptance-controls-failed'), acceptanceControls }
       await writeOnce(outputPath, record)
       return { skipped: false, outputPath, record }
     }
@@ -314,7 +336,8 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
       provider: caseEntry.provider,
       mode: options.mode,
       model: options.model,
-      maxAttempts: 1,
+      workflow: options.workflow,
+      maxAttempts: options.maxAttempts,
       timeoutMs: options.timeoutMs,
       maxBudgetUsd: options.maxBudgetUsd
     }, {
@@ -333,7 +356,9 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
         sanitizedSingleCommitHistory: true,
         goldHiddenFromProvider: true,
         sameProvider: true,
-        protocolVersion: PROTOCOL_VERSION,
+        protocolVersion: inputs.protocolVersion,
+        executionPolicy: executionPolicy(options),
+        executionPolicySha256: inputs.executionPolicySha256,
         configSha256: config.sourceSha256,
         fixedMode: options.mode,
         fixedModel: options.model,
@@ -443,12 +468,14 @@ async function main() {
       schemaVersion: 1,
       corpus: { id: corpus.id, sha256: corpus.sourceSha256, repositories: corpus.repositoryCount, tasks: corpus.taskCount },
       selectedCases: matrix.length,
-      providerCalls: matrix.length,
+      providerCalls: options.workflow === 'native-workflow' ? null : matrix.length,
+      maximumProviderCalls: matrix.reduce((sum, entry) => sum + (entry.lane === 'bth' ? options.maxAttempts : 1), 0),
+      executionPolicy: executionPolicy(options),
       cases: matrix,
       executionSafety: {
         oneCaseRequires: 'BTH_PROVIDER_BENCHMARK=' + EXECUTE_ACK + ' and --allow-network',
-        allCasesRequire: 'BTH_PROVIDER_BENCHMARK_ALL=' + ALL_ACK,
-        note: 'A both-lane all-task run for one provider makes 40 authenticated provider calls.'
+        allCasesRequire: 'BTH_PROVIDER_BENCHMARK_ALL=' + (options.workflow === 'native-workflow' ? NATIVE_ALL_ACK : ALL_ACK),
+        note: 'Controlled edit makes one call per case. Native BTH may recover within maxAttempts and the shared provider allowance; native direct stays in one session.'
       }
     }, null, 2) + '\n')
     return
@@ -479,13 +506,17 @@ async function main() {
   if (!options.allowNetwork || process.env.BTH_PROVIDER_BENCHMARK !== EXECUTE_ACK) {
     throw new Error('Execution requires --allow-network and BTH_PROVIDER_BENCHMARK=' + EXECUTE_ACK + '.')
   }
-  if (options.all && process.env.BTH_PROVIDER_BENCHMARK_ALL !== ALL_ACK) {
-    throw new Error('An all-task run requires BTH_PROVIDER_BENCHMARK_ALL=' + ALL_ACK + '.')
+  const allAck = options.workflow === 'native-workflow' ? NATIVE_ALL_ACK : ALL_ACK
+  if (options.all && process.env.BTH_PROVIDER_BENCHMARK_ALL !== allAck) {
+    throw new Error('An all-task run requires BTH_PROVIDER_BENCHMARK_ALL=' + allAck + '.')
   }
   for (const entry of matrix) {
     const repository = config.repositories.find((repository) => repository.id === entry.repositoryId)
     if (!repository.tasks.find((task) => task.id === entry.taskId).acceptance) {
       throw new Error(entry.taskId + ': no independent acceptance oracle is defined; use --preflight until task acceptance is ready.')
+    }
+    if (options.workflow === 'native-workflow' && !repository.tasks.find(task => task.id === entry.taskId).projectFixture?.verification?.gates?.some(gate => gate.required)) {
+      throw new Error(entry.taskId + ': native workflow requires pinned prepared verification commands.')
     }
   }
   const probe = await probeImplementationProvider(options.provider)
@@ -499,9 +530,10 @@ async function main() {
     }, probe)
     process.stderr.write((result.skipped ? '[SKIP] ' : '[RECORDED] ') + caseEntry.id + ' -> ' + result.outputPath + '\n')
   }
-  const comparison = await reportFromOutput(resolve(options.output), { corpusSha256: corpus.sourceSha256, configSha256: config.sourceSha256, mode: options.mode, model: options.model, protocolVersion: PROTOCOL_VERSION })
+  const inputs = comparisonInputs(corpus, config, options)
+  const comparison = await reportFromOutput(resolve(options.output), inputs)
   const summaryPath = resolve(options.output, 'summary-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json')
-  await writeOnce(summaryPath, { schemaVersion: 1, protocolVersion: PROTOCOL_VERSION, corpusId: corpus.id, corpusSha256: corpus.sourceSha256, configSha256: config.sourceSha256, comparisons: comparison })
+  await writeOnce(summaryPath, { schemaVersion: 1, ...inputs, executionPolicy: executionPolicy(options), corpusId: corpus.id, comparisons: comparison })
   process.stdout.write(JSON.stringify({ summaryPath, comparisons: comparison }, null, 2) + '\n')
 }
 
