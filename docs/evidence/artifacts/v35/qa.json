@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "postDocumentationChecks": {
+    "cliDocsContract": { "command": "node --test test/docs-contract.test.mjs", "passed": 1, "failed": 0, "exitCode": 0 },
+    "evidenceLinksExist": true,
+    "corpusLedgerExactRebuild": true,
+    "personalPathAndCredentialPatternScan": "no matches in new shared evidence and replay drivers"
+  },
+  "sourceBaseCommit": "d11e2333b6f99fe746571df0b0e3aaca64d78f0c",
+  "scope": "evaluation fixtures, replay drivers, protocol identity, evidence and docs; no src runtime change",
+  "sourceHashes": {
+    "benchmarks/public-backend-v1/provider-comparison.json": "23c28bbc50a9e8f4fa61bc9c20d3551c4b3f870d835d37c36570a90eb4222f7e",
+    "benchmarks/public-backend-v1/fixtures/spring/VisitAcceptanceTests.java": "7c13cba46c1da29271390412f45abb5c2cd0dee13b64341f031828bce5110eb4",
+    "benchmarks/public-backend-v1/fixtures/spring/PetOwnershipAcceptanceTests.java": "093b38cfd6d109c4250fe85a2000ea7516cc4b628594f8c1eb4e2a3e50a2b782",
+    "scripts/check-visit-oracle-variants.mjs": "494e1f2aafecb5be5381f707e9f3a27b5d80e9d69d6a4c8c978a63ce9b89c925",
+    "scripts/audit-pet-ownership.mjs": "8bb71b2df75ac13082de6e9ceb2cfbb0aa2d2441f4d729f05f544c38c8b13565",
+    "scripts/benchmark-provider-comparison.mjs": "dcd1da7446d86155b7f14316015ec13469de765ac1ec39037c1ccf04c97ed16c",
+    "test/provider-benchmark-config.test.mjs": "f080f7817842b0f422b7ba39f26c649272f439238b01af43e67a0dad9beee92d",
+    "test/visit-oracle-variants-script.test.mjs": "b1ee0682e3ddfb452521fbbd5de96fe625812c3bd42f81ce14d028358525ceed"
+  },
+  "node": "v22.23.1",
+  "platform": "darwin",
+  "commands": [
+    {
+      "command": "node --test test/visit-oracle-variants-script.test.mjs test/task-acceptance.test.mjs test/acceptance-controls-script.test.mjs test/provider-benchmark-config.test.mjs test/provider-benchmark-script.test.mjs test/provider-benchmark-runner.test.mjs test/evaluation-corpus.test.mjs test/docs-contract.test.mjs",
+      "tests": 45,
+      "passed": 45,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/check-syntax.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/audit-pet-ownership.mjs --cache PUBLIC_MIRROR_CACHE --runs RETAINED_PAIR_DIRECTORY",
+      "exitCode": 0,
+      "meaning": "Audit executed: controls PASS, BTH ownership FAIL, direct blocked by formatting."
+    },
+    {
+      "command": "node scripts/check-visit-oracle-variants.mjs --cache PUBLIC_MIRROR_CACHE",
+      "exitCode": 0,
+      "meaning": "Base failures and target passes reproduced; key rename and @Future alternatives PASS; missing localization FAIL."
+    }
+  ],
+  "logHashes": {
+    "bth-v35-targeted-verified.log": {
+      "sha256": "90b84d2397e713610648eb7acf8491491032d24d731cf45de30b0128778064d3",
+      "bytes": 11072
+    },
+    "bth-v35-syntax-verified.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "bth-v35-visit-controls-final.log": {
+      "sha256": "df4217d7838d477d0860243273f2b98422ce89db3cf3055e25aa99c23e9e4151",
+      "bytes": 11791
+    }
+  },
+  "interruptedAttempt": {
+    "command": "node scripts/check-visit-oracle-variants.mjs --cache PUBLIC_MIRROR_CACHE",
+    "exitCode": 1,
+    "cause": "ENOSPC during third variant clone; no PASS attributed to aborted run",
+    "completedResultsLostInOldDriver": true,
+    "remedy": "Release each completed task-owned variant; emit partial JSON on later preparation error; reran all three variants."
+  },
+  "omitted": [
+    "New full-suite coverage/mutation run: runtime unchanged, scoped tests instead",
+    "New paid Claude comparison: previous quota denial, not retried",
+    "Actual Windows provider/process-tree run",
+    "Paid visit task implementation comparison",
+    "Automatic prevention/repair of ownership regressions in arbitrary user repositories",
+    "Production database, deployment and company source"
+  ]
+}

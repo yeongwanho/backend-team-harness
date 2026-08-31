@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "kind": "supplemental-post-hoc-ownership-audit",
+  "providerCalls": 0,
+  "taskId": "spring-06-pet-update",
+  "baseSha": "6328d2c9dc8eb2c367c6a613a1ae959c994003c7",
+  "targetSha": "2aa53f929d32b0d41e0fe0391b8385eabe9a3432",
+  "fixturePath": "benchmarks/public-backend-v1/fixtures/spring/PetOwnershipAcceptanceTests.java",
+  "fixtureSha256": "59a398647259d761ac482397eea7632a6ff322ece6a84c23fd339b60a39050da",
+  "sourceHashes": {
+    "src/core/junit.mjs": "aa839f10fc239f0765ca8414e89e79d9649b8e3cc040531a56c1e136ca679094",
+    "scripts/audit-pet-ownership.mjs": "8bb71b2df75ac13082de6e9ceb2cfbb0aa2d2441f4d729f05f544c38c8b13565"
+  },
+  "results": [
+    {
+      "variant": "base",
+      "originalHashes": [],
+      "originalSourceUntouched": null,
+      "process": {
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "stdout": {
+          "sha256": "1899d3b5951f1fa5abce03174293d4a9c5bab87d277031684e1f044a179bf725",
+          "bytes": 5631
+        },
+        "stderr": {
+          "sha256": "62140951bdb51589317af950060beb74f7ec632d12af6424cb662da634bf8d9c",
+          "bytes": 895
+        }
+      },
+      "report": {
+        "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests.xml",
+        "sha256": "e0c9b9c836e6d9be2f47278c95b5d9dcaf869b21b6c2ec384f6a9aabbaf84891",
+        "bytes": 42270
+      },
+      "tests": {
+        "tests": 1,
+        "executed": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "failedTests": [],
+        "selectedTests": [
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests",
+            "name": "doesNotModifyOrReparentAnotherOwnersPersistentPet",
+            "outcome": "passed"
+          }
+        ]
+      },
+      "passed": true
+    },
+    {
+      "variant": "target",
+      "originalHashes": [],
+      "originalSourceUntouched": null,
+      "process": {
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "stdout": {
+          "sha256": "b7d406c7af9c17b2db4a748c5ef2192b65fe5dbd1b1d5f75ff9fe86836106083",
+          "bytes": 5633
+        },
+        "stderr": {
+          "sha256": "c46a982a15820c1eb8994d3fd3b7f35b823415950a689134a673ed8c19cdcc07",
+          "bytes": 895
+        }
+      },
+      "report": {
+        "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests.xml",
+        "sha256": "6c93c4464ed5003e090a39d75a41543abd851774b56e87eea460413b9b6693ec",
+        "bytes": 42768
+      },
+      "tests": {
+        "tests": 1,
+        "executed": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "failedTests": [],
+        "selectedTests": [
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests",
+            "name": "doesNotModifyOrReparentAnotherOwnersPersistentPet",
+            "outcome": "passed"
+          }
+        ]
+      },
+      "passed": true
+    },
+    {
+      "variant": "bth",
+      "originalHashes": [
+        {
+          "path": "src/main/java/org/springframework/samples/petclinic/owner/Owner.java",
+          "sha256": "0d14cb80294a7f83b962a8b727b682e343faff03af7fedd9953aad5e32ec522e"
+        },
+        {
+          "path": "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "sha256": "77b5d9d22ce06b93d9834364c8796f6c537efd053d8ee73c1c3720db8522a75e"
+        },
+        {
+          "path": "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "sha256": "35cccff475c12f6c5a3901fd8dda8cbe9a44a9346152b8ac21bea75ea7a9f797"
+        }
+      ],
+      "originalSourceUntouched": true,
+      "process": {
+        "exitCode": 1,
+        "signal": null,
+        "timedOut": false,
+        "stdout": {
+          "sha256": "774bc95dd18179303a61c72f63c54efec40427146a19f6e056f5e60da86b14c0",
+          "bytes": 12305
+        },
+        "stderr": {
+          "sha256": "c46a982a15820c1eb8994d3fd3b7f35b823415950a689134a673ed8c19cdcc07",
+          "bytes": 895
+        }
+      },
+      "report": {
+        "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests.xml",
+        "sha256": "a565da65a3b722438da9c4ca2c41f0ca7410b17fcbb916cb8e15317641d05e16",
+        "bytes": 47888
+      },
+      "tests": {
+        "tests": 1,
+        "executed": 1,
+        "failures": 0,
+        "errors": 1,
+        "skipped": 0,
+        "failedTests": [
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests",
+            "name": "doesNotModifyOrReparentAnotherOwnersPersistentPet"
+          }
+        ],
+        "selectedTests": [
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests",
+            "name": "doesNotModifyOrReparentAnotherOwnersPersistentPet",
+            "outcome": "error"
+          }
+        ]
+      },
+      "passed": false
+    },
+    {
+      "variant": "direct",
+      "originalHashes": [
+        {
+          "path": "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "sha256": "c5f343cf8d4b9b11fa528efc8585639442e4e563279b89044e163b331bc797fa"
+        },
+        {
+          "path": "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "sha256": "5836b1c7a0590289fbd3dd999d422084268df41544ffb6e16e584d142759ac88"
+        }
+      ],
+      "originalSourceUntouched": true,
+      "process": {
+        "exitCode": 1,
+        "signal": null,
+        "timedOut": false,
+        "stdout": {
+          "sha256": "00ca4f770c63ea5c0b6d18bb224456ff73277e0379c693694c4b5839e4f65392",
+          "bytes": 819
+        },
+        "stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "report": null,
+      "tests": null,
+      "passed": false
+    }
+  ],
+  "controlsPassed": true,
+  "limitations": [
+    "Post-hoc adversarial regression check, not a rewrite of predeclared success@1.",
+    "Controller/JPA invocation in rollback-only local H2, not a live HTTP authorization or production security test.",
+    "Scored candidate source was not repaired or formatted. Missing reports are not behavioral passes."
+  ],
+  "preparationLimitation": "Submitted synthetic name was 33 characters but the column maximum is 30; the candidate hit a data-length error, so this is not proof of committed row transfer. Superseded by a valid-length-input audit."
+}

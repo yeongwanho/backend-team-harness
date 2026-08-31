@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 1,
+  "kind": "strengthened-five-case-oracle-against-retained-candidate",
+  "providerCalls": 0,
+  "protocolVersion": "behavioral-oracle-v35",
+  "taskId": "spring-06-pet-update",
+  "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+  "configSha256": "23c28bbc50a9e8f4fa61bc9c20d3551c4b3f870d835d37c36570a90eb4222f7e",
+  "sourceHashes": {
+    "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397"
+  },
+  "result": {
+    "schemaVersion": 1,
+    "kind": "fixture-tests",
+    "controlsConfirmed": true,
+    "candidatePassed": false,
+    "candidateSourceSha256": "c55347556125744169caf197ed4edec2c75dc3110e802910926aa86b9589775a",
+    "candidateUntouched": true,
+    "reason": null,
+    "oracleSha256": "93412a069c0c269d41e267af620f54d5d7b99b9e24dbcfc077f94c5902a3fd86",
+    "testFiles": [
+      {
+        "path": "src/test/java/org/springframework/samples/petclinic/owner/PetUpdateAcceptanceTests.java",
+        "sha256": "bf4c3a3052701b8c5f98e817aeed01b6799a21a82a6151b373bb2f9065b19934"
+      },
+      {
+        "path": "src/test/java/org/springframework/samples/petclinic/owner/PetOwnershipAcceptanceTests.java",
+        "sha256": "093b38cfd6d109c4250fe85a2000ea7516cc4b628594f8c1eb4e2a3e50a2b782"
+      }
+    ],
+    "controls": {
+      "base": {
+        "sourceStable": true,
+        "process": {
+          "exitCode": 1,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 13627,
+          "stdout": {
+            "sha256": "b9175ac14747831b98dafb7967d9736a6246006a3955afbe54ac448ebf38a6bb",
+            "bytes": 16295
+          },
+          "stderr": {
+            "sha256": "c46a982a15820c1eb8994d3fd3b7f35b823415950a689134a673ed8c19cdcc07",
+            "bytes": 895
+          }
+        },
+        "reports": [
+          {
+            "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests.xml",
+            "sha256": "c2d14d6d1658bea788f4729088be0912883feedb93cc97fc5ee7e78829ae492e",
+            "bytes": 46979
+          },
+          {
+            "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests.xml",
+            "sha256": "945d674698ceb44d75eb86ca0551218acc3882bcb9b29abc6b92f44f51fdf9d5",
+            "bytes": 41079
+          }
+        ],
+        "cases": [
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+            "name": "persistsExistingPetFieldsWithoutAddingDuplicate",
+            "outcome": "failed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+            "name": "preservesFallbackForNewUnassociatedPet",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+            "name": "duplicateNameDoesNotChangeStoredPet",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+            "name": "futureBirthDateDoesNotChangeStoredPet",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests",
+            "name": "doesNotModifyOrReparentAnotherOwnersPersistentPet",
+            "outcome": "passed"
+          }
+        ],
+        "passed": false,
+        "regressionReproduced": true
+      },
+      "target": {
+        "sourceStable": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 13131,
+          "stdout": {
+            "sha256": "aa15d9e21e67f67d91821bab6db0a981ba6c7d1f074aab28ac438d7a3549c03a",
+            "bytes": 14126
+          },
+          "stderr": {
+            "sha256": "c46a982a15820c1eb8994d3fd3b7f35b823415950a689134a673ed8c19cdcc07",
+            "bytes": 895
+          }
+        },
+        "reports": [
+          {
+            "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests.xml",
+            "sha256": "1ba2e2ed2232ca6ddc785faf1b141f74500cf81ffb229f61f4f813019af7b903",
+            "bytes": 46499
+          },
+          {
+            "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests.xml",
+            "sha256": "d100e0a7a6b65d47dcadefd0377b4bd556bc7a325041710c6a274e7c1ab394fa",
+            "bytes": 41575
+          }
+        ],
+        "cases": [
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+            "name": "persistsExistingPetFieldsWithoutAddingDuplicate",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+            "name": "preservesFallbackForNewUnassociatedPet",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+            "name": "duplicateNameDoesNotChangeStoredPet",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+            "name": "futureBirthDateDoesNotChangeStoredPet",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests",
+            "name": "doesNotModifyOrReparentAnotherOwnersPersistentPet",
+            "outcome": "passed"
+          }
+        ],
+        "passed": true,
+        "regressionReproduced": false
+      }
+    },
+    "candidate": {
+      "sourceStable": true,
+      "process": {
+        "exitCode": 1,
+        "signal": null,
+        "timedOut": false,
+        "stdioDrainTimedOut": false,
+        "durationMs": 13026,
+        "stdout": {
+          "sha256": "2989d409a49a2f9bd99c9fcae46a9f4b766b0127af1d8b71d43f6612db44c86f",
+          "bytes": 16842
+        },
+        "stderr": {
+          "sha256": "c46a982a15820c1eb8994d3fd3b7f35b823415950a689134a673ed8c19cdcc07",
+          "bytes": 895
+        }
+      },
+      "reports": [
+        {
+          "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests.xml",
+          "sha256": "f724b1f2d29bf250f1305c9f705810f6eba91a12d494d3d45ec6171daee239b2",
+          "bytes": 46184
+        },
+        {
+          "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests.xml",
+          "sha256": "d5e03f30cae05eeeb2494bf0a609abfbc6d6f4ca38b2b39fd0e488a8b922afe9",
+          "bytes": 42768
+        }
+      ],
+      "cases": [
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+          "name": "persistsExistingPetFieldsWithoutAddingDuplicate",
+          "outcome": "passed"
+        },
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+          "name": "preservesFallbackForNewUnassociatedPet",
+          "outcome": "passed"
+        },
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+          "name": "duplicateNameDoesNotChangeStoredPet",
+          "outcome": "passed"
+        },
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests",
+          "name": "futureBirthDateDoesNotChangeStoredPet",
+          "outcome": "passed"
+        },
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests",
+          "name": "doesNotModifyOrReparentAnotherOwnersPersistentPet",
+          "outcome": "failed"
+        }
+      ],
+      "passed": false,
+      "regressionReproduced": true
+    },
+    "elapsedMs": 44373
+  },
+  "expected": "base regression reproduced; target passes five cases; original BTH candidate fails ownership case",
+  "originalFirstAttemptScoreUnchanged": true
+}

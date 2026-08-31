@@ -1,0 +1,728 @@
+{
+  "schemaVersion": 1,
+  "kind": "visit-oracle-implementation-independence-controls",
+  "providerCalls": 0,
+  "taskId": "spring-04-future-visit",
+  "baseSha": "3c06fbfc1e42eb40802e0d0ca989bc9226755804",
+  "targetSha": "753d35c2f84432d88c0f3b61c9302a16069b78dd",
+  "acceptance": {
+    "kind": "fixture-tests",
+    "files": [
+      {
+        "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitAcceptanceTests.java",
+        "fixture": "fixtures/spring/VisitAcceptanceTests.java",
+        "sha256": "7c13cba46c1da29271390412f45abb5c2cd0dee13b64341f031828bce5110eb4"
+      }
+    ],
+    "command": [
+      "./mvnw",
+      "-q",
+      "-o",
+      "-Dtest=VisitAcceptanceTests",
+      "test"
+    ],
+    "reports": [
+      "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml"
+    ],
+    "cases": [
+      {
+        "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+        "name": "rejectsTodayAndPastWithLocalizedDateError"
+      },
+      {
+        "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+        "name": "acceptsTomorrowAndLater"
+      },
+      {
+        "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+        "name": "defaultsNewVisitToTomorrow"
+      },
+      {
+        "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+        "name": "rendersTomorrowAsMinimumDate"
+      },
+      {
+        "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+        "name": "rendersLocalizedDateErrors"
+      },
+      {
+        "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+        "name": "keepsDescriptionRequired"
+      }
+    ]
+  },
+  "sourceHashes": {
+    "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+    "scripts/check-visit-oracle-variants.mjs": "494e1f2aafecb5be5381f707e9f3a27b5d80e9d69d6a4c8c978a63ce9b89c925"
+  },
+  "results": [
+    {
+      "variant": "renamed-key",
+      "patches": [
+        {
+          "path": "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+          "beforeSha256": "b7c8f9cb7b2b2b5827d85787d1f18c95762a0213760013cef9d0a9e1c2c0f8d8",
+          "afterSha256": "ebb6eeb0eff3a34f6c9185c430ca16020e1c1e23a15f0e11b22cb013321855b8"
+        },
+        {
+          "path": "src/main/resources/messages/messages.properties",
+          "beforeSha256": "a42ec599fdd39375aa6ba848f4560f2c6366b09fa360631c9ab69051eb88328a",
+          "afterSha256": "f9215e9d86f0410e630c531284f1823fe38ff3dcef6164554d583e171ea5a5ca"
+        },
+        {
+          "path": "src/main/resources/messages/messages_de.properties",
+          "beforeSha256": "2196a3bdfa98d7faa69567a67868933e98bcf370488ee184e977612ca2e4c420",
+          "afterSha256": "b3c637406484c3b6180289dda5fbdb684afbd2757f75ede720aa50ba737490dd"
+        },
+        {
+          "path": "src/main/resources/messages/messages_es.properties",
+          "beforeSha256": "2150d5da4b9e486eb9907d4226e7ef4c06274cd99aa3e464860eac267fd36c9b",
+          "afterSha256": "48835515c5dad7f7ee79ffdd57ceb55bdeda16e52570fb74ebaa8755ab538ffa"
+        },
+        {
+          "path": "src/main/resources/messages/messages_fa.properties",
+          "beforeSha256": "c80a395eee9cc7147b48fb4705401f57dbff6cfaf46da15050016c450d436ae6",
+          "afterSha256": "4cc80b11740a4f7bba52471117ff33c0d1c326655bce2a558d186fc03ac32eff"
+        },
+        {
+          "path": "src/main/resources/messages/messages_ko.properties",
+          "beforeSha256": "7e8d64e2de5fed35b413c2215eff23dcac797e93a56efbe30b0b9fa51fb10bf0",
+          "afterSha256": "8efcdfe501e915dc65d7e6a2a2d7536b09f62834d889279588963912c9176141"
+        },
+        {
+          "path": "src/main/resources/messages/messages_pt.properties",
+          "beforeSha256": "f372835f966a8793d1b6553b04e50f92dcd19ea013dd8d0633dc680dd5ff2fe3",
+          "afterSha256": "6eb92ce07bbdbe3a142f5cc21a527f3be569875752b796fd56f7ea0219547621"
+        },
+        {
+          "path": "src/main/resources/messages/messages_ru.properties",
+          "beforeSha256": "4fcb4afd2d30138996c019608c30f670b961647466dc9c37f173a899cc7d1d39",
+          "afterSha256": "a128ef5e848e0866214e5ac4fc80606c9ce0ef65871740df8f597024fb9ee22c"
+        },
+        {
+          "path": "src/main/resources/messages/messages_tr.properties",
+          "beforeSha256": "f73d06f2fc12d159b3b9fed831b3437f8b0245fb22f97e509df571b4f4cde103",
+          "afterSha256": "06d674b0474ef72ebb7c1cadbe0cf762ff70bc9db8ad1501121288176cb11c71"
+        }
+      ],
+      "expectedCandidatePassed": true,
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": true,
+        "candidateSourceSha256": "e8600d1037617b10c75f0f3012c6ee04fcfee223a3854b9a1cc62bd8c2c950f5",
+        "candidateUntouched": true,
+        "reason": null,
+        "oracleSha256": "d0c995453902e967986e3f89518e8974817d589626d35d6a2b392c95828587da",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitAcceptanceTests.java",
+            "sha256": "7c13cba46c1da29271390412f45abb5c2cd0dee13b64341f031828bce5110eb4"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12802,
+              "stdout": {
+                "sha256": "ae02d450e6a11c36473eb3adb3dfc044c9ffc0b3d92b6e1d6f22afe34401e9ab",
+                "bytes": 20749
+              },
+              "stderr": {
+                "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+                "sha256": "f8eb549e8b4ac1d2156bc46f1217638768d6ddd8020e91ae13711ca17852ed6c",
+                "bytes": 64929
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rejectsTodayAndPastWithLocalizedDateError",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "acceptsTomorrowAndLater",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "defaultsNewVisitToTomorrow",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersTomorrowAsMinimumDate",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersLocalizedDateErrors",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "keepsDescriptionRequired",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12140,
+              "stdout": {
+                "sha256": "59fd8249eb8e4bae029c8a1a8f5fe40005477236c6845bd0a468392b10bae0d3",
+                "bytes": 2531
+              },
+              "stderr": {
+                "sha256": "9e89e6b2c2b2a414ec4b7f0f5683d30d5ea9363bb0c5a15bf52fab03aa86f8ff",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+                "sha256": "f50b5e05f44c2b85c8b6d8f1f1446647b97c5f4c6f6765c766ec90abb60fe3b1",
+                "bytes": 47807
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rejectsTodayAndPastWithLocalizedDateError",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "acceptsTomorrowAndLater",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "defaultsNewVisitToTomorrow",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersTomorrowAsMinimumDate",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersLocalizedDateErrors",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "keepsDescriptionRequired",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": {
+          "sourceStable": true,
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 12457,
+            "stdout": {
+              "sha256": "bfdd088fd5119fcce7df44c4de3dfa52c0b772086b9645577316ec4d84c53a5d",
+              "bytes": 2534
+            },
+            "stderr": {
+              "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+              "bytes": 900
+            }
+          },
+          "reports": [
+            {
+              "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+              "sha256": "864dc8b9e9425e18a242b481f4e4b277d7f095e5d1567c6dc4640c8fde0a2753",
+              "bytes": 47882
+            }
+          ],
+          "cases": [
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "rejectsTodayAndPastWithLocalizedDateError",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "acceptsTomorrowAndLater",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "defaultsNewVisitToTomorrow",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "rendersTomorrowAsMinimumDate",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "rendersLocalizedDateErrors",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "keepsDescriptionRequired",
+              "outcome": "passed"
+            }
+          ],
+          "passed": true,
+          "regressionReproduced": false
+        },
+        "elapsedMs": 44463
+      }
+    },
+    {
+      "variant": "bean-validation",
+      "patches": [
+        {
+          "path": "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+          "beforeSha256": "b7c8f9cb7b2b2b5827d85787d1f18c95762a0213760013cef9d0a9e1c2c0f8d8",
+          "afterSha256": "9bb9ef8fdef03e498830229e20ce6f4823d987d68992e6df289bb08c04beb1ea"
+        },
+        {
+          "path": "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "beforeSha256": "8587d71a42308feb8fe427236a4d3e211bd1b3554e645d0e235afd681683226c",
+          "afterSha256": "7f92babc9d49450e125e47e1fee77810121790d9af3cb55cb31546bed626ec9d"
+        }
+      ],
+      "expectedCandidatePassed": true,
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": true,
+        "candidateSourceSha256": "e009f5698ad4a29a351c2ee49f7a6e20c2799c1011288fc214ef43b66cb06efe",
+        "candidateUntouched": true,
+        "reason": null,
+        "oracleSha256": "d0c995453902e967986e3f89518e8974817d589626d35d6a2b392c95828587da",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitAcceptanceTests.java",
+            "sha256": "7c13cba46c1da29271390412f45abb5c2cd0dee13b64341f031828bce5110eb4"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 11980,
+              "stdout": {
+                "sha256": "deda938d75c43132742e377db8581a10d9d7c8912cf7c967840ac4c88288a983",
+                "bytes": 20748
+              },
+              "stderr": {
+                "sha256": "9e89e6b2c2b2a414ec4b7f0f5683d30d5ea9363bb0c5a15bf52fab03aa86f8ff",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+                "sha256": "e7330382fccfcbbbe4334496dcd6fcf37ac551d16495d0c21e83e8e352af9168",
+                "bytes": 64927
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rejectsTodayAndPastWithLocalizedDateError",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "acceptsTomorrowAndLater",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "defaultsNewVisitToTomorrow",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersTomorrowAsMinimumDate",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersLocalizedDateErrors",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "keepsDescriptionRequired",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 15262,
+              "stdout": {
+                "sha256": "47494382f2e9cf27b9543bdf82a329e01e42c78efd2733ae69b2c2e01acf5766",
+                "bytes": 2531
+              },
+              "stderr": {
+                "sha256": "9e89e6b2c2b2a414ec4b7f0f5683d30d5ea9363bb0c5a15bf52fab03aa86f8ff",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+                "sha256": "59098daaf8b28a2618d851c81dd87d43d6d15c96bc346e14442b9c8d85003816",
+                "bytes": 47807
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rejectsTodayAndPastWithLocalizedDateError",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "acceptsTomorrowAndLater",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "defaultsNewVisitToTomorrow",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersTomorrowAsMinimumDate",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersLocalizedDateErrors",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "keepsDescriptionRequired",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": {
+          "sourceStable": true,
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 11988,
+            "stdout": {
+              "sha256": "ed4b37798ce0a3e8f12add126080193fa5dd74d5ac8a56a687e9b8cf718b7352",
+              "bytes": 2534
+            },
+            "stderr": {
+              "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+              "bytes": 900
+            }
+          },
+          "reports": [
+            {
+              "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+              "sha256": "32d5b4aee449b091d17f23705faf2a1c1406683291127e7ddf7816f5ddd8e2ce",
+              "bytes": 47891
+            }
+          ],
+          "cases": [
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "rejectsTodayAndPastWithLocalizedDateError",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "acceptsTomorrowAndLater",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "defaultsNewVisitToTomorrow",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "rendersTomorrowAsMinimumDate",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "rendersLocalizedDateErrors",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "keepsDescriptionRequired",
+              "outcome": "passed"
+            }
+          ],
+          "passed": true,
+          "regressionReproduced": false
+        },
+        "elapsedMs": 45774
+      }
+    },
+    {
+      "variant": "unlocalized",
+      "patches": [
+        {
+          "path": "src/main/resources/messages/messages_de.properties",
+          "beforeSha256": "2196a3bdfa98d7faa69567a67868933e98bcf370488ee184e977612ca2e4c420",
+          "afterSha256": "27158bdcdf14ed2bf36a4a5c8500cb990d2eb1118664f409b6d46257de4a4dd2"
+        }
+      ],
+      "expectedCandidatePassed": false,
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": false,
+        "candidateSourceSha256": "20ef1692a698529de8010b7c98c992515670c77eeb02f3df571123f2ca3b1276",
+        "candidateUntouched": true,
+        "reason": null,
+        "oracleSha256": "d0c995453902e967986e3f89518e8974817d589626d35d6a2b392c95828587da",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitAcceptanceTests.java",
+            "sha256": "7c13cba46c1da29271390412f45abb5c2cd0dee13b64341f031828bce5110eb4"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 13025,
+              "stdout": {
+                "sha256": "83fdd4ffdee1597f223c8796e968831cbb7df8f191a40abe85df4dd925e9dd3b",
+                "bytes": 20750
+              },
+              "stderr": {
+                "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+                "sha256": "993744c4aea6bc9aab95fdf01cd8af8e782ffb63a8a53fab299b8f2b63668533",
+                "bytes": 64930
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rejectsTodayAndPastWithLocalizedDateError",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "acceptsTomorrowAndLater",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "defaultsNewVisitToTomorrow",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersTomorrowAsMinimumDate",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersLocalizedDateErrors",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "keepsDescriptionRequired",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12181,
+              "stdout": {
+                "sha256": "4374a2cd4f0c0dfe5748fb5280134398cc4e6561ef34eb687c2d615181807cbe",
+                "bytes": 2531
+              },
+              "stderr": {
+                "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+                "sha256": "302848ff86ecfabfd0184dbff0d093c35d31aff83d9305c8ef7f829124892095",
+                "bytes": 47807
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rejectsTodayAndPastWithLocalizedDateError",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "acceptsTomorrowAndLater",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "defaultsNewVisitToTomorrow",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersTomorrowAsMinimumDate",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersLocalizedDateErrors",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "keepsDescriptionRequired",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": {
+          "sourceStable": true,
+          "process": {
+            "exitCode": 1,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 13803,
+            "stdout": {
+              "sha256": "e166cc3fa600e71dd4ebe36c7515df933a0b31b408b4d9b4f04090ddb6ec74e0",
+              "bytes": 16904
+            },
+            "stderr": {
+              "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+              "bytes": 900
+            }
+          },
+          "reports": [
+            {
+              "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+              "sha256": "208cff9713432b7143a16c2e7426fcb1d15dd07fabfd615ec384adf5356769ab",
+              "bytes": 61158
+            }
+          ],
+          "cases": [
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "rejectsTodayAndPastWithLocalizedDateError",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "acceptsTomorrowAndLater",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "defaultsNewVisitToTomorrow",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "rendersTomorrowAsMinimumDate",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "rendersLocalizedDateErrors",
+              "outcome": "failed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+              "name": "keepsDescriptionRequired",
+              "outcome": "passed"
+            }
+          ],
+          "passed": false,
+          "regressionReproduced": true
+        },
+        "elapsedMs": 45121
+      }
+    }
+  ],
+  "interrupted": null,
+  "passed": true
+}

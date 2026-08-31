@@ -83,7 +83,7 @@ test('checked-in evaluator fixtures match their pinned bytes and stay outside pr
   }
   assert.ok(fixtures > 0)
   const springTasks = config.repositories.find((entry) => entry.id === 'spring-petclinic').tasks
-  for (const [id, caseCount] of [['spring-05-binder-id-protection', 5], ['spring-06-pet-update', 4]]) {
+  for (const [id, caseCount] of [['spring-05-binder-id-protection', 5], ['spring-06-pet-update', 5]]) {
     const task = springTasks.find((entry) => entry.id === id)
     assert.equal(task.acceptance.kind, 'fixture-tests')
     assert.equal(task.acceptance.cases.length, caseCount)

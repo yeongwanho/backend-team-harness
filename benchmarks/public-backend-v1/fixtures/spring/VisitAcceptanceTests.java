@@ -1,15 +1,21 @@
 package org.springframework.samples.petclinic.owner;
 
 import java.time.LocalDate;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Locale;
 import java.util.Optional;
-import java.util.Properties;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.MessageSource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.servlet.i18n.SessionLocaleResolver;
+import org.springframework.web.util.HtmlUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
@@ -22,6 +28,9 @@ class VisitAcceptanceTests {
 
 	@Autowired
 	private MockMvc mvc;
+
+	@Autowired
+	private MessageSource messages;
 
 	@MockitoBean
 	private OwnerRepository repository;
@@ -41,7 +50,7 @@ class VisitAcceptanceTests {
 			mvc.perform(post("/owners/1/pets/1/visits/new").param("date", LocalDate.now().plusDays(days).toString())
 				.param("description", "Routine visit"))
 				.andExpect(status().isOk())
-				.andExpect(model().attributeHasFieldErrorCode("visit", "date", "typeMismatch.visitDate"))
+				.andExpect(model().attributeHasFieldErrors("visit", "date"))
 				.andExpect(view().name("pets/createOrUpdateVisitForm"));
 		}
 	}
@@ -57,8 +66,10 @@ class VisitAcceptanceTests {
 	}
 
 	@Test
-	void defaultsNewVisitToTomorrow() {
-		assertEquals(LocalDate.now().plusDays(1), new Visit().getDate());
+	void defaultsNewVisitToTomorrow() throws Exception {
+		var result = mvc.perform(get("/owners/1/pets/1/visits/new")).andExpect(status().isOk()).andReturn();
+		Visit visit = (Visit) result.getModelAndView().getModel().get("visit");
+		assertEquals(LocalDate.now().plusDays(1), visit.getDate());
 	}
 
 	@Test
@@ -77,16 +88,33 @@ class VisitAcceptanceTests {
 	}
 
 	@Test
-	void declaresLocalizedVisitDateMessages() throws Exception {
-		for (String suffix : new String[] { "", "_de", "_es", "_fa", "_ko", "_pt", "_ru", "_tr" }) {
-			try (var input = getClass().getResourceAsStream("/messages/messages" + suffix + ".properties")) {
-				assertNotNull(input, "Locale resource is missing: " + suffix);
-				Properties messages = new Properties();
-				messages.load(input);
-				assertFalse(messages.getProperty("typeMismatch.visitDate", "").isBlank(),
-						"Localized date message is missing: " + suffix);
-			}
-		}
+	void rendersLocalizedDateErrors() throws Exception {
+		String english = renderedDateError(Locale.ENGLISH);
+		String german = renderedDateError(Locale.GERMAN);
+		assertNotEquals(english, german, "The validation message must follow the selected language.");
+	}
+
+	private String renderedDateError(Locale locale) throws Exception {
+		var result = mvc
+			.perform(post("/owners/1/pets/1/visits/new").locale(locale)
+				.sessionAttr(SessionLocaleResolver.LOCALE_SESSION_ATTRIBUTE_NAME, locale)
+				.param("date", LocalDate.now().toString())
+				.param("description", "Routine visit"))
+			.andExpect(status().isOk())
+			.andExpect(model().attributeHasFieldErrors("visit", "date"))
+			.andReturn();
+		BindingResult binding = (BindingResult) result.getModelAndView()
+			.getModel()
+			.get(BindingResult.MODEL_KEY_PREFIX + "visit");
+		var error = binding.getFieldError("date");
+		assertNotNull(error);
+		String text = messages.getMessage(error, locale);
+		assertFalse(text.isBlank(), "A visible validation message is required.");
+		assertFalse(Arrays.asList(error.getCodes()).contains(text), "Unresolved message keys are not messages.");
+		String html = result.getResponse().getContentAsString(StandardCharsets.UTF_8);
+		assertTrue(html.contains(text) || html.contains(HtmlUtils.htmlEscape(text)),
+				"The localized date error must be shown on the form.");
+		return text;
 	}
 
 	@Test

@@ -48,7 +48,7 @@
           "decisions": { "modules": ["root"], "databaseImpact": "none", "apiImpact": "compatible" },
           "acceptance": {
             "kind": "fixture-tests",
-            "files": [{ "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitAcceptanceTests.java", "fixture": "fixtures/spring/VisitAcceptanceTests.java", "sha256": "05ab5e569fd6462a063bae452ba60678e70b466fe973506526e23fdf88924dcf" }],
+            "files": [{ "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitAcceptanceTests.java", "fixture": "fixtures/spring/VisitAcceptanceTests.java", "sha256": "7c13cba46c1da29271390412f45abb5c2cd0dee13b64341f031828bce5110eb4" }],
             "command": ["./mvnw", "-q", "-o", "-Dtest=VisitAcceptanceTests", "test"],
             "reports": ["target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml"],
             "cases": [
@@ -56,7 +56,7 @@
               { "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests", "name": "acceptsTomorrowAndLater" },
               { "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests", "name": "defaultsNewVisitToTomorrow" },
               { "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests", "name": "rendersTomorrowAsMinimumDate" },
-              { "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests", "name": "declaresLocalizedVisitDateMessages" },
+              { "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests", "name": "rendersLocalizedDateErrors" },
               { "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests", "name": "keepsDescriptionRequired" }
             ]
           }
@@ -83,14 +83,21 @@
           "decisions": { "modules": ["root"], "databaseImpact": "write", "apiImpact": "compatible" },
           "acceptance": {
             "kind": "fixture-tests",
-            "files": [{ "path": "src/test/java/org/springframework/samples/petclinic/owner/PetUpdateAcceptanceTests.java", "fixture": "fixtures/spring/PetUpdateAcceptanceTests.java", "sha256": "bf4c3a3052701b8c5f98e817aeed01b6799a21a82a6151b373bb2f9065b19934" }],
-            "command": ["./mvnw", "-q", "-o", "-Dtest=PetUpdateAcceptanceTests", "test"],
-            "reports": ["target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests.xml"],
+            "files": [
+              { "path": "src/test/java/org/springframework/samples/petclinic/owner/PetUpdateAcceptanceTests.java", "fixture": "fixtures/spring/PetUpdateAcceptanceTests.java", "sha256": "bf4c3a3052701b8c5f98e817aeed01b6799a21a82a6151b373bb2f9065b19934" },
+              { "path": "src/test/java/org/springframework/samples/petclinic/owner/PetOwnershipAcceptanceTests.java", "fixture": "fixtures/spring/PetOwnershipAcceptanceTests.java", "sha256": "093b38cfd6d109c4250fe85a2000ea7516cc4b628594f8c1eb4e2a3e50a2b782" }
+            ],
+            "command": ["./mvnw", "-q", "-o", "-Dtest=PetUpdateAcceptanceTests,PetOwnershipAcceptanceTests", "test"],
+            "reports": [
+              "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests.xml",
+              "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests.xml"
+            ],
             "cases": [
               { "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests", "name": "persistsExistingPetFieldsWithoutAddingDuplicate" },
               { "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests", "name": "preservesFallbackForNewUnassociatedPet" },
               { "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests", "name": "duplicateNameDoesNotChangeStoredPet" },
-              { "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests", "name": "futureBirthDateDoesNotChangeStoredPet" }
+              { "className": "org.springframework.samples.petclinic.owner.PetUpdateAcceptanceTests", "name": "futureBirthDateDoesNotChangeStoredPet" },
+              { "className": "org.springframework.samples.petclinic.owner.PetOwnershipAcceptanceTests", "name": "doesNotModifyOrReparentAnotherOwnersPersistentPet" }
             ]
           }
         },

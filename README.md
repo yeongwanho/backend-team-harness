@@ -577,6 +577,7 @@ OMO 코드를 복사하거나 의존하지 않습니다. Core/adapter/project �
 - [2026 adaptive harness research](docs/RESEARCH-2026-ADAPTIVE-HARNESS.md)
 - [Roadmap](docs/ROADMAP.md)
 - [실제 FastAPI 비교: 둘 다 정답, 아직 하네스가 더 느린 결과](docs/evidence/fastapi-prepared-baseline-v33.md)
+- [v35: 기본 검사 통과 후보의 소유권 회귀 발견·검사 보강·20개 과제 현황](docs/evidence/corpus-expansion-v35.md)
 - [v34: 테스트 짝짓기 수정·입력 축소 후 재측정—속도 문제는 아직 남음](docs/evidence/provider-context-correctness-v34.md)
 - [Security](SECURITY.md)
 

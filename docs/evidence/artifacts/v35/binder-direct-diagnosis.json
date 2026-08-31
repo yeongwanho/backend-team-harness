@@ -1,0 +1,26 @@
+{
+  "kind": "independent-failure-diagnosis",
+  "taskId": "spring-05-binder-id-protection",
+  "command": [
+    "./mvnw",
+    "-q",
+    "-o",
+    "validate"
+  ],
+  "exitCode": 1,
+  "diagnosis": "spring-javaformat rejected three modified test classes before test execution",
+  "code": "SPRING_JAVAFORMAT_VIOLATION",
+  "paths": [
+    "src/test/java/org/springframework/samples/petclinic/owner/OwnerControllerTests.java",
+    "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+    "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java"
+  ],
+  "rawLogSha256": "2560c7058dfb8d0d495fc3a30feca6413cc24d925b0ad0086d72c2898e12b2d9",
+  "rawLogBytes": 1184,
+  "originalScoreUnchanged": true,
+  "sourceEdited": false,
+  "limitations": [
+    "The ordinary diagnostic field was null and ruleViolations was empty; neither means no project-style violations.",
+    "No formatting repair was applied to this scored first attempt."
+  ]
+}

@@ -18,6 +18,8 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Changed
 
+- Public evaluation protocol `behavioral-oracle-v35` accepts implementation-independent localized visit validation and adds a cross-owner JPA regression to the pet-update oracle. A real BTH candidate passed the earlier four cases but changed another owner's row; it is not an acceptable apply candidate. Historical first-attempt records remain unchanged. See `docs/evidence/corpus-expansion-v35.md`.
+- Model-free visit controls release each completed temporary variant and preserve partial results after later preparation failures. This reduces peak copied Git history; it does not change implementation-provider runtime or claim a general speed improvement.
 - Test pairing recognizes Python prefixes, scopes duplicate names by module/language and package/directory hints, and leaves ambiguous or over-budget buckets unresolved. Test-only annotations and DB signals no longer contaminate production convention observations.
 - Provider input removes only exactly duplicated generated context fields after artifact and renderer checks. Approved plans and custom human context remain intact. The v34 real Codex comparison still does not demonstrate a latency advantage; see `docs/evidence/provider-context-correctness-v34.md`.
 - Generated pytest verification uses an already-prepared project/workspace environment and the backend working directory; it no longer implicitly runs `uv run`. Python `doctor` lookup recognizes normal interpreter symlink leaves while rejecting linked environment directories, and labels presence checks as unprobed imports/tests.
