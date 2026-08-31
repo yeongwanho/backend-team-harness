@@ -418,6 +418,14 @@ BTH 125.364초·164,740토큰, 직접 Codex 134.440초·211,087토큰입니다. 
 실행의 결과이며 일반적인 속도 우위는 아닙니다. 실제 MySQL/Flyway의 정상·실패·
 시간초과 및 소유권 기반 정리도 별도로 검증했습니다. [20개 과제 현황과 한계](docs/evidence/native-small-work-v43.md).
 
+v44에서는 Spring의 전체 Maven 검증과 임시 MySQL/PostgreSQL 환경으로 범위를 넓혔습니다.
+BTH는 호출 1번으로 71개 테스트·독립 검사 6개를 통과했지만, 직접 Codex는 CLI가
+종료되어 전체 요청 완료·사용량이 미확인입니다. 직접 후보도 이후 별도 복사본에서
+72개·6개 검사를 통과했으므로 코드 품질이나 속도 우위를 단정하지 않습니다.
+검사기의 전체 Git 이력 복사는 원본 SHA를 유지하는 깊이 1 snapshot으로 바꿨고,
+실제 Spring 객체 복사량은 783,327KiB에서 476KiB로 줄었습니다.
+[결과·실패·남은 검증](docs/evidence/native-spring-work-v44.md).
+
 provider 비교는 공개 이력을 target commit 없이 단일 합성 base commit으로 만들고 gold 경로를 provider에게 전달하지 않습니다. raw provider 출력·소스 본문은 결과에 저장하지 않고 digest, byte count, 사용량, pre-write 경로와 명령 종류 집계만 남깁니다. controlled-edit의 `--all`은 provider당 최대 40회로 별도의 `BTH_PROVIDER_BENCHMARK_ALL=I_UNDERSTAND_40_PROVIDER_RUNS` 승인이 필요합니다. native의 전체 쌍대 실행은 최대 80회가 될 수 있어 `BTH_PROVIDER_BENCHMARK_ALL=I_UNDERSTAND_NATIVE_WORKFLOW_CALL_LIMITS` 승인을 별도로 요구합니다. 정확한 선택 범위의 상한은 먼저 `--plan`으로 확인하세요.
 
 기존 테스트 통과는 `verificationSuccessAt1`이며, 요청한 기능의 성공과 다릅니다. `successAt1`은 수정 전 코드에서는 실패하고 정답 코드에서는 통과하는 독립 회귀 테스트로 해당 구현도 확인했을 때만 인정합니다. 그 검증이 없으면 `null`이며, 전체 성공률도 미측정 항목이 남은 동안 확정하지 않습니다. schema 2 이하의 과거 `successAt1`은 기존 테스트 통과 관찰값으로만 취급합니다.

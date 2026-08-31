@@ -9,6 +9,7 @@ import { buildSafeEnvironment, runProcess } from '../core/process-runner.mjs'
 import { resolveGateExecutable } from '../config/verification.mjs'
 import { resolveSafeProjectPath } from '../fs-safety.mjs'
 import { parseTaskAcceptance } from './provider-benchmark-config.mjs'
+import { createIsolatedGitSnapshot } from './isolated-git-snapshot.mjs'
 
 const execute = promisify(execFile)
 const digest = (bytes) => createHash('sha256').update(bytes).digest('hex')
@@ -40,10 +41,7 @@ async function snapshot(root) {
 }
 
 async function cloneAt(source, ref, destination) {
-  await git(undefined, ['clone', '--quiet', '--no-checkout', '--no-hardlinks', '--', source, destination])
-  const tree = await git(destination, ['ls-tree', '-r', ref])
-  if (tree.split('\n').some((line) => /^(120000|160000) /.test(line))) throw new Error('Oracle snapshots cannot contain symlinks or submodules.')
-  await git(destination, ['checkout', '--quiet', '--detach', ref])
+  await createIsolatedGitSnapshot(source, ref, destination)
   // This is a newly allocated evaluator clone, never a caller's workspace.
   await rm(join(destination, '.backend-harness'), { recursive: true, force: true })
 }

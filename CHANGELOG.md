@@ -25,6 +25,8 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Changed
 
+- Evaluation snapshots now use bounded local depth-one fetches with exact original SHA, no alternates/remotes, and preserved dirty-candidate checks. On the pinned Spring source, copied Git object storage decreased from 783,327KiB to 476KiB; this is not an LLM-token or whole-workflow speed claim.
+- Added pinned Spring Maven verification fixtures preserving original integration assertions while isolating MySQL/PostgreSQL on owned loopback/tmpfs containers. Native BTH completed the search task; direct Codex exited without completion/usage. Its unchanged code passed a separate diagnostic, not a retroactive provider success. Known public verifier names now select their Windows `.cmd` companions; actual Windows provider execution remains unverified.
 - MySQL reference E2E cleanup now targets a unique run label and rechecks full container/image identity before removal. Its actual Flyway/JDBC success, assertion failure, JVM halt and timeout scenarios pass with no owned container remaining; the fixture uses bounded tmpfs, a random password, and an asserted loopback binding. The reviewed MySQL image must already be cached; implicit pulls are disabled.
 - Recorded the first confirmed native small-task pair under the guarded protocol: both candidates preserve authorization and pass 58 ordinary plus seven independent tests. One fast/low Codex result is not an aggregate efficiency claim. The 20-task ledger now separately re-scores native historical observations instead of counting v42's unconfirmed direct validation as completion.
 

@@ -7,6 +7,18 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'benchmarks/public-backend-v1/fixtures/spring/full-test-run.mjs',
+    from: 'info[0].Config?.Labels?.[LABEL] !== owner',
+    to: 'false',
+    test: 'test/public-maven-cleanup.test.mjs'
+  },
+  {
+    file: 'benchmarks/public-backend-v1/fixtures/spring/full-test-run.mjs',
+    from: '!images.includes(info[0].Image)',
+    to: 'false',
+    test: 'test/public-maven-cleanup.test.mjs'
+  },
+  {
     file: 'test-support/owned-docker-resources.mjs',
     from: 'inspected[0].Config?.Labels?.[MYSQL_OWNER_LABEL] !== owner',
     to: 'false',
@@ -300,6 +312,7 @@ async function copyFixture(target) {
   await cp(join(root, 'src'), join(target, 'src'), { recursive: true })
   await cp(join(root, 'test'), join(target, 'test'), { recursive: true })
   await cp(join(root, 'test-support'), join(target, 'test-support'), { recursive: true })
+  await cp(join(root, 'benchmarks/public-backend-v1/fixtures/spring'), join(target, 'benchmarks/public-backend-v1/fixtures/spring'), { recursive: true })
   await cp(join(root, 'packs'), join(target, 'packs'), { recursive: true })
   await cp(join(root, 'vendor'), join(target, 'vendor'), { recursive: true })
   await cp(join(root, 'package.json'), join(target, 'package.json'))

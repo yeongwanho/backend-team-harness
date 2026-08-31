@@ -34,6 +34,17 @@ The runnable example downloads these dependencies only when its Gradle integrati
 - MySQL Connector/J 26.7.0: GPLv2 with Universal FOSS Exception, https://github.com/mysql/mysql-connector-j
 - MySQL Server Docker image `mysql:8.4.11`: downloaded from the Docker Official Image at test time and not redistributed by BTH
 
+## Spring Petclinic integration-test fixtures
+
+The evaluation-only `benchmarks/public-backend-v1/fixtures/spring/` versions of
+`MySqlIntegrationTests.java`, `MysqlTestApplication.java`, and
+`PostgresIntegrationTests.java` are adapted from Spring Petclinic at
+`0f6e8614047bd74cf6223b4d8a858d2ed2824f8a`. Copyright and Apache-2.0 headers are
+preserved. Only database provisioning is changed: cached exact images, loopback
+ports, temporary data, per-run ownership and no optional Docker skips. Original
+test methods and assertions remain unchanged. `BthDatabaseFixture.java` is an
+evaluation helper added by BTH. License text: `third_party/spring-petclinic/LICENSE.txt`.
+
 ## FastAPI full-stack template test fixtures
 
 The evaluation-only `benchmarks/public-backend-v1/fixtures/fastapi/test_utils.py`,

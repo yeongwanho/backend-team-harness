@@ -26,20 +26,147 @@
         },
         {
           "id": "spring-02-owner-search-whitespace",
-          "decisions": { "modules": ["root"], "databaseImpact": "read", "apiImpact": "compatible" },
+          "decisions": {
+            "modules": [
+              "root"
+            ],
+            "databaseImpact": "read",
+            "apiImpact": "compatible"
+          },
           "acceptance": {
             "kind": "fixture-tests",
-            "files": [{ "path": "src/test/java/org/springframework/samples/petclinic/owner/OwnerSearchAcceptanceTests.java", "fixture": "fixtures/spring/OwnerSearchAcceptanceTests.java", "sha256": "f53fd6ad54a2ae1351487f8ae0ef2317c974b133c5baedcd5a95783d5ee2965b" }],
-            "command": ["./mvnw", "-q", "-o", "-Dtest=OwnerSearchAcceptanceTests", "test"],
-            "reports": ["target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests.xml"],
+            "files": [
+              {
+                "path": "src/test/java/org/springframework/samples/petclinic/owner/OwnerSearchAcceptanceTests.java",
+                "fixture": "fixtures/spring/OwnerSearchAcceptanceTests.java",
+                "sha256": "f53fd6ad54a2ae1351487f8ae0ef2317c974b133c5baedcd5a95783d5ee2965b"
+              }
+            ],
+            "command": [
+              "./mvnw",
+              "-q",
+              "-o",
+              "-Dtest=OwnerSearchAcceptanceTests",
+              "test"
+            ],
+            "reports": [
+              "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests.xml"
+            ],
             "cases": [
-              { "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests", "name": "surroundingWhitespaceFindsSameOwner" },
-              { "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests", "name": "whitespaceOnlyUsesUnfilteredSearch" },
-              { "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests", "name": "emptyOrMissingNameStillListsOwners" },
-              { "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests", "name": "ordinaryNameKeepsIdentity" },
-              { "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests", "name": "internalWhitespaceAndCaseAreNotRewritten" },
-              { "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests", "name": "unmatchedNameStaysAValidationResult" }
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "surroundingWhitespaceFindsSameOwner"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "whitespaceOnlyUsesUnfilteredSearch"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "emptyOrMissingNameStillListsOwners"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "ordinaryNameKeepsIdentity"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "internalWhitespaceAndCaseAreNotRewritten"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.OwnerSearchAcceptanceTests",
+                "name": "unmatchedNameStaysAValidationResult"
+              }
             ]
+          },
+          "projectFixture": {
+            "files": [
+              {
+                "path": "src/test/java/org/springframework/samples/petclinic/MySqlIntegrationTests.java",
+                "fixture": "fixtures/spring/MySqlIntegrationTests.java",
+                "sha256": "f24428eb74bd1c62861dfdbaf9a98ce024411c8dbaf8d24fc51f31822e921b68",
+                "expectedSha256": "d6d45501b3bf141644683974cab727d2982062962f74eb38a1f08c5087256fcd"
+              },
+              {
+                "path": "src/test/java/org/springframework/samples/petclinic/MysqlTestApplication.java",
+                "fixture": "fixtures/spring/MysqlTestApplication.java",
+                "sha256": "aafa3600d46a2e66d68b3b37576b0eb31828162f875ac59e0250a07f9ad805f7",
+                "expectedSha256": "c74523e82c36e1d4fbde13fd308a47d1eb11c32c3265edae6930e4213b2d1a70"
+              },
+              {
+                "path": "src/test/java/org/springframework/samples/petclinic/PostgresIntegrationTests.java",
+                "fixture": "fixtures/spring/PostgresIntegrationTests.java",
+                "sha256": "776ed5e04f95b15b208b7d9a5f4fbcab8f92c7ea942f33f2fe0dfd7eb8217746",
+                "expectedSha256": "2226b14986be562f616c55d25b61de358dd71633e3e3584990150c79f2aa69e8"
+              },
+              {
+                "path": "src/test/java/org/springframework/samples/petclinic/BthDatabaseFixture.java",
+                "fixture": "fixtures/spring/BthDatabaseFixture.java",
+                "sha256": "26fe3ca4a22f7685d97674397f04e598d0be67f3bbb7344f02e9629e532e4c03",
+                "expectedSha256": null
+              },
+              {
+                "path": ".backend-harness/bin/verify-public-maven",
+                "fixture": "fixtures/spring/verify-public-maven",
+                "sha256": "f558f9dd543a9a2387391ed5b1299f95c3ce052a9254649d65739024886ac94e",
+                "expectedSha256": null,
+                "executable": true
+              },
+              {
+                "path": ".backend-harness/bin/verify-public-maven.cmd",
+                "fixture": "fixtures/spring/verify-public-maven.cmd",
+                "sha256": "a756bfaaa500db095d050e114272cb251d99931fe3517cb699ab922ef74e7c17",
+                "expectedSha256": null
+              },
+              {
+                "path": ".backend-harness/bin/verify-public-maven.mjs",
+                "fixture": "fixtures/spring/full-test-run.mjs",
+                "sha256": "85a24ac2193845edcb1e6779d2853e636b25e8d11ca75f9e0e2367f858902849",
+                "expectedSha256": null
+              }
+            ],
+            "verification": {
+              "schemaVersion": 1,
+              "context": {
+                "profile": "test",
+                "databaseDialect": null
+              },
+              "gates": [
+                {
+                  "id": "tests",
+                  "required": true,
+                  "feedback": true,
+                  "network": true,
+                  "command": [
+                    "./.backend-harness/bin/verify-public-maven"
+                  ],
+                  "timeoutMs": 240000,
+                  "inputs": [
+                    "pom.xml",
+                    "mvnw",
+                    "mvnw.cmd",
+                    ".mvn/wrapper/maven-wrapper.properties",
+                    ".editorconfig",
+                    "src/checkstyle/nohttp-checkstyle.xml",
+                    "src/checkstyle/nohttp-checkstyle-suppressions.xml",
+                    "src/test/java/org/springframework/samples/petclinic/MySqlIntegrationTests.java",
+                    "src/test/java/org/springframework/samples/petclinic/MysqlTestApplication.java",
+                    "src/test/java/org/springframework/samples/petclinic/PostgresIntegrationTests.java",
+                    "src/test/java/org/springframework/samples/petclinic/BthDatabaseFixture.java",
+                    ".backend-harness/bin/verify-public-maven",
+                    ".backend-harness/bin/verify-public-maven.cmd",
+                    ".backend-harness/bin/verify-public-maven.mjs"
+                  ],
+                  "result": {
+                    "type": "junit",
+                    "reports": [
+                      "target/surefire-reports/TEST-*.xml"
+                    ],
+                    "minimumTests": 71
+                  }
+                }
+              ]
+            }
           }
         },
         { "id": "spring-03-unique-pet-name", "decisions": { "modules": ["root"], "databaseImpact": "schema", "schemaStrategy": "bootstrap-only", "apiImpact": "compatible" } },

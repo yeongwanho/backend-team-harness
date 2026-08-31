@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T06:20:47.351Z",
+  "platform": "darwin",
+  "node": "v22.23.1",
+  "sourceHashes": {
+    "CHANGELOG.md": "a5966520669306cb9427c0febf1270c96a129797bdc0bbdba7163629c201d103",
+    "README.md": "08eb5a4d14a10d41dac4121acc4071d8bc991f784090b6d7cab70ff79858460f",
+    "THIRD_PARTY_NOTICES.md": "deb1f6915f84d63b0317760b00dfb69a7022447d4ba2448ca51d9e44d4867ca2",
+    "benchmarks/public-backend-v1/corpus.json": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+    "benchmarks/public-backend-v1/fixtures/spring/BthDatabaseFixture.java": "26fe3ca4a22f7685d97674397f04e598d0be67f3bbb7344f02e9629e532e4c03",
+    "benchmarks/public-backend-v1/fixtures/spring/MySqlIntegrationTests.java": "f24428eb74bd1c62861dfdbaf9a98ce024411c8dbaf8d24fc51f31822e921b68",
+    "benchmarks/public-backend-v1/fixtures/spring/MysqlTestApplication.java": "aafa3600d46a2e66d68b3b37576b0eb31828162f875ac59e0250a07f9ad805f7",
+    "benchmarks/public-backend-v1/fixtures/spring/PostgresIntegrationTests.java": "776ed5e04f95b15b208b7d9a5f4fbcab8f92c7ea942f33f2fe0dfd7eb8217746",
+    "benchmarks/public-backend-v1/fixtures/spring/full-test-run.mjs": "85a24ac2193845edcb1e6779d2853e636b25e8d11ca75f9e0e2367f858902849",
+    "benchmarks/public-backend-v1/fixtures/spring/verify-public-maven": "f558f9dd543a9a2387391ed5b1299f95c3ce052a9254649d65739024886ac94e",
+    "benchmarks/public-backend-v1/fixtures/spring/verify-public-maven.cmd": "a756bfaaa500db095d050e114272cb251d99931fe3517cb699ab922ef74e7c17",
+    "benchmarks/public-backend-v1/provider-comparison.json": "17b1391e722e6eb3f456a4505decc98ede4a84cf2d9b758cab5dd34889adcf67",
+    "docs/evidence/artifacts/v44/diagnose-direct.mjs": "a3012ded59003e7655f3181f0ec1bc8653743981b8dc1c737418fbe82cd5af30",
+    "docs/evidence/artifacts/v44/rebuild-progress.mjs": "0eafe314152ef08a661349b9f392c680ffaa7f4680c1ec8a5e693795263842b3",
+    "docs/evidence/artifacts/v44/record-baseline.mjs": "cf9fd9341c0d050dd1bcaf901d0ac2892c868450a5b90436c86a8881f3b736f8",
+    "docs/evidence/artifacts/v44/record-pair.mjs": "103e16aed12fd05640e8b1e754c2e819cee8f1fe156b2e3d1fc20bcf0b7dcd22",
+    "docs/evidence/artifacts/v44/record-qa.mjs": "942a7578b84cac230c7e1869132d26f1134b373d7d2bac33b6142c841eabaa8b",
+    "docs/evidence/native-spring-work-v44.md": "46a7f3f26d20449b9449998d8a754a266f4b3a20192bf5b79eb61cb5007f2ada",
+    "docs/plans/native-spring-work-v44.md": "13c8a2a2386deef8bc6fcf43efbefc489310ddc5fce5406778d9df3e71415232",
+    "packs/codegraph-advisory/indexer.mjs": "ac2e15649c943151872edc3304fd0e79a558fadafaf94e706d9c4c01a4780bab",
+    "scripts/benchmark-provider-comparison.mjs": "d1aa9a8c0ed143e5a38f305d08a2371f8ae5e992e386861565ef5c9475d985a7",
+    "scripts/mutation-smoke.mjs": "a8f3eadc8a5108c358ff78e5ba27b42e931cfe5c82f7e60c828144bc0bcc6cef",
+    "src/core/platform.mjs": "2f1076b747421594c678cab533cdb9cd86ed352c0b2c2183f7a41673adc9b2ea",
+    "src/core/provider-context.mjs": "3fe58aadbe8690ed1b070247e01a416ca4440644d5d897d931fe3d2ac9a8dc14",
+    "src/evaluation/isolated-git-snapshot.mjs": "d96a1038205b2d8fe4921a9c650455b21cba4439f9f9588e6e82fcab68e2925b",
+    "src/evaluation/provider-benchmark-runner.mjs": "82b7c897eed542218a3aca8b1b358a1918283a6063cef56e4fc5b491b30e26b9",
+    "src/evaluation/provider-comparison.mjs": "ddc22cecdc5eb176da77dfd64b0a79075ff160d79e1eac3b04992ef2ec5d0087",
+    "src/evaluation/task-acceptance.mjs": "28039ba76313c49a43cafc3ae54dc79761e86aecd60365cb0e85746cd663a28d",
+    "src/evaluation/workflow-budget.mjs": "edecc1aef45efe8ce8c2c781628115e6e94c259ad65c463bb1e2e38eea0be822",
+    "src/providers/model-cli.mjs": "c081e4b3fda23e1ff49d85fb0689faa5c3dce3cabfece85b087c8eb8ab98eead",
+    "src/providers/validation-activity.mjs": "993fc228774e46b5e62af0948524ca1a94854d14288ada5f421760aedd308862",
+    "src/runtime/implementation-orchestrator.mjs": "16f088635dde87b16954bf6413f7a5398f60b139e6313ec30c5f56d8433e3610",
+    "src/runtime/work-orchestrator.mjs": "27ec7327b113e2dea43175dc5ac23beef886b00bb31387e02333b7cbb87bccb0",
+    "test/isolated-git-snapshot.test.mjs": "6498c9db9ea59887604d506a5a508383093745e093397b4ec2cae77ce2c3d45b",
+    "test/public-maven-cleanup.test.mjs": "5598ed304e17242d593941debfb55070200b05df3ffd196c24c4a15420500619",
+    "test/public-maven-fixture.test.mjs": "fe2575664091ee9b3bf53c421cea5632ebaf77c1a215b6fbd630eb60cdb7d33e",
+    "third_party/spring-petclinic/LICENSE.txt": "56dfc19e0dc836e30177332f73e8e6fbc297941acf3d906eec6eaaa46c2c452a"
+  },
+  "suite": {
+    "tests": 620,
+    "pass": 616,
+    "fail": 0,
+    "skipped": 4
+  },
+  "coverage": {
+    "statements": 91.46,
+    "branches": 83.22,
+    "functions": 98.73,
+    "lines": 91.46,
+    "logSha256": "10357a2cd6922202034321200e29a78820550cc87a0f2262661e44f77fb87c30"
+  },
+  "mutation": {
+    "killed": 50,
+    "curatedTotal": 50,
+    "exhaustive": false,
+    "logSha256": "64ae5738293f6553347d919b91246184f64e47c0b3f807c9a0e2f38f2f97ec8a"
+  },
+  "install": {
+    "passed": true,
+    "logSha256": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989"
+  },
+  "syntaxPassed": true,
+  "diffCheckPassed": true,
+  "artifactHashes": {
+    "codex-native-spring-pair.json": "7c36b28343d00a5f95ca58fa486a1776b954015b6311e03cc2a2eddf35317b8b",
+    "spring-baseline.json": "07879a52c953d711a3fe8849287735ba8bd9bb4a6e068eea20dcbe5a901bd720",
+    "direct-diagnostic.json": "f3b4c4adc1f47f557114403c5454731c5cf7161b3b66cb23dded9cd0ae0a5b49",
+    "corpus-ledger.json": "c722988b5a33722cb3cb61ab8f48f76ab178d5c555451d92e43edbecc34785bc"
+  },
+  "corpusCounts": {
+    "tasks": 20,
+    "configuredOracles": 11,
+    "currentValidatedOracles": 1,
+    "tasksWithHistoricalPairedInference": 9,
+    "tasksWithHistoricalSuccessfulPair": 4,
+    "tasksWithNativePairAttempt": 3,
+    "tasksWithConfirmedNativePair": 1
+  },
+  "invalidatedCoverage": {
+    "reason": "ENOSPC during concurrent full-history acceptance clones",
+    "logSha256": "c7786bdd1abbe2a0ea80f1f38b7aebac47bcee2622c5fd71134a43a7dacbbf40",
+    "countedAsPass": false
+  },
+  "commands": [
+    "node --test test/isolated-git-snapshot.test.mjs test/task-acceptance.test.mjs test/public-maven-fixture.test.mjs test/public-maven-cleanup.test.mjs test/windows-compat.test.mjs",
+    "node node_modules/c8/bin/c8.js --all --include=src/**/*.mjs --check-coverage --lines 88 --branches 77 --functions 90 --reporter=text node --test --test-concurrency=4 test/*.test.mjs",
+    "node scripts/mutation-smoke.mjs",
+    "node scripts/install-smoke.mjs",
+    "BTH_PROVIDER_BENCHMARK=I_UNDERSTAND_PROVIDER_COSTS node scripts/benchmark-provider-comparison.mjs --execute --workflow native-workflow --provider codex --lane both --task spring-02-owner-search-whitespace --mode fast --model gpt-5.6-sol --timeout-ms 240000 --max-attempts 3 --allow-network --keep-workspace --output <new-directory>"
+  ],
+  "goalComplete": false,
+  "limitations": [
+    "Prepared public project, not zero-configuration company onboarding or validated interview accuracy.",
+    "Direct CLI exited before final usage/completion. Its separate diagnostic pass is not native workflow success.",
+    "Only one historically confirmed native pair; no twenty-task completeness or general speed/token advantage.",
+    "Actual Windows provider/descendant termination, two-developer handoff and company-policy integration remain unverified.",
+    "Depth-one snapshot optimizes Git object copying; current-source acceptance controls require reruns for other tasks.",
+    "Default suite skips four opt-in environmental tests. Real Spring JVM/DB evidence is separate; no OS egress guarantee."
+  ]
+}
