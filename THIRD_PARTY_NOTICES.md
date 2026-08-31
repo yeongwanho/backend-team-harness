@@ -33,3 +33,34 @@ The runnable example downloads these dependencies only when its Gradle integrati
 - Flyway Open Source 13.4.0 (`flyway-core`, `flyway-mysql`): Apache License 2.0, https://github.com/flyway/flyway
 - MySQL Connector/J 26.7.0: GPLv2 with Universal FOSS Exception, https://github.com/mysql/mysql-connector-j
 - MySQL Server Docker image `mysql:8.4.11`: downloaded from the Docker Official Image at test time and not redistributed by BTH
+
+## FastAPI full-stack template test fixtures
+
+The evaluation-only `benchmarks/public-backend-v1/fixtures/fastapi/test_utils.py`,
+`test_backend_pre_start.py`, and `test_test_pre_start.py` adapt test helpers from
+`fastapi/full-stack-fastapi-template` at
+`fe3bafc6f6732698ed2c58424f64065a4209ad47`. Changes fix imported mock bindings,
+assertions and synthetic email addresses; production application code is not
+bundled. Original [source and license](https://github.com/fastapi/full-stack-fastapi-template/tree/fe3bafc6f6732698ed2c58424f64065a4209ad47).
+
+MIT License
+
+Copyright (c) 2019 Sebastián Ramírez
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { isAbsolute, posix } from 'node:path'
+import { parseProjectFixture } from './project-fixture-config.mjs'
 
 const DATABASE_IMPACTS = new Set(['none', 'read', 'write', 'schema'])
 const API_IMPACTS = new Set(['none', 'compatible', 'breaking'])
@@ -132,10 +133,10 @@ export function parseProviderBenchmarkConfig(text, corpus, source = '<inline>') 
     const tasks = repository.tasks.map((task, taskIndex) => {
       const taskLabel = label + '.tasks[' + taskIndex + ']'
       plainObject(task, taskLabel)
-      exactKeys(task, new Set(['id', 'decisions', 'acceptance']), taskLabel)
+      exactKeys(task, new Set(['id', 'decisions', 'acceptance', 'projectFixture']), taskLabel)
       if (!taskIds.has(task.id) || seenTasks.has(task.id)) throw new Error(taskLabel + '.id is unknown or duplicated.')
       seenTasks.add(task.id)
-      return { id: task.id, decisions: decisions(task.decisions, taskLabel + '.decisions'), acceptance: parseTaskAcceptance(task.acceptance, taskLabel + '.acceptance') }
+      return { id: task.id, decisions: decisions(task.decisions, taskLabel + '.decisions'), acceptance: parseTaskAcceptance(task.acceptance, taskLabel + '.acceptance'), projectFixture: parseProjectFixture(task.projectFixture) }
     })
     return {
       id: repository.id,

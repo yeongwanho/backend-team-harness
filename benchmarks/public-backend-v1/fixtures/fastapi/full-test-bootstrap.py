@@ -1,8 +1,11 @@
 """Explicit public-pilot pytest plugin; keeps the repository's original tests."""
 import os
 import socket
+from email import message_from_string
 
 from pydantic_settings import BaseSettings
+from emails.backend.smtp.backend import SMTPBackend
+from emails.backend.response import SMTPResponse
 
 _settings_init = BaseSettings.__init__
 
@@ -34,6 +37,32 @@ def _local_connect_ex(self, address):
 
 socket.socket.connect = _local_connect
 socket.socket.connect_ex = _local_connect_ex
+
+
+def _in_memory_mail(self, from_addr, to_addrs, msg, mail_options=None, rcpt_options=None):
+    """Keep Message.send/MIME assembly; replace only actual SMTP delivery."""
+    addresses = [from_addr, *(to_addrs if isinstance(to_addrs, (list, tuple)) else [to_addrs])]
+    if not 2 <= len(addresses) <= 10 or any(
+        not isinstance(address, str) or not address.endswith("@example.com") or
+        len(address) > 254 or any(character in address for character in "\r\n")
+        for address in addresses
+    ):
+        raise RuntimeError("Public pilot mail accepts only synthetic example.com addresses")
+    content = msg.as_string()
+    if len(content.encode("utf-8")) > 1024 * 1024:
+        raise RuntimeError("Public pilot mail exceeds the message budget")
+    message = message_from_string(content)
+    if not message.get("Subject") or not message.get("From") or not message.get("To"):
+        raise RuntimeError("Public pilot mail must contain actual MIME headers")
+    response = SMTPResponse(backend="bth-in-memory-public-fixture")
+    response.set_status("DATA", 250, "synthetic delivery accepted")
+    response._finished = True
+    response.from_addr = from_addr
+    response.to_addrs = list(addresses[1:])
+    return response
+
+
+SMTPBackend.sendmail = _in_memory_mail
 
 
 def pytest_sessionstart(session):

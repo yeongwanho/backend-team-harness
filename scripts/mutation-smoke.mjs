@@ -7,6 +7,30 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/evaluation/project-fixture.mjs',
+    from: '(before?.sha256 ?? null) !== file.expectedSha256 && before?.sha256 !== file.sha256',
+    to: 'false',
+    test: 'test/project-fixture.test.mjs'
+  },
+  {
+    file: 'src/evaluation/project-fixture-config.mjs',
+    from: 'paths.some(path => !inputs.has(path))',
+    to: 'false',
+    test: 'test/project-fixture.test.mjs'
+  },
+  {
+    file: 'src/evaluation/provider-benchmark-runner.mjs',
+    from: 'JSON.stringify(await fixtureInputSnapshot(root, fixture)) !== JSON.stringify(before)',
+    to: 'false',
+    test: 'test/provider-benchmark-runner.test.mjs'
+  },
+  {
+    file: 'src/evaluation/project-fixture.mjs',
+    from: "(await read(root, write.path))?.sha256 !== write.sha256",
+    to: 'false',
+    test: 'test/project-fixture.test.mjs'
+  },
+  {
     file: 'src/core/python-workspace-preparation.mjs',
     from: "'--offline', '--locked', '--no-build', '--no-install-workspace'",
     to: "'--offline', '--locked', '--no-install-workspace'",

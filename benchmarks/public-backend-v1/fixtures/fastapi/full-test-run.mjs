@@ -19,7 +19,7 @@ const label = 'bth.fastapi.productqa=' + token
 const temporary = await mkdtemp(join(tmpdir(), 'bth-fastapi-product-runtime-'))
 const report = join(root, '.backend-harness/local/reports/tests/junit.xml')
 const environment = { PATH: process.env.PATH, HOME: process.env.HOME, SystemRoot: process.env.SystemRoot,
-  PYTEST_ADDOPTS: '-p bth_evaluation_bootstrap', PYTHONDONTWRITEBYTECODE: '1' }
+  PYTEST_ADDOPTS: '-p tests.bth_evaluation_bootstrap', PYTHONDONTWRITEBYTECODE: '1' }
 const evidence = { image, preparation: 'not-run', databaseReady: false, testsExitCode: null, containerRemoved: null, networkRemoved: null,
   networkPolicy: 'dedicated bridge; loopback bind requested; OS egress isolation not enforced; public synthetic data only' }
 let network = null, container = null
@@ -73,7 +73,8 @@ try {
     PYTHONPATH: join(root, 'backend'), BTH_ORACLE_DB_PORT: port, PROJECT_NAME: 'BTH public fixture', ENVIRONMENT: 'local',
     POSTGRES_SERVER: '127.0.0.1', POSTGRES_PORT: port, POSTGRES_USER: 'bth_oracle', POSTGRES_DB: 'bth_oracle', POSTGRES_PASSWORD: password,
     SECRET_KEY: 'bth-public-test-key-not-a-real-secret-1234567890', FIRST_SUPERUSER: 'admin@example.com',
-    FIRST_SUPERUSER_PASSWORD: 'bth-public-test-password', FRONTEND_HOST: 'http://localhost:5173' })
+    FIRST_SUPERUSER_PASSWORD: 'bth-public-test-password', FRONTEND_HOST: 'http://localhost:5173',
+    EMAILS_FROM_EMAIL: 'fixture@example.com' })
   evidence.testsExitCode = execution.status
   process.stdout.write(execution.stdout)
   process.stderr.write(execution.stderr)

@@ -12,6 +12,9 @@ import { implementationStatus, resetImplementation } from '../runtime/implementa
 import { runWork } from '../runtime/work-orchestrator.mjs'
 import { scoreProviderCase } from './provider-comparison.mjs'
 import { compactImplementationVerification, implementationFailureSummary } from '../core/implementation-verification.mjs'
+import { inspectProjectFixture } from './project-fixture.mjs'
+import { verificationInputPaths } from '../config/verification.mjs'
+import { snapshotImplementedFiles } from '../core/implementation-record-store.mjs'
 
 const execute = promisify(execFile)
 const MAX_GIT_OUTPUT = 16 * 1024 * 1024
@@ -51,12 +54,27 @@ async function changedPaths(root, baseCommit) {
   return [...new Set((tracked + untracked).split('\0').filter(Boolean))].sort()
 }
 
-async function directRuleViolations(root, baseCommit, paths, repositoryConfig) {
+async function fixtureInputSnapshot(root, fixture) {
+  if (!fixture) return null
+  const files = await snapshotImplementedFiles(root, verificationInputPaths(fixture.verification).map(path => path.replace(/^\.\//, '')))
+  if (files.some(file => file.kind !== 'file')) throw new Error('Prepared verification input is missing before provider execution.')
+  return files
+}
+
+async function fixtureInputsChanged(root, fixture, before) {
+  if (!before) return false
+  try { return JSON.stringify(await fixtureInputSnapshot(root, fixture)) !== JSON.stringify(before) }
+  catch { return true }
+}
+
+async function directRuleViolations(root, baseCommit, paths, repositoryConfig, projectFixture, protectedInputs) {
   const violations = []
   const currentHead = (await git(root, ['rev-parse', 'HEAD'])).trim()
   if (currentHead !== baseCommit) violations.push('provider-changed-git-history')
   const outside = paths.filter((path) => !prefixAllows(path, repositoryConfig.allowedPrefixes))
   if (outside.length) violations.push('outside-approved-prefixes:' + outside.slice(0, 32).join(','))
+  if (!(await inspectProjectFixture(root, projectFixture)).valid) violations.push('protected-project-fixture-change')
+  if (await fixtureInputsChanged(root, projectFixture, protectedInputs)) violations.push('protected-verification-input-change')
   if (paths.length > 100) violations.push('changed-file-budget-exceeded')
   const binaryDiff = await git(root, ['diff', '--binary', '--full-index', '--no-renames', baseCommit, '--'])
   if (Buffer.byteLength(binaryDiff) > 2 * 1024 * 1024) violations.push('diff-byte-budget-exceeded')
@@ -76,6 +94,9 @@ function directPrompt(task, repositoryConfig) {
     'Approved decisions: ' + JSON.stringify(decision) + '.',
     'Read only repository-owned instruction or architecture sections directly relevant to this task, then inspect the most relevant adjacent production example and its matching test when present; do not reread every policy document.',
     'Write only inside these approved paths: ' + repositoryConfig.allowedPrefixes.join(', ') + '.',
+    ...(repositoryConfig.tasks.find(entry => entry.id === task.id)?.projectFixture ? [
+      'The evaluator-owned baseline fixtures and verification configuration are immutable even inside approved paths: ' + repositoryConfig.tasks.find(entry => entry.id === task.id).projectFixture.files.map(file => file.path).join(', ') + '.'
+    ] : []),
     'Preserve observed naming, layering, DTO/error, persistence, transaction, migration, and test patterns. Do not guess through an unknown or conflicting project rule.',
     'Do not read .env files, credentials, private keys, tokens, or unrelated user data. Do not commit, change Git refs, deploy, access production, or use a production database.',
     TEST_AUTHORING_CONTRACT,
@@ -133,6 +154,7 @@ async function commitHarnessContract(root) {
   // evidence files cannot be mistaken for candidate source changes.
   await git(root, ['add', '-f', '--', '.backend-harness/.gitignore'])
   await git(root, ['add', '--', '.backend-harness'])
+  if (!(await git(root, ['diff', '--cached', '--name-only'])).trim()) return (await git(root, ['rev-parse', 'HEAD'])).trim()
   await git(root, [
     '-c', 'user.name=Backend Team Harness Benchmark',
     '-c', 'user.email=bth-benchmark@example.invalid',
@@ -248,6 +270,8 @@ async function runBthLane(root, task, repositoryConfig, input, options) {
 
 async function runDirectLane(root, task, repositoryConfig, input, options) {
   const baseCommit = (await git(root, ['rev-parse', 'HEAD'])).trim()
+  const projectFixture = repositoryConfig.tasks.find(entry => entry.id === task.id)?.projectFixture
+  const protectedInputs = await fixtureInputSnapshot(root, projectFixture)
   const profile = selectImplementationProfile({ mode: input.mode, taskCharacters: task.requirement.length })
   const adapter = {
     provider: input.provider,
@@ -265,7 +289,8 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
     env: buildSafeEnvironment()
   }, { version: options.providerVersion })
   const paths = await changedPaths(root, baseCommit)
-  const ruleViolations = await directRuleViolations(root, baseCommit, paths, repositoryConfig)
+  const ruleViolations = await directRuleViolations(root, baseCommit, paths, repositoryConfig,
+    projectFixture, protectedInputs)
   if ((run.metadata?.activity?.validationCommandCount ?? 0) > 0) {
     ruleViolations.push('provider-ran-evaluator-owned-validation')
   }
@@ -284,6 +309,11 @@ async function runDirectLane(root, task, repositoryConfig, input, options) {
     } catch (error) {
       verificationFailure = error?.code ?? 'verification-exception'
     }
+  }
+  if (await fixtureInputsChanged(root, projectFixture, protectedInputs)) {
+    verificationConfirmed = false
+    verificationFailure = 'protected-verification-input-change'
+    if (!ruleViolations.includes(verificationFailure)) ruleViolations.push(verificationFailure)
   }
   const elapsedMs = Date.now() - startedAt
   const acceptance = await taskAcceptance(root, verificationConfirmed && ruleViolations.length === 0, options)
@@ -322,6 +352,7 @@ export async function runPreparedComparisonCase(root, task, repositoryConfig, in
   if (!['codex', 'claude'].includes(input.provider)) throw new Error('Benchmark provider must be codex or claude.')
   const status = await git(root, ['status', '--porcelain=v1', '--untracked-files=all'])
   if (status.trim()) throw new Error('Benchmark case requires a clean prepared Git workspace.')
+  if (!(await inspectProjectFixture(root, repositoryConfig.tasks.find(entry => entry.id === task.id)?.projectFixture)).valid) throw new Error('Benchmark project fixture is missing or changed before provider execution.')
   const observation = input.lane === 'bth'
     ? await runBthLane(root, task, repositoryConfig, input, options)
     : await runDirectLane(root, task, repositoryConfig, input, options)

@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31",
+  "sourceBaseCommit": "03a9d4c18b23f7db47bed652e0ea3ca89ae00d88",
+  "sourceSha256": {
+    "src/evaluation/project-fixture-config.mjs": "56bcb66ade995c7305cff1bf54b5708843a07efe6a9de7b25b6d36de9a600c3f",
+    "src/evaluation/project-fixture.mjs": "8853daff9c4697f5964f6f21edee7da3ebb53908f1091d9cbbb4b77950949fbb",
+    "src/evaluation/provider-project-preparation.mjs": "1a229fd013fc958b42db1dd2601a5643c5e152866838e276de190b71239d5d03",
+    "src/evaluation/provider-benchmark-config.mjs": "808f6949d88d443a96e7cf4d432c030efdce32f38a8cb6271ee322b22fc67391",
+    "src/evaluation/provider-benchmark-runner.mjs": "c70ca20f0db6a3befb0542bf29028dfacf41c56e7f10037c5caf4ee1c1a949ca",
+    "scripts/benchmark-provider-comparison.mjs": "c15b03e87d62fc7633786f0049025aace9efaff5aade4768d96b9881d8e189c8",
+    "scripts/mutation-smoke.mjs": "f370c16a411c70e0fc628876161910d0a508eb259a2943a3c6db7a94539f34e7",
+    "benchmarks/public-backend-v1/provider-comparison.json": "4932b011a3c62c6b7d65f2a4dafbdf36004ca9d74fd71ab3775d883ef665cc7c",
+    "test/project-fixture.test.mjs": "51b303a26f78e59c3d6f99af6cc19af3315b5a7be7584e12d205b532ab576930",
+    "test/provider-project-preparation.test.mjs": "19cc74994933d83c8f0b1136052a914b6ea6713810099821a525f6cfc3840f0a",
+    "test/provider-benchmark-config.test.mjs": "7ead0ae2ce5f5df4ac15ec611224c3e134b8b521aaf061be3ab6b2b9769a1baf",
+    "test/provider-benchmark-runner.test.mjs": "f38636671dd913be282ab16c8f8ae3cd83d289de79018a85811631322a47d0b3"
+  },
+  "environment": {
+    "platform": "darwin",
+    "node": "v22.23.1",
+    "codex": "0.151.0",
+    "uv": "0.11.28",
+    "python": "3.12.13",
+    "docker": "20.10.17"
+  },
+  "checks": [
+    {
+      "command": "npm run test:coverage",
+      "exitCode": 0,
+      "tests": 524,
+      "passed": 520,
+      "failed": 0,
+      "skipped": 4,
+      "coverage": {
+        "statements": 90.96,
+        "branches": 82.14,
+        "functions": 98.9,
+        "lines": 90.96
+      },
+      "log": {
+        "sha256": "e51914eac83b685693c6f15b42d3edb31f94541f4048f738ae777758f80d1138",
+        "bytes": 130593
+      }
+    },
+    {
+      "command": "node scripts/mutation-smoke.mjs",
+      "exitCode": 0,
+      "selectedMutants": 29,
+      "killed": 29,
+      "assertions": [
+        "KILLED src/evaluation/project-fixture.mjs by test/project-fixture.test.mjs (baseline 10 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/evaluation/project-fixture-config.mjs by test/project-fixture.test.mjs (baseline 10 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/evaluation/provider-benchmark-runner.mjs by test/provider-benchmark-runner.test.mjs (baseline 13 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/evaluation/project-fixture.mjs by test/project-fixture.test.mjs (baseline 10 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/python-workspace-preparation.mjs by test/python-workspace-preparation.test.mjs (baseline 6 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/python-project.mjs by test/python-project.test.mjs (baseline 7 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/evaluation/task-acceptance.mjs by test/task-acceptance.test.mjs (baseline 10 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/jest-module-resolution.mjs by test/jest-module-resolution.test.mjs (baseline 8 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/evaluation/empty-test-baseline.mjs by test/empty-test-baseline.test.mjs (baseline 5 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/execution-diagnostics.mjs by test/execution-diagnostics.test.mjs (baseline 7 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/implementation-verification.mjs by test/implementation-verification.test.mjs (baseline 4 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/test-authoring-contract.mjs by test/test-authoring-contract.test.mjs (baseline 6 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/test-authoring-contract.mjs by test/test-authoring-contract.test.mjs (baseline 6 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/lexical-retrieval.mjs by test/lexical-retrieval.test.mjs (baseline 8 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/lexical-retrieval.mjs by test/lexical-retrieval.test.mjs (baseline 8 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/implementation-verification.mjs by test/implementation-verification.test.mjs (baseline 4 passed; mutant 2 failed tests with assertion evidence)",
+        "KILLED src/core/portable-project-index.mjs by test/portable-project-index.test.mjs (baseline 5 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/workspace-preparation.mjs by test/workspace-preparation.test.mjs (baseline 4 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/evaluation/empty-test-baseline.mjs by test/empty-test-baseline.test.mjs (baseline 5 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/runtime/implementation-orchestrator.mjs by test/work-first-test.test.mjs (baseline 5 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/jest-report.mjs by test/jest-report.test.mjs (baseline 4 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/task-state.mjs by test/task-state.test.mjs (baseline 8 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/adapters/verification-tool.mjs by test/generic-verification.test.mjs (baseline 11 passed; mutant 6 failed tests with assertion evidence)",
+        "KILLED src/core/work-draft.mjs by test/work-draft.test.mjs (baseline 5 passed; mutant 3 failed tests with assertion evidence)",
+        "KILLED src/core/junit.mjs by test/junit.test.mjs (baseline 14 passed; mutant 2 failed tests with assertion evidence)",
+        "KILLED src/core/junit.mjs by test/junit.test.mjs (baseline 14 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/retrieval-query.mjs by test/retrieval-query.test.mjs (baseline 5 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/migration-discovery.mjs by test/migration-discovery.test.mjs (baseline 7 passed; mutant 1 failed tests with assertion evidence)",
+        "KILLED src/core/migration-discovery.mjs by test/migration-discovery.test.mjs (baseline 7 passed; mutant 1 failed tests with assertion evidence)"
+      ],
+      "log": {
+        "sha256": "fa07b3f5225d2001b985bb2bfeffff189c4d778e7ec135f528d594465e327e51",
+        "bytes": 4175
+      },
+      "wholeCodebaseMutationScore": null
+    },
+    {
+      "command": "node scripts/install-smoke.mjs",
+      "exitCode": 0,
+      "log": {
+        "sha256": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989",
+        "bytes": 62
+      }
+    },
+    {
+      "command": "node scripts/check-syntax.mjs",
+      "exitCode": 0,
+      "log": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "command": "npm audit --omit=dev --json",
+      "exitCode": 0,
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      }
+    }
+  ],
+  "behavioralRegression": {
+    "name": "Hidden transitive verification input change must not pass",
+    "before": {
+      "exitCode": 1,
+      "assertion": "verificationConfirmed was true but expected false",
+      "log": {
+        "sha256": "aa90dba4be6cc83cf1d398099c71ddf2a0c3cf075fe7a70aa359cf7954725841",
+        "bytes": 1028
+      }
+    },
+    "after": {
+      "exitCode": 0,
+      "cases": [
+        "provider-time mutation",
+        "verification-time mutation"
+      ],
+      "log": {
+        "sha256": "b82a9f4f6626d684a583a89fd53c0ee1f71ba61bfbbf4d09d8dcd3448e04b053",
+        "bytes": 393
+      }
+    }
+  },
+  "preparationSequence": [
+    {
+      "phase": "v32 original baseline",
+      "tests": 55,
+      "passed": 52,
+      "failed": 3,
+      "evidence": "../v32/python-execution.json"
+    },
+    {
+      "phase": "v33 first environment correction",
+      "tests": 57,
+      "passed": 56,
+      "failed": 1,
+      "log": {
+        "sha256": "7e9b66953a5537b4e2fb12f6a71ed9bb418d94e724eb5e08a758fde7a6453057",
+        "bytes": 29645
+      }
+    },
+    {
+      "phase": "v33 synthetic address correction",
+      "tests": 57,
+      "passed": 57,
+      "failed": 0,
+      "log": {
+        "sha256": "b8e865efdd9e14389c7c4db84706a00b1f00b59d5ef5b2c4702c9f94286b3997",
+        "bytes": 30664
+      }
+    }
+  ],
+  "testAuthoringCorrections": [
+    "The first local fixture test draft missed a closing brace; not a behavioral failing-first result.",
+    "New synthetic verification configs initially omitted required=true and used a non-dedicated report path. Those test setup mistakes were corrected without relaxing the production schema."
+  ],
+  "resourceCleanup": {
+    "bth.fastapi.productqa": {
+      "containerCount": 0,
+      "networkCount": 0
+    },
+    "bth.fastapi.oracle": {
+      "containerCount": 0,
+      "networkCount": 0
+    }
+  },
+  "notExecuted": [
+    "Actual Windows provider editing",
+    "Actual Windows process-tree termination",
+    "Opt-in MySQL E2E in this increment",
+    "Separate opt-in real JVM E2E in this increment",
+    "Claude paired execution for this FastAPI task"
+  ],
+  "limitations": [
+    "Local public test clones only; no company source or production database.",
+    "No OS-level egress isolation claim.",
+    "One actual paid pair is not a stable performance estimate.",
+    "No npm publication; package version remains 0.9.0."
+  ]
+}

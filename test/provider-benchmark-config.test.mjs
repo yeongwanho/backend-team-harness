@@ -92,3 +92,21 @@ test('checked-in evaluator fixtures match their pinned bytes and stay outside pr
   assert.ok(config.repositories.find((entry) => entry.id === 'nestjs-boilerplate').allowedPrefixes.includes('.hygen/generate/'))
   assert.ok(config.repositories.every((entry) => !entry.allowedPrefixes.includes('.env')), 'environment secrets remain outside edit scope')
 })
+
+test('FastAPI prepared baseline has pinned preimages, complete protected inputs and no production replacements', async () => {
+  const corpus = parseEvaluationCorpus(await readFile('benchmarks/public-backend-v1/corpus.json', 'utf8'))
+  const config = parseProviderBenchmarkConfig(await readFile('benchmarks/public-backend-v1/provider-comparison.json', 'utf8'), corpus)
+  const tasks = config.repositories.flatMap(repository => repository.tasks).filter(task => task.projectFixture)
+  assert.deepEqual(tasks.map(task => task.id), ['fastapi-05-missing-user'])
+  const fixture = tasks[0].projectFixture
+  assert.equal(fixture.files.length, 8)
+  assert.equal(fixture.files.filter(file => file.expectedSha256 !== null).length, 3)
+  assert.equal(fixture.verification.gates[0].result.minimumTests, 57)
+  assert.equal(fixture.workspacePreparation.kind, 'uv-sync-offline')
+  for (const file of fixture.files) {
+    const bytes = await readFile('benchmarks/public-backend-v1/' + file.fixture)
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), file.sha256, file.path)
+    assert.match(file.path, /^(?:backend\/tests\/|\.backend-harness\/bin\/)/)
+    assert.ok(fixture.verification.gates[0].inputs.includes(file.path))
+  }
+})

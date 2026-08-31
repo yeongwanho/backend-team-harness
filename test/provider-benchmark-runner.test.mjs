@@ -1,11 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { createHash } from 'node:crypto'
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { runPreparedComparisonCase } from '../src/evaluation/provider-benchmark-runner.mjs'
 import { initializeGit } from '../test-support/git-project.mjs'
+import { initProject } from '../src/init-project.mjs'
+import { applyProjectFixture } from '../src/evaluation/project-fixture.mjs'
+import { configureImplementationProvider } from '../src/config/implementation-setup.mjs'
 
 async function project(prefix) {
   const root = await mkdtemp(join(tmpdir(), prefix))
@@ -69,6 +73,143 @@ async function fixtureProvider(adapter, input) {
   await writeFile(join(input.cwd, 'src/main/java/example/Feature.java'), 'package example; class Feature {}\n')
   return successfulRun(adapter.provider)
 }
+
+async function preparedFixture(root) {
+  const fixtures = await mkdtemp(join(tmpdir(), 'bth-comparison-fixtures-'))
+  await mkdir(join(fixtures, 'fixtures'))
+  const wrapper = await readFile(join(root, 'gradlew'), 'utf8')
+  const protectedPath = 'src/test/java/example/ExistingServiceTest.java'
+  const before = await readFile(join(root, protectedPath), 'utf8')
+  const fixed = before + '// Evaluator-owned environment fix.\n'
+  await writeFile(join(fixtures, 'fixtures/wrapper'), wrapper)
+  await writeFile(join(fixtures, 'fixtures/test'), fixed)
+  const hash = text => createHash('sha256').update(text).digest('hex')
+  const command = '.backend-harness/bin/verify-fixture'
+  const projectFixture = { files: [
+    { path: command, fixture: 'fixtures/wrapper', sha256: hash(wrapper), expectedSha256: null, executable: true },
+    { path: protectedPath, fixture: 'fixtures/test', sha256: hash(fixed), expectedSha256: hash(before) }
+  ], workspacePreparation: null, verification: { schemaVersion: 1, gates: [{ id: 'tests', required: true, command: ['./' + command],
+    inputs: [command, protectedPath, 'build.gradle.kts'], timeoutMs: 10000,
+    result: { type: 'junit', reports: ['build/test-results/test/*.xml'], minimumTests: 1 } }] } }
+  await initProject(root, { preferredSystem: 'gradle' })
+  await applyProjectFixture(root, fixtures, projectFixture)
+  const configuration = structuredClone(repositoryConfig)
+  configuration.tasks[0].projectFixture = projectFixture
+  const stage = spawnSync('git', ['add', '-f', '--', '.backend-harness/.gitignore', command, protectedPath], { cwd: root, encoding: 'utf8' })
+  assert.equal(stage.status, 0, stage.stderr)
+  const add = spawnSync('git', ['add', '--', '.backend-harness'], { cwd: root, encoding: 'utf8' })
+  assert.equal(add.status, 0, add.stderr)
+  const commit = spawnSync('git', ['-c', 'user.name=BTH Test', '-c', 'user.email=bth@example.invalid', 'commit', '-qm', 'common baseline'], { cwd: root, encoding: 'utf8' })
+  assert.equal(commit.status, 0, commit.stderr)
+  return { configuration, protectedPath }
+}
+
+test('both providers lanes retain the same immutable prepared baseline during normal verification', async () => {
+  for (const lane of ['bth', 'direct']) {
+    const root = await project('bth-comparison-prepared-fixture-')
+    const { configuration, protectedPath } = await preparedFixture(root)
+    const before = await readFile(join(root, '.backend-harness/verification.json'), 'utf8')
+    const provider = async (adapter, input) => {
+      assert.match(await readFile(join(input.cwd, protectedPath), 'utf8'), /Evaluator-owned/)
+      assert.equal(await readFile(join(input.cwd, '.backend-harness/verification.json'), 'utf8'), before)
+      return fixtureProvider(adapter, input)
+    }
+    const result = await runPreparedComparisonCase(root, task, configuration, {
+      lane, provider: 'codex', mode: 'balanced', model: null, maxAttempts: 1, timeoutMs: 30000, maxBudgetUsd: null
+    }, { providerProbe: async () => ({ available: true, version: 'fixture' }), bthProviderRunner: provider,
+      directProviderRunner: provider, cleanupBthWorkspace: true })
+    assert.equal(result.score.verificationSuccessAt1, true, JSON.stringify(result))
+    assert.deepEqual(result.score.changedPaths, task.goldPaths)
+  }
+})
+
+test('a missing protected fixture stops both lanes before calling any provider', async () => {
+  for (const lane of ['bth', 'direct']) {
+    const root = await project('bth-comparison-missing-fixture-')
+    const { configuration, protectedPath } = await preparedFixture(root)
+    await writeFile(join(root, protectedPath), 'tampered\n')
+    const hidden = spawnSync('git', ['update-index', '--assume-unchanged', protectedPath], { cwd: root })
+    assert.equal(hidden.status, 0)
+    let calls = 0
+    const provider = async () => { calls++; return successfulRun('codex') }
+    await assert.rejects(runPreparedComparisonCase(root, task, configuration, {
+      lane, provider: 'codex', mode: 'balanced', model: null, maxAttempts: 1, timeoutMs: 30000, maxBudgetUsd: null
+    }, { bthProviderRunner: provider, directProviderRunner: provider }), /fixture is missing or changed/)
+    assert.equal(calls, 0)
+  }
+})
+
+test('both lanes reject provider edits to evaluator tests even inside allowed source paths', async () => {
+  for (const lane of ['bth', 'direct']) {
+    const root = await project('bth-comparison-fixture-tamper-')
+    const { configuration, protectedPath } = await preparedFixture(root)
+    const provider = async (adapter, input) => {
+      await writeFile(join(input.cwd, protectedPath), 'compromised\n')
+      // Direct integrity must not depend on Git's path list.
+      if (lane === 'direct') assert.equal(spawnSync('git', ['update-index', '--assume-unchanged', protectedPath], { cwd: input.cwd }).status, 0)
+      return fixtureProvider(adapter, input)
+    }
+    const result = await runPreparedComparisonCase(root, task, configuration, {
+      lane, provider: 'codex', mode: 'balanced', model: null, maxAttempts: 1, timeoutMs: 30000, maxBudgetUsd: null
+    }, { providerProbe: async () => ({ available: true, version: 'fixture' }), bthProviderRunner: provider,
+      directProviderRunner: provider, cleanupBthWorkspace: true })
+    assert.equal(result.score.verificationConfirmed, false, JSON.stringify(result))
+    assert.ok(result.score.ruleViolations.length > 0, JSON.stringify(result))
+    if (lane === 'direct') assert.ok(result.score.ruleViolations.includes('protected-project-fixture-change'))
+  }
+})
+
+test('an already committed identical provider contract is not an empty-commit failure', async () => {
+  const root = await project('bth-comparison-no-empty-commit-')
+  await initProject(root, { preferredSystem: 'gradle' })
+  await configureImplementationProvider(root, 'codex', { force: true, mode: 'balanced', model: null,
+    allowedPrefixes: repositoryConfig.allowedPrefixes, maxChangedFiles: 100, maxDiffBytes: 2 * 1024 * 1024,
+    maxAttempts: 1, timeoutMs: 30000, maxBudgetUsd: null })
+  assert.equal(spawnSync('git', ['add', '-f', '--', '.backend-harness/.gitignore'], { cwd: root }).status, 0)
+  assert.equal(spawnSync('git', ['add', '--', '.backend-harness'], { cwd: root }).status, 0)
+  assert.equal(spawnSync('git', ['commit', '-qm', 'already configured'], { cwd: root }).status, 0)
+  const result = await runPreparedComparisonCase(root, task, repositoryConfig, {
+    lane: 'bth', provider: 'codex', mode: 'balanced', model: null, maxAttempts: 1, timeoutMs: 30000, maxBudgetUsd: null
+  }, { providerProbe: async () => ({ available: true, version: 'fixture' }), bthProviderRunner: fixtureProvider, cleanupBthWorkspace: true })
+  assert.equal(result.score.verificationSuccessAt1, true, JSON.stringify(result))
+})
+
+test('direct lane protects transitive declared inputs before and after verification, not just overlay files', async () => {
+  for (const phase of ['provider', 'verification']) {
+    const root = await project('bth-comparison-transitive-input-')
+    const { configuration } = await preparedFixture(root)
+    const tamper = async () => {
+      await writeFile(join(root, 'build.gradle.kts'), 'compromised\n')
+      assert.equal(spawnSync('git', ['update-index', '--assume-unchanged', 'build.gradle.kts'], { cwd: root }).status, 0)
+    }
+    const result = await runPreparedComparisonCase(root, task, configuration, {
+      lane: 'direct', provider: 'codex', mode: 'balanced', model: null, maxAttempts: 1, timeoutMs: 30000, maxBudgetUsd: null
+    }, {
+      directProviderRunner: async (adapter, input) => {
+        if (phase === 'provider') await tamper()
+        return fixtureProvider(adapter, input)
+      },
+      projectChecker: async () => {
+        if (phase === 'verification') await tamper()
+        return { confirmed: true, result: { failure: null } }
+      }
+    })
+    assert.equal(result.score.verificationConfirmed, false, phase)
+    assert.ok(result.score.ruleViolations.includes('protected-verification-input-change'), JSON.stringify(result))
+  }
+})
+
+test('a missing transitive verifier input refuses a direct provider call even if Git hides its deletion', async () => {
+  const root = await project('bth-comparison-missing-transitive-')
+  const { configuration } = await preparedFixture(root)
+  await rm(join(root, 'build.gradle.kts'))
+  assert.equal(spawnSync('git', ['update-index', '--assume-unchanged', 'build.gradle.kts'], { cwd: root }).status, 0)
+  let called = false
+  await assert.rejects(runPreparedComparisonCase(root, task, configuration, {
+    lane: 'direct', provider: 'codex', mode: 'balanced', model: null, maxAttempts: 1, timeoutMs: 30000, maxBudgetUsd: null
+  }, { directProviderRunner: async () => { called = true; return successfulRun('codex') } }), /verification input is missing/)
+  assert.equal(called, false)
+})
 
 test('prepared BTH lane seals one isolated verified change and records normalized metrics', async () => {
   const root = await project('bth-comparison-harness-')

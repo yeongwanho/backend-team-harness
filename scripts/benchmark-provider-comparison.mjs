@@ -16,13 +16,15 @@ import { initProject } from '../src/init-project.mjs'
 import { checkProject } from '../src/runtime/backend-harness.mjs'
 import { evaluateTaskAcceptance } from '../src/evaluation/task-acceptance.mjs'
 import { canAttemptBaseline, inspectEmptyTestBaseline } from '../src/evaluation/empty-test-baseline.mjs'
+import { prepareBenchmarkProjectFixture } from '../src/evaluation/provider-project-preparation.mjs'
+import { inspectProjectFixture } from '../src/evaluation/project-fixture.mjs'
 
 const execute = promisify(execFile)
 const DEFAULT_CORPUS = 'benchmarks/public-backend-v1/corpus.json'
 const DEFAULT_CONFIG = 'benchmarks/public-backend-v1/provider-comparison.json'
 const EXECUTE_ACK = 'I_UNDERSTAND_PROVIDER_COSTS'
 const ALL_ACK = 'I_UNDERSTAND_40_PROVIDER_RUNS'
-const PROTOCOL_VERSION = 'python-workspace-v32'
+const PROTOCOL_VERSION = 'prepared-baseline-v33'
 
 function parseArguments(argv) {
   const result = {
@@ -158,7 +160,9 @@ function compactProcess(result) {
   }
 }
 
-async function prepareDependencies(project, repositoryConfig, timeoutMs) {
+async function prepareDependencies(project, repositoryConfig, timeoutMs, fixture = null, options = {}) {
+  if (fixture) return prepareBenchmarkProjectFixture(project, options.sourceRoot, options.fixtureRoot, fixture,
+    { buildSystem: repositoryConfig.buildSystem })
   const [program, ...args] = repositoryConfig.setupCommand
   const result = await runProcess({
     program,
@@ -175,9 +179,10 @@ async function prepareDependencies(project, repositoryConfig, timeoutMs) {
   return { passed: true, process: compactProcess(result) }
 }
 
-async function preflightBaseVerification(project, repositoryConfig) {
+async function preflightBaseVerification(project, repositoryConfig, fixture = null) {
   const harnessPath = resolve(project, '.backend-harness')
-  if (await exists(harnessPath)) throw new Error('Benchmark source already owns .backend-harness; preflight cleanup would be ambiguous.')
+  if (!fixture && await exists(harnessPath)) throw new Error('Benchmark source already owns .backend-harness; preflight cleanup would be ambiguous.')
+  if (fixture && !(await inspectProjectFixture(project, fixture)).valid) throw new Error('Prepared benchmark fixture is missing or changed before baseline verification.')
   try {
     await initProject(project, { preferredSystem: repositoryConfig.buildSystem })
     const checked = await checkProject(project, { allowNetwork: true })
@@ -212,7 +217,7 @@ async function preflightBaseVerification(project, repositoryConfig) {
   } catch (error) {
     return { confirmed: false, failureCode: error?.code ?? 'preflight-exception', tests: null, gates: [] }
   } finally {
-    await rm(harnessPath, { recursive: true, force: true })
+    if (!fixture) await rm(harnessPath, { recursive: true, force: true })
   }
 }
 
@@ -279,13 +284,15 @@ async function executeCase(caseEntry, corpus, config, options, providerProbe) {
   try {
     const mirror = await ensureMirror(repository, options.cache)
     project = await materializeSanitizedWorkspace(mirror, task, caseRoot)
-    const setup = await prepareDependencies(project, repositoryConfig, options.timeoutMs)
+    const fixture = repositoryConfig.tasks.find(entry => entry.id === task.id).projectFixture
+    const setup = await prepareDependencies(project, repositoryConfig, options.timeoutMs, fixture,
+      { sourceRoot: join(caseRoot, 'staging'), fixtureRoot: dirname(resolve(options.config)) })
     if (!setup.passed) {
       const record = preProviderFailureCase(caseEntry, task, setup, null, Date.now() - startedAt, comparisonInputs)
       await writeOnce(outputPath, record)
       return { skipped: false, outputPath, record }
     }
-    const preflight = await preflightBaseVerification(project, repositoryConfig)
+    const preflight = await preflightBaseVerification(project, repositoryConfig, fixture)
     const cleanAfterPreflight = await git(['status', '--porcelain=v1', '--untracked-files=all'], project)
     if (cleanAfterPreflight) throw new Error('Baseline verification left visible source changes; refusing an unfair provider run.')
     if (!canAttemptBaseline(preflight)) {
@@ -368,8 +375,10 @@ async function executePreflight(caseEntry, corpus, config, options) {
   try {
     const mirror = await ensureMirror(repository, options.cache)
     const project = await materializeSanitizedWorkspace(mirror, task, caseRoot)
-    const setup = await prepareDependencies(project, repositoryConfig, options.timeoutMs)
-    const preflight = setup.passed ? await preflightBaseVerification(project, repositoryConfig) : null
+    const fixture = repositoryConfig.tasks.find(entry => entry.id === task.id).projectFixture
+    const setup = await prepareDependencies(project, repositoryConfig, options.timeoutMs, fixture,
+      { sourceRoot: join(caseRoot, 'staging'), fixtureRoot: dirname(resolve(options.config)) })
+    const preflight = setup.passed ? await preflightBaseVerification(project, repositoryConfig, fixture) : null
     const acceptance = repositoryConfig.tasks.find((entry) => entry.id === task.id).acceptance
     const acceptanceControls = canAttemptBaseline(preflight) && acceptance
       ? await evaluateTaskAcceptance({ mirror, task, acceptance, timeoutMs: options.timeoutMs, fixtureRoot: dirname(resolve(options.config)) })

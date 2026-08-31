@@ -576,6 +576,7 @@ OMO 코드를 복사하거나 의존하지 않습니다. Core/adapter/project �
 - [OMO design mapping](docs/OMO-DESIGN-MAPPING.md)
 - [2026 adaptive harness research](docs/RESEARCH-2026-ADAPTIVE-HARNESS.md)
 - [Roadmap](docs/ROADMAP.md)
+- [실제 FastAPI 비교: 둘 다 정답, 아직 하네스가 더 느린 결과](docs/evidence/fastapi-prepared-baseline-v33.md)
 - [Security](SECURITY.md)
 
 ## License
