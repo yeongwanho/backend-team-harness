@@ -23,7 +23,8 @@
     "example:doctor": "node src/cli.mjs doctor examples/spring-service"
   },
   "dependencies": {
-    "fast-xml-parser": "5.11.1"
+    "fast-xml-parser": "5.11.1",
+    "smol-toml": "1.8.0"
   },
   "engines": {
     "node": ">=20"

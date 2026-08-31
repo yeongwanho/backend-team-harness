@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "sourceParent": "000b17edc07709158f4178358ac1d47edfb656b9",
+  "sourceHashes": {
+    "src/core/python-project.mjs": "ca05889d92cee1e8356ea86c7974df9cc860201b14bb89f0218f4318b0b19f4d",
+    "src/core/python-workspace-preparation.mjs": "99a81173dc1e46eeecf487d06d2c171458b99cccb2396bed71e2690481fbc739",
+    "src/core/portable-test-discovery.mjs": "e502c3335cec9ab0382c05f9ae7ea7238769946226bef24f6e5105d947fa6b1d",
+    "src/core/workspace-preparation.mjs": "465ccbf2bc14821e02703a59cb5cbe5577f4495b33b6300bae594ada74596449",
+    "src/config/implementation.mjs": "2c94509b1d8cc57026b902b5c9d1160d134713fbc0af05b46274e1169b13afb5",
+    "src/init-project.mjs": "95f3e9d15737450f5f674d8260ddb417570df86bee871db20e407123c95e6c3b",
+    "src/doctor.mjs": "569423eeee2ddcf64c078b7648b1e524b5ccf63679c151ebcaff6346a0f14594",
+    "src/runtime/implementation-orchestrator.mjs": "be34dcb8520704720d97f3aa4a6e82853095dcadbe27515cda37e5f2e8c23cdd",
+    "benchmarks/public-backend-v1/fixtures/fastapi/full-test-bootstrap.py": "0bf96ca5d690def313978c3f53b014e8aee3b20fe22981c9f0dd36a661d42791",
+    "benchmarks/public-backend-v1/fixtures/fastapi/full-test-run.mjs": "b30d29107cdb515ebcd1a08909b642465939cb91fcc9fd98615c68116f778d06"
+  },
+  "tests": {
+    "command": "node_modules/.bin/c8 --all --include=src/**/*.mjs --check-coverage --lines 88 --branches 77 --functions 90 --reporter=text --reporter=json-summary --reporter=json node --test --test-concurrency=2 test/*.test.mjs",
+    "total": 504,
+    "passed": 500,
+    "failed": 0,
+    "skipped": 4,
+    "durationMs": 96062.821958,
+    "skips": [
+      "Opt-in real MySQL integration",
+      "Opt-in real Maven/Gradle integration",
+      "Actual Windows provider command execution",
+      "Actual Windows descendant termination"
+    ],
+    "initialRegression": {
+      "total": 503,
+      "passed": 498,
+      "failed": 1,
+      "skipped": 4,
+      "reason": "The generated Nest oracle runner had not yet been regenerated after the shared runner changed; fixed by exact fixture/hash update, not by relaxing the contract."
+    }
+  },
+  "coverage": {
+    "lines": {
+      "total": 17088,
+      "covered": 15522,
+      "skipped": 0,
+      "pct": 90.83
+    },
+    "statements": {
+      "total": 17088,
+      "covered": 15522,
+      "skipped": 0,
+      "pct": 90.83
+    },
+    "functions": {
+      "total": 715,
+      "covered": 707,
+      "skipped": 0,
+      "pct": 98.88
+    },
+    "branches": {
+      "total": 7278,
+      "covered": 5953,
+      "skipped": 0,
+      "pct": 81.79
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "newModuleCoverage": {
+    "python-project.mjs": {
+      "lines": {
+        "total": 166,
+        "covered": 166,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 13,
+        "covered": 13,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 166,
+        "covered": 166,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 154,
+        "covered": 138,
+        "skipped": 0,
+        "pct": 89.61
+      }
+    },
+    "python-workspace-preparation.mjs": {
+      "lines": {
+        "total": 93,
+        "covered": 93,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 4,
+        "covered": 4,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 93,
+        "covered": 93,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 113,
+        "covered": 102,
+        "skipped": 0,
+        "pct": 90.26
+      }
+    }
+  },
+  "mutation": {
+    "selected": 25,
+    "killed": 25,
+    "fullMutationScore": false
+  },
+  "syntax": {
+    "passed": true
+  },
+  "install": {
+    "passed": true,
+    "version": "0.9.0",
+    "published": false
+  },
+  "docsContract": {
+    "passed": true
+  },
+  "runtimeDependencyAudit": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "dependencies": {
+      "prod": 10,
+      "dev": 55,
+      "optional": 0,
+      "peer": 0,
+      "peerOptional": 0,
+      "total": 64
+    }
+  },
+  "logHashes": {
+    "bth-v32-python-metadata-red.log": "6bbc4d09df02196d0b8f51ef1a32c3c5c7ada33f219a4159f22c194f319943a4",
+    "bth-v32-python-preparation-red.log": "93011fc6341a6167553d2bd5cf41d5fd7734e039923bf563d073017e06942b9c",
+    "bth-v32-python-runner-red.log": "8db39ae8197c62e405e60a80d66979f50eac83fbf2060c4d51cbd72dae462337",
+    "bth-v32-python-legacy-red.log": "6f240a06a7a3371398e7e6cdeff4fcf1504c19315807429f91a7be810faf8959",
+    "bth-v32-python-boundaries-red.log": "5b54fbf0823408480d594d42eb61bec26b50c469cb9540cdb4d1bfc0b0ea0eca",
+    "bth-v32-doctor-red.log": "86bac08725be42eb6ac70749b489f72539f27bf63a20d9ef2402d35bdfe20576",
+    "bth-v32-python-work-boundaries.log": "9179f4ad2547bf26c6c5caf4af2ab6ab73e2265a14cdd0b6a9c30640611e4d3b",
+    "bth-v32-tests.log": "7994c34c078f18b08ed5ae24f62eaec27defd4ccddb0e84163f209d8d185f679",
+    "bth-v32-coverage.log": "91847af85264681681527c37138d5cdcb763bed591b72523c5aeb5445dc8557e",
+    "bth-v32-mutations.log": "339fadec7796b9676c5c236f332cf04ba6ddfd4347f9c5d68ae40635a502af89",
+    "bth-v32-install-final.log": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989",
+    "bth-v32-contracts-final.log": "3d8cc4aa4d67ad69791cd29ba22aa2776f9b120216b2f5f2cc28354d39b551ad",
+    "bth-v32-syntax-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "omitted": [
+    "Raw failure tracebacks (synthetic JWT/source snippets)",
+    "Provider calls and external reviewer calls",
+    "New Windows/real MySQL/JVM runs",
+    "Production/company resources",
+    "End-to-end speed/token superiority claims"
+  ]
+}

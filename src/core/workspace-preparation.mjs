@@ -4,6 +4,7 @@ import { open, realpath } from 'node:fs/promises'
 import { isAbsolute, relative, resolve } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { buildSafeEnvironment, runProcess } from './process-runner.mjs'
+import { preparePythonWorkspaceDependencies } from './python-workspace-preparation.mjs'
 
 async function boundedJson(root, path) {
   const absolute = await resolveSafeProjectPath(root, path)
@@ -67,6 +68,7 @@ export async function prepareWorkspaceDependencies(sourceRoot, workspaceRoot, co
   const reverse = relative(workspace, source)
   const outside = value => isAbsolute(value) || value === '..' || value.startsWith('../') || value.startsWith('..\\')
   if (!outside(direction) || !outside(reverse)) throw new Error('Dependencies may only be prepared in a separate implementation workspace.')
+  if (configuration.kind === 'uv-sync-offline') return preparePythonWorkspaceDependencies(workspace, configuration, declaredInputs, options)
   if (configuration.kind !== 'npm-ci-offline') throw new Error('Unsupported workspace preparation kind.')
   const prefix = configuration.projectPath === '.' ? '' : configuration.projectPath + '/'
   const paths = [prefix + 'package.json', prefix + 'package-lock.json']

@@ -2,10 +2,11 @@
 import { spawn } from 'node:child_process'
 import { access, lstat, mkdir, open, rm, writeFile } from 'node:fs/promises'
 import { constants } from 'node:fs'
-import { resolve } from 'node:path'
+import { resolve, relative, isAbsolute, sep, delimiter } from 'node:path'
 
 const root = process.cwd()
 const projectPath = "."
+const pythonVenvPath = ".venv"
 const framework = "jest"
 const testArgs = ["--config","test/bth/jest.config.cjs","--ci","--no-cache"]
 const project = resolve(root, projectPath)
@@ -153,17 +154,32 @@ if (framework === 'jest') {
   if (!await exists(entry)) throw new Error('Local Vitest is missing; install the pinned project dependencies before verification.')
   result = await run(process.execPath, [entry, 'run', ...testArgs, '--reporter=junit', '--outputFile=' + report])
 } else {
-  const venv = process.platform === 'win32'
-    ? resolve(project, '.venv/Scripts/python.exe')
-    : resolve(project, '.venv/bin/python')
-  if (await exists(venv)) {
-    result = await run(venv, ['-m', 'pytest', '--junitxml=' + report])
-  } else {
-    result = await run(process.platform === 'win32' ? 'uv.exe' : 'uv', ['run', '--offline', '--project', project, 'pytest', '--junitxml=' + report], {
-      cwd: root,
-      env: { ...process.env, UV_OFFLINE: '1' }
-    })
+  async function safeDirectory(path) {
+    const local = relative(root, path)
+    if (isAbsolute(local) || local === '..' || local.startsWith('..' + sep)) throw new Error('Python directory is outside this project.')
+    let current = root
+    for (const segment of local.split(sep).filter(Boolean)) {
+      current = resolve(current, segment)
+      let metadata
+      try { metadata = await lstat(current) } catch (error) { if (error.code === 'ENOENT') return false; throw error }
+      if (!metadata.isDirectory() || metadata.isSymbolicLink()) throw new Error('Python directory must not be a symbolic link or non-directory.')
+    }
+    return true
   }
+  let python = null
+  for (const directory of ['.backend-harness/local/python-venv', pythonVenvPath]) {
+    const environment = resolve(root, directory)
+    if (!await safeDirectory(environment)) continue
+    const candidate = resolve(environment, process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
+    if (await safeDirectory(resolve(candidate, '..')) && await exists(candidate)) { python = candidate; break }
+  }
+  if (!python) throw new Error('Python environment is missing; prepare the pinned dependencies explicitly before verification. Tests never install packages.')
+  if (!await safeDirectory(project)) throw new Error('Python project directory is missing.')
+  const sourcePaths = [project]
+  if (await safeDirectory(resolve(project, 'src'))) sourcePaths.push(resolve(project, 'src'))
+  result = await run(python, ['-m', 'pytest', '--junitxml=' + report, '-o', 'cache_dir=' + resolve(reportDirectory, 'pytest-cache')], {
+    cwd: project, env: { ...process.env, PYTHONPATH: sourcePaths.join(delimiter), PYTHONDONTWRITEBYTECODE: '1' }
+  })
 }
 
 if (result.signal) process.kill(process.pid, result.signal)

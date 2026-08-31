@@ -133,7 +133,7 @@
               {
                 "path": "test/bth/verify-jest.mjs",
                 "fixture": "fixtures/nest/verify-jest.mjs",
-                "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+                "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75"
               }
             ],
             "command": [
@@ -204,7 +204,7 @@
               { "path": "test/bth/file-flow.spec.ts", "fixture": "fixtures/nest/file-flow.spec.ts", "sha256": "30f8531d2500cb29694894ab6d97ca33be35e95de077ef213f119f683c72bfe3" },
               { "path": "test/bth/jest.config.cjs", "fixture": "fixtures/nest/jest.config.cjs", "sha256": "663d94b68f3a7a30e50c7c04404c1456cc8dc65944e2f97d1d1aff0fde9184d8" },
               { "path": "test/bth/run.cjs", "fixture": "fixtures/nest/run.cjs", "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de" },
-              { "path": "test/bth/verify-jest.mjs", "fixture": "fixtures/nest/verify-jest.mjs", "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13" }
+              { "path": "test/bth/verify-jest.mjs", "fixture": "fixtures/nest/verify-jest.mjs", "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75" }
             ],
             "command": ["node", "test/bth/run.cjs"],
             "reports": ["coverage/bth-junit.xml"],
@@ -249,7 +249,7 @@
               {
                 "path": "test/bth/verify-jest.mjs",
                 "fixture": "fixtures/nest/verify-jest.mjs",
-                "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+                "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75"
               }
             ],
             "command": [
@@ -307,7 +307,7 @@
               {
                 "path": "test/bth/verify-jest.mjs",
                 "fixture": "fixtures/nest/verify-jest.mjs",
-                "sha256": "c045c9c0adbddceb0dc437ea5f99ee453b3029d101c98b8675be6ed63320da13"
+                "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75"
               }
             ],
             "command": [

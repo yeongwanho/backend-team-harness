@@ -1,13 +1,34 @@
 import { constants } from 'node:fs'
-import { access, readFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { access, readFile, stat } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
 import { loadQualityGates } from './config/quality-gates.mjs'
 import { loadVerificationConfig, resolveGateExecutable } from './config/verification.mjs'
 import { inspectJvmBuild, JVM_BUILD_DISCOVERY } from './core/jvm-build-discovery.mjs'
 import { inspectPortableTestBuild } from './core/portable-test-discovery.mjs'
 import { scanProjectManifest } from './core/project-manifest.mjs'
 import { reportGlobRegex } from './core/report-glob.mjs'
-import { resolveReadableRoot, statPath } from './fs-safety.mjs'
+import { resolveReadableRoot, resolveSafeProjectPath, statPath } from './fs-safety.mjs'
+
+async function pythonRuntime(root, detection) {
+  const interpreter = process.platform === 'win32' ? '/Scripts/python.exe' : '/bin/python'
+  const candidates = [...new Set(['.backend-harness/local/python-venv', detection.venvPath])].map(path => path + interpreter)
+  const available = []
+  for (const path of candidates) {
+    try {
+      // Normal virtualenv interpreter symlinks are allowed at the leaf only.
+      // Reject unsafe parents even when another candidate exists, like the runner.
+      await resolveSafeProjectPath(root, dirname(path))
+      if (!(await stat(resolve(root, path))).isFile()) continue
+      await access(resolve(root, path), process.platform === 'win32' ? constants.R_OK : constants.X_OK)
+      available.push(path)
+      break
+    } catch (error) {
+      if (error.code === 'ENOENT' || error.code === 'EACCES') continue
+      return { candidates, available: [], directoryBoundaryValid: false, modulesProbed: false }
+    }
+  }
+  return { candidates, available, directoryBoundaryValid: true, modulesProbed: false }
+}
 
 async function regularFile(root, path) {
   const stat = await statPath(resolve(root, path))
@@ -214,13 +235,17 @@ export async function doctorProject(inputPath = '.', options = {}) {
         ? [directory + 'node_modules/vitest/vitest.mjs']
         : [directory + '.venv/bin/python', directory + '.venv/Scripts/python.exe']
     const available = []
-    for (const path of candidates) if (await regularFile(root, path)) available.push(path)
-    portableRuntime = { framework: portableDetection.framework, candidates, available }
+    if (portableDetection.framework === 'pytest') portableRuntime = { framework: 'pytest', ...await pythonRuntime(root, portableDetection) }
+    else {
+      for (const path of candidates) if (await regularFile(root, path)) available.push(path)
+      portableRuntime = { framework: portableDetection.framework, candidates, available }
+    }
+    const present = portableRuntime.available.length > 0
     checks.push(check(
       'test-runtime',
-      available.length > 0 ? 'pass' : 'warn',
-      available.length > 0
-        ? 'The detected portable test runtime is installed inside the project.'
+      present ? 'pass' : 'warn',
+      portableRuntime.directoryBoundaryValid === false ? 'The Python environment has an unsafe directory boundary; verification will refuse it.' : present
+        ? portableDetection.framework === 'pytest' ? 'A project-local Python interpreter was located; imports and test results were not probed.' : 'The detected portable test runtime is installed inside the project.'
         : 'The portable test contract is configured, but its project-local runtime is not installed; install pinned dependencies before implementation.',
       portableRuntime
     ))

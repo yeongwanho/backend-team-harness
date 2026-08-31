@@ -16,6 +16,15 @@ Installed as an npm runtime dependency rather than copied into this repository.
 - Project: https://github.com/NaturalIntelligence/fast-xml-parser
 - License: MIT (included with the installed npm package)
 
+## smol-toml 1.8.0
+
+Installed as a pinned npm runtime dependency for bounded Python project/lock
+metadata parsing, rather than copied into this repository. It has no runtime
+dependencies of its own.
+
+- Project: https://github.com/squirrelchat/smol-toml
+- License: BSD-3-Clause (included with the installed npm package)
+
 ## Opt-in MySQL acceptance-test dependencies
 
 The runnable example downloads these dependencies only when its Gradle integration-test configuration is resolved; their binaries are not copied into this repository.

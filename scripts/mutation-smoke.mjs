@@ -7,6 +7,18 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/core/python-workspace-preparation.mjs',
+    from: "'--offline', '--locked', '--no-build', '--no-install-workspace'",
+    to: "'--offline', '--locked', '--no-install-workspace'",
+    test: 'test/python-workspace-preparation.test.mjs'
+  },
+  {
+    file: 'src/core/python-project.mjs',
+    from: '[path, ownerPath, ...memberPaths, lockPath]',
+    to: '[path, ...memberPaths, lockPath]',
+    test: 'test/python-project.test.mjs'
+  },
+  {
     file: 'src/evaluation/task-acceptance.mjs',
     from: "casesExecuted && errors === 0 && cases.some((entry) => entry.outcome === 'failed')",
     to: "casesExecuted && cases.some((entry) => ['failed', 'error'].includes(entry.outcome))",

@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { chmod, mkdir, mkdtemp, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { chmod, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { doctorProject } from '../src/doctor.mjs'
 import { initProject } from '../src/init-project.mjs'
@@ -89,6 +89,29 @@ test('doctor reports a generated portable test contract as unknown until pinned 
   assert.equal(result.healthy, false)
   assert.equal(runtime.status, 'warn')
   assert.match(runtime.message, /install pinned dependencies/i)
+})
+
+test('doctor finds the selected Python workspace or prepared runtime without following directory links', async t => {
+  for (const directory of ['.venv', '.backend-harness/local/python-venv']) {
+    const root = await mkdtemp(join(tmpdir(), 'bth-doctor-python-runtime-'))
+    t.after(() => rm(root, { recursive: true, force: true }))
+    await mkdir(join(root, 'backend'))
+    await writeFile(join(root, 'backend/pyproject.toml'), '[project]\nname="api"\n[dependency-groups]\ndev=["pytest"]\n')
+    await writeFile(join(root, 'pyproject.toml'), '[tool.uv.workspace]\nmembers=["backend"]\n')
+    await writeFile(join(root, 'uv.lock'), 'version=1\n')
+    await initProject(root, { allowUnversioned: true })
+    const runtime = async () => (await doctorProject(root)).checks.find(entry => entry.id === 'test-runtime')
+    assert.equal((await runtime()).status, 'warn')
+    const executable = join(root, directory, process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
+    await mkdir(dirname(executable), { recursive: true })
+    // A harmless stand-in: doctor must never execute it. POSIX virtualenvs use
+    // a symlink leaf; a linked parent directory is still forbidden.
+    await symlink(process.execPath, executable)
+    assert.equal((await runtime()).status, 'pass')
+    await rm(join(root, directory), { recursive: true })
+    await symlink(dirname(process.execPath), join(root, directory), process.platform === 'win32' ? 'junction' : 'dir')
+    assert.equal((await runtime()).status, 'warn')
+  }
 })
 
 test('an empty build file does not count as a build definition', async () => {

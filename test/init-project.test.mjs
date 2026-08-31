@@ -177,3 +177,22 @@ test('init generates nested offline Pytest verification from one monorepo backen
   assert.equal(checked.confirmed, true, JSON.stringify(checked.result, null, 2))
   assert.equal(checked.result.tests.executed, 1)
 })
+
+test('init binds a Python workspace root and retains explicitly customized preparation on repeat', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bth-init-uv-workspace-'))
+  await mkdir(join(root, 'backend'), { recursive: true })
+  await writeFile(join(root, 'backend/pyproject.toml'), '[project]\nname="api"\n[dependency-groups]\ndev=["pytest>=8"]\n')
+  await writeFile(join(root, 'pyproject.toml'), '[tool.uv.workspace]\nmembers=["backend"]\n')
+  await writeFile(join(root, 'uv.lock'), 'version=1\n')
+  await initProject(root, { allowUnversioned: true })
+  const path = join(root, '.backend-harness/implementation.json')
+  const document = JSON.parse(await readFile(path, 'utf8'))
+  assert.deepEqual(document.workspacePreparation, { kind: 'uv-sync-offline', projectPath: 'backend', timeoutMs: 180000 })
+  const verification = JSON.parse(await readFile(join(root, '.backend-harness/verification.json'), 'utf8'))
+  for (const input of ['backend/pyproject.toml', 'pyproject.toml', 'uv.lock']) assert.ok(verification.gates[0].inputs.includes(input))
+  document.workspacePreparation.pythonVersion = '3.12.13'
+  await writeFile(path, JSON.stringify(document))
+  const repeated = await initProject(root, { allowUnversioned: true })
+  assert.ok(repeated.skipped.includes('.backend-harness/implementation.json'))
+  assert.equal(await readFile(path, 'utf8'), JSON.stringify(document))
+})

@@ -3,6 +3,7 @@ import { posix } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { jestJsonToJUnit } from './jest-report.mjs'
 import { inspectJestModuleSearch } from './jest-module-resolution.mjs'
+import { inspectPythonTestProjects } from './python-project.mjs'
 
 const MAX_BUILD_BYTES = 1024 * 1024
 const MAX_CANDIDATES = 32
@@ -84,24 +85,8 @@ async function nodeCandidates(root, manifest) {
   return results
 }
 
-async function pythonCandidates(root, manifest) {
-  const results = []
-  for (const path of manifest.files.filter((entry) => entry === 'pyproject.toml' || entry.endsWith('/pyproject.toml')).slice(0, MAX_CANDIDATES)) {
-    const text = await boundedText(root, path)
-    if (!text || !/(?:^|[\s"'])pytest(?:[<>=!~\s"']|$)/m.test(text)) continue
-    const projectPath = parent(path)
-    const buildInputs = [path]
-    for (const lock of ['uv.lock', 'poetry.lock', 'pdm.lock']) {
-      const candidate = under(projectPath, lock)
-      if (manifest.files.includes(candidate)) buildInputs.push(candidate)
-    }
-    results.push({ system: 'python-pytest', framework: 'pytest', projectPath, buildInputs })
-  }
-  return results
-}
-
 export async function inspectPortableTestBuild(root, manifest) {
-  const candidates = [...await nodeCandidates(root, manifest), ...await pythonCandidates(root, manifest)]
+  const candidates = [...await nodeCandidates(root, manifest), ...await inspectPythonTestProjects(root, manifest)]
   if (candidates.length !== 1) {
     return {
       status: candidates.length > 1 ? 'conflict' : 'unknown',
@@ -118,6 +103,7 @@ export async function inspectPortableTestBuild(root, manifest) {
     }
   }
   const selected = candidates[0]
+  if (selected.metadataIssue) return { ...selected, status: 'unknown', canGenerateVerification: false, label: 'unresolved-python-layout', candidates, diagnostics: [selected.metadataIssue] }
   return {
     status: 'confirmed',
     ...selected,
@@ -130,6 +116,7 @@ export async function inspectPortableTestBuild(root, manifest) {
 
 function portableRunnerSource(detection) {
   const projectPath = JSON.stringify(detection.projectPath)
+  const pythonVenvPath = JSON.stringify(detection.venvPath ?? under(detection.projectPath, '.venv'))
   const framework = JSON.stringify(detection.framework)
   const testArgs = JSON.stringify(detection.testArgs ?? [])
   const moduleSearchArgument = detection.moduleSearchPath === undefined ? ''
@@ -138,10 +125,11 @@ function portableRunnerSource(detection) {
 import { spawn } from 'node:child_process'
 import { access, lstat, mkdir, open, rm, writeFile } from 'node:fs/promises'
 import { constants } from 'node:fs'
-import { resolve } from 'node:path'
+import { resolve, relative, isAbsolute, sep, delimiter } from 'node:path'
 
 const root = process.cwd()
 const projectPath = ${projectPath}
+const pythonVenvPath = ${pythonVenvPath}
 const framework = ${framework}
 const testArgs = ${testArgs}
 const project = resolve(root, projectPath)
@@ -209,17 +197,32 @@ if (framework === 'jest') {
   if (!await exists(entry)) throw new Error('Local Vitest is missing; install the pinned project dependencies before verification.')
   result = await run(process.execPath, [entry, 'run', ...testArgs, '--reporter=junit', '--outputFile=' + report])
 } else {
-  const venv = process.platform === 'win32'
-    ? resolve(project, '.venv/Scripts/python.exe')
-    : resolve(project, '.venv/bin/python')
-  if (await exists(venv)) {
-    result = await run(venv, ['-m', 'pytest', '--junitxml=' + report])
-  } else {
-    result = await run(process.platform === 'win32' ? 'uv.exe' : 'uv', ['run', '--offline', '--project', project, 'pytest', '--junitxml=' + report], {
-      cwd: root,
-      env: { ...process.env, UV_OFFLINE: '1' }
-    })
+  async function safeDirectory(path) {
+    const local = relative(root, path)
+    if (isAbsolute(local) || local === '..' || local.startsWith('..' + sep)) throw new Error('Python directory is outside this project.')
+    let current = root
+    for (const segment of local.split(sep).filter(Boolean)) {
+      current = resolve(current, segment)
+      let metadata
+      try { metadata = await lstat(current) } catch (error) { if (error.code === 'ENOENT') return false; throw error }
+      if (!metadata.isDirectory() || metadata.isSymbolicLink()) throw new Error('Python directory must not be a symbolic link or non-directory.')
+    }
+    return true
   }
+  let python = null
+  for (const directory of ['.backend-harness/local/python-venv', pythonVenvPath]) {
+    const environment = resolve(root, directory)
+    if (!await safeDirectory(environment)) continue
+    const candidate = resolve(environment, process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python')
+    if (await safeDirectory(resolve(candidate, '..')) && await exists(candidate)) { python = candidate; break }
+  }
+  if (!python) throw new Error('Python environment is missing; prepare the pinned dependencies explicitly before verification. Tests never install packages.')
+  if (!await safeDirectory(project)) throw new Error('Python project directory is missing.')
+  const sourcePaths = [project]
+  if (await safeDirectory(resolve(project, 'src'))) sourcePaths.push(resolve(project, 'src'))
+  result = await run(python, ['-m', 'pytest', '--junitxml=' + report, '-o', 'cache_dir=' + resolve(reportDirectory, 'pytest-cache')], {
+    cwd: project, env: { ...process.env, PYTHONPATH: sourcePaths.join(delimiter), PYTHONDONTWRITEBYTECODE: '1' }
+  })
 }
 
 if (result.signal) process.kill(process.pid, result.signal)

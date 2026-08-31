@@ -41,12 +41,13 @@ export function parseImplementationConfig(text, source = '<inline>') {
     else {
       const value = parsed.workspacePreparation
       plainObject(value, source + ': workspacePreparation')
-      onlyKeys(value, new Set(['kind', 'projectPath', 'timeoutMs']), source + ': workspacePreparation')
-      if (value.kind !== 'npm-ci-offline') throw new Error(source + ': workspacePreparation.kind must be npm-ci-offline.')
+      onlyKeys(value, new Set(['kind', 'projectPath', 'timeoutMs', 'pythonVersion']), source + ': workspacePreparation')
+      if (!['npm-ci-offline', 'uv-sync-offline'].includes(value.kind)) throw new Error(source + ': workspacePreparation.kind must be npm-ci-offline or uv-sync-offline.')
+      if (value.pythonVersion !== undefined && (value.kind !== 'uv-sync-offline' || typeof value.pythonVersion !== 'string' || !/^3\.\d{1,2}(?:\.\d{1,2})?$/.test(value.pythonVersion))) throw new Error(source + ': pythonVersion requires uv preparation and a numeric Python 3 version.')
       const projectPath = safePath(value.projectPath, source + ': workspacePreparation.projectPath')
       const timeoutMs = value.timeoutMs ?? 180000
       if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 600000) throw new Error(source + ': workspacePreparation.timeoutMs must be between 1000 and 600000.')
-      preparation.workspacePreparation = { kind: value.kind, projectPath, timeoutMs }
+      preparation.workspacePreparation = { kind: value.kind, projectPath, timeoutMs, ...(value.pythonVersion !== undefined ? { pythonVersion: value.pythonVersion } : {}) }
     }
   }
   if (parsed.adapter === null) return { schemaVersion: parsed.schemaVersion, adapter: null, recovery: { maxAttempts: 2 }, ...preparation }

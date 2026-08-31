@@ -6,6 +6,7 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Added
 
+- Explicit, offline/no-build uv workspace preparation for a uniquely selected Python test project, with bounded TOML parsing, declared root/member lock inputs and optional numeric Python selection. See `docs/evidence/python-workspace-v32.md` for real FastAPI execution and remaining baseline failures.
 - Independent pinned NestJS file mapping / resolved-observable acceptance controls, with offline no-lifecycle-script dependency installation in disposable evaluator clones. The empty ordinary unit-test baseline is still not provider-ready.
 - `bth work` source-bound plan and isolated implementation flow.
 - Explicit, sealed, rollback-capable `bth implement apply`.
@@ -17,6 +18,7 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Changed
 
+- Generated pytest verification uses an already-prepared project/workspace environment and the backend working directory; it no longer implicitly runs `uv run`. Python `doctor` lookup recognizes normal interpreter symlink leaves while rejecting linked environment directories, and labels presence checks as unprobed imports/tests.
 - Code-context retrieval splits snake_case/acronyms, distinguishes explicitly named identifier ownership, and retains only query matches in memory. The known 20-task comparison improves on average but still has per-task losses; no end-to-end provider speed claim is made. See `docs/evidence/identifier-retrieval-v28.md`.
 - Generated Jest verification rejects unknown assertion states, contradictory counts, interrupted/runtime-error suites and stale raw JSON. It preserves skipped/todo results, omits failure-message bodies, bounds conversion and refuses linked report paths. The exact generated runner is exercised by the Nest controls.
 - Provider implementation now preserves observed adjacent project conventions even on small CRUD work.
@@ -24,6 +26,7 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Compatibility
 
+- `workspacePreparation.kind: "uv-sync-offline"` and `pythonVersion` require an updated BTH schema-v2 reader. Existing contracts are not overwritten. Poetry/PDM environments remain reusable without automatic installation. Provider benchmark protocol `python-workspace-v32` has new generated-runner hashes; earlier comparison records are historical, not silently interchangeable.
 - Existing project-owned `.backend-harness/bin/verify-portable.mjs` files are not replaced by a package update or ordinary `bth init`. Review regenerated runners in a disposable copy before applying this fix; `init --force` also replaces other shared files and is not a runner-only updater. See `docs/evidence/nest-verification-v25.md`.
 - Evaluator acceptance configuration now supports `node <pinned-test-file>` using its own Node runtime, with no flags, extra arguments, or PATH-based executable resolution. Other gate executable rules are unchanged.
 - Schema v1 command adapters remain readable.

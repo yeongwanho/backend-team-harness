@@ -42,6 +42,16 @@ test('optional workspace preparation is explicit, bounded and schema-v2 only', (
   ].map(change => ({ ...document, workspacePreparation: { ...document.workspacePreparation, ...change } }))]) assert.throws(() => parseImplementationConfig(JSON.stringify(value)))
 })
 
+test('uv preparation accepts only an optional numeric Python 3 interpreter selection', () => {
+  const document = { schemaVersion: 2, adapter: null, workspacePreparation: { kind: 'uv-sync-offline', projectPath: '.', pythonVersion: '3.12.13' } }
+  assert.deepEqual(parseImplementationConfig(JSON.stringify(document)).workspacePreparation,
+    { kind: 'uv-sync-offline', projectPath: '.', pythonVersion: '3.12.13', timeoutMs: 180000 })
+  for (const value of ['3', 'python3', '/usr/bin/python3', '--system', '3.12\n', '2.7', 3.12, null]) {
+    assert.throws(() => parseImplementationConfig(JSON.stringify({ ...document, workspacePreparation: { ...document.workspacePreparation, pythonVersion: value } })), /numeric Python 3/)
+  }
+  assert.throws(() => parseImplementationConfig(JSON.stringify({ ...document, workspacePreparation: { ...document.workspacePreparation, kind: 'npm-ci-offline' } })), /numeric Python 3/)
+})
+
 test('implementation config rejects unknown authority, traversal, missing budgets, and excessive recovery', () => {
   const unknown = structuredClone(valid)
   unknown.adapter.deploy = true

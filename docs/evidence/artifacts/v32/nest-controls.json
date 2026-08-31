@@ -1,0 +1,693 @@
+{
+  "schemaVersion": 1,
+  "kind": "updated-generated-runner-public-controls",
+  "protocolVersion": "python-workspace-v32",
+  "providerCalls": 0,
+  "npmVersion": "10.9.8",
+  "node": "v22.23.1",
+  "configSha256": "75041bf66ea79138e8f0f61063acd9dec484a5a51f870ba5c229dee6af18cd88",
+  "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+  "sourceHashes": {
+    "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+    "src/evaluation/provider-benchmark-config.mjs": "fc0f14360b1d310f3026beb9446047bd076864c0a1cc45b5514c346fe7b84b4e",
+    "src/core/junit.mjs": "aa839f10fc239f0765ca8414e89e79d9649b8e3cc040531a56c1e136ca679094",
+    "scripts/acceptance-controls.mjs": "4d1eaf624452d83c3800418415287887520c6473949aefa48cfba4947479b31a"
+  },
+  "results": [
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-01-session-update-by-hash",
+      "requirementSha256": "f43ab885965fb78f90245dc5dfb44c2e11c42230151c0a635388d623dce58d8c",
+      "baseSha": "a3aaea0e60fdbb0af3b0108d98f09cf2c8b50fe4",
+      "targetSha": "bba9827ca548ca30c98068936550b8cb94bbc1a0",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": false,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "oracle-controls-not-confirmed",
+        "oracleSha256": "96a59f970f3e422f3a1b9889b8e86a928f13fb267ddfb64fd1508bfae3e02a05",
+        "testFiles": [
+          {
+            "path": "test/bth/session-hash.spec.ts",
+            "sha256": "a3243da03ae35f9806efb8328eb057238d1b999701fd892834936818a31af8f7"
+          },
+          {
+            "path": "test/bth/jest.config.cjs",
+            "sha256": "a7474e42cb1cc0bba4831e31e8a99a16e7c320179d41559891df3340dafba075"
+          },
+          {
+            "path": "test/bth/run.cjs",
+            "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+          },
+          {
+            "path": "test/bth/verify-jest.mjs",
+            "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 1176,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "8030b31dddada84db133099525cee18fc827f1d83b664052106d230d7a889aff",
+                "bytes": 1207
+              }
+            },
+            "reports": [],
+            "cases": [
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "service delegates both current ID and hash with the replacement hash",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational rotation includes ID and old hash in the update predicate",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational no-match returns null without reading an unrelated session",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational deletion after update remains null",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational update errors propagate without a read",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "document rotation uses a conditional predicate and requests the updated document",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "document no-match remains null and persistence errors propagate",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "auth signs only after conditional rotation and embeds the rotated hash",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "a failed conditional match cannot issue tokens despite plausible prior session state",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "an absent session is rejected without issuing tokens",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "auth waits for conditional persistence before signing",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "conditional persistence errors and a missing user do not produce tokens",
+                "outcome": "missing"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": false
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 849,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "18d69ef90dca9df182ae971b0e0f0f5623f5169950c94964aa8f3b5606a3ea71",
+                "bytes": 1207
+              }
+            },
+            "reports": [],
+            "cases": [
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "service delegates both current ID and hash with the replacement hash",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational rotation includes ID and old hash in the update predicate",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational no-match returns null without reading an unrelated session",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational deletion after update remains null",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "relational update errors propagate without a read",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "document rotation uses a conditional predicate and requests the updated document",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "document no-match remains null and persistence errors propagate",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "auth signs only after conditional rotation and embeds the rotated hash",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "a failed conditional match cannot issue tokens despite plausible prior session state",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "an absent session is rejected without issuing tokens",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "auth waits for conditional persistence before signing",
+                "outcome": "missing"
+              },
+              {
+                "className": "test/bth/session-hash.spec.ts",
+                "name": "conditional persistence errors and a missing user do not produce tokens",
+                "outcome": "missing"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 3503
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-03-swagger-language-header",
+      "requirementSha256": "b3d96dc208076eb52a29dd16083a7c5ce6b5ea73c4936524fae1548c7fe03e71",
+      "baseSha": "1cb55deff983e56f45a0a70bdd2e6c5bfb90b79c",
+      "targetSha": "b5c3262e7b58e4443dd27328e4d2ced50c832204",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "39d9c1ea6a3f3bfd70e66d01ba7917a0035d8be29c3fd7f8f39868a0e2c538db",
+        "testFiles": [
+          {
+            "path": "test/bth/swagger-language.spec.ts",
+            "sha256": "af2ce4fcbd88e6a16e10edbcdb158d212f834d9de966015740cfb789a3ae8276"
+          },
+          {
+            "path": "test/bth/jest.config.cjs",
+            "sha256": "b697d3e36123cfd6b1aeca64375e19438b806b24787fb7bbb58280d93834505d"
+          },
+          {
+            "path": "test/bth/run.cjs",
+            "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+          },
+          {
+            "path": "test/bth/verify-jest.mjs",
+            "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 16468,
+              "stdout": {
+                "sha256": "fc65d83185b3dd10a9af0c0e4031d993e7085928c6969514a309192d0e9339b9",
+                "bytes": 28
+              },
+              "stderr": {
+                "sha256": "c53ede36027688e5b4efc8ada6f74e85aacf78b70fec16456081f5abbfcf26ef",
+                "bytes": 4139
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "0d528bc9bb7154b343cc31c4419607c6c75b7628c760073c1d388937b3cdaa23",
+                "bytes": 618
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "configured language header is optional with an English example in generated operations",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "an unset language setting falls back to x-custom-lang",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "an empty language setting falls back to x-custom-lang",
+                "outcome": "failed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 13558,
+              "stdout": {
+                "sha256": "a2c7b1a222ae0379c600b9315b4438e4d25e3a8a671472c3f44f1a13064c7650",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "f9b9c3a72b41d7f59857168dc962a9678d70b43f20efa397ceb7eeb788bd7e46",
+                "bytes": 1277
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "cbe793d335fc132a5240a2d67f7e1ef289a3567c733d62e750b961ccdc5537b5",
+                "bytes": 537
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "configured language header is optional with an English example in generated operations",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "an unset language setting falls back to x-custom-lang",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/swagger-language.spec.ts",
+                "name": "an empty language setting falls back to x-custom-lang",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 31389
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-06-user-email-conflict",
+      "requirementSha256": "941a72db44e3a0c686d1aa7640f63010be1110347a7163414c4dec4e3040d563",
+      "baseSha": "d523e2638a649817883c57971914cdeccdd04bde",
+      "targetSha": "ab530c4da7559bf2487698982799920a4d10e345",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "115f64a93020c404d60537c47e2069bc269a785ff65a61d0cdd222e80b0be6cd",
+        "testFiles": [
+          {
+            "path": "test/bth/users-email.spec.ts",
+            "sha256": "b586bce481ee96baacd37ffb6dc98eb7deb4a999668cd06c4bbb8965b59c7799"
+          },
+          {
+            "path": "test/bth/jest.config.cjs",
+            "sha256": "c385deb0342efa1a15acaf1f1b4d6256d4d29bebe6c0de20b476f258d196cfcb"
+          },
+          {
+            "path": "test/bth/run.cjs",
+            "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+          },
+          {
+            "path": "test/bth/verify-jest.mjs",
+            "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10227,
+              "stdout": {
+                "sha256": "2553b7ff51d390965010292c65d0aaf4dbe4f093700385e01d8c8fbb6c48be4d",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "c0fa2040ed38a1e94c2b5c278422b50b39fdec44ad0dab5d19d43dabe5f4d3ed",
+                "bytes": 3329
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "4f4f6703630d007e6887d83468d426c199250002de9d3586abc4b57defbeb66b",
+                "bytes": 1112
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "unused email reaches persistence and does not mutate caller payload",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "the same account may retain its existing email",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "another account email is rejected without any persistence update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "an update without email does not perform an email uniqueness lookup",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "email lookup failure propagates and prevents a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "persistence failure is not replaced by an email conflict",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "a missing update result remains null rather than a fabricated account",
+                "outcome": "failed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 10280,
+              "stdout": {
+                "sha256": "2553b7ff51d390965010292c65d0aaf4dbe4f093700385e01d8c8fbb6c48be4d",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "cfd6f5db106ba204dd93a869a8246d1279f73cccc40a08597280123eecc03413",
+                "bytes": 1530
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "e4b9f3db83b71e795ad008b9d66b4b8827fe6fb4309bf61513a112a2b95eb779",
+                "bytes": 1031
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "unused email reaches persistence and does not mutate caller payload",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "the same account may retain its existing email",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "another account email is rejected without any persistence update",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "an update without email does not perform an email uniqueness lookup",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "email lookup failure propagates and prevents a write",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "persistence failure is not replaced by an email conflict",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/users-email.spec.ts",
+                "name": "a missing update result remains null rather than a fabricated account",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 21173
+      }
+    },
+    {
+      "repositoryId": "nestjs-boilerplate",
+      "taskId": "nest-02-file-relational-mapper",
+      "requirementSha256": "938b4e21c4530cefa9044a6f379a7c43fda08b7ac4b14ec8e20d7a69fe0c4d16",
+      "baseSha": "07ac5f29d3032bb173fd538c549966e7eb96dcff",
+      "targetSha": "f4703907ddc54dff7f6e81bc37f0a42e3fdd8d22",
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "ff52db4a1bc0b16bbf7532308a250bca99dd66d9dc6ed4e58ffc1ad7f25bf704",
+        "testFiles": [
+          {
+            "path": "test/bth/file-flow.spec.ts",
+            "sha256": "30f8531d2500cb29694894ab6d97ca33be35e95de077ef213f119f683c72bfe3"
+          },
+          {
+            "path": "test/bth/jest.config.cjs",
+            "sha256": "663d94b68f3a7a30e50c7c04404c1456cc8dc65944e2f97d1d1aff0fde9184d8"
+          },
+          {
+            "path": "test/bth/run.cjs",
+            "sha256": "da9b18110fcbdfba7113c44e41ef328c311f7230c827d5e603df513208db60de"
+          },
+          {
+            "path": "test/bth/verify-jest.mjs",
+            "sha256": "9b8b9d6aab6f0c42113ca74d4d8803372e1d551d7a0e7c57ffb49fdb03f56b75"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 21760,
+              "stdout": {
+                "sha256": "0e6e60d1f0f84fcbdd0de256022d99f09fb4464d0d649d1f482fdc6614c65284",
+                "bytes": 28
+              },
+              "stderr": {
+                "sha256": "8e78af1a5fbf6bff345f4890539c63342574333b4285430b403a9a13c62ecf0f",
+                "bytes": 5518
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "9d1bb1e675c23f722bf687f768df43bc57a7eed148bf5626c88cc68028081294",
+                "bytes": 1110
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create returns mapped domain data from the saved entity",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create propagates persistence failure without returning a file",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findById maps existing files and preserves missing-file null",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findByIds maps each returned entity and preserves an empty result",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor emits resolved nested values rather than Promise objects",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor routes rejected values through the observable error channel",
+                "outcome": "failed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor preserves an upstream observable failure",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12772,
+              "stdout": {
+                "sha256": "44d1f69c1b8567f88e00c74101d21b7290ab0b7e602f0e8cdd2124a137a671e1",
+                "bytes": 27
+              },
+              "stderr": {
+                "sha256": "7c04295fd00734ae762e01e271aac75ca884842d148a9586f536d911f98790c1",
+                "bytes": 1802
+              }
+            },
+            "reports": [
+              {
+                "path": "coverage/bth-junit.xml",
+                "sha256": "d78b25a29e6031789acde96937e4996a3d7284b4255b2a71b52e71f2faf6089b",
+                "bytes": 1029
+              }
+            ],
+            "cases": [
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create returns mapped domain data from the saved entity",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "create propagates persistence failure without returning a file",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findById maps existing files and preserves missing-file null",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "findByIds maps each returned entity and preserves an empty result",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor emits resolved nested values rather than Promise objects",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor routes rejected values through the observable error channel",
+                "outcome": "passed"
+              },
+              {
+                "className": "test/bth/file-flow.spec.ts",
+                "name": "interceptor preserves an upstream observable failure",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 35655
+      }
+    }
+  ],
+  "confirmedTasks": 3,
+  "attemptedTasks": 4,
+  "initialAttempt": {
+    "npmVersion": "10.1.0",
+    "resultFileSha256": "7b9adf4ba7e2b86137be0120a95a51b5249d001248764eed18dd186bbd577cb5",
+    "configSha256": "6b17488b03c10f2d2d0808f1eb7614fb0c36d47adcdcfdde83f3d53fb31f9075",
+    "note": "Initial JSON formatting was canonicalized back to the repository style without semantic changes. session-update failed npm ci in both npm versions; it remains excluded."
+  },
+  "interpretation": "Three previously validated Nest tasks revalidated; no new provider success. The session-update control remains unconfirmed because its pinned public lockfile lacks gcp-metadata@7.0.1."
+}

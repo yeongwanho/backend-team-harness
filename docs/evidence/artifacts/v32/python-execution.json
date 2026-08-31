@@ -1,0 +1,301 @@
+{
+  "schemaVersion": 1,
+  "kind": "real-public-python-product-execution",
+  "providerCalls": 0,
+  "sourceParent": "000b17edc07709158f4178358ac1d47edfb656b9",
+  "sourceHashes": {
+    "src/core/python-project.mjs": "ca05889d92cee1e8356ea86c7974df9cc860201b14bb89f0218f4318b0b19f4d",
+    "src/core/python-workspace-preparation.mjs": "99a81173dc1e46eeecf487d06d2c171458b99cccb2396bed71e2690481fbc739",
+    "src/core/portable-test-discovery.mjs": "e502c3335cec9ab0382c05f9ae7ea7238769946226bef24f6e5105d947fa6b1d",
+    "src/core/workspace-preparation.mjs": "465ccbf2bc14821e02703a59cb5cbe5577f4495b33b6300bae594ada74596449",
+    "src/config/implementation.mjs": "2c94509b1d8cc57026b902b5c9d1160d134713fbc0af05b46274e1169b13afb5",
+    "src/init-project.mjs": "95f3e9d15737450f5f674d8260ddb417570df86bee871db20e407123c95e6c3b",
+    "src/doctor.mjs": "569423eeee2ddcf64c078b7648b1e524b5ccf63679c151ebcaff6346a0f14594",
+    "src/runtime/implementation-orchestrator.mjs": "be34dcb8520704720d97f3aa4a6e82853095dcadbe27515cda37e5f2e8c23cdd",
+    "benchmarks/public-backend-v1/fixtures/fastapi/full-test-bootstrap.py": "0bf96ca5d690def313978c3f53b014e8aee3b20fe22981c9f0dd36a661d42791",
+    "benchmarks/public-backend-v1/fixtures/fastapi/full-test-run.mjs": "b30d29107cdb515ebcd1a08909b642465939cb91fcc9fd98615c68116f778d06"
+  },
+  "repository": {
+    "url": "https://github.com/fastapi/full-stack-fastapi-template.git",
+    "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47"
+  },
+  "toolchain": {
+    "node": "v22.23.1",
+    "platform": "darwin",
+    "uv": "0.11.28",
+    "python": "3.12.13",
+    "fastapi": "0.115.14",
+    "pytest": "7.4.4",
+    "sqlmodel": "0.0.31",
+    "docker": "20.10.17"
+  },
+  "initialPreparation": {
+    "schemaVersion": 1,
+    "productPreparation": {
+      "kind": "uv-sync-offline",
+      "projectPath": "backend",
+      "status": "passed",
+      "dependencyEntries": 76,
+      "workspaceEntries": 1,
+      "inputs": [
+        {
+          "path": "backend/pyproject.toml",
+          "sha256": "34fbc0c1c702b37576e479d71ec02fe5a641f4b1a9495eda9ecee8a2eb3430d9"
+        },
+        {
+          "path": "pyproject.toml",
+          "sha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+        },
+        {
+          "path": "uv.lock",
+          "sha256": "c27a6c9636dc203d1151f96f9d6733a4f52986fb43a079c6d354e5a389148b68"
+        }
+      ],
+      "command": [
+        "uv",
+        "sync",
+        "--project",
+        "<isolated-workspace>",
+        "--package",
+        "app",
+        "--offline",
+        "--locked",
+        "--no-build",
+        "--no-install-workspace",
+        "--no-python-downloads",
+        "--no-config",
+        "--python",
+        "3.12",
+        "--group",
+        "dev"
+      ],
+      "environmentPath": ".backend-harness/local/python-venv",
+      "failureCode": null,
+      "process": {
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "stdioDrainTimedOut": false,
+        "durationMs": 303,
+        "stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "stderr": {
+          "sha256": "078a157329e29b44031612d274fb3f64b33eb29f597a1727fe1199d83f27b3b1",
+          "bytes": 1600
+        }
+      },
+      "lifecycleScripts": false,
+      "onlineFallback": false,
+      "egressIsolation": "not-enforced"
+    },
+    "lockUnchanged": true,
+    "verificationInputs": [
+      "backend/pyproject.toml",
+      "pyproject.toml",
+      "uv.lock",
+      ".backend-harness/bin/verify-portable.mjs",
+      ".backend-harness/bin/verify-portable.cmd"
+    ]
+  },
+  "recheck": {
+    "schemaVersion": 1,
+    "kind": "real-public-preparation-recheck",
+    "environmentAlreadyPrepared": true,
+    "productPreparation": {
+      "kind": "uv-sync-offline",
+      "projectPath": "backend",
+      "status": "passed",
+      "dependencyEntries": 76,
+      "workspaceEntries": 1,
+      "inputs": [
+        {
+          "path": "backend/pyproject.toml",
+          "sha256": "34fbc0c1c702b37576e479d71ec02fe5a641f4b1a9495eda9ecee8a2eb3430d9"
+        },
+        {
+          "path": "pyproject.toml",
+          "sha256": "3d267287ff4871340dd6a20fef41067bfacacc61f7fbde8b3cfcfc2e6f0322e1"
+        },
+        {
+          "path": "uv.lock",
+          "sha256": "c27a6c9636dc203d1151f96f9d6733a4f52986fb43a079c6d354e5a389148b68"
+        }
+      ],
+      "command": [
+        "uv",
+        "sync",
+        "--project",
+        "<isolated-workspace>",
+        "--package",
+        "app",
+        "--offline",
+        "--locked",
+        "--no-build",
+        "--no-install-workspace",
+        "--no-python-downloads",
+        "--no-config",
+        "--python",
+        "3.12",
+        "--group",
+        "dev"
+      ],
+      "environmentPath": ".backend-harness/local/python-venv",
+      "failureCode": null,
+      "process": {
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "stdioDrainTimedOut": false,
+        "durationMs": 123,
+        "stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "stderr": {
+          "sha256": "70f1489a2846f6498b0f56e66b3e0ddd7422fedd93abe2a59cce317444523019",
+          "bytes": 56
+        }
+      },
+      "lifecycleScripts": false,
+      "onlineFallback": false,
+      "egressIsolation": "not-enforced"
+    },
+    "lockUnchanged": true
+  },
+  "verification": {
+    "command": [
+      "node",
+      "src/cli.mjs",
+      "check",
+      "<disposable-public-workspace>",
+      "--acknowledge-network-risk",
+      "--json"
+    ],
+    "confirmed": false,
+    "passed": false,
+    "reason": "required_gate_failed",
+    "sourceStable": true,
+    "tests": {
+      "tests": 55,
+      "executed": 55,
+      "failures": 3,
+      "errors": 0,
+      "skipped": 0
+    },
+    "gates": [
+      {
+        "id": "tests",
+        "reason": "process_failed",
+        "process": {
+          "exitCode": 1,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "startedAt": "2026-08-31T00:16:01.178Z",
+          "finishedAt": "2026-08-31T00:16:28.752Z",
+          "durationMs": 27574,
+          "stdout": {
+            "sha256": "564953bda94bbae6dda9a1d1e487e489894606fdcd84cccff97ef4da606068f3",
+            "bytes": 15313,
+            "observation": null
+          },
+          "stderr": {
+            "sha256": "1a7d290b7cdf131c5dd8629e703d6fc9a0328c323ffa344ed7d96cd9aafed641",
+            "bytes": 379
+          }
+        },
+        "result": {
+          "type": "junit",
+          "evidenceTier": "EXECUTED",
+          "tests": 55,
+          "executed": 55,
+          "failures": 3,
+          "errors": 0,
+          "skipped": 0,
+          "failedTests": [
+            {
+              "className": "tests.api.routes.test_login",
+              "name": "test_recovery_password"
+            },
+            {
+              "className": "tests.scripts.test_backend_pre_start",
+              "name": "test_init_successful_connection"
+            },
+            {
+              "className": "tests.scripts.test_test_pre_start",
+              "name": "test_init_successful_connection"
+            }
+          ],
+          "reportFiles": [
+            ".backend-harness/local/reports/tests/junit.xml"
+          ],
+          "staleReportCount": 0,
+          "minimumTests": 1,
+          "passed": false,
+          "reason": "tests_failed"
+        }
+      }
+    ],
+    "originalTestsModified": false,
+    "expectedFailuresExcluded": false,
+    "bootstrap": "Explicit evaluation plugin disables dotenv, guards Python sockets, creates SQLModel tables in a disposable PostgreSQL 16 database; it preserves the original suite. Not an Alembic migration test.",
+    "failures": [
+      {
+        "test": "tests.api.routes.test_login.test_recovery_password",
+        "classification": "public-test-environment-incomplete",
+        "reason": "emails_enabled is false because a synthetic sender/transport has not been provisioned."
+      },
+      {
+        "test": "tests.scripts.test_backend_pre_start.test_init_successful_connection",
+        "classification": "upstream-test-assertion-defect",
+        "reason": "MagicMock.exec.called_once_with is not a valid unittest.mock assertion."
+      },
+      {
+        "test": "tests.scripts.test_test_pre_start.test_init_successful_connection",
+        "classification": "upstream-test-assertion-defect",
+        "reason": "MagicMock.exec.called_once_with is not a valid unittest.mock assertion."
+      }
+    ]
+  },
+  "doctor": {
+    "healthy": true,
+    "readiness": "ready",
+    "runtime": {
+      "id": "test-runtime",
+      "status": "pass",
+      "message": "A project-local Python interpreter was located; imports and test results were not probed.",
+      "details": {
+        "framework": "pytest",
+        "candidates": [
+          ".backend-harness/local/python-venv/bin/python",
+          ".venv/bin/python"
+        ],
+        "available": [
+          ".backend-harness/local/python-venv/bin/python"
+        ],
+        "directoryBoundaryValid": true,
+        "modulesProbed": false
+      }
+    },
+    "interpretation": "Configuration/runtime presence only; not a full-suite pass."
+  },
+  "cleanup": {
+    "label": "bth.fastapi.productqa",
+    "remainingContainers": 0,
+    "remainingNetworks": 0,
+    "checkedAfterExecution": true,
+    "temporaryPublicClonesRetained": true
+  },
+  "limitations": [
+    "No successful model implementation sample was produced.",
+    "Warm/offline preparation duration is not an end-to-end performance comparison.",
+    "Python socket checks are not OS or native-driver egress isolation.",
+    "Docker 20 localhost publishing is not guaranteed host isolation.",
+    "The PostgreSQL fixture does not change the MySQL-first product direction.",
+    "Original suite failures are retained, not masked or counted as success."
+  ],
+  "rawJUnitIncluded": false,
+  "rawLogsIncluded": false
+}

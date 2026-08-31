@@ -98,7 +98,9 @@ node src/cli.mjs check examples/spring-service --acknowledge-network-risk
 
 ## 프로젝트 실행 계약
 
-`bth init`은 Gradle/Maven Wrapper 또는 저장소가 선언한 고유한 Jest·Vitest·Pytest 구성을 인식하면 `.backend-harness/verification.json`과 OS별 프로젝트 전용 실행 래퍼까지 만듭니다. Gradle과 Maven을 의도적으로 함께 제공하는 저장소는 `--build gradle|maven`으로 팀의 선택을 명시할 수 있고, 이후 `doctor`도 생성된 검증 명령에서 그 선택을 다시 읽습니다. 여러 테스트 프로젝트가 충돌하거나 지원되지 않는 빌드라면 하나를 임의 선택하지 않고 팀이 아래 계약을 직접 정하도록 멈춥니다. 검증 자체는 Node의 프로젝트 `node_modules`, Python의 프로젝트 `.venv` 또는 `uv run --offline`만 사용하며 설치나 네트워크를 자동으로 켜지 않습니다. 별도로 npm lock이 있는 Jest·Vitest 프로젝트는 **승인된 격리 구현에만** 아래의 오프라인 의존성 준비 계약을 생성합니다. `init` 자체는 설치하지 않습니다.
+`bth init`은 Gradle/Maven Wrapper 또는 저장소가 선언한 고유한 Jest·Vitest·Pytest 구성을 인식하면 `.backend-harness/verification.json`과 OS별 프로젝트 전용 실행 래퍼까지 만듭니다. Gradle과 Maven을 의도적으로 함께 제공하는 저장소는 `--build gradle|maven`으로 팀의 선택을 명시할 수 있고, 이후 `doctor`도 생성된 검증 명령에서 그 선택을 다시 읽습니다. 여러 테스트 프로젝트가 충돌하거나 지원되지 않는 빌드라면 하나를 임의 선택하지 않고 팀이 아래 계약을 직접 정하도록 멈춥니다.
+
+**환경 준비와 테스트 실행은 별개입니다.** 검증은 Node의 프로젝트 `node_modules`, Python의 이미 준비된 `.backend-harness/local/python-venv` 또는 프로젝트/workspace `.venv`만 사용합니다. 테스트 실행기가 패키지를 설치하지 않습니다. npm lock이 있는 Jest·Vitest, 지원되는 uv lock/workspace의 Pytest 프로젝트는 승인된 격리 구현에만 아래의 오프라인 준비 계약을 생성합니다. `init` 자체는 설치하지 않습니다.
 
 ```json
 {
@@ -135,7 +137,7 @@ node src/cli.mjs check examples/spring-service --acknowledge-network-risk
 
 역사적인 경로명인 `.backend-harness/quality-gates/*.yaml`은 **사람이 계획·리뷰 때 확인할 체크리스트**입니다. `required: true`는 계획에서 반드시 다뤄야 한다는 뜻이지 자동 실행됐다는 뜻이 아닙니다. PASS를 차단하거나 만드는 실행 권한은 오직 `verification.json`에 선언된 Gate에 있습니다.
 
-자동 생성되는 JVM 기본값은 기존 캐시만 쓰는 `--offline` 모드입니다. portable 기본값도 설치된 프로젝트 로컬 런타임 또는 `uv --offline`만 허용합니다. 새 PC에서 의존성을 받아야 한다면 하네스 밖에서 먼저 설치하거나, 팀이 Gate에서 네트워크 필요성을 명시적으로 선언하고 해당 실행에만 `--acknowledge-network-risk`를 줍니다.
+자동 생성되는 JVM 기본값은 기존 캐시만 쓰는 `--offline` 모드입니다. portable 기본값은 이미 준비된 프로젝트 로컬 런타임만 사용합니다. 새 PC에서 의존성을 받아야 한다면 하네스 밖에서 먼저 설치하거나, 팀이 별도 Gate에서 네트워크 필요성을 명시적으로 선언하고 해당 실행에만 `--acknowledge-network-risk`를 줍니다. 이 옵션이 기본 준비 절차에 온라인 재시도를 추가하거나 OS 네트워크를 격리하지는 않습니다.
 
 ### 실패를 더 빨리 보여 주는 선택적 순서 최적화
 
@@ -498,8 +500,11 @@ provider request에는 승인된 계획, 허용 경로·diff budget, 봉인된 g
 실행 조건과 경계:
 
 - 새로 초기화한 단일 npm-lock 기반 Jest·Vitest 프로젝트는 implementation schema v2에 `workspacePreparation: { "kind": "npm-ci-offline", "projectPath": ".", "timeoutMs": 180000 }`를 갖습니다. `null`이면 끕니다. 선언한 package/lock을 확인한 뒤 격리 worktree에서만 `npm ci --offline --ignore-scripts --no-audit --no-fund`를 실행합니다. 원본 `node_modules`를 수정하거나 공유 링크로 연결하지 않습니다.
+- 지원되는 Python 프로젝트는 `workspacePreparation: { "kind": "uv-sync-offline", "projectPath": "backend", "timeoutMs": 180000 }`를 생성합니다. 실제 backend 경로를 사용하고, 공통 `pyproject.toml`·모든 workspace member manifest·`uv.lock`·발견된 `.python-version`을 검증 입력으로 묶습니다. 선택 사항인 `pythonVersion: "3.12"`로 이미 설치/캐시된 Python 3 버전을 지정할 수 있습니다. 여러 pytest 프로젝트, 중첩 workspace, 경로 이탈은 자동 선택하지 않습니다.
+- uv 준비는 `--offline --locked --no-build --no-install-workspace --no-python-downloads --no-config`로 실행하고, 필요하면 선언된 pytest group/extra를 선택합니다. 환경은 격리 worktree의 `.backend-harness/local/python-venv`에만 생성합니다. credential-free HTTPS registry와 SHA-256 artifact, 선언된 workspace 항목만 받으며 외부 path/Git/URL source는 거절합니다. Python 설치·소스 빌드·workspace package 설치·온라인 fallback은 하지 않습니다. 따라서 native extension의 wheel이 없거나 workspace package를 설치해야만 import되는 프로젝트는 별도 준비가 필요합니다. 이 정책은 OS egress sandbox가 아닙니다.
+- 이미 준비된 Poetry·PDM 가상환경은 계속 사용할 수 있지만 두 도구의 자동 설치 절차는 제공하지 않습니다. `doctor`의 Python runtime 확인은 실행 파일 위치 확인일 뿐 pytest import·DB 연결·실제 테스트 통과 증명이 아닙니다. DB와 메일 등의 테스트 설정도 팀이 명시해야 합니다.
 - 캐시에 필요한 패키지가 없으면 모델 호출 **0회**로 실패 기록을 남깁니다. 허용된 의존성을 따로 준비한 뒤 같은 `bth work ... --approve --run` 명령으로 이어갈 수 있습니다. 기존 승인을 재사용하되 소스·계획 일치를 다시 검사합니다. 준비 과정이 소스를 바꿨다면 재시도 대신 workspace reset이 필요합니다.
-- 준비 지원 범위는 standalone npm lockfile v2/v3입니다. npm workspaces, file/git/link 의존성, shrinkwrap, overrides·bundled dependencies는 임의 처리하지 않고 거절합니다. 오래된 lock의 SHA-1 항목은 개수로 별도 기록합니다. lifecycle scripts가 필요한 패키지는 이 준비만으로 실행 가능하다고 보장하지 않습니다. 온라인 fallback이나 OS 네트워크 격리는 제공하지 않습니다.
+- npm 준비 지원 범위는 standalone npm lockfile v2/v3입니다. npm workspaces, file/git/link 의존성, shrinkwrap, overrides·bundled dependencies는 임의 처리하지 않고 거절합니다. 오래된 lock의 SHA-1 항목은 개수로 별도 기록합니다. lifecycle scripts가 필요한 패키지는 이 준비만으로 실행 가능하다고 보장하지 않습니다. 온라인 fallback이나 OS 네트워크 격리는 제공하지 않습니다.
 - 기존 `.backend-harness/implementation.json`은 자동 교체하지 않습니다. 새 생성 계약은 버리는 복사본에서 diff를 검토한 뒤 적용해야 합니다. `implement configure`는 이미 설정된 preparation을 보존합니다. 이전 BTH 버전은 새 필드를 이해하지 못할 수 있으므로 팀 버전을 맞춰야 합니다. 이 소스 변경은 npm 새 정식 버전 발행이 아닙니다.
 - source-bound 계획이 사람에게 승인됐고 원본 소스가 clean이어야 합니다.
 - 매 실행마다 `--allow-write`, 네트워크 어댑터는 `--acknowledge-network-risk`도 필요합니다.
