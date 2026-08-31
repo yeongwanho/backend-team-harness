@@ -1,0 +1,17 @@
+{
+  "taskId": "spring-01-pet-association",
+  "requirement": "Explicitly allow association of already-persisted pets without duplicates",
+  "base": "88e37c15cf6fc8490b01bc3e8e2c800cec1ac272",
+  "target": "676db04515ee5f289641cea6cb379dc02b40f67f",
+  "comparison": {
+    "status": "review-required",
+    "findings": [
+      {
+        "code": "relationship_guard_drift",
+        "line": 109,
+        "baselineLine": 99
+      }
+    ],
+    "recognizedGuards": 1
+  }
+}

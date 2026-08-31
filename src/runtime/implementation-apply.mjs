@@ -3,7 +3,8 @@ import { chmod, copyFile, mkdir, rename, rm, unlink, writeFile } from 'node:fs/p
 import { dirname, relative, resolve } from 'node:path'
 import { canonicalJson } from '../core/canonical-json.mjs'
 import { bthError } from '../core/errors.mjs'
-import { checkImplementationPreservation, preservationNeedsReview } from '../core/implementation-preservation.mjs'
+import { checkImplementationPreservation } from '../core/implementation-preservation.mjs'
+import { acknowledgePreservationReview, preservationReview } from '../core/preservation-review.mjs'
 import {
   implementationCandidateStatus,
   implementationIntegrationStatus,
@@ -164,9 +165,7 @@ async function applyUnlocked(root, taskId, options) {
   }
 
   const preservation = await checkImplementationPreservation(workspace, record.baseHeadCommit, record.implementedFiles.map(file => file.path))
-  if (preservationNeedsReview(preservation)) {
-    throw bthError('apply_preservation_review_required', 'Candidate requires structural preservation review before automatic apply. No source files were staged or changed.', { preservation })
-  }
+  const reviewAcknowledgement = acknowledgePreservationReview(preservationReview(record, preservation), { ...options, actor })
 
   const stagingRoot = await resolveSafeProjectPath(root, '.backend-harness/local/apply/' + id + '-' + randomUUID())
   await mkdir(stagingRoot, { recursive: true, mode: 0o700 })
@@ -199,6 +198,7 @@ async function applyUnlocked(root, taskId, options) {
       taskId: id,
       actor,
       appliedAt,
+      ...(reviewAcknowledgement ? { preservationReview: reviewAcknowledgement } : {}),
       implementationRecordSha256: record.recordSha256,
       baseSourceFingerprint: record.baseSourceFingerprint,
       integratedSourceFingerprint: currentSourceBinding.fingerprint,

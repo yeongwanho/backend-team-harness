@@ -11,6 +11,14 @@ import {
   printResult
 } from './options.mjs'
 
+function printPreservationReview(result) {
+  const review = result.preservationReview
+  if (!review || review.status === 'not-required') return
+  console.log('Structural review: ' + review.status + '; passed tests do not mean this change is approved.')
+  if (review.fingerprint) console.log('Review fingerprint: ' + review.fingerprint)
+  console.log('Inspect the exact diff and findings with bth implement status <id> <project> --json before apply.')
+}
+
 export async function runImplementCommand(args) {
   const [subcommand, ...rest] = args
   if (subcommand === 'configure') {
@@ -64,8 +72,10 @@ export async function runImplementCommand(args) {
       console.log('Implementation ' + id + ': ' + result.record.status + '.')
       console.log('Workspace: ' + result.record.workspace)
       console.log('Attempts: ' + result.record.attempts.length)
-      console.log('Next: ' + result.record.nextAction)
+      printPreservationReview(result)
+      console.log('Next: ' + result.nextAction)
     })
+    if (result.preservationReview && result.preservationReview.status !== 'not-required') process.exitCode = 2
     return
   }
   if (subcommand === 'run') {
@@ -81,18 +91,21 @@ export async function runImplementCommand(args) {
       console.log('Changed files: ' + result.record.changedFiles.changedEntryCount)
       console.log('Original bound source unchanged: ' + result.record.originalBoundSourceUnchanged)
       if (result.record.verification?.failure?.code) console.log('Failure code: ' + result.record.verification.failure.code)
-      console.log('Next: ' + result.record.nextAction)
+      printPreservationReview(result)
+      console.log('Next: ' + result.nextAction)
     })
     if (result.record.status !== 'passed') process.exitCode = 1
+    else if (result.preservationReview && result.preservationReview.status !== 'not-required') process.exitCode = 2
     return
   }
   if (subcommand === 'apply') {
-    const parsed = parseArguments(rest, { booleans: ['--json', '--allow-write'], values: ['--by'] })
-    assertPositionalCount(parsed.positionals, 1, 2, 'bth implement apply <id> [path] --by <actor> --allow-write [--json]')
+    const parsed = parseArguments(rest, { booleans: ['--json', '--allow-write'], values: ['--by', '--accept-preservation-review', '--review-note'] })
+    assertPositionalCount(parsed.positionals, 1, 2, 'bth implement apply <id> [path] --by <actor> --allow-write [--accept-preservation-review <sha256> --review-note <text>] [--json]')
     const actor = parsed.options.get('--by')
     if (!actor) throw new Error('Implementation apply requires --by <actor>.')
     const [id, path = '.'] = parsed.positionals
-    const result = await applyImplementation(path, id, { actor, allowWrite: parsed.flags.has('--allow-write') })
+    const result = await applyImplementation(path, id, { actor, allowWrite: parsed.flags.has('--allow-write'),
+      acceptPreservationReview: parsed.options.get('--accept-preservation-review'), reviewNote: parsed.options.get('--review-note') })
     printResult(result, parsed.flags.has('--json'), () => {
       console.log('Applied sealed implementation candidate for task ' + id + '.')
       console.log('Receipt: ' + result.receipt)

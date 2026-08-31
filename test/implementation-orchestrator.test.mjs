@@ -103,7 +103,9 @@ const guardedCustomer = 'class Customer { @OneToMany List<Order> orders; void ad
 const recoveredCustomer = guardedCustomer.replace(' }\n', ' int count() { return orders.size(); } }\n')
 const unguardedCustomer = guardedCustomer.replace('if(o.isNew())', '')
 async function preservationProject() {
-  return approvedImplementationProject({ projectFiles: { [preservationFile]: guardedCustomer }, providerConfig: {
+  return approvedImplementationProject({
+    taskContext: 'Intentionally allow already-persisted orders to be associated after reviewing the changed guard.',
+    projectFiles: { [preservationFile]: guardedCustomer }, providerConfig: {
     schemaVersion: 2,
     adapter: { kind: 'provider', provider: 'codex', network: true, timeoutMs: 30_000, model: null, mode: 'fast', contextBudgetCharacters: 256, maxBudgetUsd: null },
     writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 65536 }, recovery: { maxAttempts: 2 }
@@ -119,45 +121,61 @@ function syntheticProvider(input) {
 }
 const preservationOptions = { actor: 'developer', allowWrite: true, allowNetwork: true, providerProbe: async () => ({ available: true, version: 'fixture' }) }
 
-test('structural drift reaches bounded provider recovery before expensive Gates; restored guard still requires full tests', async () => {
+test('intended structural change runs tests once and awaits exact-candidate review without blind repair', async () => {
   const root = await preservationProject()
   const result = await runImplementation(root, 'IMPL-1', { ...preservationOptions, providerRunner: async (_adapter, input) => {
     const request = JSON.parse(await readFile(join(input.cwd, input.requestPath), 'utf8'))
     assert.equal(request.verification.preservation.scope, 'changed-java-direct-relationship-writes')
-    if (request.attempt === 2) {
-      assert.equal(request.recovery.failure.code, 'implementation_preservation_review_required')
-      assert.equal(request.recovery.preservation.files[0].findings[0].code, 'relationship_guard_drift')
-      assert.equal(request.recovery.tests, null)
-      assert.deepEqual(request.recovery.failedGates, [])
-      await assert.rejects(access(join(input.cwd, 'build/test-results/test/TEST-fixture.xml')), /ENOENT/)
-    }
-    await writeFile(join(input.cwd, preservationFile), request.attempt === 1 ? unguardedCustomer : recoveredCustomer)
+    assert.equal(request.attempt, 1)
+    await writeFile(join(input.cwd, preservationFile), unguardedCustomer)
     return syntheticProvider(input)
   } })
   assert.equal(result.record.status, 'passed')
-  assert.equal(result.record.attempts.length, 2)
+  assert.equal(result.record.attempts.length, 1)
   assert.equal(result.record.attempts[0].verification.preservation.status, 'review-required')
-  assert.equal(result.record.verification.preservation.status, 'clear')
+  assert.equal(result.preservationReview.status, 'required')
+  assert.match(result.preservationReview.fingerprint, /^[a-f0-9]{64}$/)
   assert.ok(result.record.verification.tests.executed > 0)
   assert.equal(await readFile(join(root, preservationFile), 'utf8'), guardedCustomer)
-  assert.equal((await applyImplementation(root, 'IMPL-1', { actor: 'developer', allowWrite: true })).integration.integrated, true)
+  await assert.rejects(applyImplementation(root, 'IMPL-1', preservationOptions), { code: 'apply_preservation_review_required' })
+  const status = await implementationStatus(root, 'IMPL-1')
+  assert.equal(status.preservationReview.fingerprint, result.preservationReview.fingerprint)
+  const cliStatus = spawnSync(process.execPath, ['src/cli.mjs', 'implement', 'status', 'IMPL-1', root, '--json'], { encoding: 'utf8' })
+  assert.equal(cliStatus.status, 2, cliStatus.stderr)
+  assert.equal(JSON.parse(cliStatus.stdout).preservationReview.fingerprint, status.preservationReview.fingerprint)
+  const cliApply = spawnSync(process.execPath, ['src/cli.mjs', 'implement', 'apply', 'IMPL-1', root, '--by', 'developer', '--allow-write',
+    '--accept-preservation-review', status.preservationReview.fingerprint,
+    '--review-note', 'Reviewed the intentional association behavior and its exact candidate diff.', '--json'], { encoding: 'utf8' })
+  assert.equal(cliApply.status, 0, cliApply.stderr)
+  const apply = JSON.parse(cliApply.stdout)
+  assert.equal(apply.integration.integrated, true)
+  const receipt = JSON.parse(await readFile(join(root, apply.receipt), 'utf8'))
+  assert.equal(receipt.preservationReview.fingerprint, status.preservationReview.fingerprint)
+  assert.equal(receipt.preservationReview.actor, 'developer')
+  assert.equal(await readFile(join(root, preservationFile), 'utf8'), unguardedCustomer)
 })
 
-test('unresolved drift exhausts only the existing attempt budget, never certifies or applies the candidate', async () => {
+test('wrong review, missing or secret note, and edited candidate cannot apply or stage files', async () => {
   const root = await preservationProject()
   const result = await runImplementation(root, 'IMPL-1', { ...preservationOptions, providerRunner: async (_adapter, input) => {
     await writeFile(join(input.cwd, preservationFile), unguardedCustomer)
     return syntheticProvider(input)
   } })
-  assert.equal(result.record.status, 'failed')
-  assert.equal(result.record.attempts.length, 2)
-  assert.equal(result.record.verification.tests, null)
-  assert.deepEqual(result.record.implementedFiles, [])
-  await assert.rejects(applyImplementation(root, 'IMPL-1', preservationOptions), { code: 'apply_record_not_passed' })
+  assert.equal(result.record.status, 'passed')
+  const accepted = { ...preservationOptions, acceptPreservationReview: result.preservationReview.fingerprint, reviewNote: 'Reviewed the exact candidate.' }
+  for (const invalid of [
+    { ...accepted, acceptPreservationReview: 'f'.repeat(64) },
+    { ...accepted, reviewNote: undefined },
+    { ...accepted, reviewNote: 'Reviewed secret=fixture-only' }
+  ]) await assert.rejects(applyImplementation(root, 'IMPL-1', invalid), error => error.code.startsWith('apply_preservation_'))
+  await assert.rejects(access(join(root, '.backend-harness/local/apply')), /ENOENT/)
+  await writeFile(join(result.record.workspace, preservationFile), unguardedCustomer + '// changed after review\n')
+  await assert.rejects(applyImplementation(root, 'IMPL-1', accepted), { code: 'apply_candidate_changed' })
+  await assert.rejects(implementationStatus(root, 'IMPL-1'), { code: 'implementation_candidate_changed' })
   assert.equal(await readFile(join(root, preservationFile), 'utf8'), guardedCustomer)
 })
 
-test('a sealed old passed candidate cannot bypass new preservation checks on reuse or apply', async () => {
+test('old sealed candidates get fresh review metadata without rewriting their record or auto-applying', async () => {
   const root = await preservationProject()
   const result = await runImplementation(root, 'IMPL-1', { ...preservationOptions, providerRunner: async (_adapter, input) => {
     await writeFile(join(input.cwd, preservationFile), recoveredCustomer)
@@ -173,12 +191,53 @@ test('a sealed old passed candidate cannot bypass new preservation checks on reu
     implementedFiles: await snapshotImplementedFiles(result.record.workspace, [preservationFile])
   })
   const before = await readFile(join(root, result.path), 'utf8')
-  await assert.rejects(runImplementation(root, 'IMPL-1', preservationOptions), { code: 'implementation_preservation_review_required' })
+  const reused = await runImplementation(root, 'IMPL-1', preservationOptions)
+  assert.equal(reused.preservationReview.status, 'required')
+  assert.equal(reused.record.recordSha256, legacy.recordSha256)
   await assert.rejects(applyImplementation(root, 'IMPL-1', preservationOptions), { code: 'apply_preservation_review_required' })
   assert.equal(await readFile(join(root, preservationFile), 'utf8'), guardedCustomer)
   assert.equal(await readFile(join(root, result.path), 'utf8'), before)
   assert.match(legacy.recordSha256, /^[a-f0-9]{64}$/)
   await assert.rejects(access(join(root, '.backend-harness/local/apply')), /ENOENT/)
+})
+
+test('incomplete old candidate inspection cannot be waived with a previously valid review fingerprint', async () => {
+  const root = await preservationProject()
+  const result = await runImplementation(root, 'IMPL-1', { ...preservationOptions, providerRunner: async (_adapter, input) => {
+    await writeFile(join(input.cwd, preservationFile), unguardedCustomer)
+    return syntheticProvider(input)
+  } })
+  await writeFile(join(result.record.workspace, preservationFile), 'class Customer { @OneToMany List<Order> orders; void broken( {')
+  const { recordSha256, ...fields } = result.record
+  await saveImplementationRecord(join(root, result.path), { ...fields,
+    implementedFiles: await snapshotImplementedFiles(result.record.workspace, [preservationFile]) })
+  const status = await implementationStatus(root, 'IMPL-1')
+  assert.equal(status.preservationReview.status, 'unavailable')
+  await assert.rejects(applyImplementation(root, 'IMPL-1', { ...preservationOptions,
+    acceptPreservationReview: result.preservationReview.fingerprint, reviewNote: 'Reviewed the old candidate.' }), { code: 'apply_preservation_incomplete' })
+  await assert.rejects(access(join(root, '.backend-harness/local/apply')), /ENOENT/)
+  assert.equal(await readFile(join(root, preservationFile), 'utf8'), guardedCustomer)
+})
+
+test('real failing tests still trigger bounded repair even when intended guard review is pending', async () => {
+  const root = await approvedImplementationProject({
+    verificationFailsOnBrokenSource: true,
+    projectFiles: { [preservationFile]: guardedCustomer },
+    providerConfig: { schemaVersion: 2,
+      adapter: { kind: 'provider', provider: 'codex', network: true, timeoutMs: 30000, model: null, mode: 'fast', contextBudgetCharacters: 256, maxBudgetUsd: null },
+      writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 65536 }, recovery: { maxAttempts: 2 } }
+  })
+  const result = await runImplementation(root, 'IMPL-1', { ...preservationOptions, providerRunner: async (_adapter, input) => {
+    const request = JSON.parse(await readFile(join(input.cwd, input.requestPath), 'utf8'))
+    await writeFile(join(input.cwd, preservationFile), unguardedCustomer)
+    await writeFile(join(input.cwd, 'src/main/java/example/Generated.java'), request.attempt === 1 ? '// BROKEN\n' : 'class Generated {}\n')
+    return syntheticProvider(input)
+  } })
+  assert.equal(result.record.status, 'passed')
+  assert.equal(result.record.attempts.length, 2)
+  assert.equal(result.record.attempts[0].verification.confirmed, false)
+  assert.equal(result.record.verification.tests.executed, 1)
+  assert.equal(result.preservationReview.status, 'required')
 })
 
 async function approvedRuleAwareFastProject() {

@@ -1,0 +1,783 @@
+{
+  "schemaVersion": 1,
+  "kind": "source-matched-corpus-evidence-ledger",
+  "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+  "configSha256": "23c28bbc50a9e8f4fa61bc9c20d3551c4b3f870d835d37c36570a90eb4222f7e",
+  "evaluatorSha256": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+  "rows": [
+    {
+      "taskId": "spring-01-pet-association",
+      "repositoryId": "spring-petclinic",
+      "baseSha": "88e37c15cf6fc8490b01bc3e8e2c800cec1ac272",
+      "targetSha": "676db04515ee5f289641cea6cb379dc02b40f67f",
+      "oracleConfigured": true,
+      "fixtureHashesMatch": true,
+      "oracleSha256": "5822e5ed58176a23f6cb86d4d7a0a29e93ae39fce5ccb545027087746154e60d",
+      "currentOracleControlsConfirmed": true,
+      "controlArtifacts": [
+        {
+          "artifact": "docs/evidence/artifacts/v31/prior-controls.json",
+          "sha256": "d5f7b6ed2f98652af9b94f562fc99370f7e06a5aef0021dee4a7da58f2f63957"
+        }
+      ],
+      "runs": [
+        {
+          "artifact": "docs/evidence/artifacts/v22/codex-fast-pair.json",
+          "artifactSha256": "e30f4f038f4cfad7dd7247ad38346e8c38303b423a4aac4fa9293f754577c971",
+          "provider": "codex",
+          "lane": "bth",
+          "protocol": null,
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": true,
+          "failureReasons": []
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v22/codex-fast-pair.json",
+          "artifactSha256": "e30f4f038f4cfad7dd7247ad38346e8c38303b423a4aac4fa9293f754577c971",
+          "provider": "codex",
+          "lane": "direct",
+          "protocol": null,
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": true,
+          "failureReasons": []
+        }
+      ],
+      "historicalPairedInference": true,
+      "historicalSuccessfulPair": true,
+      "pairs": [
+        {
+          "artifact": "docs/evidence/artifacts/v22/codex-fast-pair.json",
+          "provider": "codex",
+          "bothSuccessAt1": true
+        }
+      ]
+    },
+    {
+      "taskId": "spring-02-owner-search-whitespace",
+      "repositoryId": "spring-petclinic",
+      "baseSha": "0f6e8614047bd74cf6223b4d8a858d2ed2824f8a",
+      "targetSha": "bb37aad8c332264723817d855e8b3b96b7c392bc",
+      "oracleConfigured": true,
+      "fixtureHashesMatch": true,
+      "oracleSha256": "87525dcf64a069cf490c2b47ef23fdc1c29600461e6a85d50eaf56b72013d194",
+      "currentOracleControlsConfirmed": true,
+      "controlArtifacts": [
+        {
+          "artifact": "docs/evidence/artifacts/v31/spring-controls.json",
+          "sha256": "50a38f4c66ed4f6a4e2de8c0de364f4d2737a5f22faeb2cb23fac2132ef733ae"
+        }
+      ],
+      "runs": [
+        {
+          "artifact": "docs/evidence/artifacts/v34/spring-pair.json",
+          "artifactSha256": "6eca4022eba11b7540bc93480e6b39e46be1a3b014d3ebe04ef9f97896f064de",
+          "provider": "codex",
+          "lane": "bth",
+          "protocol": "context-correctness-v34",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": true,
+          "failureReasons": []
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v34/spring-pair.json",
+          "artifactSha256": "6eca4022eba11b7540bc93480e6b39e46be1a3b014d3ebe04ef9f97896f064de",
+          "provider": "codex",
+          "lane": "direct",
+          "protocol": "context-correctness-v34",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": true,
+          "failureReasons": []
+        }
+      ],
+      "historicalPairedInference": true,
+      "historicalSuccessfulPair": true,
+      "pairs": [
+        {
+          "artifact": "docs/evidence/artifacts/v34/spring-pair.json",
+          "provider": "codex",
+          "bothSuccessAt1": true
+        }
+      ]
+    },
+    {
+      "taskId": "spring-03-unique-pet-name",
+      "repositoryId": "spring-petclinic",
+      "baseSha": "51045d1648dad955df586150c1a1a6e22ef400c2",
+      "targetSha": "e0db9b184e028d41bcb626f3cbf03a942f67e104",
+      "oracleConfigured": false,
+      "fixtureHashesMatch": false,
+      "oracleSha256": null,
+      "currentOracleControlsConfirmed": false,
+      "controlArtifacts": [],
+      "runs": [],
+      "historicalPairedInference": false,
+      "historicalSuccessfulPair": false,
+      "pairs": []
+    },
+    {
+      "taskId": "spring-04-future-visit",
+      "repositoryId": "spring-petclinic",
+      "baseSha": "3c06fbfc1e42eb40802e0d0ca989bc9226755804",
+      "targetSha": "753d35c2f84432d88c0f3b61c9302a16069b78dd",
+      "oracleConfigured": true,
+      "fixtureHashesMatch": true,
+      "oracleSha256": "d0c995453902e967986e3f89518e8974817d589626d35d6a2b392c95828587da",
+      "currentOracleControlsConfirmed": true,
+      "controlArtifacts": [
+        {
+          "artifact": "docs/evidence/artifacts/v35/visit-oracle-variants.json",
+          "sha256": "f70632e9cab51c419c92b84f7f6f5cf33217a9b337ff5fa8bb33cc432e11eb98"
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v37/visit-pair-v37.json",
+          "sha256": "0020c66334bb0672848cded93200d10170f0b7382b031eae23d3a7903c92ecdb"
+        }
+      ],
+      "runs": [
+        {
+          "artifact": "docs/evidence/artifacts/v37/visit-pair-v37.json",
+          "artifactSha256": "0020c66334bb0672848cded93200d10170f0b7382b031eae23d3a7903c92ecdb",
+          "provider": "codex",
+          "lane": "bth",
+          "protocol": "reviewable-preservation-v37",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": false,
+          "failureReasons": [
+            "structured-verification-not-confirmed",
+            "task-acceptance-not-measured"
+          ]
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v37/visit-pair-v37.json",
+          "artifactSha256": "0020c66334bb0672848cded93200d10170f0b7382b031eae23d3a7903c92ecdb",
+          "provider": "codex",
+          "lane": "direct",
+          "protocol": "reviewable-preservation-v37",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": false,
+          "failureReasons": [
+            "structured-verification-not-confirmed",
+            "task-acceptance-not-measured"
+          ]
+        }
+      ],
+      "historicalPairedInference": true,
+      "historicalSuccessfulPair": false,
+      "pairs": [
+        {
+          "artifact": "docs/evidence/artifacts/v37/visit-pair-v37.json",
+          "provider": "codex",
+          "bothSuccessAt1": false
+        }
+      ]
+    },
+    {
+      "taskId": "spring-05-binder-id-protection",
+      "repositoryId": "spring-petclinic",
+      "baseSha": "f1e0e22b883e185e680d44b264fb73a8efcff8b9",
+      "targetSha": "c7ee170434ec3e369fdc9201290ba2ea4c92b557",
+      "oracleConfigured": true,
+      "fixtureHashesMatch": true,
+      "oracleSha256": "4286c93013e34c652095c4fe2e7fdc564bc0fbb851f1bf78f5292e63ca1e7528",
+      "currentOracleControlsConfirmed": true,
+      "controlArtifacts": [
+        {
+          "artifact": "docs/evidence/artifacts/v31/spring-controls.json",
+          "sha256": "50a38f4c66ed4f6a4e2de8c0de364f4d2737a5f22faeb2cb23fac2132ef733ae"
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v35/binder-pair.json",
+          "sha256": "b420ee3b81285a91738d709ae81c9d59d3d22d279234fc24180d26048099f270"
+        }
+      ],
+      "runs": [
+        {
+          "artifact": "docs/evidence/artifacts/v35/binder-pair.json",
+          "artifactSha256": "b420ee3b81285a91738d709ae81c9d59d3d22d279234fc24180d26048099f270",
+          "provider": "codex",
+          "lane": "bth",
+          "protocol": "context-correctness-v34",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": true,
+          "failureReasons": []
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v35/binder-pair.json",
+          "artifactSha256": "b420ee3b81285a91738d709ae81c9d59d3d22d279234fc24180d26048099f270",
+          "provider": "codex",
+          "lane": "direct",
+          "protocol": "context-correctness-v34",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": false,
+          "failureReasons": [
+            "structured-verification-not-confirmed",
+            "task-acceptance-not-measured"
+          ]
+        }
+      ],
+      "historicalPairedInference": true,
+      "historicalSuccessfulPair": false,
+      "pairs": [
+        {
+          "artifact": "docs/evidence/artifacts/v35/binder-pair.json",
+          "provider": "codex",
+          "bothSuccessAt1": false
+        }
+      ]
+    },
+    {
+      "taskId": "spring-06-pet-update",
+      "repositoryId": "spring-petclinic",
+      "baseSha": "6328d2c9dc8eb2c367c6a613a1ae959c994003c7",
+      "targetSha": "2aa53f929d32b0d41e0fe0391b8385eabe9a3432",
+      "oracleConfigured": true,
+      "fixtureHashesMatch": true,
+      "oracleSha256": "93412a069c0c269d41e267af620f54d5d7b99b9e24dbcfc077f94c5902a3fd86",
+      "currentOracleControlsConfirmed": true,
+      "controlArtifacts": [
+        {
+          "artifact": "docs/evidence/artifacts/v35/pet-strengthened-acceptance.json",
+          "sha256": "bb233e64bc21288a3b8d0a51415938eb29984ed7a349c25ce35834ccd849c7ec"
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v37/pet-pair-v36.json",
+          "sha256": "2619666145269b5c2cac06db35e3fedd5a67f1ba6409ae730dd171b0945c0510"
+        }
+      ],
+      "runs": [
+        {
+          "artifact": "docs/evidence/artifacts/v35/pet-pair.json",
+          "artifactSha256": "f0f13f4897fec2c3756f494065d523e269b0a447d57a8fb3ceff854403c49298",
+          "provider": "codex",
+          "lane": "bth",
+          "protocol": "context-correctness-v34",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": true,
+          "failureReasons": []
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v35/pet-pair.json",
+          "artifactSha256": "f0f13f4897fec2c3756f494065d523e269b0a447d57a8fb3ceff854403c49298",
+          "provider": "codex",
+          "lane": "direct",
+          "protocol": "context-correctness-v34",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": false,
+          "failureReasons": [
+            "structured-verification-not-confirmed",
+            "task-acceptance-not-measured"
+          ]
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v37/pet-pair-v36.json",
+          "artifactSha256": "2619666145269b5c2cac06db35e3fedd5a67f1ba6409ae730dd171b0945c0510",
+          "provider": "codex",
+          "lane": "bth",
+          "protocol": "preservation-runtime-v36",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": false,
+          "failureReasons": [
+            "structured-verification-not-confirmed",
+            "task-acceptance-not-measured"
+          ]
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v37/pet-pair-v36.json",
+          "artifactSha256": "2619666145269b5c2cac06db35e3fedd5a67f1ba6409ae730dd171b0945c0510",
+          "provider": "codex",
+          "lane": "direct",
+          "protocol": "preservation-runtime-v36",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": true,
+          "failureReasons": []
+        }
+      ],
+      "historicalPairedInference": true,
+      "historicalSuccessfulPair": false,
+      "pairs": [
+        {
+          "artifact": "docs/evidence/artifacts/v35/pet-pair.json",
+          "provider": "codex",
+          "bothSuccessAt1": false
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v37/pet-pair-v36.json",
+          "provider": "codex",
+          "bothSuccessAt1": false
+        }
+      ]
+    },
+    {
+      "taskId": "spring-07-mysql-user",
+      "repositoryId": "spring-petclinic",
+      "baseSha": "37d53152a08a5de9d225c7f25f41b77c5d8b3cae",
+      "targetSha": "8f08b38f2c8412b9298f63e79e5e830ae247cd6e",
+      "oracleConfigured": false,
+      "fixtureHashesMatch": false,
+      "oracleSha256": null,
+      "currentOracleControlsConfirmed": false,
+      "controlArtifacts": [],
+      "runs": [],
+      "historicalPairedInference": false,
+      "historicalSuccessfulPair": false,
+      "pairs": []
+    },
+    {
+      "taskId": "nest-01-session-update-by-hash",
+      "repositoryId": "nestjs-boilerplate",
+      "baseSha": "a3aaea0e60fdbb0af3b0108d98f09cf2c8b50fe4",
+      "targetSha": "bba9827ca548ca30c98068936550b8cb94bbc1a0",
+      "oracleConfigured": true,
+      "fixtureHashesMatch": true,
+      "oracleSha256": "96a59f970f3e422f3a1b9889b8e86a928f13fb267ddfb64fd1508bfae3e02a05",
+      "currentOracleControlsConfirmed": false,
+      "controlArtifacts": [],
+      "runs": [],
+      "historicalPairedInference": false,
+      "historicalSuccessfulPair": false,
+      "pairs": []
+    },
+    {
+      "taskId": "nest-02-file-relational-mapper",
+      "repositoryId": "nestjs-boilerplate",
+      "baseSha": "07ac5f29d3032bb173fd538c549966e7eb96dcff",
+      "targetSha": "f4703907ddc54dff7f6e81bc37f0a42e3fdd8d22",
+      "oracleConfigured": true,
+      "fixtureHashesMatch": true,
+      "oracleSha256": "ff52db4a1bc0b16bbf7532308a250bca99dd66d9dc6ed4e58ffc1ad7f25bf704",
+      "currentOracleControlsConfirmed": true,
+      "controlArtifacts": [
+        {
+          "artifact": "docs/evidence/artifacts/v32/nest-controls.json",
+          "sha256": "0487e79301916924aac17d36629c8e9c1103140e2bb39d4043a6f0253fb34350"
+        }
+      ],
+      "runs": [
+        {
+          "artifact": "docs/evidence/artifacts/v26/final-comparison.json",
+          "artifactSha256": "176d218e26666ece8e3fc2bf9c697e16b7fe2171abbcd300dc8f1517329990a2",
+          "provider": "codex",
+          "lane": "bth",
+          "protocol": "first-test-v26-test-authoring",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": false,
+          "failureReasons": [
+            "structured-verification-not-confirmed",
+            "task-acceptance-not-measured"
+          ]
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v26/final-comparison.json",
+          "artifactSha256": "176d218e26666ece8e3fc2bf9c697e16b7fe2171abbcd300dc8f1517329990a2",
+          "provider": "codex",
+          "lane": "direct",
+          "protocol": "first-test-v26-test-authoring",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": true,
+          "failureReasons": []
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v26/initial-comparison.json",
+          "artifactSha256": "598dbcce926366dc653d6716c4d5292b01baa2ac595fbdb63d837d5ef0f71991",
+          "provider": "codex",
+          "lane": "bth",
+          "protocol": "first-test-v26",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": false,
+          "failureReasons": [
+            "structured-verification-not-confirmed",
+            "task-acceptance-not-measured"
+          ]
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v26/initial-comparison.json",
+          "artifactSha256": "598dbcce926366dc653d6716c4d5292b01baa2ac595fbdb63d837d5ef0f71991",
+          "provider": "codex",
+          "lane": "direct",
+          "protocol": "first-test-v26",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": false,
+          "failureReasons": [
+            "task-acceptance-failed"
+          ]
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v27/retained-nest-run.json",
+          "artifactSha256": "617f6e66f4f60c048c08f7a52263d91db508b3f5fbf2f6c779965afa690a42ce",
+          "provider": "codex",
+          "lane": "bth",
+          "protocol": "diagnostic-context-v27",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": true,
+          "failureReasons": []
+        }
+      ],
+      "historicalPairedInference": true,
+      "historicalSuccessfulPair": false,
+      "pairs": [
+        {
+          "artifact": "docs/evidence/artifacts/v26/final-comparison.json",
+          "provider": "codex",
+          "bothSuccessAt1": false
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v26/initial-comparison.json",
+          "provider": "codex",
+          "bothSuccessAt1": false
+        }
+      ]
+    },
+    {
+      "taskId": "nest-03-swagger-language-header",
+      "repositoryId": "nestjs-boilerplate",
+      "baseSha": "1cb55deff983e56f45a0a70bdd2e6c5bfb90b79c",
+      "targetSha": "b5c3262e7b58e4443dd27328e4d2ced50c832204",
+      "oracleConfigured": true,
+      "fixtureHashesMatch": true,
+      "oracleSha256": "39d9c1ea6a3f3bfd70e66d01ba7917a0035d8be29c3fd7f8f39868a0e2c538db",
+      "currentOracleControlsConfirmed": true,
+      "controlArtifacts": [
+        {
+          "artifact": "docs/evidence/artifacts/v32/nest-controls.json",
+          "sha256": "0487e79301916924aac17d36629c8e9c1103140e2bb39d4043a6f0253fb34350"
+        }
+      ],
+      "runs": [],
+      "historicalPairedInference": false,
+      "historicalSuccessfulPair": false,
+      "pairs": []
+    },
+    {
+      "taskId": "nest-04-document-find-update",
+      "repositoryId": "nestjs-boilerplate",
+      "baseSha": "85c97e1df7132eece3779a14e7f4034e48568a18",
+      "targetSha": "9e2b0c592411883d61f7670fdf8325366e33dfcd",
+      "oracleConfigured": false,
+      "fixtureHashesMatch": false,
+      "oracleSha256": null,
+      "currentOracleControlsConfirmed": false,
+      "controlArtifacts": [],
+      "runs": [],
+      "historicalPairedInference": false,
+      "historicalSuccessfulPair": false,
+      "pairs": []
+    },
+    {
+      "taskId": "nest-05-auth-email-update",
+      "repositoryId": "nestjs-boilerplate",
+      "baseSha": "48e484a14b8bc7a4b8cac6f67553038ca6a65fa8",
+      "targetSha": "9e180c985bf4730405da8acb0b7e26c96c630252",
+      "oracleConfigured": false,
+      "fixtureHashesMatch": false,
+      "oracleSha256": null,
+      "currentOracleControlsConfirmed": false,
+      "controlArtifacts": [],
+      "runs": [],
+      "historicalPairedInference": false,
+      "historicalSuccessfulPair": false,
+      "pairs": []
+    },
+    {
+      "taskId": "nest-06-user-email-conflict",
+      "repositoryId": "nestjs-boilerplate",
+      "baseSha": "d523e2638a649817883c57971914cdeccdd04bde",
+      "targetSha": "ab530c4da7559bf2487698982799920a4d10e345",
+      "oracleConfigured": true,
+      "fixtureHashesMatch": true,
+      "oracleSha256": "115f64a93020c404d60537c47e2069bc269a785ff65a61d0cdd222e80b0be6cd",
+      "currentOracleControlsConfirmed": true,
+      "controlArtifacts": [
+        {
+          "artifact": "docs/evidence/artifacts/v32/nest-controls.json",
+          "sha256": "0487e79301916924aac17d36629c8e9c1103140e2bb39d4043a6f0253fb34350"
+        }
+      ],
+      "runs": [
+        {
+          "artifact": "docs/evidence/artifacts/v29/codex-authoring-followup.json",
+          "artifactSha256": "ae7dd08545fe87cc720bce37d496efa5e1e6100e74c097e5e69c530eb5062eda",
+          "provider": "codex",
+          "lane": "bth",
+          "protocol": "test-authoring-v29",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": false,
+          "failureReasons": [
+            "structured-verification-not-confirmed",
+            "task-acceptance-not-measured"
+          ]
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v29/initial-codex-pair.json",
+          "artifactSha256": "12df2043467297c749f530143c64152487b3c5d3b62724fbacfe4947e045847c",
+          "provider": "codex",
+          "lane": "bth",
+          "protocol": "diagnostic-context-v27",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": false,
+          "failureReasons": [
+            "structured-verification-not-confirmed",
+            "task-acceptance-not-measured"
+          ]
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v29/initial-codex-pair.json",
+          "artifactSha256": "12df2043467297c749f530143c64152487b3c5d3b62724fbacfe4947e045847c",
+          "provider": "codex",
+          "lane": "direct",
+          "protocol": "diagnostic-context-v27",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": false,
+          "failureReasons": [
+            "structured-verification-not-confirmed",
+            "task-acceptance-not-measured"
+          ]
+        }
+      ],
+      "historicalPairedInference": true,
+      "historicalSuccessfulPair": false,
+      "pairs": [
+        {
+          "artifact": "docs/evidence/artifacts/v29/initial-codex-pair.json",
+          "provider": "codex",
+          "bothSuccessAt1": false
+        }
+      ]
+    },
+    {
+      "taskId": "nest-07-refresh-token-single-use",
+      "repositoryId": "nestjs-boilerplate",
+      "baseSha": "ca1c3cc3e8d2f2c88f03f0cdb6210ba47c0f5476",
+      "targetSha": "0e58e0872a852eaa5e0013fd2e81a9fffe2740b1",
+      "oracleConfigured": false,
+      "fixtureHashesMatch": false,
+      "oracleSha256": null,
+      "currentOracleControlsConfirmed": false,
+      "controlArtifacts": [],
+      "runs": [],
+      "historicalPairedInference": false,
+      "historicalSuccessfulPair": false,
+      "pairs": []
+    },
+    {
+      "taskId": "fastapi-01-database-url",
+      "repositoryId": "fastapi-template",
+      "baseSha": "cf1548a983fd0339dd1d0533b0db495614e27f7b",
+      "targetSha": "32ab6dd022cf46a2bc2f901f746d684078843969",
+      "oracleConfigured": false,
+      "fixtureHashesMatch": false,
+      "oracleSha256": null,
+      "currentOracleControlsConfirmed": false,
+      "controlArtifacts": [],
+      "runs": [],
+      "historicalPairedInference": false,
+      "historicalSuccessfulPair": false,
+      "pairs": []
+    },
+    {
+      "taskId": "fastapi-02-cors",
+      "repositoryId": "fastapi-template",
+      "baseSha": "781b283849e602fa2c2c3562b2fe4fbd9374919d",
+      "targetSha": "d85803bf642102ecbc01ea676501106ae12a5e1d",
+      "oracleConfigured": false,
+      "fixtureHashesMatch": false,
+      "oracleSha256": null,
+      "currentOracleControlsConfirmed": false,
+      "controlArtifacts": [],
+      "runs": [],
+      "historicalPairedInference": false,
+      "historicalSuccessfulPair": false,
+      "pairs": []
+    },
+    {
+      "taskId": "fastapi-03-created-at",
+      "repositoryId": "fastapi-template",
+      "baseSha": "2720308701fef9d22505013d4c417bfe3afb4530",
+      "targetSha": "3c1f7c4cdb67dff619898d66236cf6e09cb7c3e2",
+      "oracleConfigured": false,
+      "fixtureHashesMatch": false,
+      "oracleSha256": null,
+      "currentOracleControlsConfirmed": false,
+      "controlArtifacts": [],
+      "runs": [],
+      "historicalPairedInference": false,
+      "historicalSuccessfulPair": false,
+      "pairs": []
+    },
+    {
+      "taskId": "fastapi-04-constant-time-login",
+      "repositoryId": "fastapi-template",
+      "baseSha": "7107f7e83acdf93272377ca97985dd3c51c47686",
+      "targetSha": "689d7105e12039db84bb0e0c0cc797ca086192db",
+      "oracleConfigured": true,
+      "fixtureHashesMatch": true,
+      "oracleSha256": "56e13ff438566da679231fc2283c9723dc9a890109e68b407eb165b4549437d8",
+      "currentOracleControlsConfirmed": true,
+      "controlArtifacts": [
+        {
+          "artifact": "docs/evidence/artifacts/v31/fastapi-controls.json",
+          "sha256": "f9aa87ab01ea99e9a114ee9eaad2998f32f2be1232dc3a2415bc425fd5a491ce"
+        }
+      ],
+      "runs": [],
+      "historicalPairedInference": false,
+      "historicalSuccessfulPair": false,
+      "pairs": []
+    },
+    {
+      "taskId": "fastapi-05-missing-user",
+      "repositoryId": "fastapi-template",
+      "baseSha": "fe3bafc6f6732698ed2c58424f64065a4209ad47",
+      "targetSha": "4cab9e972f5e3e32c518ec2c6e09e18455fe469a",
+      "oracleConfigured": true,
+      "fixtureHashesMatch": true,
+      "oracleSha256": "0265a5d8f576c08248509d450eb0426afe57d0751d605799c6d1c5cd3f5d4ea2",
+      "currentOracleControlsConfirmed": true,
+      "controlArtifacts": [
+        {
+          "artifact": "docs/evidence/artifacts/v31/fastapi-controls.json",
+          "sha256": "f9aa87ab01ea99e9a114ee9eaad2998f32f2be1232dc3a2415bc425fd5a491ce"
+        }
+      ],
+      "runs": [
+        {
+          "artifact": "docs/evidence/artifacts/v33/codex-pair.json",
+          "artifactSha256": "55a4cc17e1502827b90ecc717fb13942a6cac0d9fa1bab96fa92511e9d69b92d",
+          "provider": "codex",
+          "lane": "bth",
+          "protocol": "prepared-baseline-v33",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": true,
+          "failureReasons": []
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v33/codex-pair.json",
+          "artifactSha256": "55a4cc17e1502827b90ecc717fb13942a6cac0d9fa1bab96fa92511e9d69b92d",
+          "provider": "codex",
+          "lane": "direct",
+          "protocol": "prepared-baseline-v33",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": true,
+          "failureReasons": []
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v34/claude-pair.json",
+          "artifactSha256": "fe225e86947369070d673b6ebd21758ac91189453f250036bb7d6612fa496d5b",
+          "provider": "claude",
+          "lane": "direct",
+          "protocol": "context-correctness-v34",
+          "modelInferenceObserved": false,
+          "cliAttempts": 1,
+          "successAt1": false,
+          "failureReasons": [
+            "provider-did-not-complete",
+            "structured-verification-not-confirmed",
+            "no-source-change",
+            "task-acceptance-not-measured"
+          ]
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v34/claude-pair.json",
+          "artifactSha256": "fe225e86947369070d673b6ebd21758ac91189453f250036bb7d6612fa496d5b",
+          "provider": "claude",
+          "lane": "bth",
+          "protocol": "context-correctness-v34",
+          "modelInferenceObserved": false,
+          "cliAttempts": 1,
+          "successAt1": false,
+          "failureReasons": [
+            "provider-did-not-complete",
+            "structured-verification-not-confirmed",
+            "no-source-change",
+            "task-acceptance-not-measured"
+          ]
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v34/codex-pair.json",
+          "artifactSha256": "79456cd8f1716c0d21ae74581964170248db9ff76f27b9dc9b217579a09c2435",
+          "provider": "codex",
+          "lane": "direct",
+          "protocol": "context-correctness-v34",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": true,
+          "failureReasons": []
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v34/codex-pair.json",
+          "artifactSha256": "79456cd8f1716c0d21ae74581964170248db9ff76f27b9dc9b217579a09c2435",
+          "provider": "codex",
+          "lane": "bth",
+          "protocol": "context-correctness-v34",
+          "modelInferenceObserved": true,
+          "cliAttempts": 1,
+          "successAt1": true,
+          "failureReasons": []
+        }
+      ],
+      "historicalPairedInference": true,
+      "historicalSuccessfulPair": true,
+      "pairs": [
+        {
+          "artifact": "docs/evidence/artifacts/v33/codex-pair.json",
+          "provider": "codex",
+          "bothSuccessAt1": true
+        },
+        {
+          "artifact": "docs/evidence/artifacts/v34/codex-pair.json",
+          "provider": "codex",
+          "bothSuccessAt1": true
+        }
+      ]
+    },
+    {
+      "taskId": "fastapi-06-delete-self",
+      "repositoryId": "fastapi-template",
+      "baseSha": "d1cc75903e80dbb18261160fddf38a5eb2ad8b31",
+      "targetSha": "b81cec8ea54d3bd20af5e02cc4d5baa4fa43ac83",
+      "oracleConfigured": false,
+      "fixtureHashesMatch": false,
+      "oracleSha256": null,
+      "currentOracleControlsConfirmed": false,
+      "controlArtifacts": [],
+      "runs": [],
+      "historicalPairedInference": false,
+      "historicalSuccessfulPair": false,
+      "pairs": []
+    }
+  ],
+  "counts": {
+    "tasks": 20,
+    "configuredOracles": 11,
+    "currentValidatedOracles": 10,
+    "tasksWithHistoricalPairedInference": 8,
+    "tasksWithHistoricalSuccessfulPair": 3
+  },
+  "limitations": [
+    "Historical pairs across different protocols are not a pooled success-rate or speed experiment.",
+    "Zero-token quota refusals are CLI attempts, not model inference.",
+    "Only saved case+observation+score records are counted as pairs; recovery diagnostics and single-lane replays are excluded.",
+    "Validated oracle means exact current normalized oracle hash and pinned base/target controls match; fixture presence alone is insufficient."
+  ]
+}

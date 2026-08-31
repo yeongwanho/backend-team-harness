@@ -21,7 +21,7 @@ const pathValue = value => typeof value === 'string' && value.length <= 384 &&
 
 export const preservationGuidance = Object.freeze({
   scope: 'changed-java-direct-relationship-writes',
-  instruction: 'Inspect existing relationship mutators before adding or changing collection writes. Preserve their guards; test updates to existing members and attempts to use a non-member identifier. Structural drift requires recovery/review, not a claim that authorization is proven. Normal required tests still run.',
+  instruction: 'Inspect existing relationship mutators before changing collection writes. Preserve their guards unless the approved requirement intentionally changes that behavior; test existing members and attempts to use a non-member identifier. Changed guards require exact-candidate review before apply, not blind restoration of old behavior. Normal required tests still run. Structural review is not proof of authorization.',
   limitation: 'No cross-file call, alias, inheritance, early-return or semantic ownership analysis.'
 })
 
@@ -146,7 +146,7 @@ export function preservationFailure(preservation, sourceFingerprint = null) {
     confirmed: false, sourceFingerprint, runPath: null, tests: null, gates: [], preservation,
     failure: {
       code: 'implementation_preservation_review_required',
-      message: 'Changed Java relationship writes no longer match observed baseline guards, or bounded inspection could not complete. Inspect the cited baseline and candidate lines, preserve existing mutators/guards and add a behavioral regression test. This is structural uncertainty, not proof of an authorization bug. Intentional incompatible changes require independent review outside automatic apply.'
+      message: 'Bounded Java structural inspection could not complete. Inspect the cited inputs or parsing limits; missing evidence cannot be waived by a review acknowledgement. This is structural uncertainty, not proof of an authorization bug.'
     }
   }
 }

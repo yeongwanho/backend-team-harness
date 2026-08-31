@@ -180,7 +180,10 @@ export async function runWork(inputPath, input, options = {}) {
     root,
     taskId,
     status: implementation
-      ? implementation.record.status === 'passed' ? 'implementation-passed' : 'implementation-failed'
+      ? implementation.record.status === 'passed'
+        ? implementation.preservationReview && implementation.preservationReview.status !== 'not-required'
+          ? 'implementation-needs-review' : 'implementation-passed'
+        : 'implementation-failed'
       : task.record.state === 'IMPLEMENTING' ? 'implementation-in-progress' : task.record.state === 'PLAN_APPROVED' ? 'plan-approved' : 'plan-proposed',
     draft: draftResult,
     planPath: plan?.planPath ?? '.backend-harness/tasks/' + taskId + '/interview/plan.md',
@@ -188,7 +191,7 @@ export async function runWork(inputPath, input, options = {}) {
     approval,
     implementation,
     nextAction: implementation
-      ? implementation.record.nextAction
+      ? implementation.nextAction
       : ['PLAN_APPROVED', 'IMPLEMENTING'].includes(task.record.state)
         ? 'Re-run with --approve --run --allow-write after confirming the implementation provider.'
         : 'Review the generated plan and re-run the same command with --approve.'

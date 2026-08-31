@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T03:07:42.502Z",
+  "platform": "darwin",
+  "node": "v22.23.1",
+  "sourceHashes": {
+    "src/core/preservation-review.mjs": "7ee10dfa10f4df59c795b9a57a4d17234ba4b0bab47a9ac5e7210ecaa55efcc9",
+    "src/core/implementation-preservation.mjs": "999bcb626ce01fcf9c4469589ce88d73b5bf03877fc488209602cac2c2408de3",
+    "src/runtime/implementation-orchestrator.mjs": "11d446c3375ffe612dda8f15a4b03c112573dc71938200a2efb7c75d256ab8e1",
+    "src/runtime/implementation-apply.mjs": "2678b3a619b6e1f2ca3715a72dde0e9f819ae3fa1f14d32b5480b4ab538042d3",
+    "src/runtime/work-orchestrator.mjs": "27ec7327b113e2dea43175dc5ac23beef886b00bb31387e02333b7cbb87bccb0",
+    "src/cli.mjs": "97cdba75508533de2ec4e57fbf8bc6904b02f582722e23d867ae258f144d160c",
+    "src/cli/implement-command.mjs": "7d3186ab233f6b94e43bd0f0fd64cc5b7540ac0fef4312851a3d3e90eadbc8a3",
+    "scripts/mutation-smoke.mjs": "77871ecb026e3471b7f73f5f29519692102a00eb2d30ed2f49969cc36dd65168",
+    "scripts/benchmark-provider-comparison.mjs": "879ca0ce411fcd960972fd9e5974c46f65f5313d2eed6ed0e6651447d263f275"
+  },
+  "tests": {
+    "total": 567,
+    "passed": 563,
+    "failed": 0,
+    "skipped": 4,
+    "logSha256": "f638df91446b4cab05065c545fa86de229487b82c1df72f41430f7603ea13477"
+  },
+  "coverage": {
+    "lines": 91.24,
+    "branches": 82.66,
+    "functions": 98.68
+  },
+  "mutation": {
+    "killed": 37,
+    "logSha256": "ebd07088fc637a5bf8bff08215ca623db9423a861227aba9455d827176e28038",
+    "limitation": "Curated mutation smoke, not exhaustive mutation coverage."
+  },
+  "installSmoke": {
+    "passed": true,
+    "logSha256": "ea781ddfffe003a1a189e0e8327a14fe17665304b3356e6fdb1bfe15551967fe"
+  },
+  "windowsContract": {
+    "passed": true,
+    "logSha256": "bcf4ede5c645aff5d8340ee547f22f6d9d9d3cd663cec858ec90c76a2da96133",
+    "actualWindowsExecution": false
+  },
+  "productionDependencies": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "logSha256": "d9b31b6d619719454965caba31ff8cb2b222a54a25eef7aadf0b980cecf3e09c"
+  },
+  "skipped": [
+    "real MySQL container E2E",
+    "separate Maven/Gradle cold-cache E2E",
+    "real Windows provider JSON execution",
+    "real Windows descendant termination"
+  ],
+  "limitations": [
+    "Passing unit tests and curated mutations does not prove production adoption or all requirement semantics.",
+    "Actual public Spring runs are recorded separately; never use these skips as PASS."
+  ]
+}

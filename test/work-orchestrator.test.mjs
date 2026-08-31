@@ -217,3 +217,34 @@ test('one approved bth work call reaches isolated provider implementation and ev
   await assert.rejects(access(join(root, 'src/main/java/example/users/UserStatusLookup.java')), /ENOENT/)
   await access(join(result.implementation.record.workspace, 'src/main/java/example/users/UserStatusLookup.java'))
 })
+
+test('work distinguishes passed tests from pending review instead of repeating implementation', async () => {
+  const path = 'src/main/java/example/Customer.java'
+  const before = 'class Customer { @OneToMany List<Order> orders; void add(Order o) { if(o.isNew()) orders.add(o); } }\n'
+  const root = await initializedProject('bth-work-review-', [{ path, content: before }])
+  await writeFile(join(root, '.backend-harness/implementation.json'), JSON.stringify({ schemaVersion: 2,
+    adapter: { kind: 'provider', provider: 'codex', network: true, timeoutMs: 30000, model: null, mode: 'fast', contextBudgetCharacters: 256, maxBudgetUsd: null },
+    writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 65536 }, recovery: { maxAttempts: 2 }
+  }))
+  initializeGit(root, { forcePaths: ['.gitignore', '.backend-harness/.gitignore'] })
+  let calls = 0
+  const result = await runWork(root, { requirement: 'Allow persisted orders to be associated without a migration.', taskId: 'REVIEW-1', actor: 'developer',
+    decisions: { modules: ['root'], databaseImpact: 'write', apiImpact: 'none' } }, {
+    approve: true, run: true, allowWrite: true, allowNetwork: true,
+    providerProbe: async () => ({ available: true, version: 'fixture' }),
+    providerRunner: async (_adapter, input) => {
+      calls++
+      await writeFile(join(input.cwd, path), before.replace('if(o.isNew())', ''))
+      return { process: { exitCode: 0, signal: null, timedOut: false, stdioDrainTimedOut: false,
+        startedAt: '2026-08-31T00:00:00Z', finishedAt: '2026-08-31T00:00:01Z', durationMs: 1000,
+        stdout: { sha256: 'a'.repeat(64), bytes: 0, tail: '' }, stderr: { sha256: 'b'.repeat(64), bytes: 0, tail: '' } },
+        metadata: { kind: 'provider', provider: 'codex', version: 'fixture', profile: input.profile, usage: {} } }
+    }
+  })
+  assert.equal(result.status, 'implementation-needs-review')
+  assert.equal(calls, 1)
+  assert.equal(result.implementation.record.verification.tests.executed, 1)
+  assert.equal(result.implementation.preservationReview.status, 'required')
+  assert.equal(await readFile(join(root, path), 'utf8'), before)
+  assert.match(result.nextAction, /review fingerprint/)
+})

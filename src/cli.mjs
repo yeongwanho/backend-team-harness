@@ -486,6 +486,7 @@ async function runWorkCommand(args) {
     console.log('Next: ' + result.nextAction)
   })
   if (result.status === 'blocked' || result.status === 'implementation-failed') process.exitCode = 1
+  else if (result.status === 'implementation-needs-review') process.exitCode = 2
 }
 
 async function run() {

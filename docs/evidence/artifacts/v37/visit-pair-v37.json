@@ -1,0 +1,1088 @@
+{
+  "schemaVersion": 1,
+  "kind": "actual-provider-pair",
+  "recordedAt": "2026-08-31T03:14:56.656Z",
+  "taskId": "spring-04-future-visit",
+  "runtime": {
+    "baseCommit": "a4f0b674bf195239f276e0bf4d0d0481d7227af9",
+    "workingTreeSourceHashes": true
+  },
+  "sourceHashes": {
+    "scripts/benchmark-provider-comparison.mjs": "879ca0ce411fcd960972fd9e5974c46f65f5313d2eed6ed0e6651447d263f275",
+    "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+    "src/evaluation/provider-benchmark-runner.mjs": "8bebec36f6df198aba6f9cbb82bc16ae72ced978823876e77916aee56ac9ca17",
+    "src/runtime/implementation-orchestrator.mjs": "11d446c3375ffe612dda8f15a4b03c112573dc71938200a2efb7c75d256ab8e1",
+    "src/runtime/implementation-apply.mjs": "2678b3a619b6e1f2ca3715a72dde0e9f819ae3fa1f14d32b5480b4ab538042d3",
+    "src/runtime/work-orchestrator.mjs": "27ec7327b113e2dea43175dc5ac23beef886b00bb31387e02333b7cbb87bccb0",
+    "src/core/implementation-preservation.mjs": "999bcb626ce01fcf9c4469589ce88d73b5bf03877fc488209602cac2c2408de3",
+    "src/adapters/java-preservation.mjs": "69e4254692b7d9d31c4627746e6d82bffc0ef08d056d4776e7e8db2019055bf4",
+    "src/core/preservation-review.mjs": "7ee10dfa10f4df59c795b9a57a4d17234ba4b0bab47a9ac5e7210ecaa55efcc9"
+  },
+  "provider": "codex",
+  "model": "gpt-5.6-sol",
+  "mode": "fast",
+  "order": [
+    "bth",
+    "direct"
+  ],
+  "attemptsPerLane": 1,
+  "records": {
+    "bth": {
+      "originalArtifactSha256": "d126b40975db9cbf6a49ada4c7c0bd82d4ace009baec4c4bc4018c66abc55c56",
+      "schemaVersion": 1,
+      "case": {
+        "id": "codex:bth:spring-04-future-visit",
+        "provider": "codex",
+        "lane": "bth",
+        "repositoryId": "spring-petclinic",
+        "taskId": "spring-04-future-visit",
+        "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+        "requirementSha256": "b24d45e6d00787b1edea2a1dfd0d73402b476ea0669a27418f67b35bcbc6f617",
+        "baseSha": "3c06fbfc1e42eb40802e0d0ca989bc9226755804",
+        "targetSha": "753d35c2f84432d88c0f3b61c9302a16069b78dd"
+      },
+      "fairness": {
+        "sanitizedSingleCommitHistory": true,
+        "goldHiddenFromProvider": true,
+        "sameProvider": true,
+        "protocolVersion": "reviewable-preservation-v37",
+        "configSha256": "23c28bbc50a9e8f4fa61bc9c20d3551c4b3f870d835d37c36570a90eb4222f7e",
+        "fixedMode": "fast",
+        "fixedModel": "gpt-5.6-sol",
+        "setupCommandSha256": "045342373bda32aab89f5caf4de7ab74bc1d5d66c692b1f84a166f441527c0d1"
+      },
+      "setup": {
+        "passed": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 55893,
+          "stdout": {
+            "sha256": "3ba72f65e2ab7041cd49042e3b56bb3516635c853758ef6ababcc98d9996b759",
+            "bytes": 62221
+          },
+          "stderr": {
+            "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+            "bytes": 900
+          }
+        }
+      },
+      "preflight": {
+        "confirmed": true,
+        "emptyTestBaseline": null,
+        "failureCode": null,
+        "diagnosticCode": null,
+        "tests": {
+          "tests": 60,
+          "executed": 60,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "passed",
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 49967,
+              "stdout": {
+                "sha256": "c02399aeb26bc0c74ed2451416d9e8d9f43bc4152441af53727da9e43f020994",
+                "bytes": 74015
+              },
+              "stderr": {
+                "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+                "bytes": 900
+              }
+            }
+          }
+        ]
+      },
+      "acceptanceControls": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "d0c995453902e967986e3f89518e8974817d589626d35d6a2b392c95828587da",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitAcceptanceTests.java",
+            "sha256": "7c13cba46c1da29271390412f45abb5c2cd0dee13b64341f031828bce5110eb4"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12662,
+              "stdout": {
+                "sha256": "a5b1d4fd51cea56be17700bf0d5296200cde77559fc6d0f2ed04c34bd410e7b0",
+                "bytes": 20750
+              },
+              "stderr": {
+                "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+                "sha256": "1b7fc6cdb1db4af2e3ce7c0859991076b3236332df6f55b0304875769e901f8f",
+                "bytes": 64930
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rejectsTodayAndPastWithLocalizedDateError",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "acceptsTomorrowAndLater",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "defaultsNewVisitToTomorrow",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersTomorrowAsMinimumDate",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersLocalizedDateErrors",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "keepsDescriptionRequired",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12748,
+              "stdout": {
+                "sha256": "193ebfc38c7d45e8e5227f4f6eb931438e7feb8a701a2cd6380a36382de6c0ed",
+                "bytes": 2531
+              },
+              "stderr": {
+                "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+                "sha256": "e7d7e1ec1a2d3e66e147b9c135ff6b83e4c34db5be028af9a309902d1dfb52e4",
+                "bytes": 47807
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rejectsTodayAndPastWithLocalizedDateError",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "acceptsTomorrowAndLater",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "defaultsNewVisitToTomorrow",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersTomorrowAsMinimumDate",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersLocalizedDateErrors",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "keepsDescriptionRequired",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 30404
+      },
+      "observation": {
+        "provider": "codex",
+        "lane": "bth",
+        "providerCompleted": true,
+        "verificationConfirmed": false,
+        "acceptance": {
+          "controlsConfirmed": false,
+          "candidatePassed": null,
+          "reason": "candidate-not-eligible"
+        },
+        "attempts": 1,
+        "elapsedMs": 169129,
+        "changedPaths": [
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+          "src/main/resources/messages/messages.properties",
+          "src/main/resources/messages/messages_de.properties",
+          "src/main/resources/messages/messages_es.properties",
+          "src/main/resources/messages/messages_fa.properties",
+          "src/main/resources/messages/messages_ko.properties",
+          "src/main/resources/messages/messages_pt.properties",
+          "src/main/resources/messages/messages_ru.properties",
+          "src/main/resources/messages/messages_tr.properties",
+          "src/main/resources/templates/fragments/inputField.html",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java"
+        ],
+        "impactPaths": [
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+          "src/test/java/org/springframework/samples/petclinic/service/ClinicServiceTests.java"
+        ],
+        "ruleViolations": [],
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 418732,
+            "uncachedInput": 67244,
+            "output": 5486,
+            "cachedInput": 351488,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 1503,
+            "total": 424218
+          },
+          "costUsd": null,
+          "durationMs": 163814,
+          "turns": null
+        },
+        "evidence": {
+          "taskState": "IMPLEMENTING",
+          "implementationStatus": "failed",
+          "workflowStatus": "implementation-failed",
+          "preservationReview": null,
+          "verificationRunPath": ".backend-harness/local/runs/latest.json",
+          "failureCode": "required_gate_failed",
+          "preparation": null,
+          "verificationTests": {
+            "tests": 0,
+            "executed": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "verificationGates": [
+            {
+              "id": "tests",
+              "outcome": "failed"
+            }
+          ],
+          "implementationDiagnosis": {
+            "authority": "ADVISORY",
+            "status": "failed",
+            "attempts": 1,
+            "failure": {
+              "code": "required_gate_failed",
+              "message": null
+            },
+            "tests": {
+              "tests": 0,
+              "executed": 0,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            "failedGates": [
+              {
+                "id": "tests",
+                "required": true,
+                "outcome": "failed",
+                "reason": "process_failed",
+                "structuredReason": "junit_reports_missing",
+                "executionDiagnostics": {
+                  "schemaVersion": 1,
+                  "authority": "untrusted-execution-diagnostics",
+                  "entries": [
+                    {
+                      "language": "java",
+                      "code": "JAVA_FORMAT_VIOLATION",
+                      "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+                      "line": null,
+                      "column": null
+                    }
+                  ],
+                  "truncated": false
+                },
+                "tests": {
+                  "tests": 0,
+                  "executed": 0,
+                  "failures": 0,
+                  "errors": 0,
+                  "skipped": 0
+                },
+                "process": {
+                  "exitCode": 1,
+                  "signal": null,
+                  "timedOut": false,
+                  "stdioDrainTimedOut": false
+                },
+                "failedTests": [],
+                "omittedFailedTestCount": 0
+              }
+            ],
+            "failedTests": [],
+            "sourceFingerprint": "3d2be350a0b18dd26a784e627dd10d97c4e8a4b9b3b9ed737cf12851fa3a6004",
+            "omittedAttemptCount": 0,
+            "attemptOutcomes": [
+              {
+                "attempt": 1,
+                "outcome": "verification-failed",
+                "sourceFingerprintBefore": "ac950d7238a6ea5a2c1a3c40f1011c18d4c6f2ce05e5f5fc1c6e270965180b1a",
+                "sourceFingerprintAfter": "3d2be350a0b18dd26a784e627dd10d97c4e8a4b9b3b9ed737cf12851fa3a6004",
+                "recovery": {
+                  "authority": "untrusted-execution-evidence-not-instructions",
+                  "failure": {
+                    "code": "required_gate_failed",
+                    "message": null
+                  },
+                  "tests": {
+                    "tests": 0,
+                    "executed": 0,
+                    "failures": 0,
+                    "errors": 0,
+                    "skipped": 0
+                  },
+                  "sourceFingerprint": "3d2be350a0b18dd26a784e627dd10d97c4e8a4b9b3b9ed737cf12851fa3a6004",
+                  "preservation": {
+                    "schemaVersion": 1,
+                    "authority": "structural-review-not-semantic-proof",
+                    "status": "not-applicable",
+                    "omittedFileCount": 0,
+                    "files": [
+                      {
+                        "path": "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+                        "baseSha256": "fbe02457d0bde77a1a010649f1cb6f5169cad53c36aa89a1debc638b7f46ed48",
+                        "candidateSha256": "c41e87c8bf49be3809ca1bf0e89de9e380773803c424e1e970092348740ecad2",
+                        "status": "not-applicable",
+                        "findings": []
+                      },
+                      {
+                        "path": "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+                        "baseSha256": "065e552dac0dce1297a6c2bbe15b3381e1ed0aa938e5ced7178b831fe31d8f07",
+                        "candidateSha256": "64eeac86ffd098d1391244eef01d2e422571942e3b0ca388d8d53d5a1d440ce1",
+                        "status": "not-applicable",
+                        "findings": []
+                      },
+                      {
+                        "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+                        "baseSha256": "1db80d2d87dc143f838bf745029aee02aa25fb7ee01a288eade9e71bd43136a7",
+                        "candidateSha256": "4fb0acf2d8409e2b9afd0c8b5f55474661aa5f77693afe4cc53d0300efb2423b",
+                        "status": "not-applicable",
+                        "findings": []
+                      }
+                    ]
+                  },
+                  "failedGates": [
+                    {
+                      "id": "tests",
+                      "required": true,
+                      "outcome": "failed",
+                      "reason": "process_failed",
+                      "structuredReason": "junit_reports_missing",
+                      "executionDiagnostics": {
+                        "schemaVersion": 1,
+                        "authority": "untrusted-execution-diagnostics",
+                        "entries": [
+                          {
+                            "language": "java",
+                            "code": "JAVA_FORMAT_VIOLATION",
+                            "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+                            "line": null,
+                            "column": null
+                          }
+                        ],
+                        "truncated": false
+                      },
+                      "tests": {
+                        "tests": 0,
+                        "executed": 0,
+                        "failures": 0,
+                        "errors": 0,
+                        "skipped": 0
+                      },
+                      "process": {
+                        "exitCode": 1,
+                        "signal": null,
+                        "timedOut": false,
+                        "stdioDrainTimedOut": false
+                      },
+                      "failedTests": [],
+                      "omittedFailedTestCount": 0
+                    }
+                  ],
+                  "omittedFailedGateCount": 0
+                }
+              }
+            ]
+          },
+          "request": {
+            "bytes": 19536,
+            "codeContextEntries": 6,
+            "codeContextCharacters": 1889,
+            "projectRuleCount": 4,
+            "knowledgeDocumentCount": 7
+          },
+          "providerActivity": [
+            {
+              "schemaVersion": 1,
+              "provider": "codex",
+              "authority": "provider-event-derived-advisory",
+              "parsedEvents": 30,
+              "rejectedEvents": 0,
+              "firstWriteObserved": true,
+              "preWritePaths": [
+                "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+                "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+                "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+                ".backend-harness/project.md",
+                ".backend-harness/architecture.md",
+                ".backend-harness/policies/api.md",
+                ".backend-harness/policies/error-handling.md",
+                "src/main/resources/messages/messages.properties",
+                "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+                "src/test/java/org/springframework/samples/petclinic/system/I18nPropertiesSyncTest.java",
+                "src/test/java/org/springframework/samples/petclinic/model/ValidatorTests.java"
+              ],
+              "preWriteContentPaths": [
+                "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+                "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+                "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+                ".backend-harness/project.md",
+                ".backend-harness/architecture.md",
+                ".backend-harness/policies/api.md",
+                ".backend-harness/policies/error-handling.md",
+                "src/main/resources/messages/messages.properties",
+                "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+                "src/test/java/org/springframework/samples/petclinic/system/I18nPropertiesSyncTest.java",
+                "src/test/java/org/springframework/samples/petclinic/model/ValidatorTests.java"
+              ],
+              "preWriteDiscoveryPaths": [],
+              "changedPaths": [
+                "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+                "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+                "src/main/resources/messages/messages.properties",
+                "src/main/resources/messages/messages_de.properties",
+                "src/main/resources/messages/messages_es.properties",
+                "src/main/resources/messages/messages_fa.properties",
+                "src/main/resources/messages/messages_ko.properties",
+                "src/main/resources/messages/messages_pt.properties",
+                "src/main/resources/messages/messages_ru.properties",
+                "src/main/resources/messages/messages_tr.properties",
+                "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java"
+              ],
+              "readCommandCount": 5,
+              "discoveryCommandCount": 1,
+              "validationCommandCount": 0,
+              "writeEventCount": 3
+            }
+          ],
+          "workspaceRetainedForAudit": true
+        }
+      },
+      "score": {
+        "schemaVersion": 3,
+        "id": "codex:bth:spring-04-future-visit",
+        "provider": "codex",
+        "lane": "bth",
+        "taskId": "spring-04-future-visit",
+        "successAt1": false,
+        "verificationSuccessAt1": false,
+        "acceptanceConfirmed": null,
+        "failureReasons": [
+          "structured-verification-not-confirmed",
+          "task-acceptance-not-measured"
+        ],
+        "providerCompleted": true,
+        "verificationConfirmed": false,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 169129,
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 418732,
+            "uncachedInput": 67244,
+            "output": 5486,
+            "cachedInput": 351488,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 1503,
+            "total": 424218
+          },
+          "costUsd": null,
+          "durationMs": 163814,
+          "turns": null
+        },
+        "changedPaths": [
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+          "src/main/resources/messages/messages.properties",
+          "src/main/resources/messages/messages_de.properties",
+          "src/main/resources/messages/messages_es.properties",
+          "src/main/resources/messages/messages_fa.properties",
+          "src/main/resources/messages/messages_ko.properties",
+          "src/main/resources/messages/messages_pt.properties",
+          "src/main/resources/messages/messages_ru.properties",
+          "src/main/resources/messages/messages_tr.properties",
+          "src/main/resources/templates/fragments/inputField.html",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java"
+        ],
+        "goldPathsChanged": [
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+          "src/main/resources/messages/messages.properties",
+          "src/main/resources/messages/messages_de.properties",
+          "src/main/resources/messages/messages_es.properties",
+          "src/main/resources/messages/messages_fa.properties",
+          "src/main/resources/messages/messages_ko.properties",
+          "src/main/resources/messages/messages_pt.properties",
+          "src/main/resources/messages/messages_ru.properties",
+          "src/main/resources/messages/messages_tr.properties",
+          "src/main/resources/templates/fragments/inputField.html",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java"
+        ],
+        "unexpectedChangedPaths": [],
+        "changedGoldRecall": 1,
+        "ruleViolations": [],
+        "impactLocalization": {
+          "taskId": "spring-04-future-visit",
+          "goldPathCount": 12,
+          "rankedPathCount": 6,
+          "recallAt5": 0.25,
+          "recallAt20": 0.25,
+          "ndcgAt20": 0.41842496774457966
+        },
+        "outcomeLocalization": {
+          "taskId": "spring-04-future-visit",
+          "goldPathCount": 12,
+          "rankedPathCount": 12,
+          "recallAt5": 0.4166666666666667,
+          "recallAt20": 1,
+          "ndcgAt20": 1
+        }
+      },
+      "totalElapsedMs": 307061,
+      "workspace": "<tmp>/bth-provider-case-3wRCGZ/project"
+    },
+    "direct": {
+      "originalArtifactSha256": "8224eeac6b859e70d7c1fe527f8ff705a9ad5c05656a70a37d06037be247dae2",
+      "schemaVersion": 1,
+      "case": {
+        "id": "codex:direct:spring-04-future-visit",
+        "provider": "codex",
+        "lane": "direct",
+        "repositoryId": "spring-petclinic",
+        "taskId": "spring-04-future-visit",
+        "corpusSha256": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+        "requirementSha256": "b24d45e6d00787b1edea2a1dfd0d73402b476ea0669a27418f67b35bcbc6f617",
+        "baseSha": "3c06fbfc1e42eb40802e0d0ca989bc9226755804",
+        "targetSha": "753d35c2f84432d88c0f3b61c9302a16069b78dd"
+      },
+      "fairness": {
+        "sanitizedSingleCommitHistory": true,
+        "goldHiddenFromProvider": true,
+        "sameProvider": true,
+        "protocolVersion": "reviewable-preservation-v37",
+        "configSha256": "23c28bbc50a9e8f4fa61bc9c20d3551c4b3f870d835d37c36570a90eb4222f7e",
+        "fixedMode": "fast",
+        "fixedModel": "gpt-5.6-sol",
+        "setupCommandSha256": "045342373bda32aab89f5caf4de7ab74bc1d5d66c692b1f84a166f441527c0d1"
+      },
+      "setup": {
+        "passed": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 56887,
+          "stdout": {
+            "sha256": "c94621f7ffae128bbabfdc048304ffcabb775b3f2a99b84a42022b87319ac583",
+            "bytes": 62227
+          },
+          "stderr": {
+            "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+            "bytes": 900
+          }
+        }
+      },
+      "preflight": {
+        "confirmed": true,
+        "emptyTestBaseline": null,
+        "failureCode": null,
+        "diagnosticCode": null,
+        "tests": {
+          "tests": 60,
+          "executed": 60,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "gates": [
+          {
+            "id": "tests",
+            "outcome": "passed",
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 53463,
+              "stdout": {
+                "sha256": "d82dc3a96e84a6cabe1313620c8e3f2917f1a789f51f22013831552e01cafc0d",
+                "bytes": 74012
+              },
+              "stderr": {
+                "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+                "bytes": 900
+              }
+            }
+          }
+        ]
+      },
+      "acceptanceControls": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": null,
+        "candidateSourceSha256": null,
+        "candidateUntouched": null,
+        "reason": "candidate-not-provided",
+        "oracleSha256": "d0c995453902e967986e3f89518e8974817d589626d35d6a2b392c95828587da",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitAcceptanceTests.java",
+            "sha256": "7c13cba46c1da29271390412f45abb5c2cd0dee13b64341f031828bce5110eb4"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 15724,
+              "stdout": {
+                "sha256": "b1992b9eb5db3b51327065898e5a8e2149cc14ec9e58bbfcfc32e409d0a492ee",
+                "bytes": 20750
+              },
+              "stderr": {
+                "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+                "sha256": "26b1d4848993cc375791a17a08dd57db9302e7f4a485e3504158eee9679adf8a",
+                "bytes": 64928
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rejectsTodayAndPastWithLocalizedDateError",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "acceptsTomorrowAndLater",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "defaultsNewVisitToTomorrow",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersTomorrowAsMinimumDate",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersLocalizedDateErrors",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "keepsDescriptionRequired",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 12486,
+              "stdout": {
+                "sha256": "4b04576638328de25302450e764318ba8fc831f640730337d9d20bf267792b4b",
+                "bytes": 2530
+              },
+              "stderr": {
+                "sha256": "7be6427b51884568db40597533656847545c37e645204718e79b51bfb459f355",
+                "bytes": 900
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.VisitAcceptanceTests.xml",
+                "sha256": "b1a8c91c4b5ed489a6d8c9f6fd9d7c04074fa8071dc8c5715d147714d1a96260",
+                "bytes": 47805
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rejectsTodayAndPastWithLocalizedDateError",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "acceptsTomorrowAndLater",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "defaultsNewVisitToTomorrow",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersTomorrowAsMinimumDate",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "rendersLocalizedDateErrors",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.VisitAcceptanceTests",
+                "name": "keepsDescriptionRequired",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": null,
+        "elapsedMs": 34959
+      },
+      "observation": {
+        "provider": "codex",
+        "lane": "direct",
+        "providerCompleted": true,
+        "verificationConfirmed": false,
+        "acceptance": {
+          "controlsConfirmed": false,
+          "candidatePassed": null,
+          "reason": "candidate-not-eligible"
+        },
+        "attempts": 1,
+        "elapsedMs": 142994,
+        "changedPaths": [
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "src/main/resources/messages/messages.properties",
+          "src/main/resources/messages/messages_de.properties",
+          "src/main/resources/messages/messages_es.properties",
+          "src/main/resources/messages/messages_fa.properties",
+          "src/main/resources/messages/messages_ko.properties",
+          "src/main/resources/messages/messages_pt.properties",
+          "src/main/resources/messages/messages_ru.properties",
+          "src/main/resources/messages/messages_tr.properties",
+          "src/main/resources/templates/fragments/inputField.html",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java"
+        ],
+        "impactPaths": [
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+          "src/main/java/org/springframework/samples/petclinic/owner/Pet.java",
+          "src/test/java/org/springframework/samples/petclinic/system/I18nPropertiesSyncTest.java",
+          "src/test/java/org/springframework/samples/petclinic/model/ValidatorTests.java",
+          "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java"
+        ],
+        "ruleViolations": [],
+        "usage": {
+          "schemaVersion": 2,
+          "provider": "codex",
+          "tokens": {
+            "input": 260312,
+            "uncachedInput": 35288,
+            "output": 4672,
+            "cachedInput": 225024,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 1047,
+            "total": 264984
+          },
+          "costUsd": null,
+          "durationMs": 139922,
+          "turns": null,
+          "providerReported": {
+            "usage.input_tokens": 260312,
+            "usage.cached_input_tokens": 225024,
+            "usage.cache_write_input_tokens": 0,
+            "usage.output_tokens": 4672,
+            "usage.reasoning_output_tokens": 1047
+          },
+          "scope": "invocation-final"
+        },
+        "evidence": {
+          "providerFailureCode": null,
+          "verificationFailureCode": "required_gate_failed",
+          "verificationTests": {
+            "tests": 0,
+            "executed": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "verificationDiagnostic": {
+            "confirmed": false,
+            "sourceFingerprint": "5cfe154e18ba4d785856def6f60b2dfb002218911b5b7fa14cf3b4e1b1964145",
+            "runPath": ".backend-harness/local/runs/latest.json",
+            "failure": {
+              "code": "required_gate_failed",
+              "message": null
+            },
+            "tests": {
+              "tests": 0,
+              "executed": 0,
+              "failures": 0,
+              "errors": 0,
+              "skipped": 0
+            },
+            "gates": [
+              {
+                "id": "tests",
+                "required": true,
+                "outcome": "failed",
+                "reason": "process_failed",
+                "structuredReason": "junit_reports_missing",
+                "executionDiagnostics": {
+                  "schemaVersion": 1,
+                  "authority": "untrusted-execution-diagnostics",
+                  "entries": [
+                    {
+                      "language": "java",
+                      "code": "JAVA_FORMAT_VIOLATION",
+                      "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+                      "line": null,
+                      "column": null
+                    }
+                  ],
+                  "truncated": false
+                },
+                "tests": {
+                  "tests": 0,
+                  "executed": 0,
+                  "failures": 0,
+                  "errors": 0,
+                  "skipped": 0
+                },
+                "process": {
+                  "exitCode": 1,
+                  "signal": null,
+                  "timedOut": false,
+                  "stdioDrainTimedOut": false
+                },
+                "failedTests": [],
+                "omittedFailedTestCount": 0
+              }
+            ],
+            "omittedGateCount": 0
+          },
+          "request": {
+            "promptBytes": 1838
+          },
+          "providerActivity": {
+            "schemaVersion": 1,
+            "provider": "codex",
+            "authority": "provider-event-derived-advisory",
+            "parsedEvents": 23,
+            "rejectedEvents": 0,
+            "firstWriteObserved": true,
+            "preWritePaths": [
+              "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+              "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+              "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+              "src/main/java/org/springframework/samples/petclinic/owner/Pet.java",
+              "src/test/java/org/springframework/samples/petclinic/system/I18nPropertiesSyncTest.java",
+              "src/test/java/org/springframework/samples/petclinic/model/ValidatorTests.java",
+              "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java"
+            ],
+            "preWriteContentPaths": [
+              "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+              "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java",
+              "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+              "src/main/java/org/springframework/samples/petclinic/owner/Pet.java",
+              "src/test/java/org/springframework/samples/petclinic/system/I18nPropertiesSyncTest.java",
+              "src/test/java/org/springframework/samples/petclinic/model/ValidatorTests.java",
+              "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java"
+            ],
+            "preWriteDiscoveryPaths": [],
+            "changedPaths": [],
+            "readCommandCount": 5,
+            "discoveryCommandCount": 0,
+            "validationCommandCount": 0,
+            "writeEventCount": 3
+          },
+          "process": {
+            "exitCode": 0,
+            "signal": null,
+            "timedOut": false,
+            "stdout": {
+              "sha256": "fede5c91d99ecc521f2941b82d70c768b46d00ea6bce97fc5b693e3d42be573b",
+              "bytes": 70903
+            },
+            "stderr": {
+              "sha256": "1aa26269eb1cc57f86b235a03cda53c004edb5b1e9fc99d4da4f00843293d721",
+              "bytes": 39
+            }
+          }
+        }
+      },
+      "score": {
+        "schemaVersion": 3,
+        "id": "codex:direct:spring-04-future-visit",
+        "provider": "codex",
+        "lane": "direct",
+        "taskId": "spring-04-future-visit",
+        "successAt1": false,
+        "verificationSuccessAt1": false,
+        "acceptanceConfirmed": null,
+        "failureReasons": [
+          "structured-verification-not-confirmed",
+          "task-acceptance-not-measured"
+        ],
+        "providerCompleted": true,
+        "verificationConfirmed": false,
+        "attempts": 1,
+        "retries": 0,
+        "elapsedMs": 142994,
+        "usage": {
+          "provider": "codex",
+          "tokens": {
+            "input": 260312,
+            "uncachedInput": 35288,
+            "output": 4672,
+            "cachedInput": 225024,
+            "cacheCreationInput": 0,
+            "reasoningOutput": 1047,
+            "total": 264984
+          },
+          "costUsd": null,
+          "durationMs": 139922,
+          "turns": null
+        },
+        "changedPaths": [
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "src/main/resources/messages/messages.properties",
+          "src/main/resources/messages/messages_de.properties",
+          "src/main/resources/messages/messages_es.properties",
+          "src/main/resources/messages/messages_fa.properties",
+          "src/main/resources/messages/messages_ko.properties",
+          "src/main/resources/messages/messages_pt.properties",
+          "src/main/resources/messages/messages_ru.properties",
+          "src/main/resources/messages/messages_tr.properties",
+          "src/main/resources/templates/fragments/inputField.html",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java"
+        ],
+        "goldPathsChanged": [
+          "src/main/java/org/springframework/samples/petclinic/owner/Visit.java",
+          "src/main/resources/messages/messages.properties",
+          "src/main/resources/messages/messages_de.properties",
+          "src/main/resources/messages/messages_es.properties",
+          "src/main/resources/messages/messages_fa.properties",
+          "src/main/resources/messages/messages_ko.properties",
+          "src/main/resources/messages/messages_pt.properties",
+          "src/main/resources/messages/messages_ru.properties",
+          "src/main/resources/messages/messages_tr.properties",
+          "src/main/resources/templates/fragments/inputField.html",
+          "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java"
+        ],
+        "unexpectedChangedPaths": [],
+        "changedGoldRecall": 0.9166666666666666,
+        "ruleViolations": [],
+        "impactLocalization": {
+          "taskId": "spring-04-future-visit",
+          "goldPathCount": 12,
+          "rankedPathCount": 7,
+          "recallAt5": 0.25,
+          "recallAt20": 0.25,
+          "ndcgAt20": 0.41842496774457966
+        },
+        "outcomeLocalization": {
+          "taskId": "spring-04-future-visit",
+          "goldPathCount": 12,
+          "rankedPathCount": 11,
+          "recallAt5": 0.4166666666666667,
+          "recallAt20": 0.9166666666666666,
+          "ndcgAt20": 0.9469365938224419
+        }
+      },
+      "totalElapsedMs": 289893,
+      "workspace": "<tmp>/bth-provider-case-NXo7sx/project"
+    }
+  },
+  "limitations": [
+    "One stochastic pair is not an aggregate product score.",
+    "Cached tokens are included in total tokens; cost is unknown when the CLI does not report it.",
+    "Rule violation counters cover recorded control policies, not proof of all team conventions.",
+    "Passing required and independent tests is not authorization to apply a candidate with pending structural review."
+  ]
+}

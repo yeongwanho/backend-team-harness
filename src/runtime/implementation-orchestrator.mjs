@@ -8,6 +8,7 @@ import { loadVerificationConfig, verificationExecutablePaths, verificationInputP
 import { selectVerificationGates } from '../adapters/verification-tool.mjs'
 import { canonicalJson } from '../core/canonical-json.mjs'
 import {
+  implementationCandidateStatus,
   implementationIntegrationStatus,
   loadImplementationRecord,
   saveImplementationRecord,
@@ -28,7 +29,8 @@ import { selectProviderContext } from '../core/provider-context.mjs'
 import { compactImplementationVerification as compactVerification, implementationRecoveryInput as recoveryInput } from '../core/implementation-verification.mjs'
 import { selectTaskRetrievalQuery } from '../core/retrieval-query.mjs'
 import { inspectTestAuthoringContract } from '../core/test-authoring-contract.mjs'
-import { checkImplementationPreservation, preservationFailure, preservationGuidanceFor, preservationNeedsReview } from '../core/implementation-preservation.mjs'
+import { checkImplementationPreservation, preservationFailure, preservationGuidanceFor } from '../core/implementation-preservation.mjs'
+import { preservationReview } from '../core/preservation-review.mjs'
 import { bthError } from '../core/errors.mjs'
 import { assertNoSymlinkSegments, assertRelativeChild, resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { captureConfiguredSourceBinding, checkProject } from './backend-harness.mjs'
@@ -453,12 +455,30 @@ async function prepareIsolatedDependencies(root, workspace, preparationConfig, v
   return { ...receipt, sourceStable, ...(sourceStable ? {} : { status: 'failed', failureCode: 'workspace-preparation-source-changed' }) }
 }
 
+async function currentPreservationReview(root, record) {
+  if (record.status !== 'passed' || !record.workspace || record.schemaVersion !== 2) return null
+  const workspace = await resolveRecordedWorkspace(root, record.workspace)
+  const candidate = await implementationCandidateStatus(workspace, record)
+  if (!candidate.valid) throw bthError('implementation_candidate_changed', 'Candidate no longer matches its sealed evidence.', { mismatches: candidate.mismatches })
+  const preservation = await checkImplementationPreservation(workspace, record.baseHeadCommit, record.implementedFiles.map(file => file.path))
+  return preservationReview(record, preservation)
+}
+
+function implementationResult(root, path, record, review) {
+  const nextAction = review?.status === 'required'
+    ? 'Tests passed, but changed baseline conditions need review. Inspect bth implement status ' + record.taskId + ' <project> --json and the exact diff before apply with its review fingerprint and note.'
+    : review?.status === 'unavailable'
+      ? 'Structural inspection is incomplete. Resolve the missing evidence before apply; a review acknowledgement cannot waive it.'
+      : record.nextAction
+  return { root, path: relative(root, path).replaceAll('\\', '/'), record, preservationReview: review, nextAction }
+}
+
 export async function implementationStatus(inputPath, taskId) {
   const root = await resolveReadableRoot(inputPath)
   const id = assertTaskId(taskId)
   const loaded = await loadImplementationRecord(root, id)
   if (!loaded.record) throw new Error('No implementation run exists for task ' + taskId + '.')
-  return { root, path: relative(root, loaded.path).replaceAll('\\', '/'), record: loaded.record }
+  return implementationResult(root, loaded.path, loaded.record, await currentPreservationReview(root, loaded.record))
 }
 
 async function prepareProviderPlanning(root, task, config, sourceBinding) {
@@ -565,12 +585,7 @@ async function runUnlocked(root, taskId, options) {
     if (prior.record.schemaVersion !== 2 || !prior.record.baseHeadCommit || !Array.isArray(prior.record.implementedFiles) || prior.record.implementedFiles.length < 1) {
       throw new Error('Legacy passed implementation record lacks file-level integration evidence. Run `bth implement reset ' + taskId + ' --by <actor> --discard-workspace` before rebuilding it.')
     }
-    if (prior.record.workspace) {
-      const candidateRoot = await resolveRecordedWorkspace(root, prior.record.workspace)
-      const preservation = await checkImplementationPreservation(candidateRoot, prior.record.baseHeadCommit, prior.record.implementedFiles.map(file => file.path))
-      if (preservationNeedsReview(preservation)) throw bthError('implementation_preservation_review_required', 'Previously passed candidate requires structural preservation review under current checks; its old sealed record was not rewritten.', { preservation })
-    }
-    return { root, path: relative(root, prior.path).replaceAll('\\', '/'), record: prior.record }
+    return implementationResult(root, prior.path, prior.record, await currentPreservationReview(root, prior.record))
   }
   if ((prior.record?.attempts?.length ?? 0) >= loadedConfig.config.recovery.maxAttempts) {
     throw new Error('Implementation recovery budget is exhausted for task ' + taskId + '; inspect the recorded evidence and start a newly approved task or increase the explicit budget.')
@@ -810,7 +825,9 @@ async function runUnlocked(root, taskId, options) {
     } else if (adapterPassed) {
       candidateFiles = await snapshotImplementedFiles(workspace.path, changedPaths)
       const preservation = await checkImplementationPreservation(workspace.path, sourceBinding.headCommit, changedPaths)
-      if (preservationNeedsReview(preservation)) attemptVerification = preservationFailure(preservation, after?.fingerprint ?? null)
+      // Observed guard drift is review work, not a failing test or an order to undo
+      // the approved requirement. Incomplete analysis remains non-confirmed.
+      if (!preservation || preservation.status === 'incomplete') attemptVerification = preservationFailure(preservation, after?.fingerprint ?? null)
       const selectedFeedbackGates = selectVerificationGates(verificationConfig.gates, { mode: 'feedback', changedPaths })
       // An identical selection gains no early feedback: run the full scope once.
       // Strict subsets still get early feedback followed by full verification.
@@ -953,10 +970,12 @@ async function runUnlocked(root, taskId, options) {
     },
     updatedAt: new Date().toISOString(),
     nextAction: status === 'passed'
-      ? 'Review the isolated diff, then run bth implement apply ' + taskId + ' <project> --by <actor> --allow-write and bth verify on the integrated source.'
+      ? verification?.preservation?.status === 'review-required'
+        ? 'Tests passed; changed baseline conditions still need review. Run bth implement status ' + taskId + ' <project> --json for the current review fingerprint. Apply only after reviewing the exact diff, then verify the integrated source.'
+        : 'Review the isolated diff, then run bth implement apply ' + taskId + ' <project> --by <actor> --allow-write and bth verify on the integrated source.'
       : 'Run bth diagnose ' + taskId + ' <project> --json to inspect the recorded failure before another bounded implementation run.'
   })
-  return { root, path: relative(root, prior.path).replaceAll('\\', '/'), record }
+  return implementationResult(root, prior.path, record, status === 'passed' ? preservationReview(record, verification?.preservation) : null)
 }
 
 export function runImplementation(inputPath, taskId, options = {}) {

@@ -234,6 +234,8 @@ async function runBthLane(root, task, repositoryConfig, input, options) {
       evidence: {
         taskState: result.task?.state ?? null,
         implementationStatus: record?.status ?? null,
+        workflowStatus: result.status,
+        preservationReview: result.implementation?.preservationReview ?? null,
         verificationRunPath: record?.verification?.runPath ?? null,
         failureCode: record?.preparation?.failureCode ?? record?.verification?.failure?.code ?? (record?.verification?.confirmed === false ? 'verification-not-confirmed' : null),
         preparation: record?.preparation ?? null,

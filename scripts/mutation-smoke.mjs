@@ -7,6 +7,18 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/core/preservation-review.mjs',
+    from: 'options.acceptPreservationReview !== review.fingerprint',
+    to: 'false',
+    test: 'test/preservation-review.test.mjs'
+  },
+  {
+    file: 'src/core/preservation-review.mjs',
+    from: "preservation.status === 'incomplete'",
+    to: 'false',
+    test: 'test/preservation-review.test.mjs'
+  },
+  {
     file: 'src/adapters/java-preservation.mjs',
     from: 'original.guards.every(guard => write.guards.includes(guard))',
     to: 'true',
