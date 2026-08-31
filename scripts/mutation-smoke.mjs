@@ -7,6 +7,18 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/adapters/java-preservation.mjs',
+    from: 'original.guards.every(guard => write.guards.includes(guard))',
+    to: 'true',
+    test: 'test/java-preservation.test.mjs'
+  },
+  {
+    file: 'src/core/implementation-preservation.mjs',
+    from: "files.some(file => file.status === 'review-required') ? 'review-required'",
+    to: "files.some(file => file.status === 'review-required') ? 'clear'",
+    test: 'test/implementation-preservation.test.mjs'
+  },
+  {
     file: 'src/core/convention-compiler.mjs',
     from: "if (path.endsWith('.py')) stem = stem.replace(/^test_/, '')",
     to: 'if (false) stem = stem',
@@ -211,6 +223,7 @@ async function copyFixture(target) {
   await cp(join(root, 'test'), join(target, 'test'), { recursive: true })
   await cp(join(root, 'test-support'), join(target, 'test-support'), { recursive: true })
   await cp(join(root, 'packs'), join(target, 'packs'), { recursive: true })
+  await cp(join(root, 'vendor'), join(target, 'vendor'), { recursive: true })
   await cp(join(root, 'package.json'), join(target, 'package.json'))
   await symlink(join(root, 'node_modules'), join(target, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir')
 }

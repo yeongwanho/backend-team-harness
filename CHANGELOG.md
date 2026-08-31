@@ -6,6 +6,9 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Added
 
+- Bounded changed-Java relationship guard preservation review before implementation verification and automatic apply, including old sealed candidates. Source-hashed locations reach the existing retry budget; no semantic authorization proof or test-skipping authority is claimed. The portable Java grammar is pinned, hash-checked and tested from the installed package. See `docs/evidence/runtime-preservation-v36.md`.
+- File-only Spring JavaFormat diagnostics survive bounded recovery without invented line numbers, source excerpts or log-provided commands.
+
 - Explicit, offline/no-build uv workspace preparation for a uniquely selected Python test project, with bounded TOML parsing, declared root/member lock inputs and optional numeric Python selection. See `docs/evidence/python-workspace-v32.md` for real FastAPI execution and remaining baseline failures.
 - Independent pinned NestJS file mapping / resolved-observable acceptance controls, with offline no-lifecycle-script dependency installation in disposable evaluator clones. The empty ordinary unit-test baseline is still not provider-ready.
 - `bth work` source-bound plan and isolated implementation flow.
@@ -29,6 +32,9 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 - Shared records redact additional provider tokens, auth/cookie material, email addresses, and raw source-bearing fields.
 
 ### Compatibility
+
+- Automatic implementation/apply can now hold a previously passed Java candidate for structural preservation review or incomplete bounded inspection. Intentional guard changes and equivalent unsupported control-flow rewrites require independent review outside automatic apply. Legacy schema-v1 request fields remain unchanged; schema-v2 adds compact preservation guidance and optional recovery evidence.
+- New paired provider runs use protocol `preservation-runtime-v36`; older v35 records are not reused as results for the changed implementation runtime. No new real-model success claim is made by this release.
 
 - `workspacePreparation.kind: "uv-sync-offline"` and `pythonVersion` require an updated BTH schema-v2 reader. Existing contracts are not overwritten. Poetry/PDM environments remain reusable without automatic installation. Provider benchmark protocol `python-workspace-v32` has new generated-runner hashes; earlier comparison records are historical, not silently interchangeable.
 - Existing project-owned `.backend-harness/bin/verify-portable.mjs` files are not replaced by a package update or ordinary `bth init`. Review regenerated runners in a disposable copy before applying this fix; `init --force` also replaces other shared files and is not a runner-only updater. See `docs/evidence/nest-verification-v25.md`.

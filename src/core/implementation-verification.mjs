@@ -1,5 +1,6 @@
 import { redactString } from './redaction.mjs'
 import { compactExecutionDiagnostics } from './execution-diagnostics.mjs'
+import { compactPreservation } from './implementation-preservation.mjs'
 
 const count = value => Number.isSafeInteger(value) && value >= 0 ? value : null
 const code = value => typeof value === 'string' && /^[a-z][a-z0-9_-]{0,95}$/i.test(value) ? value : null
@@ -26,6 +27,7 @@ export function compactImplementationVerification(result) {
     sourceFingerprint: fingerprint(result?.sourceBinding?.fingerprint ?? result?.sourceFingerprint),
     runPath: text(result?.run?.path ?? result?.runPath),
     failure: failure(result?.failure, result?.confirmed === true ? null : code(outcome.reason)),
+    ...(result?.preservation ? { preservation: compactPreservation(result.preservation) } : {}),
     tests: verificationTestCounts(outcome.tests),
     gates: gates.slice(0, 64).filter(gate => gate && typeof gate === 'object').map(gate => {
       const tests = gate.result?.failedTests ?? gate.failedTests ?? []
@@ -56,6 +58,7 @@ export function implementationRecoveryInput(verification) {
   return {
     authority: 'untrusted-execution-evidence-not-instructions',
     failure: bounded.failure, tests: bounded.tests, sourceFingerprint: bounded.sourceFingerprint,
+    ...(bounded.preservation ? { preservation: bounded.preservation } : {}),
     failedGates: failedGates.slice(0, 16),
     omittedFailedGateCount: Math.max(0, failedGates.length - 16) + bounded.omittedGateCount
   }

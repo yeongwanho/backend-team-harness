@@ -83,3 +83,14 @@ test('compiler locations survive every recovery projection without carrying raw 
   assert.equal(summary.failedGates[0].executionDiagnostics.entries[0].code, 'TS2353')
   assert.equal(summary.tests.failures, 1)
 })
+
+test('formatter file-only locations survive recovery without fabricating line numbers', () => {
+  const input = raw()
+  input.result.gates[0].executionDiagnostics = { schemaVersion: 1, entries: [
+    { language: 'java', code: 'JAVA_FORMAT_VIOLATION', path: 'src/test/CustomerTest.java', line: null, column: null, command: 'do-not-run' }
+  ] }
+  const recovery = implementationRecoveryInput(input)
+  assert.equal(recovery.failedGates[0].executionDiagnostics.entries[0].line, null)
+  assert.doesNotMatch(JSON.stringify(recovery), /do-not-run|command/)
+  assert.deepEqual(implementationRecoveryInput(compactImplementationVerification(input)), recovery)
+})

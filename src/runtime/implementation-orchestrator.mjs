@@ -28,6 +28,8 @@ import { selectProviderContext } from '../core/provider-context.mjs'
 import { compactImplementationVerification as compactVerification, implementationRecoveryInput as recoveryInput } from '../core/implementation-verification.mjs'
 import { selectTaskRetrievalQuery } from '../core/retrieval-query.mjs'
 import { inspectTestAuthoringContract } from '../core/test-authoring-contract.mjs'
+import { checkImplementationPreservation, preservationFailure, preservationGuidanceFor, preservationNeedsReview } from '../core/implementation-preservation.mjs'
+import { bthError } from '../core/errors.mjs'
 import { assertNoSymlinkSegments, assertRelativeChild, resolveReadableRoot, resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
 import { captureConfiguredSourceBinding, checkProject } from './backend-harness.mjs'
 import { generatedProviderContext } from './interview-orchestrator.mjs'
@@ -563,6 +565,11 @@ async function runUnlocked(root, taskId, options) {
     if (prior.record.schemaVersion !== 2 || !prior.record.baseHeadCommit || !Array.isArray(prior.record.implementedFiles) || prior.record.implementedFiles.length < 1) {
       throw new Error('Legacy passed implementation record lacks file-level integration evidence. Run `bth implement reset ' + taskId + ' --by <actor> --discard-workspace` before rebuilding it.')
     }
+    if (prior.record.workspace) {
+      const candidateRoot = await resolveRecordedWorkspace(root, prior.record.workspace)
+      const preservation = await checkImplementationPreservation(candidateRoot, prior.record.baseHeadCommit, prior.record.implementedFiles.map(file => file.path))
+      if (preservationNeedsReview(preservation)) throw bthError('implementation_preservation_review_required', 'Previously passed candidate requires structural preservation review under current checks; its old sealed record was not rewritten.', { preservation })
+    }
     return { root, path: relative(root, prior.path).replaceAll('\\', '/'), record: prior.record }
   }
   if ((prior.record?.attempts?.length ?? 0) >= loadedConfig.config.recovery.maxAttempts) {
@@ -642,6 +649,7 @@ async function runUnlocked(root, taskId, options) {
     ? await resolveImplementationExecutable(workspace.path, loadedConfig.config.adapter.command)
     : null
   const verificationConfig = (await loadVerificationConfig(workspace.path)).config
+  const preservationGuidance = preservationGuidanceFor(verificationConfig.gates, codeContext?.entries?.map(entry => entry.path) ?? [])
   const testAuthoring = loadedConfig.config.schemaVersion === 2
     ? await inspectTestAuthoringContract(workspace.path, verificationConfig) : null
   const requestDir = await resolveSafeProjectPath(workspace.path, '.backend-harness/local/implementation')
@@ -685,6 +693,7 @@ async function runUnlocked(root, taskId, options) {
             executionOwner: 'harness',
             focusedRegressionTestsRequired: true,
             testAuthoring,
+            ...(preservationGuidance ? { preservation: preservationGuidance } : {}),
             requiredGates: verificationConfig.gates.filter(gate => gate.required).map(gate => ({
               id: gate.id, resultType: gate.result.type, minimumExecutedTests: gate.result.minimumTests ?? null
             }))
@@ -800,10 +809,12 @@ async function runUnlocked(root, taskId, options) {
       }
     } else if (adapterPassed) {
       candidateFiles = await snapshotImplementedFiles(workspace.path, changedPaths)
+      const preservation = await checkImplementationPreservation(workspace.path, sourceBinding.headCommit, changedPaths)
+      if (preservationNeedsReview(preservation)) attemptVerification = preservationFailure(preservation, after?.fingerprint ?? null)
       const selectedFeedbackGates = selectVerificationGates(verificationConfig.gates, { mode: 'feedback', changedPaths })
       // An identical selection gains no early feedback: run the full scope once.
       // Strict subsets still get early feedback followed by full verification.
-      if (selectedFeedbackGates.length > 0 && selectedFeedbackGates.length < verificationConfig.gates.length) {
+      if (!attemptVerification && selectedFeedbackGates.length > 0 && selectedFeedbackGates.length < verificationConfig.gates.length) {
         feedback = compactVerification(await checkProject(workspace.path, {
           allowNetwork: options.allowNetwork === true,
           verificationScope: { mode: 'feedback', changedPaths }
@@ -832,6 +843,7 @@ async function runUnlocked(root, taskId, options) {
           attemptVerification = checked
         }
       }
+      attemptVerification.preservation = preservation
     } else {
       attemptVerification = null
     }

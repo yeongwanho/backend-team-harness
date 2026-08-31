@@ -20,10 +20,12 @@ function safeRelativePath(value) {
 }
 
 function entry(value) {
-  if (!value || typeof value !== 'object' || typeof value.code !== 'string' || !positive(value.line) || (value.column !== null && !positive(value.column))) return null
+  if (!value || typeof value !== 'object' || typeof value.code !== 'string') return null
+  const formatter = value.language === 'java' && value.code === 'JAVA_FORMAT_VIOLATION'
+  if (formatter ? value.line !== null || value.column !== null : !positive(value.line) || (value.column !== null && !positive(value.column))) return null
   const path = safeRelativePath(value.path)
   const validCode = value.language === 'typescript' ? /^TS\d{3,6}$/.test(value.code) && /\.[cm]?[jt]sx?$/.test(path ?? '')
-    : value.language === 'java' ? value.code === 'JAVA_COMPILE_ERROR' && path?.endsWith('.java')
+    : value.language === 'java' ? (formatter || value.code === 'JAVA_COMPILE_ERROR') && path?.endsWith('.java')
       : value.language === 'kotlin' && value.code === 'KOTLIN_COMPILE_ERROR' && path?.endsWith('.kt')
   return path && validCode ? { language: value.language, code: value.code, path, line: value.line, column: value.column } : null
 }
@@ -69,8 +71,18 @@ export async function extractExecutionDiagnostics(processResult, projectRoot) {
     // allocation. No source read, command execution or repository walk occurs.
     const limited = Buffer.from(tail.slice(-MAX_TAIL_BYTES)).subarray(-MAX_TAIL_BYTES).toString('utf8')
     truncated ||= limited.length < tail.length || stream.bytes > Buffer.byteLength(tail)
+    let formatterList = false
     for (const line of stripVTControlCharacters(limited).split(/\r?\n/)) {
-      const parsed = parseLine(line.trim())
+      const trimmed = line.trim()
+      if (/^\[ERROR\] Failed to execute goal io\.spring\.javaformat:spring-javaformat-maven-plugin:[\w.-]+:validate \([^\r\n]*\) on project [^\r\n]+: Formatting violations found in the following files:$/.test(trimmed)) {
+        formatterList = true
+        continue
+      }
+      const formattedFile = formatterList ? trimmed.match(/^\[ERROR\]\s+\*\s+(.+\.java)$/) : null
+      formatterList = Boolean(formattedFile)
+      const parsed = formattedFile
+        ? { language: 'java', code: 'JAVA_FORMAT_VIOLATION', path: formattedFile[1], line: null, column: null }
+        : parseLine(trimmed)
       if (!parsed) continue
       if (++candidates > MAX_CANDIDATES) { truncated = true; break }
       let path = parsed.path

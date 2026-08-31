@@ -3,6 +3,7 @@ import { chmod, copyFile, mkdir, rename, rm, unlink, writeFile } from 'node:fs/p
 import { dirname, relative, resolve } from 'node:path'
 import { canonicalJson } from '../core/canonical-json.mjs'
 import { bthError } from '../core/errors.mjs'
+import { checkImplementationPreservation, preservationNeedsReview } from '../core/implementation-preservation.mjs'
 import {
   implementationCandidateStatus,
   implementationIntegrationStatus,
@@ -160,6 +161,11 @@ async function applyUnlocked(root, taskId, options) {
   const candidate = await implementationCandidateStatus(workspace, record)
   if (!candidate.valid) {
     throw bthError('apply_candidate_changed', candidate.reason, { mismatches: candidate.mismatches })
+  }
+
+  const preservation = await checkImplementationPreservation(workspace, record.baseHeadCommit, record.implementedFiles.map(file => file.path))
+  if (preservationNeedsReview(preservation)) {
+    throw bthError('apply_preservation_review_required', 'Candidate requires structural preservation review before automatic apply. No source files were staged or changed.', { preservation })
   }
 
   const stagingRoot = await resolveSafeProjectPath(root, '.backend-harness/local/apply/' + id + '-' + randomUUID())

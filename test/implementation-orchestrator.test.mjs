@@ -14,6 +14,7 @@ import { advanceTask, createTask, loadTask, updateTaskPlan } from '../src/core/t
 import { initializeGit, writeGradleFixture } from '../test-support/git-project.mjs'
 import { loadBudgetedCodeContext } from '../src/core/code-context.mjs'
 import { exportApprovedPlan } from '../src/runtime/plan-export.mjs'
+import { saveImplementationRecord, snapshotImplementedFiles } from '../src/core/implementation-record-store.mjs'
 
 async function approvedImplementationProject(options = {}) {
   const root = await mkdtemp(join(tmpdir(), 'bth-implementation-'))
@@ -96,6 +97,89 @@ async function approvedImplementationProject(options = {}) {
   })
   return root
 }
+
+const preservationFile = 'src/main/java/example/Customer.java'
+const guardedCustomer = 'class Customer { @OneToMany List<Order> orders; void add(Order o) { if(o.isNew()) orders.add(o); } }\n'
+const recoveredCustomer = guardedCustomer.replace(' }\n', ' int count() { return orders.size(); } }\n')
+const unguardedCustomer = guardedCustomer.replace('if(o.isNew())', '')
+async function preservationProject() {
+  return approvedImplementationProject({ projectFiles: { [preservationFile]: guardedCustomer }, providerConfig: {
+    schemaVersion: 2,
+    adapter: { kind: 'provider', provider: 'codex', network: true, timeoutMs: 30_000, model: null, mode: 'fast', contextBudgetCharacters: 256, maxBudgetUsd: null },
+    writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 65536 }, recovery: { maxAttempts: 2 }
+  } })
+}
+function syntheticProvider(input) {
+  return {
+    process: { exitCode: 0, signal: null, timedOut: false, stdioDrainTimedOut: false,
+      startedAt: '2026-08-31T00:00:00Z', finishedAt: '2026-08-31T00:00:01Z', durationMs: 1000,
+      stdout: { sha256: 'a'.repeat(64), bytes: 0, tail: '' }, stderr: { sha256: 'b'.repeat(64), bytes: 0, tail: '' } },
+    metadata: { kind: 'provider', provider: 'codex', version: 'fixture', profile: input.profile, usage: {} }
+  }
+}
+const preservationOptions = { actor: 'developer', allowWrite: true, allowNetwork: true, providerProbe: async () => ({ available: true, version: 'fixture' }) }
+
+test('structural drift reaches bounded provider recovery before expensive Gates; restored guard still requires full tests', async () => {
+  const root = await preservationProject()
+  const result = await runImplementation(root, 'IMPL-1', { ...preservationOptions, providerRunner: async (_adapter, input) => {
+    const request = JSON.parse(await readFile(join(input.cwd, input.requestPath), 'utf8'))
+    assert.equal(request.verification.preservation.scope, 'changed-java-direct-relationship-writes')
+    if (request.attempt === 2) {
+      assert.equal(request.recovery.failure.code, 'implementation_preservation_review_required')
+      assert.equal(request.recovery.preservation.files[0].findings[0].code, 'relationship_guard_drift')
+      assert.equal(request.recovery.tests, null)
+      assert.deepEqual(request.recovery.failedGates, [])
+      await assert.rejects(access(join(input.cwd, 'build/test-results/test/TEST-fixture.xml')), /ENOENT/)
+    }
+    await writeFile(join(input.cwd, preservationFile), request.attempt === 1 ? unguardedCustomer : recoveredCustomer)
+    return syntheticProvider(input)
+  } })
+  assert.equal(result.record.status, 'passed')
+  assert.equal(result.record.attempts.length, 2)
+  assert.equal(result.record.attempts[0].verification.preservation.status, 'review-required')
+  assert.equal(result.record.verification.preservation.status, 'clear')
+  assert.ok(result.record.verification.tests.executed > 0)
+  assert.equal(await readFile(join(root, preservationFile), 'utf8'), guardedCustomer)
+  assert.equal((await applyImplementation(root, 'IMPL-1', { actor: 'developer', allowWrite: true })).integration.integrated, true)
+})
+
+test('unresolved drift exhausts only the existing attempt budget, never certifies or applies the candidate', async () => {
+  const root = await preservationProject()
+  const result = await runImplementation(root, 'IMPL-1', { ...preservationOptions, providerRunner: async (_adapter, input) => {
+    await writeFile(join(input.cwd, preservationFile), unguardedCustomer)
+    return syntheticProvider(input)
+  } })
+  assert.equal(result.record.status, 'failed')
+  assert.equal(result.record.attempts.length, 2)
+  assert.equal(result.record.verification.tests, null)
+  assert.deepEqual(result.record.implementedFiles, [])
+  await assert.rejects(applyImplementation(root, 'IMPL-1', preservationOptions), { code: 'apply_record_not_passed' })
+  assert.equal(await readFile(join(root, preservationFile), 'utf8'), guardedCustomer)
+})
+
+test('a sealed old passed candidate cannot bypass new preservation checks on reuse or apply', async () => {
+  const root = await preservationProject()
+  const result = await runImplementation(root, 'IMPL-1', { ...preservationOptions, providerRunner: async (_adapter, input) => {
+    await writeFile(join(input.cwd, preservationFile), recoveredCustomer)
+    return syntheticProvider(input)
+  } })
+  assert.equal(result.record.status, 'passed')
+  await writeFile(join(result.record.workspace, preservationFile), unguardedCustomer)
+  const { recordSha256, ...fields } = result.record
+  // Construct an old valid seal: candidate bytes are unchanged relative to that seal,
+  // so only the newly independent preservation recheck can reject it.
+  const legacy = await saveImplementationRecord(join(root, result.path), {
+    ...fields, verification: { ...fields.verification, preservation: undefined },
+    implementedFiles: await snapshotImplementedFiles(result.record.workspace, [preservationFile])
+  })
+  const before = await readFile(join(root, result.path), 'utf8')
+  await assert.rejects(runImplementation(root, 'IMPL-1', preservationOptions), { code: 'implementation_preservation_review_required' })
+  await assert.rejects(applyImplementation(root, 'IMPL-1', preservationOptions), { code: 'apply_preservation_review_required' })
+  assert.equal(await readFile(join(root, preservationFile), 'utf8'), guardedCustomer)
+  assert.equal(await readFile(join(root, result.path), 'utf8'), before)
+  assert.match(legacy.recordSha256, /^[a-f0-9]{64}$/)
+  await assert.rejects(access(join(root, '.backend-harness/local/apply')), /ENOENT/)
+})
 
 async function approvedRuleAwareFastProject() {
   const root = await mkdtemp(join(tmpdir(), 'bth-rule-aware-fast-'))

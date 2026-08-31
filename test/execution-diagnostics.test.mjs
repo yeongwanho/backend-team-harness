@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { compactExecutionDiagnostics, extractExecutionDiagnostics } from '../src/core/execution-diagnostics.mjs'
 
 const execution = (stderr, stdout = '') => ({ stderr: { tail: stderr, bytes: Buffer.byteLength(stderr) }, stdout: { tail: stdout, bytes: Buffer.byteLength(stdout) } })
+const formatHeader = '[ERROR] Failed to execute goal io.spring.javaformat:spring-javaformat-maven-plugin:0.0.47:validate (default) on project demo: Formatting violations found in the following files:'
 async function fixture(t) {
   const root = await mkdtemp(join(tmpdir(), 'bth-compiler-hints-'))
   t.after(() => rm(root, { recursive: true, force: true }))
@@ -89,4 +90,36 @@ test('persisted hints are revalidated and cannot carry arbitrary messages, instr
   assert.equal(compactExecutionDiagnostics(null), null)
   assert.equal(compactExecutionDiagnostics({ schemaVersion: 99, entries: [valid] }), null)
   assert.equal(compactExecutionDiagnostics({ schemaVersion: 1, entries: [] }), null)
+})
+
+test('Spring JavaFormat reports file-only locations without inventing line numbers or forwarding commands', async t => {
+  const root = await fixture(t)
+  const result = await extractExecutionDiagnostics(execution([
+    formatHeader, '[ERROR]  * ' + join(root, 'src/Service.java'),
+    '[ERROR]', '[ERROR] Run `spring-javaformat:apply` to fix. password=secret'
+  ].join('\n')), root)
+  assert.deepEqual(result.entries, [{ language: 'java', code: 'JAVA_FORMAT_VIOLATION', path: 'src/Service.java', line: null, column: null }])
+  assert.deepEqual(compactExecutionDiagnostics(result), result)
+  assert.doesNotMatch(JSON.stringify(result), /apply|Run|password|secret/)
+})
+
+test('formatter list parsing requires its own header, stops at non-list lines and cannot cross streams', async t => {
+  const root = await fixture(t)
+  for (const input of [
+    execution('[ERROR] * src/Service.java'),
+    execution('Formatting violations found in the following files:\n[ERROR] * src/Service.java'),
+    execution(formatHeader + '\n[ERROR]\n[ERROR] * src/Service.java'),
+    execution(formatHeader, '[ERROR] * src/Service.java'),
+    execution(formatHeader.replace(':validate ', ':apply ') + '\n[ERROR] * src/Service.java'),
+    execution(formatHeader + '\n[ERROR] * ../Service.java\n[ERROR] * src/person@example.invalid.ts'),
+  ]) assert.equal(await extractExecutionDiagnostics(input, root), null)
+})
+
+test('null positions are accepted only for the exact Java formatter diagnostic', () => {
+  const value = { language: 'java', code: 'JAVA_FORMAT_VIOLATION', path: 'src/Service.java', line: null, column: null }
+  const result = compactExecutionDiagnostics({ schemaVersion: 1, entries: [value,
+    { ...value, code: 'JAVA_COMPILE_ERROR' }, { ...value, line: 1 },
+    { ...value, column: 1 }, { ...value, path: 'src/service.ts' },
+  ] })
+  assert.deepEqual(result.entries, [value])
 })

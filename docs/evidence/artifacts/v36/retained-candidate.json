@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "kind": "read-only-retained-candidate-preservation",
+  "passed": true,
+  "providerCalls": 0,
+  "runtimeBehavioralTests": 0,
+  "candidateBaseCommit": "87e7493e654b03304d9eb059e1c37f6ffb4bef31",
+  "candidateDiffUnchanged": true,
+  "sourceHashes": {
+    "src/adapters/java-preservation.mjs": "69e4254692b7d9d31c4627746e6d82bffc0ef08d056d4776e7e8db2019055bf4",
+    "src/adapters/java-preservation-worker.mjs": "4bd3dd138650d70a02002416dc2b3260a153242d72ea1e8599909c8dff24c70d",
+    "src/core/implementation-preservation.mjs": "4b238735a3c5d130b57d7927e24f022480e346611ea8ef4ffed2b6cccbb8e499",
+    "src/core/execution-diagnostics.mjs": "56c51791f499d5a0859166528c583eadbe1a1f5f6162d80e0fb6a2eaa01e2bc5",
+    "src/core/implementation-verification.mjs": "cfe9b5c7233de43b7019a9543c3590c318db8f0a50a178681cda42d28a13cc04",
+    "src/runtime/implementation-orchestrator.mjs": "8ff8192dec2b65de30d1003897ba0e290020865352f06cd3e3d7ef8b3620336d",
+    "src/runtime/implementation-apply.mjs": "53f85b7d3d84fe00dbc3fb489ce885444abc972737f1d6b5bd45994ff5abe8a8",
+    "vendor/tree-sitter-java/tree-sitter-java.wasm": "4fdeac4ca6ca089f06c6f7e562abcac1733cd465728cc7031ebb73c2019122c4"
+  },
+  "candidate": {
+    "schemaVersion": 1,
+    "authority": "structural-review-not-semantic-proof",
+    "status": "review-required",
+    "omittedFileCount": 0,
+    "files": [
+      {
+        "path": "src/main/java/org/springframework/samples/petclinic/owner/Owner.java",
+        "baseSha256": "89f31f0ba0c36db0ff3f3716c3e1b2645a97f3cb0c6a5d1d13dacdace1935718",
+        "candidateSha256": "0d14cb80294a7f83b962a8b727b682e343faff03af7fedd9953aad5e32ec522e",
+        "status": "review-required",
+        "findings": [
+          {
+            "code": "relationship_guard_drift",
+            "line": 110,
+            "baselineLine": 98
+          }
+        ]
+      },
+      {
+        "path": "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+        "baseSha256": "ae704a37bfae4ca7de723f5cf5788cba62ae240829e28f7563dcd33e5cb70663",
+        "candidateSha256": "77b5d9d22ce06b93d9834364c8796f6c537efd053d8ee73c1c3720db8522a75e",
+        "status": "not-applicable",
+        "findings": []
+      },
+      {
+        "path": "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+        "baseSha256": "cb4a831d068740e7c2754be226bf67d1a712edca0c5ce6d2feea541645773c45",
+        "candidateSha256": "35cccff475c12f6c5a3901fd8dda8cbe9a44a9346152b8ac21bea75ea7a9f797",
+        "status": "not-applicable",
+        "findings": []
+      }
+    ]
+  },
+  "repeatedResultsIdentical": true,
+  "timingsMs": [
+    323.5264159999999,
+    228.99687499999993,
+    317.22062500000004
+  ],
+  "noJavaMeanMs": 0.002565829999998641,
+  "historicalBase": "6328d2c9dc8eb2c367c6a613a1ae959c994003c7",
+  "historicalTarget": "2aa53f929d32b0d41e0fe0391b8385eabe9a3432",
+  "historical": [
+    {
+      "path": "src/main/java/org/springframework/samples/petclinic/owner/PetController.java",
+      "status": "not-applicable",
+      "findings": [],
+      "recognizedGuards": 0
+    }
+  ],
+  "formatterLogSha256": "2560c7058dfb8d0d495fc3a30feca6413cc24d925b0ad0086d72c2898e12b2d9",
+  "formatter": {
+    "schemaVersion": 1,
+    "authority": "untrusted-execution-diagnostics",
+    "entries": [
+      {
+        "language": "java",
+        "code": "JAVA_FORMAT_VIOLATION",
+        "path": "src/test/java/org/springframework/samples/petclinic/owner/PetControllerTests.java",
+        "line": null,
+        "column": null
+      },
+      {
+        "language": "java",
+        "code": "JAVA_FORMAT_VIOLATION",
+        "path": "src/test/java/org/springframework/samples/petclinic/owner/OwnerControllerTests.java",
+        "line": null,
+        "column": null
+      },
+      {
+        "language": "java",
+        "code": "JAVA_FORMAT_VIOLATION",
+        "path": "src/test/java/org/springframework/samples/petclinic/owner/VisitControllerTests.java",
+        "line": null,
+        "column": null
+      }
+    ],
+    "truncated": false
+  },
+  "recoveredFormatterEntries": 3,
+  "limitations": [
+    "Structural review signal, not a semantic bug proof.",
+    "Existing v35 scores and candidate source are unchanged.",
+    "No paid model recovery or real Windows execution in this check."
+  ]
+}

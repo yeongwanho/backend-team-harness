@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "kind": "runtime-preservation-v36-qa",
+  "runtime": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v22.23.1"
+  },
+  "fullSuite": {
+    "command": "npm run test:coverage",
+    "exitCode": 0,
+    "tests": 560,
+    "passed": 556,
+    "failed": 0,
+    "skipped": 4,
+    "coverage": {
+      "lines": 91.19,
+      "branches": 82.57,
+      "functions": 98.93
+    },
+    "skipReasons": [
+      "real MySQL DB E2E opt-in",
+      "real Maven/Gradle JVM E2E opt-in",
+      "real Windows provider shim",
+      "real Windows descendant termination"
+    ]
+  },
+  "mutation": {
+    "command": "node scripts/mutation-smoke.mjs",
+    "exitCode": 0,
+    "killed": 35,
+    "scope": "35 explicit mutation smoke cases; not a comprehensive mutation score",
+    "newCases": [
+      "disable structural guard comparison",
+      "convert review-required into clear"
+    ]
+  },
+  "install": {
+    "command": "node scripts/install-smoke.mjs",
+    "exitCode": 0,
+    "tarballInstalledInTemporaryProject": true,
+    "installedGrammarParsed": true,
+    "installedDependenciesAudited": true,
+    "nativeBuildOrInstallHooks": false
+  },
+  "windowsContract": {
+    "command": "node --test test/windows-compat.test.mjs",
+    "passed": 8,
+    "failed": 0,
+    "realWindowsExecuted": false
+  },
+  "docs": {
+    "command": "node --test test/docs-contract.test.mjs",
+    "passed": 1,
+    "failed": 0
+  },
+  "dependencyAudit": {
+    "command": "npm audit --omit=dev --json",
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    }
+  },
+  "syntax": {
+    "commands": [
+      "node scripts/check-syntax.mjs",
+      "node --check scripts/benchmark-provider-comparison.mjs",
+      "node --check src/adapters/java-preservation.mjs",
+      "node --check src/core/implementation-preservation.mjs"
+    ],
+    "passed": true
+  },
+  "logSha256": {
+    "coverage": "6f7fddab6132e336b5014f5822354b7a9674d35f2804d8394a8fae58061dedef",
+    "mutation": "b8a5561de094ecf52699adda1eb1bc364552f8d0645789bdce0e48d706dc36ee",
+    "install": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989",
+    "docs": "769736bc25adae9dc2e29e02c4b629a4b1b306e02a760984f5f1aceec8c07491",
+    "windowsContract": "f8b1233667418fea32a0a6d16a3ce57cee12b3a6ed337475898d9e975d1ff507",
+    "audit": "d9b31b6d619719454965caba31ff8cb2b222a54a25eef7aadf0b980cecf3e09c"
+  },
+  "omitted": [
+    "No new live Codex/Claude implementation run or success@1 measurement",
+    "No new JVM/MySQL or real Windows E2E",
+    "No production/company source write",
+    "No forced worker timeout, WASM OOM or malicious-grammar resource exhaustion test",
+    "Structural scope intentionally excludes aliases, cross-file calls and semantic ownership proofs"
+  ],
+  "goalComplete": false
+}
