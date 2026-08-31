@@ -25,6 +25,7 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Changed
 
+- All initialization paths now preserve `.backend-harness/` contract bytes across Git checkouts, including Maven, Gradle and unrecognized repositories. Newly generated verification binds the attribute file. Existing team attributes are preserved without `--force`; company root attributes are untouched. Actual Spring Git controls reproduce the previous `.cmd` hash drift and verify the fix. See `docs/evidence/native-pet-association-v46.md`.
 - Evaluation snapshots now use bounded local depth-one fetches with exact original SHA, no alternates/remotes, and preserved dirty-candidate checks. On the pinned Spring source, copied Git object storage decreased from 783,327KiB to 476KiB; this is not an LLM-token or whole-workflow speed claim.
 - Added pinned Spring Maven verification fixtures preserving original integration assertions while isolating MySQL/PostgreSQL on owned loopback/tmpfs containers. Native BTH completed the search task; direct Codex exited without completion/usage. Its unchanged code passed a separate diagnostic, not a retroactive provider success. Known public verifier names now select their Windows `.cmd` companions; actual Windows provider execution remains unverified.
 - MySQL reference E2E cleanup now targets a unique run label and rechecks full container/image identity before removal. Its actual Flyway/JDBC success, assertion failure, JVM halt and timeout scenarios pass with no owned container remaining; the fixture uses bounded tmpfs, a random password, and an asserted loopback binding. The reviewed MySQL image must already be cached; implicit pulls are disabled.
@@ -53,6 +54,7 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Compatibility
 
+- `bth init` can add a missing `.backend-harness/.gitattributes` to older projects but does not overwrite existing verification or team attributes. Review existing Git policy and verification inputs when upgrading; `init --force` regenerates all shared templates, not only Git attributes. This change does not retroactively validate saved candidates or provider trials.
 - New comparison runs use `bounded-navigation-v41`; old provider scores are retained. Model-facing convention projection metadata is schema v2 and reports the navigation limit. This is not a changed permission boundary or a complete impact list.
 
 - `record.status: passed` continues to describe required verification, not approval to integrate. Status/run results now expose separate `preservationReview` and current `nextAction` fields; `bth work` uses `implementation-needs-review`. CLI `work`, `implement run/status` return exit code 2 for pending/unavailable structural review.

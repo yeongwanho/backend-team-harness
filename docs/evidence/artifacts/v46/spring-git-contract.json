@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T07:18:01.609Z",
+  "sourceHashes": {
+    "src/init-project.mjs": "4d3b59a3cf77c7d66a0f0abb22487d316d4ab98db3f53dace787729df8b1478a",
+    "src/core/portable-test-discovery.mjs": "af73d542845f6f5061b9757e8c43484260e3b74754c6e7ed80de0b14653c7fa5",
+    "src/evaluation/isolated-git-snapshot.mjs": "d96a1038205b2d8fe4921a9c650455b21cba4439f9f9588e6e82fcab68e2925b",
+    "src/evaluation/project-fixture.mjs": "8853daff9c4697f5964f6f21edee7da3ebb53908f1091d9cbbb4b77950949fbb",
+    "benchmarks/public-backend-v1/provider-comparison.json": "4f5cbe10b725217491f543368c19713b07612b5a192383cf92734c21df60cc7b",
+    "test/harness-git-contract.test.mjs": "84499e67af6a64cce3ac2928ac4b86d0fc498c4cb7603e2b96da57704db2d1bf",
+    "docs/evidence/artifacts/v46/probe-spring-git.mjs": "6b23641360106486fd4cbfcca940f283acf70ca7f4945f82eb7ecb36cd1c1ac7"
+  },
+  "baseSha": "88e37c15cf6fc8490b01bc3e8e2c800cec1ac272",
+  "providerCalls": 0,
+  "observations": {
+    "protected": {
+      "fixture": {
+        "valid": true,
+        "mismatchedPaths": []
+      },
+      "cmdSha256": "a756bfaaa500db095d050e114272cb251d99931fe3517cb699ab922ef74e7c17",
+      "cmdBytes": 103,
+      "crlfLines": 0,
+      "attributes": ".backend-harness/bin/verify-public-maven.cmd: text: unset"
+    },
+    "legacy-control": {
+      "fixture": {
+        "valid": false,
+        "mismatchedPaths": [
+          ".backend-harness/bin/verify-public-maven.cmd"
+        ]
+      },
+      "cmdSha256": "357f19226765f9c7575c3756c18efc1081c7759cfe517f77e7a94e11562f3dab",
+      "cmdBytes": 107,
+      "crlfLines": 4,
+      "attributes": ".backend-harness/bin/verify-public-maven.cmd: text: set"
+    }
+  },
+  "ownedProbeRemoved": true,
+  "failingFirst": {
+    "logSha256": "6f563000db397046eece94abdce9f2efcd58b255d7179f6fd480ef3f38fa75cf",
+    "tests": 6,
+    "pass": 1,
+    "fail": 5
+  },
+  "targetedRegression": {
+    "logSha256": "18239c16b01a45502a1d170c18e849b227538ca0eb63cd59685f94d9edcd86db",
+    "tests": 21,
+    "pass": 21,
+    "fail": 0
+  },
+  "limitations": [
+    "Actual Git checkout behavior on macOS, not actual Windows execution.",
+    "Legacy control deliberately omits the contract attribute file in an owned copy; retained provider candidates are never modified.",
+    "This proves a checkout defect, not the cause of the original provider interruption or validation-event verdict."
+  ]
+}

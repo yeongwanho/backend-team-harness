@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T07:23:00.411Z",
+  "sourceParent": "12dfc63a2dcb822414594f7158a3e242cd822b25",
+  "stagedHashes": {
+    "CHANGELOG.md": "bc16ee4c1c758c449cc618bd4f5236ff9dba44973786b43313d788bcb6bbd0ea",
+    "README.md": "c6496dacb13073dc46243bf637c80e81aba119887b054a90588895befb9d6275",
+    "benchmarks/public-backend-v1/fixtures/spring/PetAssociationAcceptanceTests.java": "272f5948dbdfb5e8de2525fa32faeea49ef5868f39948e00ca65a845223123cb",
+    "benchmarks/public-backend-v1/provider-comparison.json": "4f5cbe10b725217491f543368c19713b07612b5a192383cf92734c21df60cc7b",
+    "docs/evidence/artifacts/v46/codex-native-spring-pair.json": "e5da71197bae11313b9176ac2b018b222592ad44bc9f569530ec66b28dd365e5",
+    "docs/evidence/artifacts/v46/corpus-ledger.json": "bd05463631adb82780f3dee8417c3f2b3fe73d769418c9bd59ee2a3f29fa7e06",
+    "docs/evidence/artifacts/v46/final-audit.mjs": "fa29946bec538bc1db5636743af886351abacb2b51eb9909a4f9be36eb8eda41",
+    "docs/evidence/artifacts/v46/oracle-mutations.json": "b21bfdf081a30721f5862ac0091af8808b3ebd0d8159f16179dd5e56ce02c025",
+    "docs/evidence/artifacts/v46/probe-oracle-mutations.mjs": "5692e324cb32f6bd7ae1ea3ac68f5e0a90708ceb46d6bd9cb5b6a9b1249cf342",
+    "docs/evidence/artifacts/v46/probe-spring-git.mjs": "6b23641360106486fd4cbfcca940f283acf70ca7f4945f82eb7ecb36cd1c1ac7",
+    "docs/evidence/artifacts/v46/qa.json": "5adcffc1043b0cd1186ff53198664e072d30270ef705596691727dc55787fe69",
+    "docs/evidence/artifacts/v46/rebuild-progress.mjs": "0eafe314152ef08a661349b9f392c680ffaa7f4680c1ec8a5e693795263842b3",
+    "docs/evidence/artifacts/v46/record-pair.mjs": "f124f1b0627aed736873e9c069b7069a17066445e8786346207c798820d50bd7",
+    "docs/evidence/artifacts/v46/run-regression.mjs": "f9666ee57fc6a03aaf83570826fabdece82337d921689b019ba6671145178747",
+    "docs/evidence/artifacts/v46/spring-git-contract.json": "bd435a6ea784f7ab4afa8ab043710d52fe46031b32faa1179567a18235dc0d52",
+    "docs/evidence/native-pet-association-v46.md": "c20baf669a559cfb99967e6dd5a8619cb88348ad09ce25113a7499ff76c4c171",
+    "docs/plans/native-pet-association-v46.md": "c1ee890d4b048a682ee71860c46075607b44e6269a6ddb3df6150ce24b9e750f",
+    "src/core/portable-test-discovery.mjs": "af73d542845f6f5061b9757e8c43484260e3b74754c6e7ed80de0b14653c7fa5",
+    "src/init-project.mjs": "4d3b59a3cf77c7d66a0f0abb22487d316d4ab98db3f53dace787729df8b1478a",
+    "test/harness-git-contract.test.mjs": "84499e67af6a64cce3ac2928ac4b86d0fc498c4cb7603e2b96da57704db2d1bf",
+    "test/public-maven-fixture.test.mjs": "c619e3282a3c7cc8b300acce57492086bc6db773ea4e98288f5ff8ab6219d2ab"
+  },
+  "artifactHashes": {
+    "codex-native-spring-pair.json": "e5da71197bae11313b9176ac2b018b222592ad44bc9f569530ec66b28dd365e5",
+    "oracle-mutations.json": "b21bfdf081a30721f5862ac0091af8808b3ebd0d8159f16179dd5e56ce02c025",
+    "spring-git-contract.json": "bd435a6ea784f7ab4afa8ab043710d52fe46031b32faa1179567a18235dc0d52",
+    "qa.json": "5adcffc1043b0cd1186ff53198664e072d30270ef705596691727dc55787fe69",
+    "corpus-ledger.json": "bd05463631adb82780f3dee8417c3f2b3fe73d769418c9bd59ee2a3f29fa7e06"
+  },
+  "retained": {
+    "bth": {
+      "originalArtifactUnchanged": true,
+      "candidateUnchanged": true,
+      "fingerprint": "488450260224920c532cef5a6f08ee26420ebcaf580249187faf7e4f303a3b3e"
+    },
+    "direct": {
+      "originalArtifactUnchanged": true,
+      "candidateUnchanged": true,
+      "fingerprint": "a13fc8bb8ca5d4eb595dd4d4f3d6deab55bf84fff3e8bddf382f1a9a2a573b4e"
+    }
+  },
+  "install": {
+    "passed": true,
+    "version": "0.9.0",
+    "logSha256": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989"
+  },
+  "finalDocumentationContractPassed": true,
+  "stagedBytesMatch": true,
+  "exposureScanPassed": true,
+  "corpusCounts": {
+    "tasks": 20,
+    "configuredOracles": 12,
+    "currentValidatedOracles": 11,
+    "tasksWithHistoricalPairedInference": 9,
+    "tasksWithHistoricalSuccessfulPair": 4,
+    "tasksWithNativePairAttempt": 4,
+    "tasksWithConfirmedNativePair": 1
+  },
+  "goalComplete": false,
+  "limitations": [
+    "Pattern scans do not prove absence of every possible sensitive value.",
+    "Post-comparison Git fixes and subsequent QA do not change original provider trial outcomes."
+  ]
+}

@@ -5,7 +5,7 @@ import { sharedTemplates } from './templates.mjs'
 import { defaultVerificationConfig } from './config/verification.mjs'
 import { inspectJvmBuild } from './core/jvm-build-discovery.mjs'
 import { scanProjectManifest } from './core/project-manifest.mjs'
-import { inspectPortableTestBuild, portableVerificationTemplates } from './core/portable-test-discovery.mjs'
+import { harnessGitAttributesTemplate, inspectPortableTestBuild, portableVerificationTemplates } from './core/portable-test-discovery.mjs'
 import {
   assertNoSymlinkSegments,
   resolveExistingProjectRoot,
@@ -81,6 +81,13 @@ export async function initProject(inputPath = '.', options = {}) {
     }
   })
   const portableTemplates = portableVerificationTemplates(portableDetection)
+  const gitAttributes = harnessGitAttributesTemplate()
+  if (!portableTemplates.some(template => template.path === gitAttributes.path)) {
+    detectedTemplates.push(gitAttributes)
+  }
+  for (const gate of detectedVerification?.gates ?? []) {
+    gate.inputs = [...new Set([...(gate.inputs ?? []), gitAttributes.path])]
+  }
   const templates = detectedVerification
     ? [...detectedTemplates, ...portableTemplates, {
         path: '.backend-harness/verification.json',

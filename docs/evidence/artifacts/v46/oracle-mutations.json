@@ -1,0 +1,1602 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T07:18:50.561Z",
+  "sourceHashes": {
+    "src/evaluation/isolated-git-snapshot.mjs": "d96a1038205b2d8fe4921a9c650455b21cba4439f9f9588e6e82fcab68e2925b",
+    "src/evaluation/task-acceptance.mjs": "87819f0124426be23cbce34d636b2f2c4d8de229bf8254dd2d4a0cf4a7248e3e",
+    "benchmarks/public-backend-v1/provider-comparison.json": "4f5cbe10b725217491f543368c19713b07612b5a192383cf92734c21df60cc7b",
+    "benchmarks/public-backend-v1/fixtures/spring/PetAssociationAcceptanceTests.java": "272f5948dbdfb5e8de2525fa32faeea49ef5868f39948e00ca65a845223123cb",
+    "docs/evidence/artifacts/v46/probe-oracle-mutations.mjs": "5692e324cb32f6bd7ae1ea3ac68f5e0a90708ceb46d6bd9cb5b6a9b1249cf342"
+  },
+  "taskId": "spring-01-pet-association",
+  "baseSha": "88e37c15cf6fc8490b01bc3e8e2c800cec1ac272",
+  "targetSha": "676db04515ee5f289641cea6cb379dc02b40f67f",
+  "providerCalls": 0,
+  "curated": 5,
+  "killed": 5,
+  "results": [
+    {
+      "id": "same-new-object-duplicate",
+      "path": "src/main/java/org/springframework/samples/petclinic/owner/Owner.java",
+      "beforeSha256": "7cac66179350f35c0b3b0622a8a9f79de3b232641aac88da4e816437451c7daa",
+      "afterSha256": "3a815a97aa20104f96328f0f44ed00070ea5fe8f616b0b369dd39b55f5da0a30",
+      "expectedFailingCase": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+      "killed": true,
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": false,
+        "candidateSourceSha256": "62da20e66ceea2e8e59de1a14dd4fb829b3555b3f684cfb3a4d94b1ff02cfacb",
+        "candidateUntouched": true,
+        "reason": null,
+        "oracleSha256": "c41373522c6464dc0c53fdee3cb2d53c4a348616725def66738d73a7ebdc8131",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/PetAssociationAcceptanceTests.java",
+            "sha256": "272f5948dbdfb5e8de2525fa32faeea49ef5868f39948e00ca65a845223123cb"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 5924,
+              "stdout": {
+                "sha256": "23a6dd788c6af3c4392993ab9d51f9b95b2182703e3ae6241d6d5fb242d37b46",
+                "bytes": 8290
+              },
+              "stderr": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+                "sha256": "935b81213cbfdb8c697e9fc91e6df019cc46a0f97ab7472b445333d10fa2d419",
+                "bytes": 53074
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "differentPersistedIdsRemainSeparateAssociations",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "newPetTypeAndBirthDateRemainRequired",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 5706,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+                "sha256": "186c5a117d12e2ba096d93937f1c9718d8dd9f716d3dfe6c0bb15dfea01d6c60",
+                "bytes": 46848
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "differentPersistedIdsRemainSeparateAssociations",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "newPetTypeAndBirthDateRemainRequired",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": {
+          "sourceStable": true,
+          "process": {
+            "exitCode": 1,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 5793,
+            "stdout": {
+              "sha256": "26d79231a93f3142501365375003efb4149ae78c4de50f8cd75014c0d9cb001a",
+              "bytes": 2091
+            },
+            "stderr": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            }
+          },
+          "reports": [
+            {
+              "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+              "sha256": "e12a1e5563b3a64478fea8e30f09c23da463fc575d6c6f0eee9931b7ac0e7af9",
+              "bytes": 47780
+            }
+          ],
+          "cases": [
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "differentPersistedIdsRemainSeparateAssociations",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+              "outcome": "failed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "newPetTypeAndBirthDateRemainRequired",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+              "outcome": "passed"
+            }
+          ],
+          "passed": false,
+          "regressionReproduced": true
+        },
+        "elapsedMs": 18559
+      }
+    },
+    {
+      "id": "same-id-different-object-duplicate",
+      "path": "src/main/java/org/springframework/samples/petclinic/owner/Owner.java",
+      "beforeSha256": "7cac66179350f35c0b3b0622a8a9f79de3b232641aac88da4e816437451c7daa",
+      "afterSha256": "8aa9a80dd8a6bd4077dbd7468b680bfdc9a02cb7871ded9e72534189dd4618dc",
+      "expectedFailingCase": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+      "killed": true,
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": false,
+        "candidateSourceSha256": "164a38cad0250f3f64f6720c46f9461ffec537211e5bc8d18a6a6466d330c6a4",
+        "candidateUntouched": true,
+        "reason": null,
+        "oracleSha256": "c41373522c6464dc0c53fdee3cb2d53c4a348616725def66738d73a7ebdc8131",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/PetAssociationAcceptanceTests.java",
+            "sha256": "272f5948dbdfb5e8de2525fa32faeea49ef5868f39948e00ca65a845223123cb"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 5740,
+              "stdout": {
+                "sha256": "a226f98e096341f9c4252a9c0ed138e4aad57772e0b76cb1cb280c3477c663bf",
+                "bytes": 8290
+              },
+              "stderr": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+                "sha256": "32d9d618d5b3f8a929e529870e869941dbe74c50a55e14f68d78ee8163b53743",
+                "bytes": 53076
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "differentPersistedIdsRemainSeparateAssociations",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "newPetTypeAndBirthDateRemainRequired",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 5751,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+                "sha256": "81bdbcba0208b33d5c634887fd19088f297f3b3e6418c3803c00c5d61457571f",
+                "bytes": 46846
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "differentPersistedIdsRemainSeparateAssociations",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "newPetTypeAndBirthDateRemainRequired",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": {
+          "sourceStable": true,
+          "process": {
+            "exitCode": 1,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 5735,
+            "stdout": {
+              "sha256": "d0d745d06be8d525a58b5b11535b270f7fb02e671cca121fadaf8eda2f94e4eb",
+              "bytes": 2103
+            },
+            "stderr": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            }
+          },
+          "reports": [
+            {
+              "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+              "sha256": "56b37e6b5abf8d9e45ae3c5d458938b950dc7fc016c2c2fddf393f9777790aff",
+              "bytes": 47764
+            }
+          ],
+          "cases": [
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+              "outcome": "failed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "differentPersistedIdsRemainSeparateAssociations",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "newPetTypeAndBirthDateRemainRequired",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+              "outcome": "passed"
+            }
+          ],
+          "passed": false,
+          "regressionReproduced": true
+        },
+        "elapsedMs": 18345
+      }
+    },
+    {
+      "id": "distinct-null-ids-collapsed",
+      "path": "src/main/java/org/springframework/samples/petclinic/owner/Owner.java",
+      "beforeSha256": "7cac66179350f35c0b3b0622a8a9f79de3b232641aac88da4e816437451c7daa",
+      "afterSha256": "9e0bef23bc0657f7d2a3720da20c3e0a3214d62eb805d3e48a100a52e6e7024a",
+      "expectedFailingCase": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+      "killed": true,
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": false,
+        "candidateSourceSha256": "9d2da337432c690344d53e6fe66bca04238ed156d6d4fd6b0c5b2af9a3e31414",
+        "candidateUntouched": true,
+        "reason": null,
+        "oracleSha256": "c41373522c6464dc0c53fdee3cb2d53c4a348616725def66738d73a7ebdc8131",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/PetAssociationAcceptanceTests.java",
+            "sha256": "272f5948dbdfb5e8de2525fa32faeea49ef5868f39948e00ca65a845223123cb"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 5716,
+              "stdout": {
+                "sha256": "4a3a09771432ae8a9f5cc9ef1018d6ac98697f0c3580408b06dc6bec8483071b",
+                "bytes": 8290
+              },
+              "stderr": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+                "sha256": "f353651fa931a4576f2c3ca44e51cede930c40e61d805784d54e44934da79c37",
+                "bytes": 53080
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "differentPersistedIdsRemainSeparateAssociations",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "newPetTypeAndBirthDateRemainRequired",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 5639,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+                "sha256": "456c745b5c5db6efa30c468a6374a99ce245cbca0b617e25e89c27ba1ba21082",
+                "bytes": 46852
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "differentPersistedIdsRemainSeparateAssociations",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "newPetTypeAndBirthDateRemainRequired",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": {
+          "sourceStable": true,
+          "process": {
+            "exitCode": 1,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 5787,
+            "stdout": {
+              "sha256": "c4c286aa8107dc6f197805f8a2592df45ad566333f3ec7c2336493e854ae6da7",
+              "bytes": 2131
+            },
+            "stderr": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            }
+          },
+          "reports": [
+            {
+              "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+              "sha256": "ac960dcfc9d860f19ba439503e4a008834f995b9b3743e0ac73e4046b13cdae2",
+              "bytes": 47826
+            }
+          ],
+          "cases": [
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "differentPersistedIdsRemainSeparateAssociations",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+              "outcome": "failed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "newPetTypeAndBirthDateRemainRequired",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+              "outcome": "passed"
+            }
+          ],
+          "passed": false,
+          "regressionReproduced": true
+        },
+        "elapsedMs": 18239
+      }
+    },
+    {
+      "id": "reject-thirty-characters",
+      "path": "src/main/java/org/springframework/samples/petclinic/owner/PetValidator.java",
+      "beforeSha256": "1cee4c2a57afd7edb3521fa7a19c4b643f23c2f5b91406ecd638319c6cce9f7f",
+      "afterSha256": "4f82f6975fdd8329a0cf5d64906d83b9b3859160bbfe523a4390d1c52eb380f1",
+      "expectedFailingCase": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+      "killed": true,
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": false,
+        "candidateSourceSha256": "b3d10df0dfc9efdda02c145fa2bcce0ad01971a0d8645198d1d506b049f838d8",
+        "candidateUntouched": true,
+        "reason": null,
+        "oracleSha256": "c41373522c6464dc0c53fdee3cb2d53c4a348616725def66738d73a7ebdc8131",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/PetAssociationAcceptanceTests.java",
+            "sha256": "272f5948dbdfb5e8de2525fa32faeea49ef5868f39948e00ca65a845223123cb"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 5683,
+              "stdout": {
+                "sha256": "cba8432fed6f2c49e29f8bf012e9c637958f12ed49879859283d26e496cd8b4e",
+                "bytes": 8290
+              },
+              "stderr": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+                "sha256": "1b03854c5ab6726a8f355aca74005844cac7d6c6c49b6f01a33429707b43b95c",
+                "bytes": 53076
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "differentPersistedIdsRemainSeparateAssociations",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "newPetTypeAndBirthDateRemainRequired",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 5647,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+                "sha256": "1776deb349a65be5e5d7dd0b22478877e2699b38d16d54c71ab9731a49768ada",
+                "bytes": 46852
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "differentPersistedIdsRemainSeparateAssociations",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "newPetTypeAndBirthDateRemainRequired",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": {
+          "sourceStable": true,
+          "process": {
+            "exitCode": 1,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 5843,
+            "stdout": {
+              "sha256": "4ed79b8225cdb7b151f4c02b4664c4d38edcd5d65037e0a8784eb5671c361b82",
+              "bytes": 2078
+            },
+            "stderr": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            }
+          },
+          "reports": [
+            {
+              "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+              "sha256": "344520deb3bd8c016926861245082aeab273c2f5dbc659ef07c2ecf7bbd10957",
+              "bytes": 47753
+            }
+          ],
+          "cases": [
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "differentPersistedIdsRemainSeparateAssociations",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+              "outcome": "failed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "newPetTypeAndBirthDateRemainRequired",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+              "outcome": "passed"
+            }
+          ],
+          "passed": false,
+          "regressionReproduced": true
+        },
+        "elapsedMs": 18294
+      }
+    },
+    {
+      "id": "accept-thirty-one-characters",
+      "path": "src/main/java/org/springframework/samples/petclinic/owner/PetValidator.java",
+      "beforeSha256": "1cee4c2a57afd7edb3521fa7a19c4b643f23c2f5b91406ecd638319c6cce9f7f",
+      "afterSha256": "f5c96ceb67051999ad26a2d9a4d8465ffd20a3465599fa5a58a33b927e8babeb",
+      "expectedFailingCase": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+      "killed": true,
+      "result": {
+        "schemaVersion": 1,
+        "kind": "fixture-tests",
+        "controlsConfirmed": true,
+        "candidatePassed": false,
+        "candidateSourceSha256": "ba655ee1edb010e9457400a7cba9f56b0a33e611e9a54e95de5226ed190a33da",
+        "candidateUntouched": true,
+        "reason": null,
+        "oracleSha256": "c41373522c6464dc0c53fdee3cb2d53c4a348616725def66738d73a7ebdc8131",
+        "testFiles": [
+          {
+            "path": "src/test/java/org/springframework/samples/petclinic/owner/PetAssociationAcceptanceTests.java",
+            "sha256": "272f5948dbdfb5e8de2525fa32faeea49ef5868f39948e00ca65a845223123cb"
+          }
+        ],
+        "controls": {
+          "base": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 1,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 5714,
+              "stdout": {
+                "sha256": "0f8edffa6459378efce5e04f9191fe9dbb24ddaf86d329b7aca18666da7814bb",
+                "bytes": 8290
+              },
+              "stderr": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+                "sha256": "4a8f9bdb01c0839720636c253d5a82fce65dc4bd8221356d9e7fa706a912a910",
+                "bytes": 53073
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "differentPersistedIdsRemainSeparateAssociations",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+                "outcome": "failed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "newPetTypeAndBirthDateRemainRequired",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+                "outcome": "passed"
+              }
+            ],
+            "passed": false,
+            "regressionReproduced": true
+          },
+          "target": {
+            "sourceStable": true,
+            "process": {
+              "exitCode": 0,
+              "signal": null,
+              "timedOut": false,
+              "stdioDrainTimedOut": false,
+              "durationMs": 5656,
+              "stdout": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              },
+              "stderr": {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "bytes": 0
+              }
+            },
+            "reports": [
+              {
+                "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+                "sha256": "5e90d64324837ea4e17688a2bde62b8cee837276754794b93a4707d8d53f6b7b",
+                "bytes": 46846
+              }
+            ],
+            "cases": [
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "differentPersistedIdsRemainSeparateAssociations",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "newPetTypeAndBirthDateRemainRequired",
+                "outcome": "passed"
+              },
+              {
+                "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+                "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+                "outcome": "passed"
+              }
+            ],
+            "passed": true,
+            "regressionReproduced": false
+          }
+        },
+        "candidate": {
+          "sourceStable": true,
+          "process": {
+            "exitCode": 1,
+            "signal": null,
+            "timedOut": false,
+            "stdioDrainTimedOut": false,
+            "durationMs": 5792,
+            "stdout": {
+              "sha256": "36971e933f6223f55c630be96a3c04e95537bfd3e70ebc946ea0642f40938449",
+              "bytes": 2070
+            },
+            "stderr": {
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "bytes": 0
+            }
+          },
+          "reports": [
+            {
+              "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+              "sha256": "e151a048ddbfcd8592bfe1f3a051be5a56f46489c10abe844a43ac136e1a2638",
+              "bytes": 47748
+            }
+          ],
+          "cases": [
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "differentPersistedIdsRemainSeparateAssociations",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+              "outcome": "failed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "newPetTypeAndBirthDateRemainRequired",
+              "outcome": "passed"
+            },
+            {
+              "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+              "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+              "outcome": "passed"
+            }
+          ],
+          "passed": false,
+          "regressionReproduced": true
+        },
+        "elapsedMs": 18252
+      }
+    }
+  ],
+  "diagnosticCandidate": {
+    "schemaVersion": 1,
+    "kind": "fixture-tests",
+    "controlsConfirmed": true,
+    "candidatePassed": true,
+    "candidateSourceSha256": "77fb2411713f247e4b5e0c7e798168d6773a4fea0914c548afaf543399454bd8",
+    "candidateUntouched": true,
+    "reason": null,
+    "oracleSha256": "c41373522c6464dc0c53fdee3cb2d53c4a348616725def66738d73a7ebdc8131",
+    "testFiles": [
+      {
+        "path": "src/test/java/org/springframework/samples/petclinic/owner/PetAssociationAcceptanceTests.java",
+        "sha256": "272f5948dbdfb5e8de2525fa32faeea49ef5868f39948e00ca65a845223123cb"
+      }
+    ],
+    "controls": {
+      "base": {
+        "sourceStable": true,
+        "process": {
+          "exitCode": 1,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 5636,
+          "stdout": {
+            "sha256": "55275844e505e296105c574309af14be2f0c4b1e61cb83eff0e83da93ac650d9",
+            "bytes": 8282
+          },
+          "stderr": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          }
+        },
+        "reports": [
+          {
+            "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+            "sha256": "2d326e330f50db2101e5537ebb11b4301752282d45a8748e88337cbaac4b8e9f",
+            "bytes": 53069
+          }
+        ],
+        "cases": [
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+            "outcome": "failed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+            "outcome": "failed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+            "outcome": "failed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "differentPersistedIdsRemainSeparateAssociations",
+            "outcome": "failed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+            "outcome": "failed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+            "outcome": "failed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+            "outcome": "failed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "newPetTypeAndBirthDateRemainRequired",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+            "outcome": "passed"
+          }
+        ],
+        "passed": false,
+        "regressionReproduced": true
+      },
+      "target": {
+        "sourceStable": true,
+        "process": {
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "stdioDrainTimedOut": false,
+          "durationMs": 5728,
+          "stdout": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          },
+          "stderr": {
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "bytes": 0
+          }
+        },
+        "reports": [
+          {
+            "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+            "sha256": "281920832ec8716e96d1207043d415aab48611c1fd931d9bebb094bd3f1ffdd3",
+            "bytes": 46852
+          }
+        ],
+        "cases": [
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "differentPersistedIdsRemainSeparateAssociations",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "newPetTypeAndBirthDateRemainRequired",
+            "outcome": "passed"
+          },
+          {
+            "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+            "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+            "outcome": "passed"
+          }
+        ],
+        "passed": true,
+        "regressionReproduced": false
+      }
+    },
+    "candidate": {
+      "sourceStable": true,
+      "process": {
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "stdioDrainTimedOut": false,
+        "durationMs": 5747,
+        "stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "reports": [
+        {
+          "path": "target/surefire-reports/TEST-org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests.xml",
+          "sha256": "20551dc171e07e57e0760b65ef07da256026733875d26a5276b781774ece9aea",
+          "bytes": 46795
+        }
+      ],
+      "cases": [
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+          "name": "persistedPetCanBeAssociatedWithoutRewritingItsFields",
+          "outcome": "passed"
+        },
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+          "name": "addingTheSamePersistedObjectTwiceIsIdempotent",
+          "outcome": "passed"
+        },
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+          "name": "anotherObjectWithTheSamePersistedIdDoesNotReplaceOrDuplicateIt",
+          "outcome": "passed"
+        },
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+          "name": "differentPersistedIdsRemainSeparateAssociations",
+          "outcome": "passed"
+        },
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+          "name": "addingTheSameNewObjectTwiceDoesNotDuplicateIt",
+          "outcome": "passed"
+        },
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+          "name": "separateNewPetsAreNotDeduplicatedByTheirNullIds",
+          "outcome": "passed"
+        },
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+          "name": "namesAtThirtyCharactersPassAndThirtyOneCharactersFail",
+          "outcome": "passed"
+        },
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+          "name": "missingAndBlankNamesKeepTheirRequiredValidation",
+          "outcome": "passed"
+        },
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+          "name": "newPetTypeAndBirthDateRemainRequired",
+          "outcome": "passed"
+        },
+        {
+          "className": "org.springframework.samples.petclinic.owner.PetAssociationAcceptanceTests",
+          "name": "persistedPetWithoutTypeRetainsItsExistingValidationContract",
+          "outcome": "passed"
+        }
+      ],
+      "passed": true,
+      "regressionReproduced": false
+    },
+    "elapsedMs": 18289
+  },
+  "goalComplete": false,
+  "limitations": [
+    "Five selected behavioral mutations, not exhaustive mutation coverage.",
+    "Only disposable public target snapshots are mutated; original repositories and scored provider candidates are unchanged.",
+    "Compiler/setup/missing-report failures do not count as killed mutations.",
+    "The optional read-only candidate diagnostic does not replace any original provider score."
+  ]
+}
