@@ -25,6 +25,9 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Changed
 
+- Bounded initial provider navigation to fast/balanced/deep 8/16/24 entries while retaining the approved plan, supplied rules, DB review signals and verification. Parallel nested Python/ECMAScript test paths now co-select a unique same-module production file; ambiguous layouts remain unlinked. Pre-projection Java guidance is kept separately so navigation truncation cannot suppress it. Static context is smaller, but an actual Codex pair still favors direct execution on time/tokens; see `docs/evidence/provider-navigation-v41.md`.
+- Added assertion-checked mutation cases for navigation limits and ambiguous test-path rejection. Existing project-owned Pack copies and sealed graphs are not silently upgraded.
+
 - Added a prepared 62-test public FastAPI authentication baseline without replacing production or pre-start/API test code. Four actual Codex/Claude BTH/direct candidates passed ordinary verification and a separate nine-case oracle; efficiency was mixed and a Claude direct read-path metric is missing. This changes evaluation coverage, not production runtime. See `docs/evidence/auth-comparison-v40.md`.
 
 - Fixed the v36 regression that treated observed guards as immutable policy and skipped tests on an intended guard change. Required tests now run; a real failure still uses bounded repair, while passed tests with changed conditions produce `implementation-needs-review` without a blind model retry. Historical sealed records are rechecked without rewriting them.
@@ -40,6 +43,8 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 - Shared records redact additional provider tokens, auth/cookie material, email addresses, and raw source-bearing fields.
 
 ### Compatibility
+
+- New comparison runs use `bounded-navigation-v41`; old provider scores are retained. Model-facing convention projection metadata is schema v2 and reports the navigation limit. This is not a changed permission boundary or a complete impact list.
 
 - `record.status: passed` continues to describe required verification, not approval to integrate. Status/run results now expose separate `preservationReview` and current `nextAction` fields; `bth work` uses `implementation-needs-review`. CLI `work`, `implement run/status` return exit code 2 for pending/unavailable structural review.
 - Applying a reviewed guard change requires `--accept-preservation-review <current-sha256> --review-note <text>` in addition to actor/write approval. Stale candidates, changed source and incomplete inspection remain blocked. Existing seals, legacy schema-v1 request fields and normal apply without a pending review are preserved.

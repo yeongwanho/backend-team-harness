@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T04:52:12.879Z",
+  "platform": "darwin",
+  "node": "v22.23.1",
+  "sourceHashes": {
+    "src/providers/model-cli.mjs": "b2dee309b45aa17e709619693783b1ff7781b6f78798a78de80eac53f4938501",
+    "src/core/provider-context.mjs": "3fe58aadbe8690ed1b070247e01a416ca4440644d5d897d931fe3d2ac9a8dc14",
+    "packs/codegraph-advisory/indexer.mjs": "ac2e15649c943151872edc3304fd0e79a558fadafaf94e706d9c4c01a4780bab",
+    "src/core/code-context.mjs": "ed33494ea6afc30f179b9ea43b9088a1ce2cb6442a550f9fab8d8afbd0a8657b",
+    "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+    "src/evaluation/provider-benchmark-runner.mjs": "94115af0c08858ba170e2710114b0a531a1e3eef4dcfd0f40b0d5fa9a9f56d16",
+    "src/runtime/implementation-orchestrator.mjs": "16f088635dde87b16954bf6413f7a5398f60b139e6313ec30c5f56d8433e3610",
+    "src/runtime/work-orchestrator.mjs": "27ec7327b113e2dea43175dc5ac23beef886b00bb31387e02333b7cbb87bccb0",
+    "scripts/benchmark-provider-comparison.mjs": "7f231a5898a268ba2b104912900ae99efa70665ea3642674d49f51f3d173166e",
+    "benchmarks/public-backend-v1/provider-comparison.json": "f7999657dfbbe143510dd46000a436c88d86f4da74d23feea511ef3882addf74",
+    "scripts/mutation-smoke.mjs": "fe51d5c95ee880d2e68a4bbb05da3cd9fd04f97071b0916d12429f76fe6dfe23",
+    "test/semantic-graph.test.mjs": "8e9d7574e4d3d5e45db5e97025d559aae94decba7cd6b9a095c5e20fa0a3a047",
+    "test/provider-context.test.mjs": "014b96463666b18c1564e39cc1c454be01921ae352ab9e6e2f9b00af7a653eb8",
+    "test/implementation-orchestrator.test.mjs": "9c20f284884215f68ca1f8b0f017332a2c872b4980c60a7cd9e01391714f1492",
+    "test/packs.test.mjs": "996841c676b1e3a3b6106843e31b977bbf9ab5f32913180609d242e07f08af07",
+    "docs/evidence/provider-navigation-v41.md": "a6252f74dc92fd47e1205a320f46d15a41172e3bc4dfee3d099e2d436f63abfa",
+    "README.md": "90935613356d8a6ed7acb8f187cfbfa1846f9fa3f0eee2926df905f574fc7b6c",
+    "CHANGELOG.md": "81e2c39af84a03e1907af7f17f0a43235dae3d2de39f19d1fc0a73140eca4b00"
+  },
+  "suites": {
+    "firstRed": {
+      "tests": 11,
+      "pass": 7,
+      "fail": 4,
+      "skipped": 0,
+      "logSha256": "82acb6cd72977533bab382b70efa8fdcf71cee220aa72a0e19bf0d31ad9a7ed8"
+    },
+    "firstGreen": {
+      "tests": 11,
+      "pass": 11,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "55d5cfbff33f988417c4e927e29f760ac5608ac27ae3efb4d3f9bd75be2b3260"
+    },
+    "scoped": {
+      "tests": 94,
+      "pass": 94,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "5975e7bac5bb18bf4a6664d63c5a7a8754e85515ae057f88caf8da6f6f4d98e6"
+    },
+    "guidanceRed": {
+      "tests": 1,
+      "pass": 0,
+      "fail": 1,
+      "skipped": 0,
+      "logSha256": "0c76d2ca9940d176480fd5eee5ad2dd763d9dc050286b87c96cce42b087e8096"
+    },
+    "guidanceGreen": {
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "306deb80b9cb9a5037f4462c1bd67e88e8e8a1c0dd98c00215da5e230b5ab150"
+    },
+    "coverage": {
+      "tests": 596,
+      "pass": 592,
+      "fail": 0,
+      "skipped": 4,
+      "logSha256": "34c372dcf940fd1ab4f02610898c8471f2a3ef09b90a5bac254173fb526376a9"
+    }
+  },
+  "skippedTests": [
+    "DB Pack runs real MySQL migrations and integration behavior",
+    "real Maven and Gradle projects produce accepted JUnit verification",
+    "real Windows command shim executes provider JSON and normalizes telemetry",
+    "real Windows timeout terminates the provider descendant tree"
+  ],
+  "coverage": {
+    "statements": 91.36,
+    "branches": 82.95,
+    "functions": 98.7,
+    "lines": 91.36
+  },
+  "syntax": {
+    "passed": true,
+    "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "diffCheck": {
+    "passed": true
+  },
+  "mutation": {
+    "killed": 42,
+    "totalCurated": 42,
+    "logSha256": "b578179c077a16e7179644e7489000a364bc946e749d2f1281bbdd2f36081362",
+    "exhaustive": false
+  },
+  "installSmoke": {
+    "passed": true,
+    "logSha256": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989"
+  },
+  "publicFixtureResources": [
+    {
+      "kind": "container",
+      "label": "bth.fastapi.productqa",
+      "remaining": 0
+    },
+    {
+      "kind": "network",
+      "label": "bth.fastapi.productqa",
+      "remaining": 0
+    },
+    {
+      "kind": "container",
+      "label": "bth.fastapi.oracle",
+      "remaining": 0
+    },
+    {
+      "kind": "network",
+      "label": "bth.fastapi.oracle",
+      "remaining": 0
+    }
+  ],
+  "providerPairSha256": "270a4e5e92e5db893d559bc351c2e9a27cb6c786f6c6954a9ba789c41a8c4ada",
+  "postComparisonChanges": [
+    {
+      "path": "src/runtime/implementation-orchestrator.mjs",
+      "comparedSha256": "dc329cf8019c172da8e6b85e68d57df16ed3d6bbd3b0b0eda5a58279313872a4",
+      "currentSha256": "16f088635dde87b16954bf6413f7a5398f60b139e6313ec30c5f56d8433e3610"
+    }
+  ],
+  "postComparisonCorrection": "Request-level failing-first correction: Java preservation guidance uses pre-projection paths. The actual frozen Python pair preceded this correction; do not call it a new-provider run of the correction.",
+  "limitations": [
+    "No actual Windows, new MySQL E2E or two-developer onboarding run.",
+    "Static navigation omits some relevant paths; full native provider workflow baseline is still missing."
+  ]
+}

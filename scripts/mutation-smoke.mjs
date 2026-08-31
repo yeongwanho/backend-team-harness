@@ -7,6 +7,18 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/core/provider-context.mjs',
+    from: 'if (entries.length > limits.entries) {',
+    to: 'if (false) {',
+    test: 'test/provider-context.test.mjs'
+  },
+  {
+    file: 'packs/codegraph-advisory/indexer.mjs',
+    from: "if (targets.length === 1) edge(node, targets[0], 'tests', 'convention-test-path-resolved')",
+    to: "if (targets.length >= 1) edge(node, targets[0], 'tests', 'convention-test-path-resolved')",
+    test: 'test/semantic-graph.test.mjs'
+  },
+  {
     file: 'src/core/test-failure-diagnostics.mjs',
     from: 'DIAGNOSTICS.get(item.exceptionType) !== item.code',
     to: 'false',

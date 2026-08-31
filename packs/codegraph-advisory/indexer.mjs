@@ -181,7 +181,7 @@ function conventionTestTargets(projectPath) {
     if (!targets.includes(target)) targets.push(target)
   }
   const ecma = basename.match(/^(.+)\.(?:spec|test)$/)
-  if (ecma) {
+  if (extension !== '.py' && ecma) {
     add(directory, ecma[1])
     if (posix.basename(directory) === '__tests__') add(posix.dirname(directory), ecma[1])
   }
@@ -192,6 +192,16 @@ function conventionTestTargets(projectPath) {
     add(directory, pythonName)
     if (posix.basename(directory) === 'test' || posix.basename(directory) === 'tests') {
       add(posix.dirname(directory), pythonName)
+    }
+  }
+  // Parallel test/source trees retain the entire relative directory and module
+  // prefix. This is a bounded path convention, never a global basename search.
+  const sourceName = extension === '.py' ? pythonName : ecma?.[1]
+  const parts = directory.split('/')
+  const marker = parts.findLastIndex(part => ['test', 'tests', '__tests__'].includes(part))
+  if (sourceName && marker >= 0) {
+    for (const sourceRoot of ['', 'app', 'src']) {
+      add(posix.join(...parts.slice(0, marker), sourceRoot, ...parts.slice(marker + 1)), sourceName)
     }
   }
   return targets
@@ -459,7 +469,7 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
   const modules = moduleIndex(nodes)
   const nodesByPath = new Map(nodes.map((node) => [node.path, node]))
   const edges = [], edgeKeys = new Set()
-  let unresolvedImports = 0, ambiguousImports = 0, unresolvedRelations = 0, ambiguousRelations = 0
+  let unresolvedImports = 0, ambiguousImports = 0, unresolvedRelations = 0, ambiguousRelations = 0, ambiguousTestPaths = 0
   function edge(from, to, kind, provenance) {
     if (!to || from.id === to.id) return
     const key = from.id + '\0' + to.id + '\0' + kind
@@ -506,10 +516,10 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
     }
   }
   for (const node of nodes.filter((entry) => entry.roles.includes('test'))) {
-    for (const targetPath of conventionTestTargets(node.path)) {
-      const target = nodesByPath.get(targetPath)
-      if (target && !target.roles.includes('test')) edge(node, target, 'tests', 'convention-test-path-resolved')
-    }
+    const targets = conventionTestTargets(node.path).map(path => nodesByPath.get(path))
+      .filter(target => target && !target.roles.includes('test') && target.language === node.language)
+    if (targets.length === 1) edge(node, targets[0], 'tests', 'convention-test-path-resolved')
+    else if (targets.length > 1) ambiguousTestPaths += 1
   }
   edges.sort((left, right) => left.from.localeCompare(right.from) || left.to.localeCompare(right.to) || left.kind.localeCompare(right.kind))
   const scc = stronglyConnectedComponents(nodes, edges), ranking = pageRank(nodes, edges)
@@ -524,8 +534,9 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
   if (ambiguousImports > 0) findings.push({ ruleId: 'graph.coverage.ambiguous-imports', severity: 'warning', message: ambiguousImports + ' imports matched duplicate project type declarations and were not linked.', location: null })
   if (unresolvedRelations > 0) findings.push({ ruleId: 'graph.coverage.unresolved-relations', severity: 'info', message: unresolvedRelations + ' declared inheritance/implementation relations were left unresolved.', location: null })
   if (ambiguousRelations > 0) findings.push({ ruleId: 'graph.coverage.ambiguous-relations', severity: 'warning', message: ambiguousRelations + ' structural relations were ambiguous and not linked.', location: null })
+  if (ambiguousTestPaths > 0) findings.push({ ruleId: 'graph.coverage.ambiguous-test-paths', severity: 'warning', message: ambiguousTestPaths + ' test paths matched multiple source layouts and were not linked.', location: null })
   const metrics = {
-    nodes: nodes.length, edges: edges.length, unresolvedImports, ambiguousImports, unresolvedRelations, ambiguousRelations,
+    nodes: nodes.length, edges: edges.length, unresolvedImports, ambiguousImports, unresolvedRelations, ambiguousRelations, ambiguousTestPaths,
     duplicateTypes: [...qualifiedTypes.values()].filter((entries) => entries.length > 1).length, oversizedFiles, skippedSymlinks: discovered.skippedSymlinks,
     indexedBytes: actualBytes, rankedNodes: nodes.length, declarations: nodes.reduce((sum, node) => sum + node.declaredTypes.length, 0),
     stronglyConnectedComponents: scc.components.length, cyclicComponents: scc.components.filter((members) => members.length > 1).length,
@@ -535,7 +546,7 @@ export async function indexProjectGraph(root = process.cwd(), options = {}) {
   const generatedAt = options.generatedAt ?? new Date().toISOString()
   const generation = createHash('sha256').update(JSON.stringify(nodes) + JSON.stringify(edges)).digest('hex')
   return {
-    schemaVersion: 1, tool: { id: 'bth-semantic-advisory-graph', version: '2.0.0' }, findings, metrics,
+    schemaVersion: 1, tool: { id: 'bth-semantic-advisory-graph', version: '2.1.0' }, findings, metrics,
     graph: {
       schemaVersion: 1, generatedAt, generation, advisory: true,
       permittedUses: ['navigation', 'review-questions', 'impact-localization'], forbiddenUses: ['pass-verdict', 'test-skipping'],

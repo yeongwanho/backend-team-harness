@@ -88,6 +88,24 @@ test('the advisory graph resolves only unique static TypeScript and Python modul
   assert.equal(byPath.get('backend/app/api/orders.py').language, 'python')
 })
 
+test('installed standalone graph runner pairs nested Python tests without changing required verification', async () => {
+  const root = await gradleProject('bth-pack-parallel-tests-')
+  await mkdir(join(root, 'backend/app/api'), { recursive: true })
+  await mkdir(join(root, 'backend/tests/api'), { recursive: true })
+  await writeFile(join(root, 'backend/app/api/records.py'), 'def records(): return []\n')
+  await writeFile(join(root, 'backend/tests/api/test_records.py'), 'def test_records(): pass\n')
+  await installPack(root, 'codegraph-advisory')
+  const result = await checkProject(root)
+  assert.equal(result.confirmed, true)
+  assert.equal(result.result.tests.executed, 1, 'The required fixture gate remains separate from graph observations')
+  const document = JSON.parse(await readFile(join(root, '.backend-harness/generated/packs/codegraph-advisory/graph.json'), 'utf8'))
+  assert.equal(document.tool.version, '2.1.0')
+  assert.equal(document.metrics['edges.tests'], 1)
+  assert.equal(document.metrics.ambiguousTestPaths, 0)
+  assert.equal(document.graph.edges[0].provenance, 'convention-test-path-resolved')
+  assert.deepEqual(document.graph.forbiddenUses, ['pass-verdict', 'test-skipping'])
+})
+
 test('artifact nodes expose paths without reading secret-bearing artifact bodies', async () => {
   const root = await gradleProject('bth-pack-artifact-graph-')
   await mkdir(join(root, '.agents'), { recursive: true })

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "goalComplete": false,
+  "newUniquePairedTasks": 0,
+  "newProviderPairs": 1,
+  "newModelCalls": 2,
+  "staticTasksCompared": 20,
+  "historicalCounts": {
+    "tasks": 20,
+    "configuredOracles": 11,
+    "currentValidatedOracles": 10,
+    "tasksWithHistoricalPairedInference": 9,
+    "tasksWithHistoricalSuccessfulPair": 4
+  },
+  "nextEvidenceGaps": [
+    "Remaining versioned tasks and native full-workflow baselines across all three backends.",
+    "Fast-mode retrieval losses and mixed-model efficiency; no universal speed or token-saving claim.",
+    "Missing Claude direct path telemetry, direct CLI version provenance and auxiliary token accounting.",
+    "Actual Windows, MySQL corpus and second-developer onboarding."
+  ],
+  "limitations": [
+    "Do not pool historical protocols into a current-runtime success rate or completion percentage."
+  ]
+}

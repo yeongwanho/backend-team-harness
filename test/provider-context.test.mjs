@@ -90,3 +90,32 @@ test('package neighborhoods are bounded by mode and selected by ranked code whil
   assert.deepEqual(input, before)
   assert.equal(selectProviderContext(input.codeContext, input.projectConventions, 'deep').projectConventions.discovered.layers[0].packages.length, 5)
 })
+
+test('provider navigation has mode-bounded entries without dropping declared rules or hiding omissions', () => {
+  const input = fixture()
+  input.codeContext.entries = Array.from({ length: 47 }, (_, index) => ({ path: `src/Service${index}.java`, costCharacters: 100 }))
+  input.codeContext.budget = { limitCharacters: 12000, usedCharacters: 4700, omittedNodes: 3 }
+  input.projectConventions.adjacentCode = {
+    status: 'confirmed', source: 'source-bound-codegraph',
+    paths: input.codeContext.entries.slice(0, 32).map(entry => entry.path), omittedPathCount: 15
+  }
+  input.projectConventions.discovered.database.reviewCandidates = { locking: 17, nPlusOne: 21, indexCoverageUnknown: true }
+  const before = structuredClone(input)
+  for (const [mode, limit] of [['fast', 8], ['balanced', 16], ['deep', 24]]) {
+    const projected = selectProviderContext(input.codeContext, input.projectConventions, mode)
+    assert.deepEqual(projected.codeContext.entries, input.codeContext.entries.slice(0, limit))
+    assert.equal(projected.codeContext.budget.usedCharacters, limit * 100)
+    assert.equal(projected.codeContext.budget.omittedNodes, 50 - limit)
+    assert.equal(projected.codeContext.providerProjection.omittedEntries, 47 - limit)
+    assert.deepEqual(projected.projectConventions.adjacentCode.paths, input.projectConventions.adjacentCode.paths.slice(0, limit))
+    assert.equal(projected.projectConventions.adjacentCode.omittedPathCount, 47 - limit)
+    for (const key of ['projectRules', 'knowledgeDocuments', 'authority', 'requiredBeforeEdit']) {
+      assert.deepEqual(projected.projectConventions[key], input.projectConventions[key], key)
+    }
+    assert.deepEqual(projected.projectConventions.discovered.database.reviewCandidates, input.projectConventions.discovered.database.reviewCandidates)
+    assert.deepEqual(projected.codeContext.authority, input.codeContext.authority)
+    assert.deepEqual(projected.codeContext.provenance, input.codeContext.provenance)
+    assert.equal(projected.projectConventions.discovered.tests.count, 10)
+  }
+  assert.deepEqual(input, before)
+})

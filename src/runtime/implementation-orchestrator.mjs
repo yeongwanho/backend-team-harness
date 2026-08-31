@@ -548,8 +548,11 @@ async function prepareProviderPlanning(root, task, config, sourceBinding) {
       projectConventions = buildProjectConventions(planningContext.projectRuleEvaluation, planningContext.knowledge, codeContext, planningContext.conventions)
     }
   }
+  // Advisory prompt truncation must not remove language-specific safety advice.
+  // Actual changed-file preservation checks remain independent of both lists.
+  const guidancePaths = codeContext?.entries?.map(entry => entry.path) ?? []
   const selectedContext = selectProviderContext(codeContext, projectConventions, profile.selected)
-  return { providerTask, planningContext, profile, ...selectedContext }
+  return { providerTask, planningContext, profile, guidancePaths, ...selectedContext }
 }
 
 function assertApprovedSource(task, sourceBinding) {
@@ -583,7 +586,7 @@ async function runUnlocked(root, taskId, options) {
   }
 
   const sourceBinding = await captureConfiguredSourceBinding(root)
-  const { providerTask, profile, codeContext, projectConventions } = await prepareProviderPlanning(
+  const { providerTask, profile, codeContext, projectConventions, guidancePaths = [] } = await prepareProviderPlanning(
     root, loadedTask.record, loadedConfig.config, sourceBinding
   )
   const baseRefsSha256 = await sharedRefsSha256(root)
@@ -688,7 +691,7 @@ async function runUnlocked(root, taskId, options) {
     ? await resolveImplementationExecutable(workspace.path, loadedConfig.config.adapter.command)
     : null
   const verificationConfig = (await loadVerificationConfig(workspace.path)).config
-  const preservationGuidance = preservationGuidanceFor(verificationConfig.gates, codeContext?.entries?.map(entry => entry.path) ?? [])
+  const preservationGuidance = preservationGuidanceFor(verificationConfig.gates, guidancePaths)
   const testAuthoring = loadedConfig.config.schemaVersion === 2
     ? await inspectTestAuthoringContract(workspace.path, verificationConfig) : null
   const requestDir = await resolveSafeProjectPath(workspace.path, '.backend-harness/local/implementation')

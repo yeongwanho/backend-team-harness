@@ -18,6 +18,10 @@ Claude high 재시도에서는 오류가 줄었지만 테스트 1개가 끝내 �
 시간은 비슷하지만 비용이 높았습니다. [실제 비교와 개선할 점](docs/evidence/auth-comparison-v40.md)을
 공개합니다. 아직 항상 더 빠르거나 저렴한 도구라고 주장하지 않습니다.
 
+이후 구현↔테스트 연결을 보완하고 초기 탐색 목록을 줄였습니다. 규칙과 검증은
+유지했지만, 새 실제 비교에서도 직접 실행이 더 효율적이었습니다.
+[개선 내용·회귀 수정·남은 성능 문제](docs/evidence/provider-navigation-v41.md)를 함께 기록했습니다.
+
 ## 한눈에 보는 구조
 
 ```text
@@ -537,6 +541,13 @@ BTH Core는 모델을 PASS 판정기로 사용하지 않습니다. 대신 설치
 provider request에는 승인된 계획, 허용 경로·diff budget, 봉인된 graph 또는 현재 source에서 즉석 생성한 bounded graph의 제한된 상위 문맥, `projectConventions` 규칙·지식 문서·인접 코드 경로, 직전 실패 요약만 들어갑니다. 소스 본문 전체를 복사하지 않고 프로젝트 상대 경로를 전달합니다. 즉석 graph 전후에 source fingerprint가 바뀌면 구현을 시작하지 않습니다. 요청 파일 자체도 실행 전후 SHA-256으로 봉인됩니다. provider는 이미 source-cited 형태로 평가된 규칙을 시작 계약으로 사용하고, 이번 작업과 직접 관련되거나 미확정 사항을 해결하는 문서 절만 다시 엽니다. 가장 높은 production 경로와 짝지어진 test를 먼저 확인하고 이름·계층·DTO/오류·트랜잭션·영속성·테스트 관례를 보존합니다. MySQL/JPA 작업에는 query shape, 인덱스 선언, transaction, lock, fetch/N+1 후보를 별도 검토하되 정적 패턴을 실제 query plan이나 runtime 결함으로 과장하지 않습니다. 차단 규칙을 확인할 수 없거나 코드와 충돌하면 추측해 수정하지 않습니다. provider는 build/test/formatter/linter/package-manager/Docker/DB 명령을 실행하지 않고 편집만 담당하며, 이후 BTH가 변경 경로에 맞는 feedback Gate와 전체 필수 Gate를 각 책임에 맞게 실행합니다. provider 이벤트에서 evaluator 소유 검증 명령이 관찰되면 구현 성공과 별개로 규칙 위반입니다. 최종 PASS에서 전체 Gate를 생략하지 않습니다. provider의 서로 다른 출력은 input/uncached-input/output/cache/reasoning/total token, USD 비용, 시간, turn의 공통 schema로 정규화하며 관찰값일 뿐 PASS 권한은 없습니다. 코드 변경이 전혀 없으면 첫 호출에서 `no-source-change`로 멈추고 Gate와 맹목적 recovery를 실행하지 않습니다. 내장 provider는 이미 로그인된 로컬 CLI 세션을 사용하며 API-key 환경변수는 의도적으로 전달하지 않습니다.
 
 모델용 관례 문맥은 모든 선언 규칙·차단 상태·권한과 선택된 코드 순위를 보존하면서, source-pattern 예시를 관련 경로 우선으로 그룹당 fast/balanced/deep 각각 1/2/4개, 테스트 쌍을 2/4/8개로 선별합니다. 생략 수와 모드를 기록하고 전체 관찰은 승인된 인터뷰 snapshot에 남깁니다. 그래프 알고리즘의 수렴 통계와 중복된 전역 경로는 모델용 요청에서 줄이며, JSON은 공백 없는 기계용 형식으로 저장합니다. 같은 Spring 작업의 요청은 `52,340B → 26,580B`로 줄었지만 이것만으로 provider 총 토큰이나 완료 시간이 같은 비율로 줄었다고 주장하지 않습니다.
+
+초기 코드 탐색 목록은 문자 예산 안에서 `fast` 최대 8개, `balanced` 16개,
+`deep` 24개로 제한합니다. 생략한 수를 기록하며, 이 목록이 편집 허용 범위나 전체
+영향 목록이라는 뜻은 아닙니다. 필요하면 승인된 범위 안에서 관련 호출·구현·테스트를
+더 찾아야 합니다. 승인 계획·선언 규칙·DB 위험 신호·필수 검증은 이 상한으로 줄이지
+않습니다. 병렬 `tests/...`와 `app/...`·`src/...` 경로의 유일한 짝도 함께 보여주되,
+모호한 짝은 추측하지 않습니다. 목록 크기 감소가 성공률이나 속도 향상을 보장하지는 않습니다.
 
 `fast`가 제한하는 것은 BTH가 추가하는 task·code context와 provider effort입니다. 각 CLI가 자체적으로 붙이는 system prompt, tool schema, cache traffic까지 작아진다는 뜻은 아닙니다. 2026-08-30의 작은 합성 Java 구현 smoke에서 BTH request는 각각 약 1.6 KiB였지만 Codex는 총 input 97,449(그중 cached 82,688), Claude는 input 6 + cache creation 13,849 + cache read 80,424와 약 $0.076을 보고했습니다. 이 값은 한 환경의 관찰값이지 일반 성능 보장이 아닙니다. Claude는 `--max-budget-usd`를 전달할 수 있지만 현재 사용한 Codex CLI에는 같은 달러 상한이 없어 effort·timeout·attempt 한도로만 제한합니다. 따라서 내장 provider는 승인된 구현용이며, 짧은 질문을 항상 저비용으로 답하는 chat router는 아직 아닙니다.
 

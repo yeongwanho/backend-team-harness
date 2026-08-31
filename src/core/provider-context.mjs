@@ -1,7 +1,7 @@
 const LIMITS = Object.freeze({
-  fast: { examples: 1, pairs: 2, impactPaths: 2, packages: 2 },
-  balanced: { examples: 2, pairs: 4, impactPaths: 4, packages: 4 },
-  deep: { examples: 4, pairs: 8, impactPaths: 8, packages: 8 }
+  fast: { entries: 8, examples: 1, pairs: 2, impactPaths: 2, packages: 2 },
+  balanced: { entries: 16, examples: 2, pairs: 4, impactPaths: 4, packages: 4 },
+  deep: { entries: 24, examples: 4, pairs: 8, impactPaths: 8, packages: 8 }
 })
 
 function rankedSelection(values, maximum, score) {
@@ -39,8 +39,8 @@ function compactImpact(impact, maximum) {
 }
 
 // This is a model-facing projection, not a new source of policy. It retains all
-// declared rules, approval text, entry ranking, and authority boundaries while
-// limiting redundant source-pattern examples. Full observations remain in the
+// declared rules, approval text, selected entry order, and authority boundaries
+// while limiting advisory navigation and examples. Full observations remain in the
 // source-bound interview snapshot used to construct projectConventions.
 export function selectProviderContext(codeContext, projectConventions, mode) {
   const limits = LIMITS[mode]
@@ -84,17 +84,38 @@ export function selectProviderContext(codeContext, projectConventions, mode) {
   const context = codeContext ? structuredClone(codeContext) : codeContext
   if (context) {
     // Convergence telemetry and global graph sizes help algorithm audits, not
-    // implementation. Ranked entries and their source provenance stay intact.
+    // implementation. Selected entries and their source provenance stay intact.
     delete context.algorithm
     delete context.graph
     delete context.query
     if (context.impact) context.impact = compactImpact(context.impact, limits.impactPaths)
+    const entries = context.entries ?? []
+    if (entries.length > limits.entries) {
+      const omitted = entries.length - limits.entries
+      context.entries = entries.slice(0, limits.entries)
+      context.budget = {
+        ...context.budget,
+        usedCharacters: context.entries.reduce((sum, entry) => sum + (entry.costCharacters ?? JSON.stringify(entry).length), 0),
+        omittedNodes: (context.budget?.omittedNodes ?? 0) + omitted
+      }
+      context.providerProjection = {
+        schemaVersion: 1, entryLimit: limits.entries, omittedEntries: omitted,
+        fullNavigationSource: 'source-bound-codegraph', mayDiscoverMoreWithinApprovedScope: true
+      }
+      if (Array.isArray(conventions?.adjacentCode?.paths)) {
+        const selected = new Set(context.entries.map(entry => entry.path))
+        const original = conventions.adjacentCode.paths
+        conventions.adjacentCode.paths = original.filter(path => selected.has(path))
+        conventions.adjacentCode.omittedPathCount = (conventions.adjacentCode.omittedPathCount ?? 0) + original.length - conventions.adjacentCode.paths.length
+      }
+    }
   }
   if (conventions) {
     conventions.providerProjection = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       mode,
       declaredRulesPreserved: true,
+      navigationEntryLimit: limits.entries,
       examplesPerGroup: limits.examples,
       testPairLimit: limits.pairs,
       omittedExamples: omissions.examples,

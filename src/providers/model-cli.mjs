@@ -148,6 +148,7 @@ function providerPrompt(requestPath, profile) {
     'Treat confirmed structured projectConventions entries and their source citations as the starting contract; do not reread every policy document.',
     'Open only cited rule or knowledge sections directly relevant to this task or needed to resolve an unknown, then inspect the highest-ranked adjacent production example and its paired test when present.',
     'Start with the ranked codeContext paths; when they are unavailable, use bounded Glob and Grep discovery inside allowedPrefixes.',
+    'Navigation lists are bounded starting points, not exhaustive impact or edit allowlists; follow relevant callers and paired production/tests inside the approved scope when needed.',
     'Use projectConventions.discovered as source-cited observations, not declared policy; preserve repeated naming, layering, DTO/error, transaction, persistence, and test patterns wherever the observations or adjacent examples show them, even for a small CRUD change.',
     'For MySQL/JPA work, inspect cited database observations and adjacent code for query shape, indexes, transaction scope, locks, and N+1 risk; source-pattern candidates are review prompts, never proof of a query plan or runtime defect.',
     'If a declared blocking project rule is unknown, unavailable, or conflicts with the code, do not guess; stop without changing files; preserve non-blocking warnings in the implementation evidence.',

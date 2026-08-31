@@ -1,15 +1,71 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { indexProjectGraph } from '../packs/codegraph-advisory/indexer.mjs'
+import { rankCodeContext } from '../src/core/code-context.mjs'
 
 async function writeSource(root, name, text, sourceSet = 'main') {
   const directory = join(root, 'src', sourceSet, 'java', 'example')
   await mkdir(directory, { recursive: true })
   await writeFile(join(directory, name + '.java'), 'package example;\n' + text + '\n', 'utf8')
 }
+
+async function pathFixture(t, files) {
+  const root = await mkdtemp(join(tmpdir(), 'bth-parallel-test-paths-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  for (const path of files) {
+    await mkdir(dirname(join(root, path)), { recursive: true })
+    await writeFile(join(root, path), path.endsWith('.py') ? 'pass\n' : 'export {}\n')
+  }
+  return indexProjectGraph(root)
+}
+
+function testEdges(document) {
+  const paths = new Map(document.graph.nodes.map(node => [node.id, node.path]))
+  return document.graph.edges.filter(edge => edge.kind === 'tests')
+    .map(edge => [paths.get(edge.from), paths.get(edge.to)]).sort()
+}
+
+test('parallel nested Python tests pair within their module and co-select the production file', async t => {
+  const document = await pathFixture(t, [
+    'clinic/app/api/routes/records.py', 'clinic/tests/api/routes/test_records.py',
+    'clinic/app/unrelated.py', 'admin/app/api/routes/records.py',
+    'admin/tests/api/routes/records_test.py', 'orphan/tests/api/routes/test_records.py'
+  ])
+  assert.deepEqual(testEdges(document), [
+    ['admin/tests/api/routes/records_test.py', 'admin/app/api/routes/records.py'],
+    ['clinic/tests/api/routes/test_records.py', 'clinic/app/api/routes/records.py']
+  ])
+  const result = rankCodeContext(document, 'test_records', { budgetCharacters: 1200 })
+  const first = result.entries.findIndex(entry => entry.path === 'clinic/tests/api/routes/test_records.py')
+  assert.ok(first >= 0)
+  assert.equal(result.entries[first + 1].path, 'clinic/app/api/routes/records.py')
+  assert.deepEqual(document.graph.forbiddenUses, ['pass-verdict', 'test-skipping'])
+})
+
+test('parallel nested ECMAScript paths pair without searching another module or language', async t => {
+  const document = await pathFixture(t, [
+    'orders/src/controllers/orders.ts', 'orders/tests/controllers/orders.spec.ts',
+    'audit/app/nested/events.js', 'audit/test/nested/events.test.js',
+    'other/src/controllers/orders.ts', 'other/tests/controllers/orders.spec.py'
+  ])
+  assert.deepEqual(testEdges(document), [
+    ['audit/test/nested/events.test.js', 'audit/app/nested/events.js'],
+    ['orders/tests/controllers/orders.spec.ts', 'orders/src/controllers/orders.ts']
+  ])
+})
+
+test('ambiguous parallel source layouts remain unresolved and cannot invent test coverage', async t => {
+  const document = await pathFixture(t, [
+    'backend/app/api/accounts.py', 'backend/src/api/accounts.py',
+    'backend/tests/api/test_accounts.py', 'backend/app/unrelated/accounts.py'
+  ])
+  assert.deepEqual(testEdges(document), [])
+  assert.equal(document.metrics.ambiguousTestPaths, 1)
+  assert.ok(document.findings.some(finding => finding.ruleId === 'graph.coverage.ambiguous-test-paths'))
+})
 
 test('semantic advisory graph resolves multiple declarations, inheritance, injection, tests, and SCCs', async () => {
   const root = await mkdtemp(join(tmpdir(), 'bth-semantic-graph-'))

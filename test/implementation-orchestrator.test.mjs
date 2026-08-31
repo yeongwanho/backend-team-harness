@@ -593,6 +593,40 @@ test('automatic fast implementation requires confirmed project rules and adjacen
   assert.match(capturedRequest.task.context, /Project rules needing attention:/)
 })
 
+test('navigation truncation cannot remove Java preservation guidance for a custom verification gate', async () => {
+  const projectFiles = Object.fromEntries(Array.from({ length: 30 }, (_, index) => [
+    `src/api/request${index}.ts`, `export function requestHandler${index}() { return ${index}; }\n`
+  ]))
+  projectFiles['src/main/java/example/LegacyModel.java'] = 'package example; class LegacyModel {}\n'
+  projectFiles['tools/verify'] = '#!/usr/bin/env node\nprocess.exit(0)\n'
+  const root = await approvedImplementationProject({
+    taskContext: 'Update request handlers.', taskPlan: 'Update src/api/request0.ts only. Preserve required verification.',
+    projectFiles, executableFiles: ['tools/verify'],
+    providerConfig: {
+      schemaVersion: 2,
+      adapter: { kind: 'provider', provider: 'codex', network: true, timeoutMs: 30000,
+        model: null, mode: 'deep', contextBudgetCharacters: null, maxBudgetUsd: null },
+      writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 65536 },
+      recovery: { maxAttempts: 1 }
+    },
+    verificationConfig: { schemaVersion: 1, gates: [{ id: 'tests', required: true,
+      command: ['./tools/verify'], inputs: ['tools/verify'], timeoutMs: 30000,
+      result: { type: 'junit', reports: ['build/results.xml'], minimumTests: 1 } }] }
+  })
+  let request
+  await assert.rejects(runImplementation(root, 'IMPL-1', {
+    actor: 'developer', allowWrite: true, allowNetwork: true,
+    providerProbe: async () => ({ available: true, version: 'fixture' }),
+    providerRunner: async (_adapter, input) => {
+      request = JSON.parse(await readFile(join(input.cwd, input.requestPath), 'utf8'))
+      throw new Error('fixture-captured-request-before-any-edit')
+    }
+  }), /fixture-captured-request-before-any-edit/)
+  assert.equal(request.codeContext.entries.length, 24)
+  assert.ok(request.codeContext.entries.every(entry => !entry.path.endsWith('.java')))
+  assert.equal(request.verification.preservation?.scope, 'changed-java-direct-relationship-writes')
+})
+
 test('an unavailable built-in provider fails before creating implementation state or changing the task', async () => {
   const root = await approvedImplementationProject({
     providerConfig: {
