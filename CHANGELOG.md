@@ -25,6 +25,8 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Changed
 
+- Added a prepared 62-test public FastAPI authentication baseline without replacing production or pre-start/API test code. Four actual Codex/Claude BTH/direct candidates passed ordinary verification and a separate nine-case oracle; efficiency was mixed and a Claude direct read-path metric is missing. This changes evaluation coverage, not production runtime. See `docs/evidence/auth-comparison-v40.md`.
+
 - Fixed the v36 regression that treated observed guards as immutable policy and skipped tests on an intended guard change. Required tests now run; a real failure still uses bounded repair, while passed tests with changed conditions produce `implementation-needs-review` without a blind model retry. Historical sealed records are rechecked without rewriting them.
 - Added real Codex pet/visit comparisons and a zero-model historical-target replay with 76 JVM tests before and after acknowledged integration. The model comparisons do not demonstrate a speed or token advantage; their first-attempt failures are preserved.
 - Public evaluation protocol `behavioral-oracle-v35` accepts implementation-independent localized visit validation and adds a cross-owner JPA regression to the pet-update oracle. A real BTH candidate passed the earlier four cases but changed another owner's row; it is not an acceptable apply candidate. Historical first-attempt records remain unchanged. See `docs/evidence/corpus-expansion-v35.md`.

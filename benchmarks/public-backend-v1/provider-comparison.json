@@ -370,6 +370,66 @@
         { "id": "fastapi-03-created-at", "decisions": { "modules": ["root"], "databaseImpact": "schema", "apiImpact": "compatible" } },
         {
           "id": "fastapi-04-constant-time-login",
+          "projectFixture": {
+            "files": [
+              {
+                "path": "backend/tests/bth_evaluation_bootstrap.py",
+                "fixture": "fixtures/fastapi/full-test-bootstrap.py",
+                "sha256": "8aa98e4fe8cf718817211ddf30a592133ca05cfe99a0b101a7533f5f6562327f",
+                "expectedSha256": null
+              },
+              {
+                "path": ".backend-harness/bin/verify-public-fastapi.mjs",
+                "fixture": "fixtures/fastapi/full-test-run.mjs",
+                "sha256": "2e7a5c6ed657a26362af6532ef45b41e6b24bbb95797c2f80fc69b8ce26f53fa",
+                "expectedSha256": null
+              },
+              {
+                "path": ".backend-harness/bin/verify-public-fastapi",
+                "fixture": "fixtures/fastapi/verify-public-fastapi",
+                "sha256": "1486e7ac42647a75f682317ad92321462fdb5b4894a64cfb13a5283742370faf",
+                "expectedSha256": null,
+                "executable": true
+              },
+              {
+                "path": ".backend-harness/bin/verify-public-fastapi.cmd",
+                "fixture": "fixtures/fastapi/verify-public-fastapi.cmd",
+                "sha256": "8ba96bfee91d48be818061140248bfb77ba0c986820ff6afe5f1180650326f05",
+                "expectedSha256": null
+              },
+              {
+                "path": "backend/tests/test_baseline_environment.py",
+                "fixture": "fixtures/fastapi/test_baseline_environment.py",
+                "sha256": "ab10054180cf606d0759c084cf560e0c9fecb7c440c223d0056e52bde51ee6aa",
+                "expectedSha256": null
+              },
+              {
+                "path": "backend/tests/utils/utils.py",
+                "fixture": "fixtures/fastapi/test_utils.py",
+                "sha256": "037e8c294c1a6645bc6975b91d01284e89e42bddc2bc99c0daa9a94563d6df06",
+                "expectedSha256": "ec4de331ed328dda26e329024c1f598996845fb5d9f662413a99a5b39a7e7f70"
+              }
+            ],
+            "workspacePreparation": { "kind": "uv-sync-offline", "projectPath": "backend", "pythonVersion": "3.12", "timeoutMs": 180000 },
+            "verification": {
+              "schemaVersion": 1,
+              "context": { "profile": "test", "databaseDialect": "postgresql" },
+              "gates": [{
+                "id": "tests", "required": true, "feedback": true, "network": true,
+                "pathPrefixes": ["backend"],
+                "command": ["./.backend-harness/bin/verify-public-fastapi"],
+                "timeoutMs": 240000,
+                "inputs": [
+                  "pyproject.toml", "backend/pyproject.toml", "uv.lock",
+                  ".backend-harness/bin/verify-portable.mjs", ".backend-harness/bin/verify-portable.cmd",
+                  ".backend-harness/bin/verify-public-fastapi", ".backend-harness/bin/verify-public-fastapi.cmd",
+                  ".backend-harness/bin/verify-public-fastapi.mjs", "backend/tests/bth_evaluation_bootstrap.py",
+                  "backend/tests/test_baseline_environment.py", "backend/tests/utils/utils.py"
+                ],
+                "result": { "type": "junit", "reports": [".backend-harness/local/reports/tests/junit.xml"], "minimumTests": 62 }
+              }]
+            }
+          },
           "decisions": {
             "modules": [
               "root"

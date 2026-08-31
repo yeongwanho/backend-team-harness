@@ -96,9 +96,7 @@ test('checked-in evaluator fixtures match their pinned bytes and stay outside pr
 test('FastAPI prepared baseline has pinned preimages, complete protected inputs and no production replacements', async () => {
   const corpus = parseEvaluationCorpus(await readFile('benchmarks/public-backend-v1/corpus.json', 'utf8'))
   const config = parseProviderBenchmarkConfig(await readFile('benchmarks/public-backend-v1/provider-comparison.json', 'utf8'), corpus)
-  const tasks = config.repositories.flatMap(repository => repository.tasks).filter(task => task.projectFixture)
-  assert.deepEqual(tasks.map(task => task.id), ['fastapi-05-missing-user'])
-  const fixture = tasks[0].projectFixture
+  const fixture = config.repositories.flatMap(repository => repository.tasks).find(task => task.id === 'fastapi-05-missing-user').projectFixture
   assert.equal(fixture.files.length, 8)
   assert.equal(fixture.files.filter(file => file.expectedSha256 !== null).length, 3)
   assert.equal(fixture.verification.gates[0].result.minimumTests, 57)
@@ -108,5 +106,25 @@ test('FastAPI prepared baseline has pinned preimages, complete protected inputs 
     assert.equal(createHash('sha256').update(bytes).digest('hex'), file.sha256, file.path)
     assert.match(file.path, /^(?:backend\/tests\/|\.backend-harness\/bin\/)/)
     assert.ok(fixture.verification.gates[0].inputs.includes(file.path))
+  }
+})
+
+test('FastAPI authentication baseline preserves existing task assertions and corrected pre-start tests', async () => {
+  const corpus = parseEvaluationCorpus(await readFile('benchmarks/public-backend-v1/corpus.json', 'utf8'))
+  const config = parseProviderBenchmarkConfig(await readFile('benchmarks/public-backend-v1/provider-comparison.json', 'utf8'), corpus)
+  const task = config.repositories.flatMap(repository => repository.tasks).find(task => task.id === 'fastapi-04-constant-time-login')
+  const fixture = task.projectFixture
+  assert.ok(fixture, 'The real original suite needs an explicit common test environment before provider execution')
+  assert.equal(fixture.files.length, 6)
+  assert.deepEqual(fixture.files.filter(file => file.expectedSha256 !== null).map(file => file.path), ['backend/tests/utils/utils.py'])
+  assert.equal(fixture.workspacePreparation.kind, 'uv-sync-offline')
+  assert.equal(fixture.verification.gates[0].result.minimumTests, 62)
+  assert.equal(task.acceptance.cases.length, 9)
+  for (const file of fixture.files) {
+    assert.doesNotMatch(file.path, /backend\/app\/|tests\/scripts\/|tests\/api\/|auth_enumeration/)
+    assert.match(file.path, /^(?:backend\/tests\/|\.backend-harness\/bin\/)/)
+    assert.ok(fixture.verification.gates[0].inputs.includes(file.path))
+    const bytes = await readFile('benchmarks/public-backend-v1/' + file.fixture)
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), file.sha256, file.path)
   }
 })

@@ -13,6 +13,11 @@ Claude high 재시도에서는 오류가 줄었지만 테스트 1개가 끝내 �
 [실제 복구 결과와 소모량](docs/evidence/test-failure-recovery-v39.md)에 실패를 포함해 기록했습니다.
 이 개선이 자동 구현 성공률이나 토큰 절약을 보장하지는 않습니다.
 
+추가 FastAPI 로그인 보안 작업에서는 Codex·Claude의 BTH/직접 실행 네 후보가 모두
+테스트를 통과했습니다. 다만 Codex BTH는 더 느리고 토큰도 많았으며, Claude BTH는
+시간은 비슷하지만 비용이 높았습니다. [실제 비교와 개선할 점](docs/evidence/auth-comparison-v40.md)을
+공개합니다. 아직 항상 더 빠르거나 저렴한 도구라고 주장하지 않습니다.
+
 ## 한눈에 보는 구조
 
 ```text

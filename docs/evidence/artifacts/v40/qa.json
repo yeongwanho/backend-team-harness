@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T04:26:48.086Z",
+  "platform": "darwin",
+  "node": "v22.23.1",
+  "sourceHashes": {
+    "benchmarks/public-backend-v1/provider-comparison.json": "f7999657dfbbe143510dd46000a436c88d86f4da74d23feea511ef3882addf74",
+    "test/provider-benchmark-config.test.mjs": "0fb8fd3eb2b2dd11edf30a31d9c0520f495e6ea8bb7531ab2aa6bd549f0beefc",
+    "docs/evidence/auth-comparison-v40.md": "d3d7d2dd7860a1589421587337cd9cfa97f40b59926f5a3517943a8d6571456c",
+    "README.md": "21af1a3d3bdebe45304f91616849a02c56f1e110a612c0d09266afb1a823c384",
+    "CHANGELOG.md": "fd5395b7b03b3ae124201b44ba22e6d1b6f1d4cc49edf66716edbe09a8be27be",
+    "docs/evidence/artifacts/v40/record-pair.mjs": "4521245b5e5592345655fd135fa2e7d666c8a30712580365ff84ef2267ab10cf",
+    "docs/evidence/artifacts/v40/record-evidence.mjs": "e8781117d89b0d693bcd5d8f020c74a5659dd37e45b0fa2a78d5028848c95ffc"
+  },
+  "pairHashes": {
+    "docs/evidence/artifacts/v40/codex-pair.json": "0c2d5663fa8cacced9213b505b1b25e0be2610fb1962012dd84184f55422ae15",
+    "docs/evidence/artifacts/v40/claude-pair.json": "cfb7cd640e0de7646e4da926f2682545044d3f6ffbf89a0e29e0edcc18def647"
+  },
+  "suites": {
+    "failingFirst": {
+      "tests": 7,
+      "pass": 6,
+      "fail": 1,
+      "skipped": 0,
+      "logSha256": "fe8cfd16e288213b38559ba920f7cec157c1b0c744aa85f253a8e144defcbdac"
+    },
+    "fixture": {
+      "tests": 20,
+      "pass": 20,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "ec10e8289361a83ae6dc2f2179ca3ec0f02091767de1d86f87ce7f5acb75904e"
+    },
+    "scoped": {
+      "tests": 52,
+      "pass": 52,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "b983f0b8d22002f04efc335e8e4d22134c2cd983d5df41b312d10da19c724579"
+    },
+    "final": {
+      "tests": 10,
+      "pass": 10,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "4cd8f53b3a136f6ab8efe575c365e23436419f04c0cd4db8115f445c80e8eb1c"
+    }
+  },
+  "syntax": {
+    "passed": true,
+    "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "diffCheck": {
+    "passed": true
+  },
+  "publicFixtureResources": [
+    {
+      "kind": "container",
+      "label": "bth.fastapi.productqa",
+      "remaining": 0
+    },
+    {
+      "kind": "network",
+      "label": "bth.fastapi.productqa",
+      "remaining": 0
+    },
+    {
+      "kind": "container",
+      "label": "bth.fastapi.oracle",
+      "remaining": 0
+    },
+    {
+      "kind": "network",
+      "label": "bth.fastapi.oracle",
+      "remaining": 0
+    }
+  ],
+  "realProviderCalls": 4,
+  "limitations": [
+    "Scoped QA for evaluator configuration/tests/docs; production runtime is unchanged from b188df3.",
+    "No v40 full coverage, mutation, installation smoke, actual Windows, MySQL task or second-developer run.",
+    "TAP raw logs remain local; hashes and counts are published, not private workspaces or raw provider streams."
+  ]
+}

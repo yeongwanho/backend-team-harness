@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "goalComplete": false,
+  "newPairedTasks": 1,
+  "newProviderPairs": 2,
+  "newModelCalls": 4,
+  "newPairsBothSuccessAt1": 2,
+  "corpusLedger": {
+    "path": "docs/evidence/artifacts/v40/corpus-ledger.json",
+    "sha256": "2d8512cc3033d87ed33666ad9efe5748716a59f4ad2fb1b4a9e4f6a6ea5c813e",
+    "counts": {
+      "tasks": 20,
+      "configuredOracles": 11,
+      "currentValidatedOracles": 10,
+      "tasksWithHistoricalPairedInference": 9,
+      "tasksWithHistoricalSuccessfulPair": 4
+    }
+  },
+  "pairHashes": {
+    "docs/evidence/artifacts/v40/codex-pair.json": "0c2d5663fa8cacced9213b505b1b25e0be2610fb1962012dd84184f55422ae15",
+    "docs/evidence/artifacts/v40/claude-pair.json": "cfb7cd640e0de7646e4da926f2682545044d3f6ffbf89a0e29e0edcc18def647"
+  },
+  "nativeFullWorkflowBaselineComplete": false,
+  "nextEvidenceGaps": [
+    "Reduce irrelevant context and improve production/test ranking without losing mandatory rules or sources; validate beyond this known task.",
+    "Reproduce and repair missing Claude direct read-path observability; persist direct CLI version and clarify auxiliary token scope.",
+    "Cover remaining versioned tasks and independent backend environments, then run native provider full-workflow baselines.",
+    "Actual Windows process/provider QA, MySQL task corpus and two-developer onboarding remain incomplete."
+  ],
+  "limitations": [
+    "Historical pairs across protocols are not a pooled success rate or current-runtime completion percentage.",
+    "All four candidates pass defined behavior, but Claude BTH comments overstate timing guarantees and duplicate hash configuration; human review remains necessary.",
+    "Deep/high one-call comparisons do not establish auto/light efficiency or universal BTH benefit."
+  ]
+}
