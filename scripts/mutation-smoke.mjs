@@ -7,6 +7,12 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/core/test-failure-diagnostics.mjs',
+    from: 'DIAGNOSTICS.get(item.exceptionType) !== item.code',
+    to: 'false',
+    test: 'test/implementation-verification.test.mjs'
+  },
+  {
     file: 'src/core/workspace-formatting.mjs',
     from: '!declared.has(normalized(input))',
     to: 'false',

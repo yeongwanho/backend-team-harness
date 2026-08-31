@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { HELP_LINES } from '../src/cli/help.mjs'
 import { parseImplementationConfig } from '../src/config/implementation.mjs'
+import { compactTestFailureDiagnostics } from '../src/core/test-failure-diagnostics.mjs'
 
 test('documented CLI commands match the executable help contract', async () => {
   const reference = await readFile(new URL('../docs/CLI-REFERENCE.md', import.meta.url), 'utf8')
@@ -23,4 +24,10 @@ test('documented project-formatting fragment is accepted by the actual config pa
   assert.match(guide, /verification.json/)
   assert.match(guide, /32 MiB/)
   assert.match(guide, /OS 네트워크 차단이 아닙니다/)
+})
+
+test('documented test diagnostic matches the runtime allowlist exactly', async () => {
+  const guide = await readFile(new URL('../docs/TEST-FAILURE-DIAGNOSTICS.md', import.meta.url), 'utf8')
+  const example = JSON.parse(guide.match(/```json\n([\s\S]*?)\n```/)[1])
+  assert.deepEqual(compactTestFailureDiagnostics([example]), [example])
 })

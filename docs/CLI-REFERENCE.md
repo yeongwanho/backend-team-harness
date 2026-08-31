@@ -58,6 +58,9 @@ workspace integrity and explicit execution options. A passed latest run is not
 diagnosed as an old failure, and an invalid record seal is rejected.
 
 Diagnostics and provider recovery omit stdout/stderr and assertion bodies.
+New JUnit failures may also include allowlisted standard exception diagnostics;
+see [test failure diagnostics](TEST-FAILURE-DIAGNOSTICS.md). These are bounded
+untrusted observations, not root-cause proof or test-pass authority.
 Names receive bounded best-effort redaction and remain untrusted execution data,
 not instructions; this is not a guarantee that arbitrary test names contain no
 private information. The ordinary `VERIFY_FAILED` sealed-run path remains supported.

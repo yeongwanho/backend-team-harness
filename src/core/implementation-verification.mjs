@@ -1,6 +1,7 @@
 import { redactString } from './redaction.mjs'
 import { compactExecutionDiagnostics } from './execution-diagnostics.mjs'
 import { compactPreservation } from './implementation-preservation.mjs'
+import { compactTestFailureDiagnostics } from './test-failure-diagnostics.mjs'
 
 const count = value => Number.isSafeInteger(value) && value >= 0 ? value : null
 const code = value => typeof value === 'string' && /^[a-z][a-z0-9_-]{0,95}$/i.test(value) ? value : null
@@ -43,7 +44,10 @@ export function compactImplementationVerification(result) {
           signal: code(process.signal), timedOut: process.timedOut === true,
           stdioDrainTimedOut: process.stdioDrainTimedOut === true
         } : null,
-        failedTests: Array.isArray(tests) ? tests.slice(0, 32).map(test => ({ className: text(test?.className), name: text(test?.name) ?? '<unnamed>' })) : [],
+        failedTests: Array.isArray(tests) ? tests.slice(0, 32).map(test => {
+          const diagnostics = compactTestFailureDiagnostics(test?.diagnostics)
+          return { className: text(test?.className), name: text(test?.name) ?? '<unnamed>', ...(diagnostics.length ? { diagnostics } : {}) }
+        }) : [],
         omittedFailedTestCount: Math.max(0, (Array.isArray(tests) ? tests.length : 0) - 32) + (count(gate.omittedFailedTestCount) ?? 0)
       }
     }),

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "goalComplete": false,
+  "priorCorpusLedger": {
+    "path": "docs/evidence/artifacts/v37/corpus-ledger.json",
+    "sha256": "562363bb48f2c6f1f64adf8925afff373ddfc71200269327342e049485b9afa8"
+  },
+  "taskCount": 20,
+  "historicalPairedTasks": 8,
+  "historicalSuccessfulPairs": 3,
+  "configuredOracles": 11,
+  "validatedCurrentOracles": 10,
+  "newPairedTasks": 0,
+  "newModelCalls": 2,
+  "newSuccessfulRepairTasks": 0,
+  "repairChain": [
+    "docs/evidence/artifacts/v39/codex-recovery.json",
+    "docs/evidence/artifacts/v39/claude-recovery.json"
+  ],
+  "nextEvidenceGap": "Run uncovered versioned corpus tasks and native full-workflow baselines. The saved Spring assertion failure needs source-bound locale/config diagnosis; exception identity alone did not solve it.",
+  "limitations": [
+    "Historical protocols are not pooled as a success rate.",
+    "This actual Claude repair is not a Claude/direct pair. Actual Windows, MySQL task corpus and second-developer onboarding remain incomplete."
+  ]
+}

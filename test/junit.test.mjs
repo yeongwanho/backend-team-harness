@@ -5,6 +5,26 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { collectJUnitResults, parseJUnitXml, snapshotReportFiles } from '../src/core/junit.mjs'
 
+test('JUnit keeps bounded standard exception diagnostics without report messages or stack traces', () => {
+  const result = parseJUnitXml('<testsuite><testcase classname="ViewTest" name="renders"><error type="org.xml.sax.SAXParseException; lineNumber: 16" message="token=private-message">private-source-stack</error></testcase></testsuite>')
+  assert.deepEqual(result.failedTests[0].diagnostics, [{ code: 'xml_parse_error', exceptionType: 'org.xml.sax.SAXParseException' }])
+  assert.doesNotMatch(JSON.stringify(result), /private|token=|lineNumber/)
+  assert.equal(result.errors, 1)
+  const unknown = parseJUnitXml('<testsuite><testcase name="unknown"><error type="com.company.SecretPolicyException">raw private data</error></testcase></testsuite>')
+  assert.deepEqual(unknown.failedTests, [{ className: null, name: 'unknown' }])
+  assert.equal(unknown.errors, 1)
+})
+
+test('JUnit diagnostic extraction covers flaky and rerun attributes, deduplicates and never trusts body text', () => {
+  const result = parseJUnitXml('<testsuite><testcase name="retry"><rerunError type="java.lang.NullPointerException"/><flakyFailure type="java.lang.AssertionError"/><error type="java.lang.NullPointerException"/><system-out>org.xml.sax.SAXParseException</system-out></testcase></testsuite>')
+  assert.deepEqual(result.failedTests[0].diagnostics, [
+    { code: 'null_reference', exceptionType: 'java.lang.NullPointerException' },
+    { code: 'assertion_failure', exceptionType: 'java.lang.AssertionError' }
+  ])
+  const forged = parseJUnitXml('<testsuite><testcase name="still unknown"><error type="org.xml.sax.SAXParseException.evil" message="org.xml.sax.SAXParseException">org.xml.sax.SAXParseException</error></testcase></testsuite>')
+  assert.equal(forged.failedTests[0].diagnostics, undefined)
+})
+
 test('JUnit parser counts executed, failed, errored, and skipped test cases', () => {
   const result = parseJUnitXml([
     '<testsuite tests="4" failures="1" errors="1" skipped="1">',

@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T03:57:38.346Z",
+  "platform": "darwin",
+  "node": "v22.23.1",
+  "sourceHashes": {
+    "src/runtime/implementation-orchestrator.mjs": "dc329cf8019c172da8e6b85e68d57df16ed3d6bbd3b0b0eda5a58279313872a4",
+    "src/core/workspace-formatting.mjs": "5f19d317769b88c2dff2622476801896342102f350b59f1fb800b7f2de99b8be",
+    "src/config/formatting.mjs": "358f13c9d3a0bd293cf21a735944e887037d69136f85cb1b0f83a4eecb022654",
+    "src/config/implementation.mjs": "13278e890783cade014766b61c885f865111ac251e214599c3331f5e35a9230f",
+    "src/core/junit.mjs": "884a507f9e189babc568617ecbfa0dd5d733925f21d2d3b064cdac901248b92c",
+    "src/core/test-failure-diagnostics.mjs": "ff19484c85780d71da23ee0225784eb3465b70c35895a6f03c6ad04cec82dabc",
+    "src/core/implementation-verification.mjs": "ba20b659a0638ca57823252c4219f5b80bb8a13b20fd8c2dc1028b37cfebfbc8",
+    "src/providers/model-cli.mjs": "a56d0c6c44ae037f38a2276bdfa10a061770692ff6d3e3a98f255d65a6f88eff",
+    "scripts/mutation-smoke.mjs": "df2baa658acc11a3ba7c67e5d804c339c4ca3a1491ae1cb1cb45c9663e6ddf1a",
+    "test/junit.test.mjs": "c90454f032e85a800036cdb5dd18b3a3d934a31b01d3e90714a7006c0ca787e8",
+    "test/implementation-verification.test.mjs": "15ac48710087ace573ba690f49142072b2efa566b8dcd3b41b815b10b5c9366e",
+    "test/implementation-orchestrator.test.mjs": "aa145b44f403e00884199086dff011a66bcb23e65f5250e6044c05d6446464c5",
+    "test/test-failure-diagnostics.test.mjs": "7c2c9485bd17f367cc22024bc6b698aeb9a4b4f102d0bb6e71b5b0dc7b564217",
+    "test/docs-contract.test.mjs": "3a52302df6bba62867e81eeb697e5b9e08195f25f1012597dbdad0d774729557",
+    "docs/TEST-FAILURE-DIAGNOSTICS.md": "a580912f22ea0a80f4b86eecec1250f5b5204f51cdc9a3b1e06209413088b7a9"
+  },
+  "syntax": {
+    "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "tests": {
+    "total": 589,
+    "passed": 585,
+    "failed": 0,
+    "skipped": 4,
+    "logSha256": "0cd22cb50927a13a2e186215b53ba4d7fe5c26088dea20b1ecbdc4683b1be6df"
+  },
+  "coverage": {
+    "lines": 91.36,
+    "branches": 83.01,
+    "functions": 98.7
+  },
+  "mutation": {
+    "killed": 40,
+    "totalCurated": 40,
+    "logSha256": "352f773558a7b11c69dd10093b1697712330747b1f8949f58bc6431567340d2d",
+    "limitation": "Curated smoke, not exhaustive mutation coverage."
+  },
+  "installSmoke": {
+    "passed": true,
+    "logSha256": "ea781ddfffe003a1a189e0e8327a14fe17665304b3356e6fdb1bfe15551967fe"
+  },
+  "windowsContract": {
+    "passed": true,
+    "logSha256": "aee9f8e615ecc6747736355b6c83bd2fccdd9f2c834b280a87efc21721988203",
+    "actualWindowsExecution": false
+  },
+  "productionDependencies": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "logSha256": "d9b31b6d619719454965caba31ff8cb2b222a54a25eef7aadf0b980cecf3e09c"
+  },
+  "skipped": [
+    "real MySQL container E2E",
+    "separate Maven/Gradle cold-cache E2E",
+    "real Windows provider JSON execution",
+    "real Windows descendant termination"
+  ],
+  "limitations": [
+    "Both actual repair attempts still fail an ordinary test; unit QA is not product task success.",
+    "The second provider received the first provider output and a different profile. No head-to-head ranking, success@1, speed or token-saving claim."
+  ]
+}

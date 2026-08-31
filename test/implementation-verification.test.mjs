@@ -1,6 +1,26 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { compactImplementationVerification, implementationRecoveryInput, implementationFailureSummary, verificationTestCounts } from '../src/core/implementation-verification.mjs'
+import { parseJUnitXml } from '../src/core/junit.mjs'
+
+test('structured test exception survives JUnit, record projection and recovery without accepting arbitrary advice', () => {
+  const tests = parseJUnitXml('<testsuite><testcase classname="ViewTest" name="renders"><error type="org.xml.sax.SAXParseException" message="secret=private">private-source</error></testcase></testsuite>')
+  const input = { confirmed: false, result: { tests, gates: [{ id: 'tests', required: true, outcome: 'failed', result: tests }] } }
+  const compact = compactImplementationVerification(input)
+  const recovery = implementationRecoveryInput(compact)
+  assert.deepEqual(recovery.failedGates[0].failedTests[0].diagnostics, [{ code: 'xml_parse_error', exceptionType: 'org.xml.sax.SAXParseException' }])
+  assert.deepEqual(compactImplementationVerification(compact), compact)
+  assert.equal(compact.confirmed, false)
+  assert.doesNotMatch(JSON.stringify(recovery), /private|secret/)
+  const malformed = structuredClone(compact)
+  malformed.gates[0].failedTests[0].diagnostics = [
+    { code: 'run-shell', exceptionType: 'org.xml.sax.SAXParseException', command: 'evil' },
+    { code: 'null_reference', exceptionType: 'com.company.SecretType' },
+    ...Array.from({ length: 20 }, () => ({ code: 'xml_parse_error', exceptionType: 'org.xml.sax.SAXParseException', message: 'secret=hidden', command: 'evil' }))
+  ]
+  assert.deepEqual(implementationRecoveryInput(malformed).failedGates[0].failedTests[0].diagnostics, [{ code: 'xml_parse_error', exceptionType: 'org.xml.sax.SAXParseException' }])
+  assert.doesNotMatch(JSON.stringify(implementationRecoveryInput(malformed)), /evil|hidden|SecretType|run-shell/)
+})
 
 const counts = { tests: 3, executed: 2, failures: 1, errors: 0, skipped: 1 }
 const raw = () => ({

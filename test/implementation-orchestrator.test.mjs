@@ -232,6 +232,34 @@ function syntheticProvider(input) {
 }
 const preservationOptions = { actor: 'developer', allowWrite: true, allowNetwork: true, providerProbe: async () => ({ available: true, version: 'fixture' }) }
 
+test('fresh JUnit exception reaches the next implementation attempt without copying diagnostic bodies', async () => {
+  const root = await approvedImplementationProject({
+    providerConfig: { schemaVersion: 2, adapter: { kind: 'provider', provider: 'codex', network: true, mode: 'fast' },
+      writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 65536 }, recovery: { maxAttempts: 2 } },
+    projectFiles: { gradlew: '#!/bin/sh\nset -eu\nmkdir -p build/test-results/test\nif grep -q BROKEN src/main/java/example/Generated.java; then\nprintf \'%s\\n\' \'<testsuite><testcase classname="ViewTest" name="renders"><error type="org.xml.sax.SAXParseException" message="token=private">private-source-stack</error></testcase></testsuite>\' > build/test-results/test/TEST-fixture.xml\nexit 1\nfi\nprintf \'%s\\n\' \'<testsuite><testcase classname="ViewTest" name="renders"/></testsuite>\' > build/test-results/test/TEST-fixture.xml\n' },
+    executableFiles: ['gradlew']
+  })
+  let calls = 0
+  const result = await runImplementation(root, 'IMPL-1', { ...preservationOptions, providerRunner: async (_adapter, input) => {
+    calls++
+    const request = JSON.parse(await readFile(join(input.cwd, input.requestPath), 'utf8'))
+    if (calls === 2) {
+      assert.deepEqual(request.recovery.failedGates[0].failedTests[0].diagnostics,
+        [{ code: 'xml_parse_error', exceptionType: 'org.xml.sax.SAXParseException' }])
+      assert.doesNotMatch(JSON.stringify(request.recovery), /private|token=|stack/)
+    }
+    await mkdir(join(input.cwd, 'src/main/java/example'), { recursive: true })
+    await writeFile(join(input.cwd, 'src/main/java/example/Generated.java'), 'class Generated {} // ' + (calls === 1 ? 'BROKEN' : 'fixed') + '\n')
+    return syntheticProvider(input)
+  } })
+  assert.equal(calls, 2)
+  assert.equal(result.record.status, 'passed')
+  assert.equal(result.record.attempts[0].verification.confirmed, false)
+  assert.equal(result.record.attempts[0].verification.tests.errors, 1)
+  assert.equal(result.record.attempts[1].verification.tests.errors, 0)
+  assert.equal(result.record.originalBoundSourceUnchanged, true)
+})
+
 test('intended structural change runs tests once and awaits exact-candidate review without blind repair', async () => {
   const root = await preservationProject()
   const result = await runImplementation(root, 'IMPL-1', { ...preservationOptions, providerRunner: async (_adapter, input) => {

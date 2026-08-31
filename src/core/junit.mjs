@@ -7,6 +7,7 @@ import { assertNoSymlinkSegments, resolveSafeProjectPath, statPath } from '../fs
 import { buildSafeEnvironment } from './process-runner.mjs'
 import { reportGlobBase, reportGlobRegex } from './report-glob.mjs'
 import { assertReportFileBytes, createReportBudget } from './report-limits.mjs'
+import { junitFailureDiagnostics } from './test-failure-diagnostics.mjs'
 
 async function filesForPattern(root, pattern) {
   const matcher = reportGlobRegex(pattern)
@@ -235,9 +236,11 @@ export function parseJUnitXml(text, source = '<inline>', options = {}) {
       throw new Error(source + ': JUnit XML exceeds the 1000000-test safety limit.')
     }
     if (failed || errored) {
+      const diagnostics = junitFailureDiagnostics(children)
       summary.failedTests.push({
         className: typeof node[':@']?.classname === 'string' ? node[':@'].classname : null,
-        name: typeof node[':@']?.name === 'string' ? node[':@'].name : '<unnamed>'
+        name: typeof node[':@']?.name === 'string' ? node[':@'].name : '<unnamed>',
+        ...(diagnostics.length ? { diagnostics } : {})
       })
     }
   }
