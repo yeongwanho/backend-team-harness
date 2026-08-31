@@ -7,6 +7,18 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'test-support/owned-docker-resources.mjs',
+    from: 'inspected[0].Config?.Labels?.[MYSQL_OWNER_LABEL] !== owner',
+    to: 'false',
+    test: 'test/owned-docker-resources.test.mjs'
+  },
+  {
+    file: 'test-support/owned-docker-resources.mjs',
+    from: 'inspected[0].Image !== image',
+    to: 'false',
+    test: 'test/owned-docker-resources.test.mjs'
+  },
+  {
     file: 'src/providers/validation-activity.mjs',
     from: 'Number.isInteger(item.exit_code) ? item.exit_code === 0 : null',
     to: 'true',

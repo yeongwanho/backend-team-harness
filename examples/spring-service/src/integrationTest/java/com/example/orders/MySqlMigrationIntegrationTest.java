@@ -1,6 +1,11 @@
 package com.example.orders;
 
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.Ports;
 import java.sql.DriverManager;
+import java.util.Map;
+import java.util.UUID;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
@@ -17,14 +22,22 @@ class MySqlMigrationIntegrationTest {
 
     @Container
     static final MySQLContainer MYSQL = new MySQLContainer(MYSQL_IMAGE)
+        .withLabel("bth.mysql.fixture", System.getProperty("bth.fixture.owner", UUID.randomUUID().toString()))
+        .withImagePullPolicy(image -> false)
+        .withTmpFs(Map.of("/var/lib/mysql", "rw,size=512m"))
+        .withCreateContainerCmdModifier(command -> command.getHostConfig().withPortBindings(
+            new PortBinding(Ports.Binding.bindIpAndPort("127.0.0.1", 0), new ExposedPort(3306))))
         .withDatabaseName("orders")
         .withUsername("orders_test")
-        .withPassword("orders_test");
+        .withPassword(UUID.randomUUID().toString());
 
     @Test
     void appliesRealMySqlMigrationAndRoundTripsMySqlValues() throws Exception {
         var mode = System.getProperty("bth.fixture.mode", "success");
         MYSQL.getJdbcUrl();
+        var bindings = MYSQL.getContainerInfo().getNetworkSettings().getPorts().getBindings().get(new ExposedPort(3306));
+        assertEquals(1, bindings.length);
+        assertEquals("127.0.0.1", bindings[0].getHostIp());
         if (mode.equals("timeout")) {
             Thread.sleep(60_000);
         }

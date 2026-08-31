@@ -1,3 +1,5 @@
+import java.util.UUID
+
 plugins {
     java
 }
@@ -49,5 +51,6 @@ tasks.register<Test>("integrationTest") {
     classpath = integrationTest.runtimeClasspath
     useJUnitPlatform()
     systemProperty("bth.fixture.mode", System.getProperty("bth.fixture.mode", "success"))
+    systemProperty("bth.fixture.owner", System.getProperty("bth.fixture.owner", UUID.randomUUID().toString()))
     shouldRunAfter(tasks.test)
 }

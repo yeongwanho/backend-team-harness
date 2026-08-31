@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T05:50:28.809Z",
+  "platform": "darwin",
+  "node": "v22.23.1",
+  "sourceHashes": {
+    "src/providers/model-cli.mjs": "c081e4b3fda23e1ff49d85fb0689faa5c3dce3cabfece85b087c8eb8ab98eead",
+    "src/providers/validation-activity.mjs": "993fc228774e46b5e62af0948524ca1a94854d14288ada5f421760aedd308862",
+    "src/evaluation/workflow-budget.mjs": "edecc1aef45efe8ce8c2c781628115e6e94c259ad65c463bb1e2e38eea0be822",
+    "src/evaluation/provider-benchmark-runner.mjs": "82b7c897eed542218a3aca8b1b358a1918283a6063cef56e4fc5b491b30e26b9",
+    "src/evaluation/provider-comparison.mjs": "ddc22cecdc5eb176da77dfd64b0a79075ff160d79e1eac3b04992ef2ec5d0087",
+    "src/evaluation/task-acceptance.mjs": "54f39d40a437ccbbb721cfd0d54a15710e99ca08ab9ef6e2951a61a15f963397",
+    "src/runtime/implementation-orchestrator.mjs": "16f088635dde87b16954bf6413f7a5398f60b139e6313ec30c5f56d8433e3610",
+    "src/runtime/work-orchestrator.mjs": "27ec7327b113e2dea43175dc5ac23beef886b00bb31387e02333b7cbb87bccb0",
+    "src/core/provider-context.mjs": "3fe58aadbe8690ed1b070247e01a416ca4440644d5d897d931fe3d2ac9a8dc14",
+    "packs/codegraph-advisory/indexer.mjs": "ac2e15649c943151872edc3304fd0e79a558fadafaf94e706d9c4c01a4780bab",
+    "scripts/benchmark-provider-comparison.mjs": "d1aa9a8c0ed143e5a38f305d08a2371f8ae5e992e386861565ef5c9475d985a7",
+    "benchmarks/public-backend-v1/corpus.json": "90b49adc9a06c1b7b2a13f427131f929e5e71ec9441ed334de36fe93ae85e516",
+    "benchmarks/public-backend-v1/provider-comparison.json": "f7999657dfbbe143510dd46000a436c88d86f4da74d23feea511ef3882addf74",
+    "docs/evidence/artifacts/v43/record-pair.mjs": "6bbd4a539b2d8fc5d95edaefd412827012b56b18c6fe952a7ab010c7656d43c1",
+    "README.md": "6d31bbc0d3ef49d34a7868f53b5bb81ac1d5a45ea89e51bfc7ae1d541dea281f",
+    "CHANGELOG.md": "75d12a3aeaecec05a2e65c8657b135442329f48b43fba6306d2b33862f59d6b0",
+    "docs/PACKS.md": "1fed2640475736d6b1866add9f8f15a543ec5970a5b1aede20ec040d6a2fd6c0",
+    "docs/evidence/native-small-work-v43.md": "1789a523143720dd58ea5adefd778da6a9dd196dc1d2ac649dec6bf35bde741b",
+    "examples/spring-service/README.md": "0c9574fe5cdd1e31ac5b6adeb0ecde09e86cdb70b5577def57119b4e48d75a75",
+    "examples/spring-service/build.gradle.kts": "a0afc2fed05b05aed7bc5a48196de6d0d67e37310f6e0eefefb5075c07ad161e",
+    "examples/spring-service/src/integrationTest/java/com/example/orders/MySqlMigrationIntegrationTest.java": "9b42a834495659f5f502934f67dc7973fbf9ffa1d433be7eec4cefddaed1db5a",
+    "examples/spring-service/src/main/resources/db/migration/V1__create_orders.sql": "7a77b73d8cd0c18cabaffff147ac6c0acd2da51db84e89ed6f4daa5a61bad277",
+    "test/db-real-e2e.test.mjs": "56cefec92292a255ae02381ae62d6c811c840690690f749ade13c99c72277439",
+    "test/owned-docker-resources.test.mjs": "3204657c994f04226dfe29207bad14535a16ea41eaa2e7d9f93c4c7c5ae079c5",
+    "test-support/owned-docker-resources.mjs": "5ad965fe1866968ccb9e80961df2bec4a8003b5ccc46fcb84a414bce9871db25",
+    "scripts/mutation-smoke.mjs": "397eaa75edbb2265992a3c7c0c66d51fec86b41b98e49ad8bd0ffbaddea4f6ca",
+    "docs/evidence/artifacts/v43/rebuild-progress.mjs": "960a25dcaa2532a30fb5264d80a280159b2be9fb329ad55a3460a4ff1d758e74",
+    "docs/evidence/artifacts/v43/record-qa.mjs": "1783139eee1c663628770e81fd827a0881709e822e620100fedb7566f3bca860"
+  },
+  "suites": {
+    "owner": {
+      "logSha256": "2593bcd0c5af115e1d1305254f8b27a1a2778eace8b19425f316df82cd78b852",
+      "tests": 2,
+      "pass": 2,
+      "fail": 0,
+      "skipped": 0
+    },
+    "mysql": {
+      "logSha256": "473290be3b8d43560463b36b5d478dab6a1a7cb38b0002f20e657a8ed58fbaab",
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0
+    },
+    "coverage": {
+      "logSha256": "1b81b646553dca78ab028b181be7ad2cedc637379fa08f811e7c06013c9fba38",
+      "tests": 614,
+      "pass": 610,
+      "fail": 0,
+      "skipped": 4
+    }
+  },
+  "coverage": {
+    "statements": 91.45,
+    "branches": 83.2,
+    "functions": 98.72,
+    "lines": 91.45
+  },
+  "mysql": {
+    "imageId": "sha256:5e7e005a680e75d935984d3d9390990d2a709b3ed67e92708e9e6747f1f754c9",
+    "observations": [
+      {
+        "mode": "success",
+        "confirmed": true,
+        "outcome": "passed",
+        "executed": 1,
+        "ownerResourcesRemaining": 0
+      },
+      {
+        "mode": "assertion-failure",
+        "confirmed": false,
+        "reason": "process_failed",
+        "ownerResourcesRemaining": 0
+      },
+      {
+        "mode": "process-failure",
+        "confirmed": false,
+        "reason": "process_failed",
+        "ownerResourcesRemaining": 0
+      },
+      {
+        "mode": "timeout",
+        "confirmed": false,
+        "reason": "process_timed_out",
+        "ownerResourcesRemaining": 0
+      }
+    ]
+  },
+  "mutation": {
+    "killed": 48,
+    "curatedTotal": 48,
+    "exhaustive": false,
+    "logSha256": "8a6afaf8ec49198e541de0fb0d50087856112e19e61c97ce4bbcac09c45c2af9"
+  },
+  "syntaxPassed": true,
+  "diffCheckPassed": true,
+  "installSmoke": {
+    "passed": true,
+    "logSha256": "1ec745e2128debee005731f62781a16e1621d369ccd5e316db467043e153f989"
+  },
+  "pairSha256": "d3bcf9fb0121e08904735945c40fde932b35f2f16a429790713e6c439b4568d8",
+  "ledgerSha256": "4a5fadf32234b09fe6beb76ae7aedd0c57bb8e6df4098e345f107f83a5018f59",
+  "corpusCounts": {
+    "tasks": 20,
+    "configuredOracles": 11,
+    "currentValidatedOracles": 10,
+    "tasksWithHistoricalPairedInference": 9,
+    "tasksWithHistoricalSuccessfulPair": 4,
+    "tasksWithNativePairAttempt": 2,
+    "tasksWithConfirmedNativePair": 1
+  },
+  "commands": [
+    "BTH_PROVIDER_BENCHMARK=I_UNDERSTAND_PROVIDER_COSTS node scripts/benchmark-provider-comparison.mjs --execute --workflow native-workflow --provider codex --lane both --task fastapi-05-missing-user --mode fast --model gpt-5.6-sol --timeout-ms 240000 --max-attempts 3 --allow-network --keep-workspace --output <new-directory>",
+    "BTH_REAL_DB_E2E=1 node --test test/db-real-e2e.test.mjs",
+    "npm run test:coverage",
+    "node scripts/mutation-smoke.mjs",
+    "node scripts/install-smoke.mjs"
+  ],
+  "goalComplete": false,
+  "limitations": [
+    "Reference fixture/test cleanup changed; production BTH implementation runtime is unchanged from 3249d9e.",
+    "Only one confirmed small-task native Codex pair. No native Claude, full 20-task success or universal efficiency claim.",
+    "Actual MySQL reference E2E passed separately; it is opt-in and remains skipped in the default coverage run.",
+    "Actual Windows provider/descendant tests and separate Maven/Gradle E2E were not executed here.",
+    "Direct content-read telemetry covers supported commands only and is not equivalent to BTH supplied-context ranking.",
+    "Company policy/interview correctness, two-developer handoff, real MySQL corpus tasks and candidate integration remain unproved."
+  ]
+}

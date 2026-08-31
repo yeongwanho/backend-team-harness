@@ -21,3 +21,11 @@ The normal example Gate runs only unit tests. To prove the DB Pack against Docke
     BTH_REAL_DB_E2E=1 node --test test/db-real-e2e.test.mjs
 
 That test copies this service into a temporary Git repository, installs `db-integration`, declares MySQL as the intended dialect, and runs both Gates through BTH. It applies a real Flyway migration using MySQL-specific `JSON`, `ENUM`, InnoDB, and `utf8mb4` behavior. It also proves removal of the pinned `mysql:8.4.11` Testcontainers container after success, an assertion failure, an abrupt test-process failure, and a BTH timeout. It never contacts an operating or company database.
+
+The MySQL image must already be cached: the test does not pull it. Database files
+use a bounded temporary memory mount. Every run gives its container a unique
+owner UUID; fallback cleanup verifies that label, full container ID and expected
+image ID. A different developer's same-image container is never a cleanup target.
+MySQL uses a random test password and a dynamically allocated loopback-bound
+port; the real test asserts the observed port binding. This is not an outbound
+network sandbox for Gradle or the container.

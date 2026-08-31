@@ -32,6 +32,10 @@ Gradle expects an `integrationTest` task. Maven expects a `db-integration` profi
 
 The maintained reference implementation currently targets MySQL 8.4 LTS with a pinned `mysql:8.4.11` Testcontainers image. Its real-container test exercises Flyway migration, MySQL-specific column behavior, JDBC reads/writes, and teardown across successful, failed, abruptly terminated, and timed-out test processes. The Core remains database-neutral; a project running another database must replace the project-owned lifecycle and declare its real dialect.
 
+The current reference requires that reviewed image to be cached before the opt-in
+test. It uses a unique owner label, verified cleanup identity, tmpfs database
+storage and an asserted loopback port binding. See the [actual MySQL evidence](evidence/native-small-work-v43.md).
+
 Required project proof:
 
 1. Same production dialect and relevant major version; for the reference path, MySQL 8.4.

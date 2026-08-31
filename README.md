@@ -412,6 +412,12 @@ native의 `successAt1`은 한 번의 전체 작업 요청 성공입니다. contr
 자체 검증 실행은 미확인입니다. 따라서 완료된 native 쌍대 비교나 속도 우위를
 확보했다고 주장하지 않습니다. 원본 결과와 보수적으로 재판정한 결과를 함께 보존합니다.
 
+이후 작은 404 처리 과제를 fast/low로 새로 실행한 v43에서는 BTH와 직접 Codex 모두
+일반 테스트 58개·독립 기능 검증 7개와 자체 검증 실행이 확인됐습니다. 관찰값은
+BTH 125.364초·164,740토큰, 직접 Codex 134.440초·211,087토큰입니다. 단일 순차
+실행의 결과이며 일반적인 속도 우위는 아닙니다. 실제 MySQL/Flyway의 정상·실패·
+시간초과 및 소유권 기반 정리도 별도로 검증했습니다. [20개 과제 현황과 한계](docs/evidence/native-small-work-v43.md).
+
 provider 비교는 공개 이력을 target commit 없이 단일 합성 base commit으로 만들고 gold 경로를 provider에게 전달하지 않습니다. raw provider 출력·소스 본문은 결과에 저장하지 않고 digest, byte count, 사용량, pre-write 경로와 명령 종류 집계만 남깁니다. controlled-edit의 `--all`은 provider당 최대 40회로 별도의 `BTH_PROVIDER_BENCHMARK_ALL=I_UNDERSTAND_40_PROVIDER_RUNS` 승인이 필요합니다. native의 전체 쌍대 실행은 최대 80회가 될 수 있어 `BTH_PROVIDER_BENCHMARK_ALL=I_UNDERSTAND_NATIVE_WORKFLOW_CALL_LIMITS` 승인을 별도로 요구합니다. 정확한 선택 범위의 상한은 먼저 `--plan`으로 확인하세요.
 
 기존 테스트 통과는 `verificationSuccessAt1`이며, 요청한 기능의 성공과 다릅니다. `successAt1`은 수정 전 코드에서는 실패하고 정답 코드에서는 통과하는 독립 회귀 테스트로 해당 구현도 확인했을 때만 인정합니다. 그 검증이 없으면 `null`이며, 전체 성공률도 미측정 항목이 남은 동안 확정하지 않습니다. schema 2 이하의 과거 `successAt1`은 기존 테스트 통과 관찰값으로만 취급합니다.
