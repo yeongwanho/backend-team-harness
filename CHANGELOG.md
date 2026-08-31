@@ -6,6 +6,8 @@ This project follows Semantic Versioning after 1.0. Before 1.0, every incompatib
 
 ### Added
 
+- Opt-in schema-v2 project formatting between implementation and verification. Declared commands/configs must be source-bound verification inputs; private bounded backups, changed-file-only postchecks, process timeouts and no blind provider retry on formatting failure. See `docs/PROJECT-FORMATTING.md`. This is not an OS sandbox or a whitespace-only semantic guarantee.
+
 - Bounded changed-Java relationship guard review with a pinned, hash-checked portable grammar. Exact-candidate review acknowledgement and a non-secret rationale can be recorded in the apply receipt; incomplete inspection cannot be waived. This is not semantic authorization proof. See `docs/evidence/provider-preservation-v37.md`.
 - File-only Spring JavaFormat diagnostics survive bounded recovery without invented line numbers, source excerpts or log-provided commands.
 

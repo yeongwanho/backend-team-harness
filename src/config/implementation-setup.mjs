@@ -57,7 +57,8 @@ export async function configureImplementationProvider(inputPath, provider, optio
       maxDiffBytes: options.maxDiffBytes ?? previous?.writePolicy?.maxDiffBytes ?? 2 * 1024 * 1024
     },
     recovery: { maxAttempts: options.maxAttempts ?? previous?.recovery?.maxAttempts ?? 2 },
-    ...(previous?.workspacePreparation !== undefined ? { workspacePreparation: previous.workspacePreparation } : {})
+    ...(previous?.workspacePreparation !== undefined ? { workspacePreparation: previous.workspacePreparation } : {}),
+    ...(previous?.formatting !== undefined ? { formatting: previous.formatting } : {})
   }
   const content = JSON.stringify(document, null, 2) + '\n'
   const normalized = parseImplementationConfig(content, '.backend-harness/implementation.json')

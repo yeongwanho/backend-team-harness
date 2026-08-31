@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-08-31T03:38:25.085Z",
+  "platform": "darwin",
+  "node": "v22.23.1",
+  "sourceHashes": {
+    "src/runtime/implementation-orchestrator.mjs": "dc329cf8019c172da8e6b85e68d57df16ed3d6bbd3b0b0eda5a58279313872a4",
+    "src/core/workspace-formatting.mjs": "5f19d317769b88c2dff2622476801896342102f350b59f1fb800b7f2de99b8be",
+    "src/config/formatting.mjs": "358f13c9d3a0bd293cf21a735944e887037d69136f85cb1b0f83a4eecb022654",
+    "src/config/implementation.mjs": "13278e890783cade014766b61c885f865111ac251e214599c3331f5e35a9230f",
+    "src/config/implementation-setup.mjs": "e6631e37972819c77eb32b52f85666ed85c47cc67d99b3156e6e28773f37615f",
+    "src/evaluation/provider-benchmark-runner.mjs": "94115af0c08858ba170e2710114b0a531a1e3eef4dcfd0f40b0d5fa9a9f56d16",
+    "scripts/mutation-smoke.mjs": "de6a983417be2a9c59b60f536bc906fd43cd16bad962c2e1c882039d29e0cfa3"
+  },
+  "tests": {
+    "total": 582,
+    "passed": 578,
+    "failed": 0,
+    "skipped": 4,
+    "logSha256": "8d3324002e2e76faefdef58b51960fedf47c5e8d7b3ea5cdaa583efccc0efbe5"
+  },
+  "coverage": {
+    "lines": 91.33,
+    "branches": 82.91,
+    "functions": 98.69
+  },
+  "mutation": {
+    "killed": 39,
+    "totalCurated": 39,
+    "logSha256": "fc8f8843e8479b2f6f4ea371cbebb4fc071eec495a1596c37b589481ec489d77",
+    "limitation": "Curated smoke, not exhaustive mutation coverage."
+  },
+  "installSmoke": {
+    "passed": true,
+    "logSha256": "ea781ddfffe003a1a189e0e8327a14fe17665304b3356e6fdb1bfe15551967fe"
+  },
+  "windowsContract": {
+    "passed": true,
+    "logSha256": "94a5f2608af0b73dc7dbd44461d53f01344bbd93a31439f76ab7e4d95ffde2dc",
+    "actualWindowsExecution": false
+  },
+  "productionDependencies": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "logSha256": "d9b31b6d619719454965caba31ff8cb2b222a54a25eef7aadf0b980cecf3e09c"
+  },
+  "skipped": [
+    "real MySQL container E2E",
+    "separate Maven/Gradle cold-cache E2E",
+    "real Windows provider JSON execution",
+    "real Windows descendant termination"
+  ],
+  "limitations": [
+    "The real Java replay has ordinary test errors; unit QA is not product task success.",
+    "No model inference or new success@1 pair in this iteration."
+  ]
+}

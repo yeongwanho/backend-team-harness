@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "goalComplete": false,
+  "priorCorpusLedger": {
+    "path": "docs/evidence/artifacts/v37/corpus-ledger.json",
+    "sha256": "562363bb48f2c6f1f64adf8925afff373ddfc71200269327342e049485b9afa8"
+  },
+  "taskCount": 20,
+  "historicalPairedTasks": 8,
+  "historicalSuccessfulPairs": 3,
+  "configuredOracles": 11,
+  "validatedCurrentOracles": 10,
+  "newPairedTasks": 0,
+  "newModelCalls": 0,
+  "replay": "docs/evidence/artifacts/v38/visit-replay.json",
+  "nextEvidenceGap": "Repair generated HTML test assertions without bypassing real tests, then evaluate new versioned corpus tasks and native full-workflow baselines.",
+  "limitations": [
+    "Historical protocols are not pooled as a success rate.",
+    "Claude, actual Windows, MySQL task corpus and second-developer onboarding remain incomplete."
+  ]
+}

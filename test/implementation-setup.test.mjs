@@ -60,6 +60,16 @@ test('provider selection preserves explicit workspace preparation and its null o
   }
 })
 
+test('changing providers preserves project formatting and its explicit opt-out', async () => {
+  const root = await project()
+  for (const formatting of [{ command: ['./gradlew', '--offline', 'format'], inputs: ['build.gradle.kts'], network: false, timeoutMs: 9000 }, null]) {
+    await writeFile(join(root, '.backend-harness/implementation.json'), JSON.stringify({ schemaVersion: 2, adapter: null, formatting }))
+    const result = await configureImplementationProvider(root, 'codex')
+    assert.deepEqual(result.config.formatting, formatting)
+    assert.deepEqual(JSON.parse(await readFile(join(root, result.backup), 'utf8')).formatting, formatting)
+  }
+})
+
 test('CLI configures a provider with explicit model, mode, and write prefixes', async () => {
   const root = await project()
   const cli = join(import.meta.dirname, '../src/cli.mjs')

@@ -7,6 +7,18 @@ import { spawnSync } from 'node:child_process'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const mutations = [
   {
+    file: 'src/core/workspace-formatting.mjs',
+    from: '!declared.has(normalized(input))',
+    to: 'false',
+    test: 'test/workspace-formatting.test.mjs'
+  },
+  {
+    file: 'src/core/workspace-formatting.mjs',
+    from: "process.exitCode !== 0 || process.signal !== null || process.timedOut || process.stdioDrainTimedOut",
+    to: 'false',
+    test: 'test/workspace-formatting.test.mjs'
+  },
+  {
     file: 'src/core/preservation-review.mjs',
     from: 'options.acceptPreservationReview !== review.fingerprint',
     to: 'false',

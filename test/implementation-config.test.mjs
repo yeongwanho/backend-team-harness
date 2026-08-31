@@ -21,6 +21,19 @@ const valid = {
   recovery: { maxAttempts: 2 }
 }
 
+test('project formatting is optional, schema-v2 only and bounded without shell evaluation', () => {
+  const formatting = { command: ['./mvnw', '-o', 'spring-javaformat:apply'], network: false, inputs: ['pom.xml', '.editorconfig'] }
+  const config = { schemaVersion: 2, adapter: null, formatting }
+  assert.deepEqual(parseImplementationConfig(JSON.stringify(config)).formatting, { ...formatting, inputs: ['.editorconfig', 'pom.xml'], timeoutMs: 60000 })
+  assert.equal(parseImplementationConfig(JSON.stringify({ ...config, formatting: null })).formatting, null)
+  assert.throws(() => parseImplementationConfig(JSON.stringify({ ...config, schemaVersion: 1 })), /schemaVersion 2/)
+  for (const patch of [
+    { command: [] }, { command: ['/usr/bin/mvn'] }, { command: ['../mvnw'] }, { command: ['./mvnw', '\0'] },
+    { network: undefined }, { network: 'false' }, { inputs: ['../policy'] }, { inputs: 'pom.xml' },
+    { timeoutMs: 999 }, { timeoutMs: 600001 }, { shell: true }
+  ]) assert.throws(() => parseImplementationConfig(JSON.stringify({ ...config, formatting: { ...formatting, ...patch } })))
+})
+
 test('implementation config is disabled by default and normalizes a strict enabled contract', () => {
   assert.deepEqual(parseImplementationConfig('{"schemaVersion":1,"adapter":null}'), {
     schemaVersion: 1,

@@ -16,6 +16,7 @@ import {
 } from '../core/implementation-record-store.mjs'
 import { buildSafeEnvironment, runProcess } from '../core/process-runner.mjs'
 import { prepareWorkspaceDependencies } from '../core/workspace-preparation.mjs'
+import { assertFormattingContract, runWorkspaceFormatting } from '../core/workspace-formatting.mjs'
 import { implementationStateDirectory } from '../core/platform.mjs'
 import { withProjectVerificationLock } from '../core/project-lock.mjs'
 import { captureSourceBinding } from '../core/source-binding.mjs'
@@ -245,6 +246,25 @@ function protectedControlPlaneChanges(paths, implementationConfig, verificationC
     protectedPaths.add(implementationConfig.adapter.command[0].replace(/^\.\//, ''))
   }
   return paths.filter((path) => path === '.backend-harness' || path.startsWith('.backend-harness/') || protectedPaths.has(path))
+}
+
+async function inspectImplementationBoundary(workspace, sourceBinding, baseRefsSha256, implementationConfig, verificationConfig, requestPath, requestBefore, processResult) {
+  const requestAfter = await requestIntegrity(requestPath, requestBefore)
+  const requestChanged = requestAfter.unchanged !== true
+  const afterCapture = await captureImplementationBinding(workspace, verificationConfig)
+  const after = afterCapture.binding
+  const historyChanged = await workspaceHead(workspace) !== sourceBinding.headCommit
+  const sharedRefsChanged = await sharedRefsSha256(workspace) !== baseRefsSha256
+  const indexFlagChanges = await suspiciousIndexFlags(workspace)
+  const declaredInputsChanged = !after || JSON.stringify(sourceBinding.explicitInputs) !== JSON.stringify(after.explicitInputs)
+  const changedPaths = processPassed(processResult) ? await changedPathsAgainstBase(workspace, sourceBinding.headCommit) : []
+  const changed = changedPaths.length > 0
+  const protectedChanges = processPassed(processResult) ? protectedControlPlaneChanges(changedPaths, implementationConfig, verificationConfig) : []
+  const writePolicy = processPassed(processResult) ? await evaluateWritePolicy(workspace, sourceBinding.headCommit, changedPaths, implementationConfig.writePolicy) : null
+  const policyFailure = requestChanged || Boolean(afterCapture.error) || historyChanged || sharedRefsChanged || indexFlagChanges.length > 0 || declaredInputsChanged || protectedChanges.length > 0 || Boolean(writePolicy && !writePolicy.passed)
+  return { requestAfter, requestChanged, afterCapture, after, historyChanged, sharedRefsChanged, indexFlagChanges,
+    declaredInputsChanged, changedPaths, changed, protectedChanges, writePolicy, policyFailure,
+    adapterPassed: processPassed(processResult) && !policyFailure && changed }
 }
 
 function providerTaskPayload(task, context = task.context) {
@@ -554,6 +574,7 @@ async function runUnlocked(root, taskId, options) {
   if (!loadedConfig.config.adapter) throw new Error('Implementation adapter is disabled. Configure .backend-harness/implementation.json first.')
   if (loadedConfig.config.adapter.network && options.allowNetwork !== true) throw new Error('Implementation adapter may use the network; pass --acknowledge-network-risk explicitly. BTH does not isolate operating-system egress.')
   if (options.allowWrite !== true) throw new Error('Implementation changes require explicit --allow-write approval.')
+  await assertFormattingContract(root, loadedConfig.config.formatting, sourceVerificationConfig, options)
   const providerProbe = loadedConfig.config.adapter.kind === 'provider'
     ? await (options.providerProbe ?? probeImplementationProvider)(loadedConfig.config.adapter.provider, { cwd: root })
     : null
@@ -577,6 +598,9 @@ async function runUnlocked(root, taskId, options) {
   }
   if (prior.record?.attempts?.at(-1)?.outcome === 'gate-integrity-failure') {
     throw new Error('A verification Gate changed the isolated implementation inventory or Git metadata. Reset the tainted workspace before another implementation run.')
+  }
+  if (prior.record?.attempts?.at(-1)?.outcome === 'formatting-integrity-failure') {
+    throw bthError('formatting_workspace_tainted', 'Formatting changed protected inputs, Git metadata or files outside the provider candidate. Reset the tainted workspace before continuing.')
   }
   if (prior.record?.preparation?.sourceStable === false) {
     throw new Error('Workspace preparation changed bound source or Git metadata. Reset the tainted workspace before retrying.')
@@ -707,6 +731,7 @@ async function runUnlocked(root, taskId, options) {
             contractPath: '.backend-harness/verification.json',
             executionOwner: 'harness',
             focusedRegressionTestsRequired: true,
+            ...(loadedConfig.config.formatting ? { formatting: { executionOwner: 'harness', stage: 'before-verification', commandPath: loadedConfig.config.formatting.command[0] } } : {}),
             testAuthoring,
             ...(preservationGuidance ? { preservation: preservationGuidance } : {}),
             requiredGates: verificationConfig.gates.filter(gate => gate.required).map(gate => ({
@@ -745,31 +770,33 @@ async function runUnlocked(root, taskId, options) {
           metadata: { kind: 'command', id: loadedConfig.config.adapter.id }
         }
     const processResult = adapterRun.process
-    const requestAfter = await requestIntegrity(requestPath, requestBefore)
-    const requestChanged = requestAfter.unchanged !== true
-    const afterCapture = await captureImplementationBinding(workspace.path, verificationConfig)
-    const after = afterCapture.binding
-    const headAfter = await workspaceHead(workspace.path)
-    const historyChanged = headAfter !== sourceBinding.headCommit
-    const sharedRefsChanged = await sharedRefsSha256(workspace.path) !== baseRefsSha256
-    const indexFlagChanges = await suspiciousIndexFlags(workspace.path)
-    const declaredInputsChanged = !after || JSON.stringify(sourceBinding.explicitInputs) !== JSON.stringify(after.explicitInputs)
-    const changedPaths = processPassed(processResult) ? await changedPathsAgainstBase(workspace.path, sourceBinding.headCommit) : []
-    const changed = changedPaths.length > 0
-    const protectedChanges = processPassed(processResult)
-      ? protectedControlPlaneChanges(changedPaths, loadedConfig.config, verificationConfig)
-      : []
-    const writePolicy = processPassed(processResult)
-      ? await evaluateWritePolicy(workspace.path, sourceBinding.headCommit, changedPaths, loadedConfig.config.writePolicy)
-      : null
-    const adapterPassed = processPassed(processResult) && !requestChanged && !afterCapture.error && !historyChanged && !sharedRefsChanged && indexFlagChanges.length === 0 && !declaredInputsChanged && changed && protectedChanges.length === 0 && writePolicy.passed
-    const policyFailure = requestChanged || Boolean(afterCapture.error) || historyChanged || sharedRefsChanged || indexFlagChanges.length > 0 || declaredInputsChanged || protectedChanges.length > 0 || (writePolicy && !writePolicy.passed)
+    const inspectBoundary = () => inspectImplementationBoundary(workspace.path, sourceBinding, baseRefsSha256, loadedConfig.config, verificationConfig, requestPath, requestBefore, processResult)
+    let boundary = await inspectBoundary()
+    let formatting = null
+    if (boundary.adapterPassed && loadedConfig.config.formatting) {
+      const providerPaths = new Set(boundary.changedPaths)
+      formatting = await runWorkspaceFormatting(workspace.path, root, loadedConfig.config.formatting, boundary.changedPaths, options)
+      boundary = await inspectBoundary()
+      const extraPaths = boundary.changedPaths.filter(path => !providerPaths.has(path))
+      if (boundary.policyFailure || extraPaths.length > 0 || formatting.integrityFailure) {
+        formatting = { ...formatting, status: 'failed', integrityFailure: true,
+          failureCode: 'formatting_boundary_violated', extraPaths }
+      }
+    }
+    const { requestAfter, requestChanged, afterCapture, after, historyChanged, sharedRefsChanged, indexFlagChanges,
+      declaredInputsChanged, changedPaths, changed, protectedChanges, writePolicy, adapterPassed, policyFailure } = boundary
     let candidateFiles = []
     let feedback = null
     let attemptVerification
     let gateIntegrityFailure = false
     if (!processPassed(processResult)) {
       attemptVerification = adapterFailureVerification(processResult, after?.fingerprint ?? null, adapterRun.metadata.failure)
+    } else if (formatting?.status === 'failed') {
+      attemptVerification = { confirmed: false, sourceFingerprint: after?.fingerprint ?? null, runPath: null,
+        failure: { code: formatting.failureCode, message: formatting.integrityFailure
+          ? 'Project formatting crossed the approved candidate boundary. Reset the workspace; no tests or automatic model retry were run.'
+          : 'Project formatting failed. Inspect the project-owned command and private recovery snapshot before retrying; no tests or automatic model retry were run.' },
+        tests: null, gates: [] }
     } else if (policyFailure) {
       attemptVerification = {
           confirmed: false,
@@ -876,6 +903,7 @@ async function runUnlocked(root, taskId, options) {
         observedSha256: requestAfter.sha256
       },
       adapter: compactProcess(processResult),
+      ...(formatting ? { formatting } : {}),
       feedback,
       changed,
       writePolicy,
@@ -883,6 +911,8 @@ async function runUnlocked(root, taskId, options) {
       sourceFingerprintAfter: after?.fingerprint ?? null,
       outcome: !processPassed(processResult)
         ? 'adapter-failed'
+        : formatting?.status === 'failed'
+          ? formatting.integrityFailure ? 'formatting-integrity-failure' : 'formatting-failed'
         : policyFailure
           ? requestChanged
             ? 'control-plane-change'
@@ -904,7 +934,7 @@ async function runUnlocked(root, taskId, options) {
               : 'verification-failed',
       verification: attemptVerification
     })
-    if (attempts.at(-1)?.outcome === 'no-source-change' || gateIntegrityFailure || providerFailureIsNonRetryable(adapterRun)) break
+    if (attempts.at(-1)?.outcome === 'no-source-change' || formatting?.status === 'failed' || gateIntegrityFailure || providerFailureIsNonRetryable(adapterRun)) break
     if (attemptVerification?.confirmed) {
       status = 'passed'
       certifiedImplementedFiles = candidateFiles

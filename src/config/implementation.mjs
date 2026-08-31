@@ -2,8 +2,9 @@ import { constants } from 'node:fs'
 import { access, readFile } from 'node:fs/promises'
 import { isAbsolute, posix, relative } from 'node:path'
 import { resolveSafeProjectPath, statPath } from '../fs-safety.mjs'
+import { parseFormatting } from './formatting.mjs'
 
-const CONFIG_KEYS = new Set(['schemaVersion', 'adapter', 'writePolicy', 'recovery', 'workspacePreparation'])
+const CONFIG_KEYS = new Set(['schemaVersion', 'adapter', 'writePolicy', 'recovery', 'workspacePreparation', 'formatting'])
 const COMMAND_ADAPTER_KEYS = new Set(['kind', 'id', 'command', 'network', 'timeoutMs'])
 const PROVIDER_ADAPTER_KEYS = new Set(['kind', 'provider', 'network', 'timeoutMs', 'model', 'mode', 'contextBudgetCharacters', 'maxBudgetUsd'])
 const RECOVERY_KEYS = new Set(['maxAttempts'])
@@ -35,6 +36,7 @@ export function parseImplementationConfig(text, source = '<inline>') {
   onlyKeys(parsed, CONFIG_KEYS, source)
   if (parsed.schemaVersion !== 1 && parsed.schemaVersion !== 2) throw new Error(source + ': schemaVersion must be 1 or 2.')
   const preparation = {}
+  if (parsed.formatting !== undefined) preparation.formatting = parseFormatting(parsed.formatting, parsed.schemaVersion)
   if (parsed.workspacePreparation !== undefined) {
     if (parsed.schemaVersion !== 2) throw new Error(source + ': workspacePreparation requires schemaVersion 2.')
     if (parsed.workspacePreparation === null) preparation.workspacePreparation = null

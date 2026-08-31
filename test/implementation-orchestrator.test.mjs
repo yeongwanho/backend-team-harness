@@ -98,6 +98,117 @@ async function approvedImplementationProject(options = {}) {
   return root
 }
 
+const formattingTarget = 'src/main/java/example/Generated.java'
+const formattingOriginal = 'package example; class Generated {} // BROKEN\n'
+async function formattingProject(options = {}) {
+  const formatting = { command: ['./tools/format'], network: false, inputs: ['.style.json'], timeoutMs: 3000, ...options.formatting }
+  return approvedImplementationProject({
+    verificationFailsOnBrokenSource: true,
+    adapterScript: options.adapterScript ?? '#!/bin/sh\nset -eu\nmkdir -p src/main/java/example\nprintf "package example; class Generated {} // BROKEN\\n" > src/main/java/example/Generated.java\n',
+    providerConfig: {
+      schemaVersion: 2, adapter: { kind: 'command', id: 'fixture', command: ['./tools/implement'], network: false, timeoutMs: 30000 },
+      writePolicy: { allowedPrefixes: ['src/'], maxChangedFiles: 4, maxDiffBytes: 65536 }, recovery: { maxAttempts: 2 },
+      formatting: options.disabled ? null : formatting
+    },
+    projectFiles: {
+      '.style.json': '{}\n',
+      'src/main/java/example/Unchanged.java': 'class Unchanged {}\n',
+      'tools/format': '#!/usr/bin/env node\n' + (options.formatter ?? "const fs = require('node:fs'); const p = 'src/main/java/example/Generated.java'; fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(' // BROKEN', '')); console.log('private-source-do-not-copy');\n")
+    }, executableFiles: ['tools/format'],
+    verificationConfig: { schemaVersion: 1, gates: [{ id: 'tests', required: true, command: ['./gradlew', 'test'],
+      inputs: options.inputs ?? ['build.gradle.kts', 'tools/format', '.style.json'], timeoutMs: 30000,
+      result: { type: 'junit', reports: ['build/test-results/test/*.xml'], minimumTests: 1 } }] }
+  })
+}
+const formattingOptions = { actor: 'developer', allowWrite: true }
+
+test('project formatter fixes a candidate before fresh tests without a model retry, preserving original and recovery bytes', async () => {
+  const root = await formattingProject()
+  const result = await runImplementation(root, 'IMPL-1', formattingOptions)
+  assert.equal(result.record.status, 'passed')
+  assert.equal(result.record.attempts.length, 1)
+  const receipt = result.record.attempts[0].formatting
+  assert.equal(receipt.status, 'passed')
+  assert.deepEqual(receipt.changedPaths, [formattingTarget])
+  assert.ok(result.record.verification.tests.executed > 0)
+  assert.equal(await readFile(join(result.record.workspace, formattingTarget), 'utf8'), formattingOriginal.replace(' // BROKEN', ''))
+  await assert.rejects(access(join(root, formattingTarget)), /ENOENT/)
+  assert.equal(await readFile(join(root, receipt.backup, formattingTarget), 'utf8'), formattingOriginal)
+  assert.doesNotMatch(JSON.stringify(result.record), /private-source-do-not-copy/)
+})
+
+test('no source change skips formatter and verification; disabled formatting preserves existing behavior', async () => {
+  const noChange = await formattingProject({ adapterScript: '#!/bin/sh\nexit 0\n' })
+  const result = await runImplementation(noChange, 'IMPL-1', formattingOptions)
+  assert.equal(result.record.attempts.length, 1)
+  assert.equal(result.record.attempts[0].outcome, 'no-source-change')
+  assert.equal(result.record.attempts[0].formatting, undefined)
+  assert.equal(result.record.verification.tests, null)
+  const disabled = await formattingProject({ disabled: true })
+  const failed = await runImplementation(disabled, 'IMPL-1', formattingOptions)
+  assert.equal(failed.record.status, 'failed')
+  assert.equal(failed.record.attempts.length, 2)
+  assert.equal(failed.record.attempts[0].formatting, undefined)
+})
+
+test('formatter network and unbound command/config inputs refuse before provider writes', async () => {
+  for (const options of [{ formatting: { network: true } }, { inputs: ['build.gradle.kts'] }, { inputs: ['build.gradle.kts', 'tools/format'] }]) {
+    const root = await formattingProject(options)
+    await assert.rejects(runImplementation(root, 'IMPL-1', formattingOptions), error => ['formatting_network_not_acknowledged', 'formatting_input_not_bound'].includes(error.code))
+    await assert.rejects(access(join(root, formattingTarget)), /ENOENT/)
+  }
+})
+
+test('failed or timed-out formatter stops without wasting provider retries or passing tests', async () => {
+  for (const options of [{ formatter: 'process.exit(7)\n' }, { formatter: 'setInterval(() => {}, 1000)\n', formatting: { timeoutMs: 1000 } }]) {
+    const root = await formattingProject(options)
+    const result = await runImplementation(root, 'IMPL-1', formattingOptions)
+    assert.equal(result.record.status, 'failed')
+    assert.equal(result.record.attempts.length, 1)
+    assert.equal(result.record.attempts[0].outcome, 'formatting-failed')
+    assert.equal(result.record.verification.failure.code, 'formatting_process_failed')
+    assert.equal(result.record.verification.tests, null)
+  }
+})
+
+test('formatter cannot expand changed-file scope, delete candidates or change file mode', async () => {
+  for (const operation of [
+    "fs.writeFileSync('src/main/java/example/Unchanged.java', 'class Changed {}')",
+    "fs.writeFileSync('src/main/java/example/Extra.java', 'class Extra {}')",
+    "fs.unlinkSync('src/main/java/example/Generated.java')",
+    "fs.chmodSync('src/main/java/example/Generated.java', 0o755)"
+  ]) {
+    const root = await formattingProject({ formatter: "const fs = require('node:fs'); " + operation + '\n' })
+    const result = await runImplementation(root, 'IMPL-1', formattingOptions)
+    assert.equal(result.record.status, 'failed')
+    assert.equal(result.record.attempts.length, 1)
+    assert.equal(result.record.attempts[0].outcome, 'formatting-integrity-failure')
+    assert.equal(result.record.verification.tests, null)
+    await assert.rejects(runImplementation(root, 'IMPL-1', formattingOptions), /Reset/)
+    await assert.rejects(applyImplementation(root, 'IMPL-1', formattingOptions))
+    assert.equal(await readFile(join(root, 'src/main/java/example/Unchanged.java'), 'utf8'), 'class Unchanged {}\n')
+  }
+})
+
+test('provider cannot change the formatter before invocation; formatter control-plane writes cannot pass', async () => {
+  const providerRoot = await formattingProject({ adapterScript: '#!/bin/sh\nprintf "#!/bin/sh\\nexit 0\\n" > tools/format\nmkdir -p src/main/java/example\nprintf "class Generated {}" > src/main/java/example/Generated.java\n' })
+  const providerResult = await runImplementation(providerRoot, 'IMPL-1', formattingOptions)
+  assert.equal(providerResult.record.status, 'failed')
+  assert.equal(providerResult.record.attempts[0].formatting, undefined)
+  for (const operation of [
+    "require('node:fs').writeFileSync('.style.json', '{\"changed\":true}')",
+    "require('node:child_process').execFileSync('git', ['update-index', '--assume-unchanged', 'src/main/java/example/Unchanged.java'])",
+    "require('node:child_process').execFileSync('git', ['branch', 'formatter-tamper'])"
+  ]) {
+    const root = await formattingProject({ formatter: operation + '\n' })
+    const result = await runImplementation(root, 'IMPL-1', formattingOptions)
+    assert.equal(result.record.status, 'failed')
+    assert.equal(result.record.attempts.length, 1)
+    assert.equal(result.record.attempts[0].outcome, 'formatting-integrity-failure')
+    assert.equal(result.record.verification.tests, null)
+  }
+})
+
 const preservationFile = 'src/main/java/example/Customer.java'
 const guardedCustomer = 'class Customer { @OneToMany List<Order> orders; void add(Order o) { if(o.isNew()) orders.add(o); } }\n'
 const recoveredCustomer = guardedCustomer.replace(' }\n', ' int count() { return orders.size(); } }\n')

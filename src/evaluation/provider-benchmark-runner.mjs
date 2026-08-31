@@ -20,7 +20,7 @@ const execute = promisify(execFile)
 const MAX_GIT_OUTPUT = 16 * 1024 * 1024
 const RULE_OUTCOMES = new Set([
   'control-plane-change', 'source-binding-failed', 'workspace-history-change', 'shared-refs-change',
-  'index-flags-change', 'write-policy-violation', 'gate-integrity-failure', 'original-source-change'
+  'index-flags-change', 'write-policy-violation', 'gate-integrity-failure', 'formatting-integrity-failure', 'original-source-change'
 ])
 
 async function git(root, args, options = {}) {

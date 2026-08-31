@@ -2,6 +2,11 @@
 
 This file is checked against the executable help in `src/cli/help.mjs`. A command rename without a matching documentation change fails the test suite.
 
+Optional schema-v2 `formatting` is configured in the project contract, not another
+CLI flag. See [project formatting](PROJECT-FORMATTING.md) for executable/config
+binding, private backups and changed-file-only checks. The stage is disabled by
+default, does not run without source changes, and never grants a test verdict.
+
 ```text
 bth init [path] [--build gradle|maven] [--force] [--allow-unversioned]
 bth doctor [path] [--json]

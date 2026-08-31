@@ -249,6 +249,20 @@ test('prepared direct lane uses the same verification contract after provider ex
   assert.equal(result.score.outcomeLocalization.recallAt5, 1)
 })
 
+test('project formatting boundary violations remain visible in benchmark rule metrics', async () => {
+  const root = await project('bth-comparison-formatting-boundary-')
+  await initProject(root)
+  await writeFile(join(root, '.backend-harness/implementation.json'), JSON.stringify({ schemaVersion: 2, adapter: null,
+    formatting: { command: ['./gradlew', 'format'], inputs: ['build.gradle.kts'], network: false, timeoutMs: 3000 } }))
+  await writeFile(join(root, 'gradlew'), '#!/bin/sh\nprintf "class Unexpected {}\\n" > src/main/java/example/Unexpected.java\n')
+  initializeGit(root, { forcePaths: ['.backend-harness/.gitignore'] })
+  const result = await runPreparedComparisonCase(root, task, repositoryConfig, {
+    lane: 'bth', provider: 'codex', mode: 'fast', model: null, maxAttempts: 1, timeoutMs: 30000, maxBudgetUsd: null
+  }, { providerProbe: async () => ({ available: true, version: 'fixture' }), bthProviderRunner: fixtureProvider })
+  assert.equal(result.observation.verificationConfirmed, false)
+  assert.deepEqual(result.observation.ruleViolations, ['bth-formatting-integrity-failure'])
+})
+
 test('prepared direct lane elapsed time includes evaluator-owned verification', async () => {
   const root = await project('bth-comparison-direct-elapsed-')
   const verificationDelayMs = 80
